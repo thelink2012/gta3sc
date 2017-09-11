@@ -28,6 +28,7 @@ script:
   - if [ "$CXX" == "clang++" ];  then export CXX="clang++"; fi
   - $CXX --version
   - lit --version
+  - which OutputCheck
   - mkdir build
   - cd build
   - cmake .. && make
