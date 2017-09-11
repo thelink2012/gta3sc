@@ -212,6 +212,34 @@
         <Arg Type="PARAM" Out="true"/>
       </Args>
     </Command>
+    <Command ID="0xa8e" Name="INT_ADD" Hash="0x4c2b352a">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xa8f" Name="INT_SUB" Hash="0xb0edd311">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xa90" Name="INT_MUL" Hash="0x2a0d06e2">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xa91" Name="INT_DIV" Hash="0x42b80fc8">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
     <Command ID="0xa92" Name="STREAM_CUSTOM_SCRIPT" Hash="0x0a39152e">
       <Args>
         <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
@@ -867,28 +895,28 @@
         <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
       </Args>
     </Command>
-    <Command ID="0xb10" Name="BITWISE_AND" Hash="0x5e21b170">
+    <Command ID="0xb10" Name="BIT_AND" Hash="0x3b78d557">
       <Args>
         <Arg Type="INT"/>
         <Arg Type="INT"/>
         <Arg Type="INT" Out="true"/>
       </Args>
     </Command>
-    <Command ID="0xb11" Name="BITWISE_OR" Hash="0x7e03c9ad">
+    <Command ID="0xb11" Name="BIT_OR" Hash="0xc30a4ac8">
       <Args>
         <Arg Type="INT"/>
         <Arg Type="INT"/>
         <Arg Type="INT" Out="true"/>
       </Args>
     </Command>
-    <Command ID="0xb12" Name="BITWISE_XOR" Hash="0xe112b461">
+    <Command ID="0xb12" Name="BIT_XOR" Hash="0x160bed36">
       <Args>
         <Arg Type="INT"/>
         <Arg Type="INT"/>
         <Arg Type="INT" Out="true"/>
       </Args>
     </Command>
-    <Command ID="0xb13" Name="BITWISE_NOT" Hash="0xc315e20e">
+    <Command ID="0xb13" Name="BIT_NOT" Hash="0xa3533480">
       <Args>
         <Arg Type="INT"/>
         <Arg Type="INT" Out="true"/>
@@ -901,14 +929,14 @@
         <Arg Type="INT" Out="true"/>
       </Args>
     </Command>
-    <Command ID="0xb15" Name="BITWISE_SHR" Hash="0x12041cc6">
+    <Command ID="0xb15" Name="BIT_SHR" Hash="0x9dbc06cb">
       <Args>
         <Arg Type="INT"/>
         <Arg Type="INT"/>
         <Arg Type="INT" Out="true"/>
       </Args>
     </Command>
-    <Command ID="0xb16" Name="BITWISE_SHL" Hash="0xc3007ec0">
+    <Command ID="0xb16" Name="BIT_SHL" Hash="0xeb99a285">
       <Args>
         <Arg Type="INT"/>
         <Arg Type="INT"/>
