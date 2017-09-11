@@ -196,6 +196,77 @@
     </Enum>
   </Constants>
   <Commands>
+    <Command ID="0x16f" Name="DRAW_SHADOW" Hash="0xd1b03326">
+      <Args>
+        <Arg Type="INT" Enum="SHADOW"/>
+        <Arg Type="FLOAT" Desc="X Coord"/>
+        <Arg Type="FLOAT" Desc="Y Coord"/>
+        <Arg Type="FLOAT" Desc="Z Coord"/>
+        <Arg Type="FLOAT" Desc="Angle"/>
+        <Arg Type="FLOAT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT" Desc="Red"/>
+        <Arg Type="INT" Desc="Green"/>
+        <Arg Type="INT" Desc="Blue"/>
+      </Args>
+    </Command>
+    <Command ID="0x349" Name="SET_TEXT_FONT" Hash="0x3ede2f10">
+      <Args>
+        <Arg Type="INT" Enum="FONT"/>
+      </Args>
+    </Command>
+    <Command ID="0x601" Name="IS_BUTTON_PRESSED_WITH_SENSITIVITY" Hash="0xefe4381e">
+      <Args>
+        <Arg Type="INT" Enum="BUTTON"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0x602" Name="EMULATE_BUTTON_PRESS_WITH_SENSITIVITY" Hash="0x0e80abff">
+      <Args>
+        <Arg Type="INT" Enum="BUTTON"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0x603" Name="IS_CAMERA_IN_WIDESCREEN_MODE" Hash="0xcd6ad16b"/>
+    <Command ID="0x604" Name="GET_WEAPONTYPE_MODEL" Hash="0x52d6368e">
+      <Args>
+        <Arg Type="INT" Enum="WEAPONTYPE"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0x605" Name="GET_MODEL_FROM_WEAPONTYPE" Hash="0xeccc0134">
+      <Args>
+        <Arg Type="INT" Enum="DEFAULTMODEL"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0x606" Name="SET_MEMORY_OFFSET" Hash="0x7cab85ce">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0x607" Name="GET_CURRENT_WEATHER" Hash="0xcf0b6bc6">
+      <Args>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0x608" Name="DISPLAY_TEXT_STRING" Hash="0x3fc3322c">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0x609" Name="DISPLAY_TEXT_FORMATTED" Hash="0xacb51078">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="PARAM" Optional="true" AllowTextLabel="true" PreserveCase="true"/>
+      </Args>
+    </Command>
     <Command ID="0xa8c" Name="WRITE_MEMORY" Hash="0xc3cc351e">
       <Args>
         <Arg Type="INT"/>
@@ -247,12 +318,6 @@
       </Args>
     </Command>
     <Command ID="0xa93" Name="TERMINATE_THIS_CUSTOM_SCRIPT" Hash="0xa70e9e1c"/>
-    <Command ID="0xa94" Name="LOAD_AND_LAUNCH_CUSTOM_MISSION" Hash="0xbc6ac801">
-      <Args>
-        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
-      </Args>
-    </Command>
-    <Command ID="0xa95" Name="SAVE_THIS_CUSTOM_SCRIPT" Hash="0x9dbb8e4d"/>
     <Command ID="0xa96" Name="GET_PED_POINTER" Hash="0x0435bb80">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
@@ -383,29 +448,6 @@
         <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
       </Args>
     </Command>
-    <Command ID="0xaac" Name="LOAD_AUDIO_STREAM" Hash="0x3aa0733a">
-      <Args>
-        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
-        <Arg Type="INT" Out="true" Entity="AUDIO_STREAM"/>
-      </Args>
-    </Command>
-    <Command ID="0xaad" Name="SET_AUDIO_STREAM_STATE" Hash="0x5a2768ca">
-      <Args>
-        <Arg Type="INT" Entity="AUDIO_STREAM"/>
-        <Arg Type="INT"/>
-      </Args>
-    </Command>
-    <Command ID="0xaae" Name="REMOVE_AUDIO_STREAM" Hash="0xa3e6165b">
-      <Args>
-        <Arg Type="INT" Entity="AUDIO_STREAM"/>
-      </Args>
-    </Command>
-    <Command ID="0xaaf" Name="GET_AUDIO_STREAM_LENGTH" Hash="0x5fda28bf">
-      <Args>
-        <Arg Type="INT" Entity="AUDIO_STREAM"/>
-        <Arg Type="INT" Out="true"/>
-      </Args>
-    </Command>
     <Command ID="0xab0" Name="IS_KEY_PRESSED" Hash="0x400c1a58">
       <Args>
         <Arg Type="INT" Enum="WIN32_VK"/>
@@ -424,119 +466,9 @@
         <Arg Type="PARAM" Optional="true" AllowTextLabel="true" PreserveCase="true"/>
       </Args>
     </Command>
-    <Command ID="0xab3" Name="SET_CLEO_SHARED_VAR" Hash="0x371eb889">
-      <Args>
-        <Arg Type="INT"/>
-        <Arg Type="PARAM"/>
-      </Args>
-    </Command>
-    <Command ID="0xab4" Name="GET_CLEO_SHARED_VAR" Hash="0xade9b81a">
-      <Args>
-        <Arg Type="INT"/>
-        <Arg Type="PARAM" Out="true"/>
-      </Args>
-    </Command>
-    <Command ID="0xab5" Name="STORE_CLOSEST_ENTITIES" Hash="0x7cf6435a">
-      <Args>
-        <Arg Type="INT" Entity="CHAR"/>
-        <Arg Type="INT" Out="true" Entity="CAR"/>
-        <Arg Type="INT" Out="true" Entity="CHAR"/>
-      </Args>
-    </Command>
-    <Command ID="0xab6" Name="GET_TARGET_BLIP_COORDS" Hash="0xf032e185">
-      <Args>
-        <Arg Type="FLOAT" Out="true"/>
-        <Arg Type="FLOAT" Out="true"/>
-        <Arg Type="FLOAT" Out="true"/>
-      </Args>
-    </Command>
-    <Command ID="0xab7" Name="GET_CAR_NUMBER_OF_GEARS" Hash="0xb5a33a1b">
-      <Args>
-        <Arg Type="INT" Entity="CAR"/>
-        <Arg Type="INT" Out="true"/>
-      </Args>
-    </Command>
-    <Command ID="0xab8" Name="GET_CAR_CURRENT_GEAR" Hash="0x61c1141d">
-      <Args>
-        <Arg Type="INT" Entity="CAR"/>
-        <Arg Type="INT" Out="true"/>
-      </Args>
-    </Command>
-    <Command ID="0xab9" Name="GET_AUDIO_STREAM_STATE" Hash="0xf68eeafb">
-      <Args>
-        <Arg Type="INT" Entity="AUDIO_STREAM"/>
-        <Arg Type="INT" Out="true"/>
-      </Args>
-    </Command>
     <Command ID="0xaba" Name="TERMINATE_ALL_CUSTOM_SCRIPTS_WITH_THIS_NAME" Hash="0x26d7351d">
       <Args>
         <Arg Type="TEXT_LABEL" AllowPointer="true"/>
-      </Args>
-    </Command>
-    <Command ID="0xabb" Name="GET_AUDIO_STREAM_VOLUME" Hash="0x2cede2f0">
-      <Args>
-        <Arg Type="INT" Entity="AUDIO_STREAM"/>
-        <Arg Type="FLOAT" Out="true"/>
-      </Args>
-    </Command>
-    <Command ID="0xabc" Name="SET_AUDIO_STREAM_VOLUME" Hash="0x8f46738d">
-      <Args>
-        <Arg Type="INT" Entity="AUDIO_STREAM"/>
-        <Arg Type="FLOAT"/>
-      </Args>
-    </Command>
-    <Command ID="0xabd" Name="IS_CAR_SIREN_ON" Hash="0xe7d7fac4">
-      <Args>
-        <Arg Type="INT" Entity="CAR"/>
-      </Args>
-    </Command>
-    <Command ID="0xabe" Name="IS_CAR_ENGINE_ON" Hash="0xf98c32c2">
-      <Args>
-        <Arg Type="INT" Entity="CAR"/>
-      </Args>
-    </Command>
-    <Command ID="0xabf" Name="CLEO_SET_CAR_ENGINE_ON" Hash="0xf4231beb">
-      <Args>
-        <Arg Type="INT" Entity="CAR"/>
-        <Arg Type="INT"/>
-      </Args>
-    </Command>
-    <Command ID="0xac0" Name="SET_AUDIO_STREAM_LOOPED" Hash="0xff5c8216">
-      <Args>
-        <Arg Type="INT" Entity="AUDIO_STREAM"/>
-        <Arg Type="INT"/>
-      </Args>
-    </Command>
-    <Command ID="0xac1" Name="LOAD_3D_AUDIO_STREAM" Hash="0xc71ca466">
-      <Args>
-        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
-        <Arg Type="INT" Out="true" Entity="AUDIO_STREAM"/>
-      </Args>
-    </Command>
-    <Command ID="0xac2" Name="SET_PLAY_3D_AUDIO_STREAM_AT_COORDS" Hash="0x0581e4db">
-      <Args>
-        <Arg Type="INT" Entity="AUDIO_STREAM"/>
-        <Arg Type="FLOAT"/>
-        <Arg Type="FLOAT"/>
-        <Arg Type="FLOAT"/>
-      </Args>
-    </Command>
-    <Command ID="0xac3" Name="SET_PLAY_3D_AUDIO_STREAM_AT_OBJECT" Hash="0x173f8062">
-      <Args>
-        <Arg Type="INT" Entity="AUDIO_STREAM"/>
-        <Arg Type="INT" Entity="OBJECT"/>
-      </Args>
-    </Command>
-    <Command ID="0xac4" Name="SET_PLAY_3D_AUDIO_STREAM_AT_CHAR" Hash="0x3af35994">
-      <Args>
-        <Arg Type="INT" Entity="AUDIO_STREAM"/>
-        <Arg Type="INT" Entity="CHAR"/>
-      </Args>
-    </Command>
-    <Command ID="0xac5" Name="SET_PLAY_3D_AUDIO_STREAM_AT_CAR" Hash="0x8b10af0b">
-      <Args>
-        <Arg Type="INT" Entity="AUDIO_STREAM"/>
-        <Arg Type="INT" Entity="CAR"/>
       </Args>
     </Command>
     <Command ID="0xac6" Name="GET_LABEL_POINTER" Hash="0xd287a6ce">
@@ -612,12 +544,6 @@
         <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
         <Arg Type="INT"/>
         <Arg Type="PARAM" Optional="true" AllowTextLabel="true" PreserveCase="true"/>
-      </Args>
-    </Command>
-    <Command ID="0xad2" Name="GET_CHAR_PLAYER_IS_TARGETING" Hash="0x24fe143f">
-      <Args>
-        <Arg Type="INT" Entity="PLAYER"/>
-        <Arg Type="INT" Out="true" Entity="CHAR"/>
       </Args>
     </Command>
     <Command ID="0xad3" Name="STRING_FORMAT" Hash="0xceb5b84c">
@@ -738,34 +664,6 @@
         <Arg Type="FLOAT"/>
         <Arg Type="INT"/>
         <Arg Type="INT" Out="true" Entity="OBJECT"/>
-      </Args>
-    </Command>
-    <Command ID="0xae4" Name="DOES_DIRECTORY_EXIST" Hash="0x25d29989">
-      <Args>
-        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
-      </Args>
-    </Command>
-    <Command ID="0xae5" Name="CREATE_DIRECTORY" Hash="0xa9b8826c">
-      <Args>
-        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
-      </Args>
-    </Command>
-    <Command ID="0xae6" Name="FIND_FIRST_FILE" Hash="0x3ca32387">
-      <Args>
-        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
-        <Arg Type="INT" Out="true" Entity="FILE_FIND"/>
-        <Arg Type="STRING" Out="true" AllowPointer="true"/>
-      </Args>
-    </Command>
-    <Command ID="0xae7" Name="FIND_NEXT_FILE" Hash="0x7b5d1038">
-      <Args>
-        <Arg Type="INT" Entity="FILE_FIND"/>
-        <Arg Type="STRING" Out="true" AllowPointer="true"/>
-      </Args>
-    </Command>
-    <Command ID="0xae8" Name="FIND_CLOSE" Hash="0xe9b900c2">
-      <Args>
-        <Arg Type="INT" Entity="FILE_FIND"/>
       </Args>
     </Command>
     <Command ID="0xae9" Name="POP_FLOAT" Hash="0x96d598a2">
@@ -940,6 +838,77 @@
       <Args>
         <Arg Type="INT"/>
         <Arg Type="INT"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xb17" Name="BITWISE_AND_THING_WITH_THING" Hash="0x751c1947">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0xb18" Name="BITWISE_OR_THING_WITH_THING" Hash="0x47320866">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0xb19" Name="BITWISE_XOR_THING_WITH_THING" Hash="0x3a5f94f7">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0xb1a" Name="BITWISE_NOT" Hash="0xc315e20e">
+      <Args>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0xb1b" Name="MOD_THING_BY_THING" Hash="0xa9850071">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0xb1c" Name="BITWISE_SHR_THING_BY_THING" Hash="0x3bd4fc4d">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0xb1d" Name="BITWISE_SHL_THING_BY_THING" Hash="0xf228aedb">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0xb20" Name="READ_CLIPBOARD_DATA" Hash="0x85abfcfa">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0xb21" Name="WRITE_CLIPBOARD_DATA" Hash="0xde443558">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0xba2" Name="MEMORY_LOAD_DYNAMIC_LIBRARY" Hash="0xe19c7a20">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="INT" Out="true" Entity="MEMORY_DYNAMIC_LIBRARY"/>
+      </Args>
+    </Command>
+    <Command ID="0xba3" Name="MEMORY_FREE_DYNAMIC_LIBRARY" Hash="0x1cd708d9">
+      <Args>
+        <Arg Type="INT" Entity="MEMORY_DYNAMIC_LIBRARY"/>
+      </Args>
+    </Command>
+    <Command ID="0xba4" Name="MEMORY_GET_DYNAMIC_LIBRARY_PROCEDURE" Hash="0x6925af19">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="INT" Entity="MEMORY_DYNAMIC_LIBRARY"/>
         <Arg Type="INT" Out="true"/>
       </Args>
     </Command>

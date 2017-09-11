@@ -235,7 +235,17 @@ optional<size_t> Disassembler::explore_opcode(size_t op_offset, const Command& c
                     offset += 8;
                     continue;
                 }
-                return nullopt;
+                else if(*opt_argtype == 0x0E 
+                        && it->type == ArgType::String 
+                        && this->program.opt.cleo)
+                {
+                    // III/VC CLEO suppots variable length strings
+                    // let it pass
+                }
+                else
+                {
+                    return nullopt;
+                }
             }
 
             switch(*opt_argtype)
@@ -463,8 +473,10 @@ DecompiledData Disassembler::opcode_to_data(size_t& offset)
                 offset += 8;
                 continue;
             }
-            // code was already analyzed by explore_opcode and it went fine, so...
-            Unreachable();
+
+            // Code was already analyzed by explore_opcode and it went fine.
+            // meaning either this is unreachable, or this is a variable
+            // length string with cleo support enabled. Let it run.
         }
 
         switch(datatype)
