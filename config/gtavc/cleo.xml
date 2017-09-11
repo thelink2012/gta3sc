@@ -1,0 +1,910 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<GTA3Script>
+  <Constants>
+    <Enum Name="WIN32_VK">
+      <Constant Name="VK_LBUTTON" Value="1"/>
+      <Constant Name="VK_RBUTTON"/>
+      <Constant Name="VK_CANCEL"/>
+      <Constant Name="VK_MBUTTON"/>
+      <Constant Name="VK_XBUTTON1"/>
+      <Constant Name="VK_XBUTTON2"/>
+      <Constant Name="VK_BACK" Value="8"/>
+      <Constant Name="VK_TAB"/>
+      <Constant Name="VK_CLEAR" Value="12"/>
+      <Constant Name="VK_RETURN"/>
+      <Constant Name="VK_PAUSE" Value="19"/>
+      <Constant Name="VK_CAPITAL"/>
+      <Constant Name="VK_KANA"/>
+      <Constant Name="VK_JUNJA" Value="23"/>
+      <Constant Name="VK_FINAL"/>
+      <Constant Name="VK_KANJI"/>
+      <Constant Name="VK_ESCAPE" Value="27"/>
+      <Constant Name="VK_CONVERT"/>
+      <Constant Name="VK_NONCONVERT"/>
+      <Constant Name="VK_ACCEPT"/>
+      <Constant Name="VK_MODECHANGE"/>
+      <Constant Name="VK_SPACE"/>
+      <Constant Name="VK_PRIOR"/>
+      <Constant Name="VK_NEXT"/>
+      <Constant Name="VK_END"/>
+      <Constant Name="VK_HOME"/>
+      <Constant Name="VK_LEFT"/>
+      <Constant Name="VK_UP"/>
+      <Constant Name="VK_RIGHT"/>
+      <Constant Name="VK_DOWN"/>
+      <Constant Name="VK_SELECT"/>
+      <Constant Name="VK_PRINT"/>
+      <Constant Name="VK_EXECUTE"/>
+      <Constant Name="VK_SNAPSHOT"/>
+      <Constant Name="VK_INSERT"/>
+      <Constant Name="VK_DELETE"/>
+      <Constant Name="VK_HELP"/>
+      <Constant Name="VK_KEY_0"/>
+      <Constant Name="VK_KEY_1"/>
+      <Constant Name="VK_KEY_2"/>
+      <Constant Name="VK_KEY_3"/>
+      <Constant Name="VK_KEY_4"/>
+      <Constant Name="VK_KEY_5"/>
+      <Constant Name="VK_KEY_6"/>
+      <Constant Name="VK_KEY_7"/>
+      <Constant Name="VK_KEY_8"/>
+      <Constant Name="VK_KEY_9"/>
+      <Constant Name="VK_KEY_A" Value="65"/>
+      <Constant Name="VK_KEY_B"/>
+      <Constant Name="VK_KEY_C"/>
+      <Constant Name="VK_KEY_D"/>
+      <Constant Name="VK_KEY_E"/>
+      <Constant Name="VK_KEY_F"/>
+      <Constant Name="VK_KEY_G"/>
+      <Constant Name="VK_KEY_H"/>
+      <Constant Name="VK_KEY_I"/>
+      <Constant Name="VK_KEY_J"/>
+      <Constant Name="VK_KEY_K"/>
+      <Constant Name="VK_KEY_L"/>
+      <Constant Name="VK_KEY_M"/>
+      <Constant Name="VK_KEY_N"/>
+      <Constant Name="VK_KEY_O"/>
+      <Constant Name="VK_KEY_P"/>
+      <Constant Name="VK_KEY_Q"/>
+      <Constant Name="VK_KEY_R"/>
+      <Constant Name="VK_KEY_S"/>
+      <Constant Name="VK_KEY_T"/>
+      <Constant Name="VK_KEY_U"/>
+      <Constant Name="VK_KEY_V"/>
+      <Constant Name="VK_KEY_W"/>
+      <Constant Name="VK_KEY_X"/>
+      <Constant Name="VK_KEY_Y"/>
+      <Constant Name="VK_KEY_Z"/>
+      <Constant Name="VK_LWIN"/>
+      <Constant Name="VK_RWIN"/>
+      <Constant Name="VK_APPS"/>
+      <Constant Name="VK_SLEEP" Value="95"/>
+      <Constant Name="VK_NUMPAD0"/>
+      <Constant Name="VK_NUMPAD1"/>
+      <Constant Name="VK_NUMPAD2"/>
+      <Constant Name="VK_NUMPAD3"/>
+      <Constant Name="VK_NUMPAD4"/>
+      <Constant Name="VK_NUMPAD5"/>
+      <Constant Name="VK_NUMPAD6"/>
+      <Constant Name="VK_NUMPAD7"/>
+      <Constant Name="VK_NUMPAD8"/>
+      <Constant Name="VK_NUMPAD9"/>
+      <Constant Name="VK_MULTIPLY"/>
+      <Constant Name="VK_ADD"/>
+      <Constant Name="VK_SEPARATOR"/>
+      <Constant Name="VK_SUBTRACT"/>
+      <Constant Name="VK_DECIMAL"/>
+      <Constant Name="VK_DIVIDE"/>
+      <Constant Name="VK_F1"/>
+      <Constant Name="VK_F2"/>
+      <Constant Name="VK_F3"/>
+      <Constant Name="VK_F4"/>
+      <Constant Name="VK_F5"/>
+      <Constant Name="VK_F6"/>
+      <Constant Name="VK_F7"/>
+      <Constant Name="VK_F8"/>
+      <Constant Name="VK_F9"/>
+      <Constant Name="VK_F10"/>
+      <Constant Name="VK_F11"/>
+      <Constant Name="VK_F12"/>
+      <Constant Name="VK_F13"/>
+      <Constant Name="VK_F14"/>
+      <Constant Name="VK_F15"/>
+      <Constant Name="VK_F16"/>
+      <Constant Name="VK_F17"/>
+      <Constant Name="VK_F18"/>
+      <Constant Name="VK_F19"/>
+      <Constant Name="VK_F20"/>
+      <Constant Name="VK_F21"/>
+      <Constant Name="VK_F22"/>
+      <Constant Name="VK_F23"/>
+      <Constant Name="VK_F24"/>
+      <Constant Name="VK_NUMLOCK" Value="144"/>
+      <Constant Name="VK_SCROLL"/>
+      <Constant Name="VK_OEM_FJ_JISHO"/>
+      <Constant Name="VK_OEM_FJ_MASSHOU"/>
+      <Constant Name="VK_OEM_FJ_TOUROKU"/>
+      <Constant Name="VK_OEM_FJ_LOYA"/>
+      <Constant Name="VK_OEM_FJ_ROYA"/>
+      <Constant Name="VK_LSHIFT" Value="160"/>
+      <Constant Name="VK_RSHIFT"/>
+      <Constant Name="VK_LCONTROL"/>
+      <Constant Name="VK_RCONTROL"/>
+      <Constant Name="VK_LMENU"/>
+      <Constant Name="VK_RMENU"/>
+      <Constant Name="VK_BROWSER_BACK"/>
+      <Constant Name="VK_BROWSER_FORWARD"/>
+      <Constant Name="VK_BROWSER_REFRESH"/>
+      <Constant Name="VK_BROWSER_STOP"/>
+      <Constant Name="VK_BROWSER_SEARCH"/>
+      <Constant Name="VK_BROWSER_FAVORITES"/>
+      <Constant Name="VK_BROWSER_HOME"/>
+      <Constant Name="VK_VOLUME_MUTE"/>
+      <Constant Name="VK_VOLUME_DOWN"/>
+      <Constant Name="VK_VOLUME_UP"/>
+      <Constant Name="VK_MEDIA_NEXT_TRACK"/>
+      <Constant Name="VK_MEDIA_PREV_TRACK"/>
+      <Constant Name="VK_MEDIA_STOP"/>
+      <Constant Name="VK_MEDIA_PLAY_PAUSE"/>
+      <Constant Name="VK_LAUNCH_MAIL"/>
+      <Constant Name="VK_LAUNCH_MEDIA_SELECT"/>
+      <Constant Name="VK_LAUNCH_APP1"/>
+      <Constant Name="VK_LAUNCH_APP2"/>
+      <Constant Name="VK_OEM_1" Value="186"/>
+      <Constant Name="VK_OEM_PLUS"/>
+      <Constant Name="VK_OEM_COMMA"/>
+      <Constant Name="VK_OEM_MINUS"/>
+      <Constant Name="VK_OEM_PERIOD"/>
+      <Constant Name="VK_OEM_2"/>
+      <Constant Name="VK_OEM_3"/>
+      <Constant Name="VK_ABNT_C1"/>
+      <Constant Name="VK_ABNT_C2"/>
+      <Constant Name="VK_OEM_4" Value="219"/>
+      <Constant Name="VK_OEM_5"/>
+      <Constant Name="VK_OEM_6"/>
+      <Constant Name="VK_OEM_7"/>
+      <Constant Name="VK_OEM_8"/>
+      <Constant Name="VK_OEM_AX" Value="225"/>
+      <Constant Name="VK_OEM_102"/>
+      <Constant Name="VK_ICO_HELP"/>
+      <Constant Name="VK_ICO_00"/>
+      <Constant Name="VK_PROCESSKEY"/>
+      <Constant Name="VK_ICO_CLEAR"/>
+      <Constant Name="VK_PACKET"/>
+      <Constant Name="VK_OEM_RESET" Value="233"/>
+      <Constant Name="VK_OEM_JUMP"/>
+      <Constant Name="VK_OEM_PA1"/>
+      <Constant Name="VK_OEM_PA2"/>
+      <Constant Name="VK_OEM_PA3"/>
+      <Constant Name="VK_OEM_WSCTRL"/>
+      <Constant Name="VK_OEM_CUSEL"/>
+      <Constant Name="VK_OEM_ATTN"/>
+      <Constant Name="VK_OEM_FINISH"/>
+      <Constant Name="VK_OEM_COPY"/>
+      <Constant Name="VK_OEM_AUTO"/>
+      <Constant Name="VK_OEM_ENLW"/>
+      <Constant Name="VK_OEM_BACKTAB"/>
+      <Constant Name="VK_ATTN"/>
+      <Constant Name="VK_CRSEL"/>
+      <Constant Name="VK_EXSEL"/>
+      <Constant Name="VK_EREOF"/>
+      <Constant Name="VK_PLAY"/>
+      <Constant Name="VK_ZOOM"/>
+      <Constant Name="VK_NONAME"/>
+      <Constant Name="VK_PA1"/>
+      <Constant Name="VK_OEM_CLEAR"/>
+    </Enum>
+  </Constants>
+  <Commands>
+    <Command ID="0x16f" Name="DRAW_SHADOW" Hash="0xd1b03326">
+      <Args>
+        <Arg Type="INT" Enum="SHADOW"/>
+        <Arg Type="FLOAT" Desc="X Coord"/>
+        <Arg Type="FLOAT" Desc="Y Coord"/>
+        <Arg Type="FLOAT" Desc="Z Coord"/>
+        <Arg Type="FLOAT" Desc="Angle"/>
+        <Arg Type="FLOAT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT" Desc="Red"/>
+        <Arg Type="INT" Desc="Green"/>
+        <Arg Type="INT" Desc="Blue"/>
+      </Args>
+    </Command>
+    <Command ID="0x349" Name="SET_TEXT_FONT" Hash="0x3ede2f10">
+      <Args>
+        <Arg Type="INT" Enum="FONT"/>
+      </Args>
+    </Command>
+    <Command ID="0x601" Name="IS_KEY_PRESSED_WITH_SENSITIVITY" Hash="0x662d65d3">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0x602" Name="EMULATE_KEY_PRESS_WITH_SENSITIVITY" Hash="0x25eda09c">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0x603" Name="IS_CAMERA_IN_WIDESCREEN_MODE" Hash="0xcd6ad16b"/>
+    <Command ID="0x604" Name="GET_MODEL_ID_OF_A_WEAPON" Hash="0x60774d21">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0x605" Name="GET_WEAPON_ID_OF_A_MODEL" Hash="0x887e993a">
+      <Args>
+        <Arg Type="INT" Enum="DEFAULTMODEL"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0x606" Name="SET_MEMORY_OFFSET" Hash="0x7cab85ce">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0x607" Name="GET_CURRENT_WEATHER" Hash="0xcf0b6bc6">
+      <Args>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0x608" Name="DISPLAY_TEXT_WITH_STRING" Hash="0x51e4cae3">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0x609" Name="DISPLAY_TEXT_WITH_STRING_FORMATTED" Hash="0xdf24eba1">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="PARAM" Optional="true" AllowTextLabel="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xa8c" Name="WRITE_MEMORY" Hash="0xc3cc351e">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="PARAM"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0xa8d" Name="READ_MEMORY" Hash="0x7fc4ddcc">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="PARAM" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xa8e" Name="INT_ADD" Hash="0x4c2b352a">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xa8f" Name="INT_SUB" Hash="0xb0edd311">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xa90" Name="INT_MUL" Hash="0x2a0d06e2">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xa91" Name="INT_DIV" Hash="0x42b80fc8">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xa92" Name="STREAM_CUSTOM_SCRIPT" Hash="0x0a39152e">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="PARAM" Optional="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xa93" Name="TERMINATE_THIS_CUSTOM_SCRIPT" Hash="0xa70e9e1c"/>
+    <Command ID="0xa96" Name="GET_PED_POINTER" Hash="0x0435bb80">
+      <Args>
+        <Arg Type="INT" Entity="CHAR"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xa97" Name="GET_VEHICLE_POINTER" Hash="0xe0b6474e">
+      <Args>
+        <Arg Type="INT" Entity="CAR"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xa98" Name="GET_OBJECT_POINTER" Hash="0xa9de7705">
+      <Args>
+        <Arg Type="INT" Entity="OBJECT"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xa99" Name="SET_CURRENT_DIRECTORY" Hash="0xc6e9c287">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xa9a" Name="OPEN_FILE" Hash="0xd4269fc0">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT" Out="true" Entity="FILE"/>
+      </Args>
+    </Command>
+    <Command ID="0xa9b" Name="CLOSE_FILE" Hash="0x71064381">
+      <Args>
+        <Arg Type="INT" Entity="FILE"/>
+      </Args>
+    </Command>
+    <Command ID="0xa9c" Name="GET_FILE_SIZE" Hash="0x03c7db92">
+      <Args>
+        <Arg Type="INT" Entity="FILE"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xa9d" Name="READ_FROM_FILE" Hash="0xebeb6b72">
+      <Args>
+        <Arg Type="INT" Entity="FILE"/>
+        <Arg Type="INT"/>
+        <Arg Type="PARAM" Out="true" AllowTextLabel="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xa9e" Name="WRITE_TO_FILE" Hash="0xb98a1f91">
+      <Args>
+        <Arg Type="INT" Entity="FILE"/>
+        <Arg Type="INT"/>
+        <Arg Type="PARAM" AllowTextLabel="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xa9f" Name="GET_THIS_SCRIPT_STRUCT" Hash="0x18f8e9ba">
+      <Args>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xaa0" Name="GOSUB_IF_FALSE" Hash="0xe0ce4bc9">
+      <Args>
+        <Arg Type="LABEL"/>
+      </Args>
+    </Command>
+    <Command ID="0xaa1" Name="RETURN_IF_FALSE" Hash="0xadfd5905"/>
+    <Command ID="0xaa2" Name="LOAD_DYNAMIC_LIBRARY" Hash="0x0c7895c3">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="INT" Out="true" Entity="DYNAMIC_LIBRARY"/>
+      </Args>
+    </Command>
+    <Command ID="0xaa3" Name="FREE_DYNAMIC_LIBRARY" Hash="0x0bce02c1">
+      <Args>
+        <Arg Type="INT" Entity="DYNAMIC_LIBRARY"/>
+      </Args>
+    </Command>
+    <Command ID="0xaa4" Name="GET_DYNAMIC_LIBRARY_PROCEDURE" Hash="0x8441dd71">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="INT" Entity="DYNAMIC_LIBRARY"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xaa5" Name="CALL_FUNCTION" Hash="0xd3b6abef">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="PARAM" Optional="true" AllowTextLabel="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xaa6" Name="CALL_METHOD" Hash="0x238fec28">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="PARAM" Optional="true" AllowTextLabel="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xaa7" Name="CALL_FUNCTION_RETURN" Hash="0xb8f2e637">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="PARAM" Ref="true" Optional="true" AllowTextLabel="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xaa8" Name="CALL_METHOD_RETURN" Hash="0x5a151db7">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="PARAM" Ref="true" Optional="true" AllowTextLabel="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xaa9" Name="IS_GAME_VERSION_ORIGINAL" Hash="0x5781af0a"/>
+    <Command ID="0xaaa" Name="GET_SCRIPT_STRUCT_NAMED" Hash="0x99901253">
+      <Args>
+        <Arg Type="TEXT_LABEL" AllowPointer="true"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xaab" Name="DOES_FILE_EXIST" Hash="0x90c73067">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xab0" Name="IS_KEY_PRESSED" Hash="0x400c1a58">
+      <Args>
+        <Arg Type="INT" Enum="WIN32_VK"/>
+      </Args>
+    </Command>
+    <Command ID="0xab1" Name="CLEO_CALL" Hash="0x4cb430f8">
+      <Args>
+        <Arg Type="LABEL"/>
+        <Arg Type="INT"/>
+        <Arg Type="PARAM" Ref="true" Optional="true" AllowTextLabel="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xab2" Name="CLEO_RETURN" Hash="0xa1352fbf">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="PARAM" Optional="true" AllowTextLabel="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xaba" Name="TERMINATE_ALL_CUSTOM_SCRIPTS_WITH_THIS_NAME" Hash="0x26d7351d">
+      <Args>
+        <Arg Type="TEXT_LABEL" AllowPointer="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xac7" Name="GET_VAR_POINTER" Hash="0xdfc15673">
+      <Args>
+        <Arg Type="PARAM" AllowTextLabel="true"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xac8" Name="ALLOCATE_MEMORY" Hash="0x3dfeff9e">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xac9" Name="FREE_MEMORY" Hash="0x8533ff35">
+      <Args>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0xaca" Name="PRINT_HELP_STRING" Hash="0x1f74954c">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xacb" Name="PRINT_BIG_STRING" Hash="0xaf463d4a">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0xacc" Name="PRINT_STRING" Hash="0xedbc43b9">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0xacd" Name="PRINT_STRING_NOW" Hash="0x4091a169">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0xace" Name="PRINT_HELP_FORMATTED" Hash="0x142eaa04">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="PARAM" Optional="true" AllowTextLabel="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xacf" Name="PRINT_BIG_FORMATTED" Hash="0x873b5318">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="PARAM" Optional="true" AllowTextLabel="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xad0" Name="PRINT_FORMATTED" Hash="0xb4e86f66">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="INT"/>
+        <Arg Type="PARAM" Optional="true" AllowTextLabel="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xad1" Name="PRINT_FORMATTED_NOW" Hash="0x85cb5ec5">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="INT"/>
+        <Arg Type="PARAM" Optional="true" AllowTextLabel="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xad3" Name="STRING_FORMAT" Hash="0xceb5b84c">
+      <Args>
+        <Arg Type="STRING" Ref="true" AllowConst="false" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="PARAM" Optional="true" AllowTextLabel="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xad4" Name="SCAN_STRING" Hash="0x48d3526f">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="INT" Out="true"/>
+        <Arg Type="PARAM" Out="true" Optional="true" AllowTextLabel="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xad5" Name="FILE_SEEK" Hash="0x6ac81649">
+      <Args>
+        <Arg Type="INT" Entity="FILE"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0xad6" Name="IS_END_OF_FILE_REACHED" Hash="0x3d0f9311">
+      <Args>
+        <Arg Type="INT" Entity="FILE"/>
+      </Args>
+    </Command>
+    <Command ID="0xad7" Name="READ_STRING_FROM_FILE" Hash="0x8e6649ba">
+      <Args>
+        <Arg Type="INT" Entity="FILE"/>
+        <Arg Type="STRING" Ref="true" AllowConst="false" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0xad8" Name="WRITE_STRING_TO_FILE" Hash="0x0e6353a6">
+      <Args>
+        <Arg Type="INT" Entity="FILE"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xad9" Name="WRITE_FORMATTED_STRING_TO_FILE" Hash="0x369350ac">
+      <Args>
+        <Arg Type="INT" Entity="FILE"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="PARAM" Optional="true" AllowTextLabel="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xada" Name="SCAN_FILE" Hash="0x2feb5ff0">
+      <Args>
+        <Arg Type="INT" Entity="FILE"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="INT" Out="true"/>
+        <Arg Type="PARAM" Out="true" Optional="true" AllowTextLabel="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xadb" Name="GET_NAME_OF_VEHICLE_MODEL" Hash="0x13e5d1a0">
+      <Args>
+        <Arg Type="INT" Enum="DEFAULTMODEL"/>
+        <Arg Type="TEXT_LABEL" Out="true" AllowPointer="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xadc" Name="TEST_CHEAT" Hash="0x04990785">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xadd" Name="SPAWN_VEHICLE_BY_CHEATING" Hash="0x67f919dd">
+      <Args>
+        <Arg Type="INT" Enum="DEFAULTMODEL"/>
+      </Args>
+    </Command>
+    <Command ID="0xade" Name="GET_TEXT_LABEL_STRING" Hash="0x9b52718b">
+      <Args>
+        <Arg Type="TEXT_LABEL" AllowPointer="true"/>
+        <Arg Type="STRING" Out="true" AllowPointer="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xadf" Name="ADD_TEXT_LABEL" Hash="0xffc7b8cd">
+      <Args>
+        <Arg Type="TEXT_LABEL" AllowPointer="true"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xae0" Name="REMOVE_TEXT_LABEL" Hash="0x9daa63ff">
+      <Args>
+        <Arg Type="TEXT_LABEL" AllowPointer="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xae1" Name="GET_RANDOM_CHAR_IN_SPHERE_NO_SAVE_RECURSIVE" Hash="0x2e6c5c91">
+      <Args>
+        <Arg Type="FLOAT"/>
+        <Arg Type="FLOAT"/>
+        <Arg Type="FLOAT"/>
+        <Arg Type="FLOAT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT" Out="true" Entity="CHAR"/>
+      </Args>
+    </Command>
+    <Command ID="0xae2" Name="GET_RANDOM_CAR_IN_SPHERE_NO_SAVE_RECURSIVE" Hash="0x16416536">
+      <Args>
+        <Arg Type="FLOAT"/>
+        <Arg Type="FLOAT"/>
+        <Arg Type="FLOAT"/>
+        <Arg Type="FLOAT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT" Out="true" Entity="CAR"/>
+      </Args>
+    </Command>
+    <Command ID="0xae3" Name="GET_RANDOM_OBJECT_IN_SPHERE_NO_SAVE_RECURSIVE" Hash="0x04dc82f4">
+      <Args>
+        <Arg Type="FLOAT"/>
+        <Arg Type="FLOAT"/>
+        <Arg Type="FLOAT"/>
+        <Arg Type="FLOAT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT" Out="true" Entity="OBJECT"/>
+      </Args>
+    </Command>
+    <Command ID="0xae9" Name="POP_FLOAT" Hash="0x96d598a2">
+      <Args>
+        <Arg Type="FLOAT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xaea" Name="GET_PED_REF" Hash="0xfd2a608e">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT" Out="true" Entity="CHAR"/>
+      </Args>
+    </Command>
+    <Command ID="0xaeb" Name="GET_VEHICLE_REF" Hash="0xf4db7227">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT" Out="true" Entity="CAR"/>
+      </Args>
+    </Command>
+    <Command ID="0xaec" Name="GET_OBJECT_REF" Hash="0x2d71931a">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT" Out="true" Entity="OBJECT"/>
+      </Args>
+    </Command>
+    <Command ID="0xaed" Name="STRING_FLOAT_FORMAT" Hash="0x5f3acf3f">
+      <Args>
+        <Arg Type="FLOAT"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="STRING" Out="true" AllowPointer="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xaee" Name="POW" Hash="0xe7a3f707">
+      <Args>
+        <Arg Type="FLOAT"/>
+        <Arg Type="FLOAT"/>
+        <Arg Type="FLOAT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xaef" Name="LOG" Hash="0x1fb5b3ec">
+      <Args>
+        <Arg Type="FLOAT"/>
+        <Arg Type="FLOAT"/>
+        <Arg Type="FLOAT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xaf0" Name="READ_INT_FROM_INI_FILE" Hash="0x7bbf9213">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xaf1" Name="WRITE_INT_TO_INI_FILE" Hash="0xe0c7424d">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xaf2" Name="READ_FLOAT_FROM_INI_FILE" Hash="0x09be5524">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="FLOAT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xaf3" Name="WRITE_FLOAT_TO_INI_FILE" Hash="0xa1d0b758">
+      <Args>
+        <Arg Type="FLOAT"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xaf4" Name="READ_STRING_FROM_INI_FILE" Hash="0xa85fb541">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="STRING" Out="true" AllowPointer="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xaf5" Name="WRITE_STRING_TO_INI_FILE" Hash="0x1fe9b38f">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xb00" Name="DELETE_FILE" Hash="0xdd49d9c1">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xb01" Name="DELETE_DIRECTORY" Hash="0xd48a399c">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0xb02" Name="MOVE_FILE" Hash="0xcb9d1de4">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xb03" Name="MOVE_DIRECTORY" Hash="0xa3360aff">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xb04" Name="COPY_FILE" Hash="0xf29cb2cc">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xb05" Name="COPY_DIRECTORY" Hash="0x79b66ee9">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xb10" Name="BITWISE_AND" Hash="0x5e21b170">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xb11" Name="BITWISE_OR" Hash="0x7e03c9ad">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xb12" Name="BITWISE_XOR" Hash="0xe112b461">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xb13" Name="BITWISE_NOT" Hash="0xc315e20e">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xb14" Name="MOD" Hash="0xb40a4474">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xb15" Name="BITWISE_SHR" Hash="0x12041cc6">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xb16" Name="BITWISE_SHL" Hash="0xc3007ec0">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+    <Command ID="0xb17" Name="BITWISE_AND_INT_VAR_BY_VAL" Hash="0xe0395187">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0xb18" Name="BITWISE_OR_INT_VAR_BY_VAL" Hash="0xd849625c">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0xb19" Name="BITWISE_XOR_INT_VAR_BY_VAL" Hash="0x6a48a60c">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0xb1a" Name="BITWISE_NOT_INT_VAR" Hash="0x013bee6b">
+      <Args>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0xb1b" Name="BITWISE_MOD_INT_VAR_BY_VAL" Hash="0x6da36195">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0xb1c" Name="BITWISE_SHR_INT_VAR_BY_VAL" Hash="0x030da354">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0xb1d" Name="BITWISE_SHL_INT_VAR_BY_VAL" Hash="0xd34516a0">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0xb20" Name="READ_CLIPBOARD_DATA" Hash="0x85abfcfa">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0xb21" Name="WRITE_CLIPBOARD_DATA" Hash="0xde443558">
+      <Args>
+        <Arg Type="INT"/>
+        <Arg Type="INT"/>
+      </Args>
+    </Command>
+    <Command ID="0xba2" Name="MEMORY_LOAD_DYNAMIC_LIBRARY" Hash="0xe19c7a20">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="INT" Out="true" Entity="DYNAMIC_LIBRARY"/>
+      </Args>
+    </Command>
+    <Command ID="0xba3" Name="MEMORY_FREE_DYNAMIC_LIBRARY" Hash="0x1cd708d9">
+      <Args>
+        <Arg Type="INT" Entity="DYNAMIC_LIBRARY"/>
+      </Args>
+    </Command>
+    <Command ID="0xba4" Name="MEMORY_GET_DYNAMIC_LIBRARY_PROCEDURE" Hash="0x6925af19">
+      <Args>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
+        <Arg Type="INT" Entity="DYNAMIC_LIBRARY"/>
+        <Arg Type="INT" Out="true"/>
+      </Args>
+    </Command>
+  </Commands>
+</GTA3Script>
