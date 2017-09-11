@@ -166,7 +166,7 @@ static ParserState giveup_to_expected(ParserState state, const char* what)
             if(e.state == ParserStatus::GiveUp)
                 add_error(new_state, ParserError(ParserStatus::Error, e.context, fmt::format("expected {}", what)));
             else
-                add_error(new_state, std::move(e)); 
+                add_error(new_state, std::move(e));
         }
         return new_state;
     }
@@ -402,7 +402,7 @@ static ParserResult parse_expression_statement(ParserContext& parser, token_iter
 
             auto it = begin;
             std::tie(it, lhs) = match_lhs(parser, it, end);
-            
+
             if(!parser_isgiveup(lhs))
             {
                 if(it != end && (opa = match_op(it->type)))
@@ -720,7 +720,7 @@ static ParserResult parse_command_statement(ParserContext& parser, token_iterato
             return std::make_pair(it, std::move(state));
         }
     }
-    else 
+    else
     {
         return parse_positive_command_statement(parser, begin, end);
     }
@@ -840,7 +840,7 @@ static ParserResult parse_label_statement(ParserContext& parser, token_iterator 
 
 /*
     variableDeclaration
-        :	
+        :
             type=(VAR_INT|LVAR_INT|VAR_FLOAT|LVAR_FLOAT|VAR_TEXT_LABEL|LVAR_TEXT_LABEL|VAR_TEXT_LABEL16|LVAR_TEXT_LABEL16)
             identifier+
             newLine
@@ -900,17 +900,17 @@ static ParserResult parse_variable_declaration(ParserContext& parser, token_iter
     conditionList
         :	(conditionListSingle|conditionListAnd|conditionListOr)
         ;
-    
+
     conditionListSingle
         :	commandStatement
         ->  ^(commandStatement)
         ;
-    
+
     conditionListAnd
         :	commandStatement (AND commandStatement)+
         ->	^(AND commandStatement+)
         ;
-    
+
     conditionListOr
         :	commandStatement (OR commandStatement)+
         ->	^(OR commandStatement+)
@@ -1249,7 +1249,7 @@ static ParserResult parse_if_statement(ParserContext& parser, token_iterator beg
                 else_tree->add_child(get<ParserSuccess>(*body_false).tree);
                 tree->add_child(std::move(else_tree));
             }
-            
+
             return std::make_pair(it, ParserSuccess(std::move(tree)));
         }
         else
@@ -1263,7 +1263,7 @@ static ParserResult parse_if_statement(ParserContext& parser, token_iterator beg
 /*
     dumpStatement
         :	DUMP newLine
-                (HEXADECIMAL|newLine)*
+                (HEXADECIMAL|STRING|newLine)*
             ENDDUMP newLine
         ->	^(DUMP)
         ;
@@ -1286,9 +1286,16 @@ static ParserResult parse_dump_statement(ParserContext& parser, token_iterator b
             {
                 bytes.emplace_back(std::stoi(parser.get_text(*it).to_string(), nullptr, 16));
             }
+            else if(it->type == Token::String)
+            {
+                auto text = parser.get_text(*it);
+
+                std::copy(std::next(text.begin()), std::prev(text.end()),
+                          std::back_inserter(bytes));
+            }
             else if(it->type != Token::NewLine)
             {
-                add_error(state, ParserError(ParserStatus::Error, it, "expected hexadecimal value"));
+                add_error(state, ParserError(ParserStatus::Error, it, "expected hexadecimal value, or string literal"));
             }
         }
 
@@ -1368,7 +1375,7 @@ shared_ptr<SyntaxTree> SyntaxTree::clone() const
     tree->token = this->token;
     tree->instream = this->instream;
     tree->udata = this->udata;
-    
+
     for(auto& child : this->childs)
         tree->add_child(child->clone());
 

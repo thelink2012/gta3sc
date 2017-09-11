@@ -319,7 +319,7 @@ extern bool decompile(const void* bytecode, size_t bytecode_size,
 ////////////////////////////////////////////////////////////
 
 template<typename... Args>
-inline std::string format_error(const Options& options, 
+inline std::string format_error(const Options& options,
                                 const char* type,
                                 optional<const TokenStream::TextStream&> stream,
                                 const char* filename, uint32_t lineno, uint32_t colno, uint32_t length,

@@ -26,7 +26,7 @@ void CompilerContext::compile()
     program.supported_or_fatal(nocontext, commands.andor, "ANDOR");
     program.supported_or_fatal(nocontext, commands.goto_, "GOTO");
     program.supported_or_fatal(nocontext, commands.goto_if_false, "GOTO_IF_FALSE");
-    
+
     compile_label(script->top_label);
     compile_label(script->start_label);
     return compile_statements(*script->tree);
@@ -351,7 +351,7 @@ void CompilerContext::compile_switch(const SyntaxTree& switch_node)
     {
         compile_switch_ifchain(switch_node, cases, break_ptr);
     }
-       
+
     loop_stack.pop_back();
 }
 
@@ -365,7 +365,7 @@ void CompilerContext::compile_switch_withop(const SyntaxTree& swnode, std::vecto
     const Command& switch_start     = this->commands.switch_start.value();
     const Command& switch_continued = this->commands.switch_continued.value();
 
-    std::transform(cases.begin(), cases.end(), sorted_cases.begin(), std::addressof<Case>);
+    std::transform(cases.begin(), cases.end(), sorted_cases.begin(), [] (auto& c) { return std::addressof<Case>(c); });
 
     std::sort(sorted_cases.begin(), sorted_cases.end(), [](const Case* a, const Case* b) {
         if(a->is_default()) return false; // default should be the last
@@ -480,7 +480,7 @@ void CompilerContext::compile_switch_ifchain(const SyntaxTree& swnode, std::vect
         {
             compile_command(*commands.goto_, { default_case->target });
         }
-        else 
+        else
         {
             default_case->target = make_internal_label();
             compile_label(default_case->target);

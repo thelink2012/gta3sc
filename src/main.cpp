@@ -432,7 +432,7 @@ int main(int argc, char** argv)
     fs::path input, output;
     ConfigInfo conf;
     DataInfo data;
-    
+
     optional<ProgramContext> program; // delay construction of ProgramContext
     std::map<std::string, uint32_t, iless> default_models;
     std::map<std::string, uint32_t, iless> level_models;
@@ -473,7 +473,7 @@ int main(int argc, char** argv)
         fprintf(stdout, "%s", GTA3SC_HELP_MESSAGE);
         return EXIT_SUCCESS;
     }
-    
+
     if(options.version)
     {
         auto version = GTA3SC_GIT_DESCRIBE_TAG[0] != '\0'? std::string(GTA3SC_GIT_DESCRIBE_TAG) :

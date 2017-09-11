@@ -209,7 +209,7 @@ static auto lex_gettok(const char* it, const char* end) -> optional<std::pair<co
     return nullopt;
 }
 
-/// Reads the next token (number/identifier/string) from `begin` into the `lexer` state. 
+/// Reads the next token (number/identifier/string) from `begin` into the `lexer` state.
 static auto lex_token(LexerContext& lexer, const char* begin, const char* end, size_t begin_pos) -> const char*
 {
     while(begin != end && lex_iswhite(*begin))
@@ -231,7 +231,7 @@ static auto lex_token(LexerContext& lexer, const char* begin, const char* end, s
         {
             if(token.first[i] < '0' || token.first[i] > '9')
             {
-                if(is_hexa && ((token.first[i] >= 'A' && token.first[i] <= 'F') 
+                if(is_hexa && ((token.first[i] >= 'A' && token.first[i] <= 'F')
                     || (token.first[i] >= 'a' && token.first[i] <= 'f')))
                 {
                     continue;
@@ -342,7 +342,7 @@ static void lex_command(LexerContext& lexer, const char* begin, const char* end,
     }
 }
 
-/// Lexes a expression context. 
+/// Lexes a expression context.
 static void lex_expr(LexerContext& lexer, const char* begin, const char* end, size_t begin_pos)
 {
     for(auto it = begin; ;)
@@ -392,7 +392,13 @@ static void lex_dump(LexerContext& lexer, const char* begin, const char* end, si
     {
         size_t tok_begin = begin_pos + std::distance(begin, next_token->first);
 
-        if((next_token->second % 2) != 0)
+        // Parses a string
+        if(next_token->first[0] == '"')
+        {
+            it = lex_token(lexer, next_token->first, end, begin_pos);
+            continue;
+        }
+        else if((next_token->second % 2) != 0)
         {
             lexer.error({tok_begin, tok_begin + next_token->second}, "hexadecimal tokens must have pairs of two digits");
         }
@@ -415,7 +421,7 @@ static void lex_dump(LexerContext& lexer, const char* begin, const char* end, si
                 }
             }
         }
-        
+
         it = std::find_if_not(next_token->first + next_token->second, end, lex_iswhite);
     }
 }
@@ -467,7 +473,7 @@ static void lex_comments(LexerContext& lexer, char* begin, char* end, size_t beg
     }
 }
 
-/// Processes the mini-preprocessor. 
+/// Processes the mini-preprocessor.
 ///
 /// Returns true in case we can keep reading this line, false otherwise.
 static bool lex_cpp(LexerContext& lexer, char* begin, char* end, size_t begin_pos)
