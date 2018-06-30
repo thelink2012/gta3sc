@@ -1,5 +1,0 @@
-MISSION_START
-{
-LVAR_INT x y z i j k // 34@ 35@ 36@ 37@ 38@ 39@
-}
-MISSION_END

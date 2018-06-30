@@ -1,5 +1,0 @@
-RUN: mkdir "%/T/gtavc" || echo _
-RUN: curl -L https://www.dropbox.com/s/fiyhjlmgoiocpex/gtavc_main.tar.gz?dl=1 -o "%/T/gtavc/gtavc_main.tar.gz"
-RUN: tar -xzf "%/T/gtavc/gtavc_main.tar.gz" -C "%/T/gtavc" --force-local
-RUN: %gta3sc "%/T/gtavc/main.sc" --config=gtavc -pedantic-errors -Werror -Wno-expect-var -frelax-not
-RUN: %checksum "%/T/gtavc/main.scm" 2a7c30f7bdd04a93213c2eaa8103bd72

@@ -1,9 +1,0 @@
-///
-/// This file is generated at $build/git-sha1.cpp with proper values replaced everytime a git commit happens.
-/// See CMakeLists.txt for details.
-///
-#include <stdinc.h>
-
-const char* GTA3SC_GIT_SHA1 = "@GIT_SHA1@";
-const char* GTA3SC_GIT_BRANCH = "@GIT_BRANCH@";
-const char* GTA3SC_GIT_DESCRIBE_TAG = "@GIT_DESCRIBE_TAG@";

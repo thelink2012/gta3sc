@@ -1,5 +1,0 @@
-RUN: mkdir "%/T/gta3" || echo _
-RUN: curl -L https://www.dropbox.com/s/765m1jwbgf6hsvu/gta3_main.tar.gz?dl=1 -o "%/T/gta3/gta3_main.tar.gz"
-RUN: tar -xzf "%/T/gta3/gta3_main.tar.gz" -C "%/T/gta3" --force-local
-RUN: %gta3sc "%/T/gta3/main.sc" --config=gta3 -pedantic-errors -Werror
-RUN: %checksum "%/T/gta3/main.scm" 694cdeb27de4aee3d20f223604ea5375

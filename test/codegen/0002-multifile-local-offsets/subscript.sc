@@ -1,5 +1,0 @@
-MISSION_START
-SCRIPT_NAME subsc
-subscript_label:
-GOTO subscript_label
-MISSION_END

@@ -1,5 +1,0 @@
-MISSION_START
-SCRIPT_NAME miss1
-miss1_label:
-GOTO miss1_label
-MISSION_END
