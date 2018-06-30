@@ -84,6 +84,7 @@ public:
         this->start_of_line = true;
         this->end_of_stream = false;
         this->expression_mode = false;
+        this->num_block_comments = 0;
         this->num_cached_tokens = 0;
     }
 
@@ -110,7 +111,7 @@ private:
     auto tell() const -> State
     {
         assert(num_cached_tokens == 0);
-        return State { cursor, start_of_line, end_of_stream, expression_mode };
+        return State { cursor, start_of_line, end_of_stream, expression_mode, num_block_comments };
     }
 
     /// Restores the state of the scanner.
@@ -120,10 +121,12 @@ private:
         this->start_of_line = state.start_of_line;
         this->end_of_stream = state.end_of_stream;
         this->expression_mode = state.expression_mode;
+        this->num_block_comments = state.num_block_comments;
         this->num_cached_tokens = 0;
     }
 
 private:
+    bool is_comment_start(SourceLocation) const;
     bool is_whitespace(SourceLocation) const;
     bool is_newline(SourceLocation) const;
     bool is_digit(SourceLocation) const;
@@ -142,6 +145,7 @@ private:
     bool start_of_line;
     bool end_of_stream;
     bool expression_mode;
+    uint8_t num_block_comments;
 
     struct State
     {
@@ -149,6 +153,7 @@ private:
         bool start_of_line;
         bool end_of_stream;
         bool expression_mode;
+        uint8_t num_block_comments;
     };
 };
 }

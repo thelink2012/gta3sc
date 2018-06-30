@@ -46,12 +46,14 @@ constexpr Category CATEGORY_OPERATOR = (CATEGORY_ASSIGNMENT_OPERATOR
                                         | CATEGORY_UNARY_OPERATOR
                                         | CATEGORY_BINARY_OPERATOR);
 
+bool Scanner::is_comment_start(SourceLocation p) const
+{
+    return *p == '/' && (*std::next(p) == '*' || *std::next(p) == '/');
+}
+
 bool Scanner::is_whitespace(SourceLocation p) const
 {
-    if(*p == '/')
-        return *std::next(p) == '*' || *std::next(p) == '/';
-    else
-        return *p == ' ' || *p == '\t' || *p == '(' || *p == ')' || *p == ',';
+    return *p == ' ' || *p == '\t' || *p == '(' || *p == ')' || *p == ',';
 }
 
 bool Scanner::is_newline(SourceLocation p) const
@@ -80,6 +82,7 @@ bool Scanner::is_operator(SourceLocation p) const
 
 auto Scanner::next(Category hint) -> std::optional<Token>
 {
+scan_again:
     auto start_pos = cursor;
     auto category = Category::EndOfLine;
 
@@ -89,41 +92,97 @@ auto Scanner::next(Category hint) -> std::optional<Token>
         return std::move(cached_tokens[num_cached_tokens]);
     }
 
+    if(num_block_comments)
+    {
+        goto parse_block_comment;
+    }
+
     if(start_of_line)
     {
-        this->start_of_line = false;
-
-        while(is_whitespace(cursor))
-            ++cursor;
-
-        if(this->scan_expression_line())
-            return next(hint);
+        if(!is_whitespace(cursor) && !is_comment_start(cursor) && !is_newline(cursor))
+        {
+            this->start_of_line = false;
+            if(this->scan_expression_line())
+                goto scan_again;
+        }
     }
 
     switch(*cursor)
     {
         // clang-format off
-        case '\0':
-            this->end_of_stream = true;
-            return Token(Category::EndOfLine, cursor, cursor);
+        newline: case '\0': case '\r': case '\n':
+            if(*cursor == '\0')
+            {
+                this->end_of_stream = true;
+            }
+            else
+            {
+                if(*cursor == '\r') ++cursor;
+                if(*cursor == '\n') ++cursor;
+                this->start_of_line = true;
+            }
+            return Token(Category::EndOfLine, start_pos, cursor);
 
-        case ' ': case '\t': case '(': case ')': case ',':
+        whitespace: case ' ': case '\t': case '(': case ')': case ',':
             while(is_whitespace(cursor))
                 ++cursor;
+
+            if(is_comment_start(cursor))
+            {
+                ++cursor;
+                goto continue_as_comment;
+            }
             
             if(is_newline(cursor))
                 goto newline;
 
+            if(start_of_line)
+            {
+                this->start_of_line = false;
+                this->scan_expression_line();
+                goto scan_again;
+            }
+
             return Token(Category::Whitespace, start_pos, cursor);
 
-        newline: case '\r': case '\n':
-            if(*cursor == '\r') ++cursor;
-            if(*cursor == '\n') ++cursor;
+        continue_as_comment:
+            assert(*std::prev(cursor) == '/');
+            assert(*cursor == '/' || *cursor == '*');
+            if(*cursor == '/')
+            {
+                while(!is_newline(*cursor))
+                    ++cursor;
+                goto newline;
+            }
+            else
+            {
+                ++cursor;
+                ++num_block_comments;
+                goto parse_block_comment;
+            }
 
-            this->start_of_line = true;
-            this->expression_mode = false;
+        parse_block_comment:
+            while(!is_newline(cursor))
+            {
+                if(*cursor == '/' && *std::next(*cursor) == '*')
+                {
+                    std::advance(cursor, 2);
+                    ++num_block_comments;
+                }
+                else if(*cursor == '*' && *std::next(*cursor) == '/')
+                {
+                    std::advance(cursor, 2);
+                    --num_block_comments;
+                    if(num_block_comments == 0)
+                        goto whitespace;
+                }
+                else
+                {
+                    ++cursor;
+                }
+            }
+            goto newline;
 
-            return Token(Category::EndOfLine, start_pos, cursor);
 
         case '-':
             ++cursor;
@@ -213,7 +272,11 @@ auto Scanner::next(Category hint) -> std::optional<Token>
 
         case '/':
             ++cursor;
-            if(!expression_mode)
+            if(*cursor == '/' || *cursor == '*')
+            {
+                goto continue_as_comment;
+            }
+            else if(!expression_mode)
             {
                 goto continue_as_graph_char;
             }
@@ -381,7 +444,7 @@ auto Scanner::next(Category hint) -> std::optional<Token>
                 goto error_recovery;
 
             // following a command or label definition is always a separator
-            if(!is_whitespace(cursor) && !is_newline(cursor))
+            if(!is_whitespace(cursor) && !is_comment_start(cursor) && !is_newline(cursor))
             {
                 assert(*cursor == '"');
                 goto error_recovery;
@@ -391,7 +454,7 @@ auto Scanner::next(Category hint) -> std::optional<Token>
 
         finish_matching_argument:
             // following a argument is always a separator
-            if(!is_whitespace(cursor) && !is_newline(cursor))
+            if(!is_whitespace(cursor) && !is_comment_start(cursor) && !is_newline(cursor))
             {
                 if(expression_mode && is_operator(cursor))
                     /* allow operators following a argument in such a case */;
@@ -410,7 +473,7 @@ auto Scanner::next(Category hint) -> std::optional<Token>
             return Token(category, start_pos, cursor);
 
         error_recovery:
-            while(!is_whitespace(cursor) && !is_newline(cursor))
+            while(!is_whitespace(cursor) && !is_comment_start(cursor) && !is_newline(cursor))
             {
                 if(expression_mode && is_operator(cursor))
                     break;
