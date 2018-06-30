@@ -128,11 +128,8 @@ scan_again:
                 ++cursor;
 
             if(is_comment_start(cursor))
-            {
-                ++cursor;
-                goto continue_as_comment;
-            }
-            
+                goto comment;
+
             if(is_newline(cursor))
                 goto newline;
 
@@ -144,22 +141,6 @@ scan_again:
             }
 
             return Token(Category::Whitespace, start_pos, cursor);
-
-        continue_as_comment:
-            assert(*std::prev(cursor) == '/');
-            assert(*cursor == '/' || *cursor == '*');
-            if(*cursor == '/')
-            {
-                while(!is_newline(*cursor))
-                    ++cursor;
-                goto newline;
-            }
-            else
-            {
-                ++cursor;
-                ++num_block_comments;
-                goto parse_block_comment;
-            }
 
         parse_block_comment:
             while(!is_newline(cursor))
@@ -270,11 +251,20 @@ scan_again:
                 return Token(Category::Star, start_pos, cursor);
             }
 
-        case '/':
+        comment: case '/':
             ++cursor;
-            if(*cursor == '/' || *cursor == '*')
+            if(*cursor == '/')
             {
-                goto continue_as_comment;
+                ++cursor;
+                while(!is_newline(*cursor))
+                    ++cursor;
+                goto newline;
+            }
+            else if(*cursor == '*')
+            {
+                ++cursor;
+                num_block_comments = 1;
+                goto parse_block_comment;
             }
             else if(!expression_mode)
             {
