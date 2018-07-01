@@ -1,14 +1,17 @@
-#include <gta3sc/sourceman.hpp>
-#include <cassert>
+#include <gta3sc/preprocessor.hpp>
 
 namespace gta3sc
 {
+/// Lexical category of a token.
+///
+/// This may be used as a bitmask to the scanner hint parameter.
+/// In all other cases, this is asssumed to be a single value.
 enum class Category : uint64_t
 {
     Integer = 1ULL << 0,
     Float = 1ULL << 1,
     Identifier = 1ULL << 2,
-    StringLiteral = 1ULL << 3,
+    Filename = 1ULL << 3,
     Equal = 1ULL << 4,
     PlusEqual = 1ULL << 5,
     MinusEqual = 1ULL << 6,
@@ -52,109 +55,102 @@ constexpr bool is_set(Category lhs, Category rhs)
     return (static_cast<uint64_t>(lhs) & static_cast<uint64_t>(rhs)) != 0;
 }
 
+/// Classified word
 struct Token
 {
-    Category category;
-    SourceRange lexeme;
+    Category category;  //< Category of this token.
+    SourceRange lexeme; //< Characters of this token.
 
     explicit Token() :
         category(Category::EndOfLine), lexeme()
     {}
 
-    explicit Token(Category category, SourceLocation begin, SourceLocation end) :
+    explicit Token(Category category, 
+                   SourceLocation begin, 
+                   SourceLocation end) :
         category(category), lexeme(begin, std::distance(begin, end))
     {}
 };
 
-/// This is a scanner for GTA3script.
+/// The scanner is a stream of tokens.
+///
+/// It transforms a stream of characters into one of tokens.
 ///
 /// The scanner is context-sensitive. In order to read the next token, a hint
 /// specifying what is expected to be read must be provided.
-///
-/// The hint does not mean only the categories specified should be scanned. Instead,
-/// it is used to resolve cases where a token may resolve to multiple categories.
-///
 class Scanner
 {
 public:
-    explicit Scanner(const SourceFile& source) :
-        source(source)
+    explicit Scanner(Preprocessor pp_) :
+        pp(std::move(pp_))
     {
-        this->cursor = source.view_with_terminator().begin();
-        this->start_of_line = true;
-        this->end_of_stream = false;
         this->expression_mode = false;
-        this->num_block_comments = 0;
-        this->num_cached_tokens = 0;
+        this->num_expr_tokens = 0;
+        this->peek_char = this->pp.next();
+        this->prev_char = '\0';
     }
 
     /// Scans the next token in the stream of characters.
     ///
-    /// In case of failure, the scanner is still
-    /// functional and may be used to scan more tokens.
+    /// A bitmask of possible categories to match must be specified in `mask`.
     ///
-    /// \returns the token or `std::nullopt` in case of failure.
-    auto next(Category hints) -> std::optional<Token>;
+    /// In case it's not possible to match any of the specified categories,
+    /// or any other error occurs, the stream recovers by skipping certain
+    /// characters, and you may call the scanner again afterwards.
+    /// 
+    /// The scanner is guaranteed to reach a newline after enough failures.
+    auto next(Category mask) -> std::optional<Token>;
 
-    /// \returns whether the end of stream has been reached.
-    bool is_eof() const
-    {
-        if(num_cached_tokens)
-            return false;
-        return end_of_stream;
-    }
-
-private:
-    struct State;
-
-    /// Returns the current state of the scanner.
-    auto tell() const -> State
-    {
-        assert(num_cached_tokens == 0);
-        return State { cursor, start_of_line, end_of_stream, expression_mode, num_block_comments };
-    }
-
-    /// Restores the state of the scanner.
-    void seek(const State& state)
-    {
-        this->cursor = state.cursor;
-        this->start_of_line = state.start_of_line;
-        this->end_of_stream = state.end_of_stream;
-        this->expression_mode = state.expression_mode;
-        this->num_block_comments = state.num_block_comments;
-        this->num_cached_tokens = 0;
-    }
+    /// Checks whether the end of stream has been reached.
+    bool eof() const;
 
 private:
-    bool is_comment_start(SourceLocation) const;
-    bool is_whitespace(SourceLocation) const;
-    bool is_newline(SourceLocation) const;
-    bool is_digit(SourceLocation) const;
-    bool is_graph(SourceLocation) const;
-    bool is_operator(SourceLocation) const;
+    struct Snapshot;
+
+    /// Takes a snapshot of the scanner state.
+    auto tell() const -> Snapshot;
+
+    /// Restores the state of the scanner from a snapshot.
+    void seek(const Snapshot& snap);
+
+    /// Consumes the next character in the character stream.
+    char getc();
+
+    /// Gets the current location in the character stream.
+    auto location() const -> SourceLocation;
+
+    bool is_whitespace(char) const;
+    bool is_newline(char) const;
+    bool is_digit(char) const;
+    bool is_graph(char) const;
+    bool is_operator(char) const;
+    bool is_filename(SourceRange) const;
+
+    auto match(Category hint, Category category, 
+               SourceLocation begin, SourceLocation end) -> std::optional<Token>;
+
     bool scan_expression_line();
 
-
 private:
-    const SourceFile& source;
+    Preprocessor pp;
 
-    size_t num_cached_tokens;
-    Token cached_tokens[7];
+    size_t num_expr_tokens;
+    Token expr_tokens[7];
 
-    SourceLocation cursor;
-    bool start_of_line;
-    bool end_of_stream;
     bool expression_mode;
-    uint8_t num_block_comments;
+    char peek_char;
+    char prev_char;
 
-    struct State
+    struct Snapshot
     {
-        SourceLocation cursor;
-        bool start_of_line;
-        bool end_of_stream;
+        Preprocessor::Snapshot pp;
         bool expression_mode;
-        uint8_t num_block_comments;
+        char peek_char;
+        char prev_char;
     };
+
+    // Keep the snapshot small.
+    static_assert(sizeof(Snapshot) <= 3 * sizeof(void*));
 };
 }
 

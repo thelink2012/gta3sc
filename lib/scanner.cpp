@@ -1,22 +1,13 @@
 #include <gta3sc/scanner.hpp>
+#include <algorithm>
+#include <cassert>
 
-    // whitespaces / sep
-    // newline / eol
-    // eof / eol
-    // command_name => FIRST() = graph_char; FOLLOW() = {sep, eol}
-    // label_stmt => FIRST() => graph_char; FOLLOW() = {sep, eol}
-    // integer => FIRST() = {'-', '0'...'9'}; FOLLOW() => {sep, eol} U operators
-    // floating => FIRST() = {'.', '-', '0'...'9'}; FOLLOW() => {sep, eol} U operators
-    // identifier => FIRST() => {'$', 'A'..'Z'}; FOLLOW() => {sep, eol} U operators
-    // string => FIRST() => {'"'}; FOLLOW() => {sep, eol}
-    // operators => FIRST() => {'=', '+', '-', '*', '/', '<', '>'}; FOLLOW() => {sep} U integer U floating U identifier
-    
 namespace gta3sc
 {
 constexpr Category CATEGORY_ARGUMENT = (Category::Integer 
                                        | Category::Float
                                        | Category::Identifier
-                                       | Category::StringLiteral);
+                                       | Category::String);
 
 constexpr Category CATEGORY_ASSIGNMENT_OPERATOR = (Category::Equal
                                                   | Category::PlusEqual
@@ -46,284 +37,326 @@ constexpr Category CATEGORY_OPERATOR = (CATEGORY_ASSIGNMENT_OPERATOR
                                         | CATEGORY_UNARY_OPERATOR
                                         | CATEGORY_BINARY_OPERATOR);
 
-bool Scanner::is_comment_start(SourceLocation p) const
+bool Scanner::eof() const
 {
-    return *p == '/' && (*std::next(p) == '*' || *std::next(p) == '/');
+    if(peek_char || num_expr_tokens)
+        return false;
+    return pp.eof();
 }
 
-bool Scanner::is_whitespace(SourceLocation p) const
+auto Scanner::location() const -> SourceLocation
 {
-    return *p == ' ' || *p == '\t' || *p == '(' || *p == ')' || *p == ',';
+    auto loc = pp.location();
+    if(peek_char) --loc;
+    return loc;
 }
 
-bool Scanner::is_newline(SourceLocation p) const
+char Scanner::getc()
 {
-    return *p == '\r' || *p == '\n' || *p == '\0';
+    this->prev_char = peek_char;
+    return std::exchange(peek_char, pp.next());
 }
 
-bool Scanner::is_digit(SourceLocation p) const
+auto Scanner::tell() const -> Snapshot
 {
-    return *p >= '0' && *p <= '9';
+    assert(num_expr_tokens == 0);
+    return Snapshot { pp.tell(), expression_mode, peek_char, prev_char };
 }
 
-bool Scanner::is_graph(SourceLocation p) const
+void Scanner::seek(const Snapshot& snap)
 {
-    return *p != '"' && *p >= 32 && *p <= 126;
+    this->pp.seek(snap.pp);
+    this->expression_mode = snap.expression_mode;
+    this->peek_char = snap.peek_char;
+    this->prev_char = snap.prev_char;
+    this->num_expr_tokens = 0;
 }
 
-bool Scanner::is_operator(SourceLocation p) const
+bool Scanner::is_whitespace(char c) const
 {
-    if(*p == '/')
-        return !(*std::next(p) == '*' || *std::next(p) == '/');
-    else
-        return *p == '+' || *p == '-' || *p == '*' 
-            || *p == '=' || *p == '<' || *p == '>';
+    return c == ' ' || c == '\t' || c == '(' || c == ')' || c == ',';
+}
+
+bool Scanner::is_newline(char c) const
+{
+    return c == '\r' || c == '\n' || c == '\0';
+}
+
+bool Scanner::is_digit(char c) const
+{
+    return c >= '0' && c <= '9';
+}
+
+bool Scanner::is_graph(char c) const
+{
+    return c != '"' && c >= 33 && c <= 126;
+}
+
+bool Scanner::is_operator(char c) const
+{
+    return c == '+' || c == '-' || c == '*' 
+        || c == '=' || c == '<' || c == '>';
+}
+
+bool Scanner::is_filename(SourceRange range) const
+{
+    if(range.size() >= 3)
+    {
+        auto it = range.rbegin();
+        const auto c2 = *it++;
+        const auto c1 = *it++;
+        const auto c0 = *it++;
+        if(c0 == '.' && (c1 == 's' || c1 == 'S') && (c2 == 'c' || c2 == 'C'))
+            return true;
+    }
+    return false;
+}
+
+auto Scanner::match(Category hint, Category category, 
+                    SourceLocation begin, SourceLocation end)
+    -> std::optional<Token>
+{
+    if(is_set(hint, category))
+        return Token(category, begin, end);
+    return std::nullopt;
 }
 
 auto Scanner::next(Category hint) -> std::optional<Token>
 {
-scan_again:
-    auto start_pos = cursor;
+    // This scanner operates in the following manner:
+    //
+    // At the beggining of each line, it tries to match a expression
+    // within the line. If successful, a stack made of the tokens of
+    // this expression is left to be drained by future calls to the
+    // scanner. This is explained further later on.
+    //
+    // Otherwise, it operates normally.
+    //
+    // A call to the scanner recognizes the correct token by starting
+    // from a possible category and reducing it to the next, until it is
+    // not possible to reduce to any other category. The hint provides
+    // additional context for possibility reduction.
+    //
+    // If the final category do not match any of the categories in hint,
+    // the scan has failed, and it usually recovers by skipping to the
+    // next whitespace or newline (except when the expression stack
+    // is not empty).
+    
+    auto start_pos = this->location();
     auto category = Category::EndOfLine;
 
-    if(num_cached_tokens)
+    // Drain the expression stack before resuming the scanner.
+    if(num_expr_tokens)
     {
-        --num_cached_tokens;
-        return std::move(cached_tokens[num_cached_tokens]);
-    }
+        --num_expr_tokens;
 
-    if(num_block_comments)
-    {
-        goto parse_block_comment;
-    }
+        auto token = this->expr_tokens[num_expr_tokens];
+        if(is_set(hint, token.category))
+            return token;
 
-    if(start_of_line)
-    {
-        if(!is_whitespace(cursor) && !is_comment_start(cursor) && !is_newline(cursor))
+        // In case of match failure and we drained the stack, we
+        // should keep the end of line element in the stack
+        // for recovery purposes.
+        if(num_expr_tokens == 0)
         {
-            this->start_of_line = false;
+            assert(token.category == Category::EndOfLine);
+            num_expr_tokens = 1;
+        }
+
+        return std::nullopt;
+    }
+
+    // Call the expression scanner in case we are at the front of a line.
+    if(!expression_mode)
+    {
+        if(!prev_char || is_newline(prev_char))
+        {
             if(this->scan_expression_line())
-                goto scan_again;
+            {
+                assert(num_expr_tokens > 0);
+                return this->next(hint);
+            }
         }
     }
 
-    switch(*cursor)
+    switch(peek_char)
     {
         // clang-format off
-        newline: case '\0': case '\r': case '\n':
-            if(*cursor == '\0')
+        newline: case '\0': case '\n':
+            if(is_set(hint, Category::EndOfLine))
             {
-                this->end_of_stream = true;
+                this->getc();
+                return Token(Category::EndOfLine, start_pos, location());
             }
-            else
-            {
-                if(*cursor == '\r') ++cursor;
-                if(*cursor == '\n') ++cursor;
-                this->start_of_line = true;
-            }
-            return Token(Category::EndOfLine, start_pos, cursor);
+            return std::nullopt;
 
         whitespace: case ' ': case '\t': case '(': case ')': case ',':
-            while(is_whitespace(cursor))
-                ++cursor;
-
-            if(is_comment_start(cursor))
-                goto comment;
-
-            if(is_newline(cursor))
-                goto newline;
-
-            if(start_of_line)
+            if(is_set(hint, Category::Whitespace | Category::EndOfLine))
             {
-                this->start_of_line = false;
-                this->scan_expression_line();
-                goto scan_again;
+                this->getc();
+                while(is_whitespace(peek_char))
+                    this->getc();
+
+                // Trailing spaces should be handled as a newline.
+                if(is_newline(peek_char))
+                    goto newline;
+
+                return match(hint, Category::Whitespace, start_pos, location());
             }
-
-            return Token(Category::Whitespace, start_pos, cursor);
-
-        parse_block_comment:
-            while(!is_newline(cursor))
-            {
-                if(*cursor == '/' && *std::next(*cursor) == '*')
-                {
-                    std::advance(cursor, 2);
-                    ++num_block_comments;
-                }
-                else if(*cursor == '*' && *std::next(*cursor) == '/')
-                {
-                    std::advance(cursor, 2);
-                    --num_block_comments;
-                    if(num_block_comments == 0)
-                        goto whitespace;
-                }
-                else
-                {
-                    ++cursor;
-                }
-            }
-            goto newline;
-
+            return std::nullopt;
 
         case '-':
-            ++cursor;
-            if(*cursor == '.')
+            this->getc();
+            if(peek_char == '.')
             {
                 goto floating_form1;
             }
-            else if(is_digit(cursor))
+            else if(is_digit(peek_char))
             {
                 goto integer;
             }
             else if(!expression_mode)
             {
-                goto continue_as_graph_char;
+                goto command_label_filename;
             }
-            else if(*cursor == '=' && *std::next(cursor) == '@')
+            else if(peek_char == '=')
             {
-                std::advance(cursor, 2);
-                return Token(Category::MinusEqualAt, start_pos, cursor);
+                this->getc();
+                if(peek_char == '@')
+                {
+                    this->getc();
+                    return match(hint, Category::MinusEqualAt, start_pos, location());
+                }
+                else
+                {
+                    return match(hint, Category::MinusEqual, start_pos, location());
+                }
             }
-            else if(*cursor == '=')
+            else if(peek_char == '-')
             {
-                ++cursor;
-                return Token(Category::MinusEqual, start_pos, cursor);
+                this->getc();
+                return match(hint, Category::MinusMinus, start_pos, location());
             }
-            else if(*cursor == '-')
+            else if(peek_char == '@')
             {
-                ++cursor;
-                return Token(Category::MinusMinus, start_pos, cursor);
-            }
-            else if(*cursor == '@')
-            {
-                ++cursor;
-                return Token(Category::MinusAt, start_pos, cursor);
+                this->getc();
+                return match(hint, Category::MinusAt, start_pos, location());
             }
             else
             {
-                return Token(Category::Minus, start_pos, cursor);
+                return match(hint, Category::Minus, start_pos, location());
             }
 
         case '+':
-            ++cursor;
+            this->getc();
             if(!expression_mode)
             {
-                goto continue_as_graph_char;
+                goto command_label_filename;
             }
-            else if(*cursor == '=' && *std::next(cursor) == '@')
+            else if(peek_char == '=')
             {
-                std::advance(cursor, 2);
-                return Token(Category::PlusEqualAt, start_pos, cursor);
+                this->getc();
+                if(peek_char == '@')
+                {
+                    this->getc();
+                    return match(hint, Category::PlusEqualAt, start_pos, location());
+                }
+                else
+                {
+                    return match(hint, Category::PlusEqual, start_pos, location());
+                }
             }
-            else if(*cursor == '=')
+            else if(peek_char == '+')
             {
-                ++cursor;
-                return Token(Category::PlusEqual, start_pos, cursor);
+                this->getc();
+                return match(hint, Category::PlusPlus, start_pos, location());
             }
-            else if(*cursor == '+')
+            else if(peek_char == '@')
             {
-                ++cursor;
-                return Token(Category::PlusPlus, start_pos, cursor);
-            }
-            else if(*cursor == '@')
-            {
-                ++cursor;
-                return Token(Category::PlusAt, start_pos, cursor);
+                this->getc();
+                return match(hint, Category::PlusAt, start_pos, location());
             }
             else
             {
-                return Token(Category::Plus, start_pos, cursor);
+                return match(hint, Category::Plus, start_pos, location());
             }
 
         case '*':
-            ++cursor;
+            this->getc();
             if(!expression_mode)
             {
-                goto continue_as_graph_char;
+                goto command_label_filename;
             }
-            else if(*cursor == '=')
+            else if(peek_char == '=')
             {
-                ++cursor;
-                return Token(Category::StarEqual, start_pos, cursor);
+                this->getc();
+                return match(hint, Category::StarEqual, start_pos, location());
             }
             else
             {
-                return Token(Category::Star, start_pos, cursor);
+                return match(hint, Category::Star, start_pos, location());
             }
 
-        comment: case '/':
-            ++cursor;
-            if(*cursor == '/')
+        case '/':
+            this->getc();
+            if(!expression_mode)
             {
-                ++cursor;
-                while(!is_newline(*cursor))
-                    ++cursor;
-                goto newline;
+                goto command_label_filename;
             }
-            else if(*cursor == '*')
+            else if(peek_char == '=')
             {
-                ++cursor;
-                num_block_comments = 1;
-                goto parse_block_comment;
-            }
-            else if(!expression_mode)
-            {
-                goto continue_as_graph_char;
-            }
-            else if(*cursor == '=')
-            {
-                ++cursor;
-                return Token(Category::SlashEqual, start_pos, cursor);
+                this->getc();
+                return match(hint, Category::SlashEqual, start_pos, location());
             }
             else
             {
-                return Token(Category::Slash, start_pos, cursor);
+                return match(hint, Category::Slash, start_pos, location());
             }
 
         case '=':
-            ++cursor;
+            this->getc();
             if(!expression_mode)
             {
-                goto continue_as_graph_char;
+                goto command_label_filename;
             }
-            else if(*cursor == '#')
+            else if(peek_char == '#')
             {
-                ++cursor;
-                return Token(Category::EqualHash, start_pos, cursor);
+                this->getc();
+                return match(hint, Category::EqualHash, start_pos, location());
             }
             else
-                return Token(Category::Equal, start_pos, cursor);
+                return match(hint, Category::Equal, start_pos, location());
 
         case '<':
-            ++cursor;
+            this->getc();
             if(!expression_mode)
             {
-                goto continue_as_graph_char;
+                goto command_label_filename;
             }
-            else if(*cursor == '=')
+            else if(peek_char == '=')
             {
-                ++cursor;
-                return Token(Category::LessEqual, start_pos, cursor);
+                this->getc();
+                return match(hint, Category::LessEqual, start_pos, location());
             }
             else
             {
-                return Token(Category::Less, start_pos, cursor);
+                return match(hint, Category::Less, start_pos, location());
             }
 
         case '>':
-            ++cursor;
+            this->getc();
             if(!expression_mode)
             {
-                goto continue_as_graph_char;
+                goto command_label_filename;
             }
-            else if(*cursor == '=')
+            else if(peek_char == '=')
             {
-                ++cursor;
-                return Token(Category::GreaterEqual, start_pos, cursor);
+                this->getc();
+                return match(hint, Category::GreaterEqual, start_pos, location());
             }
             else
             {
-                return Token(Category::Greater, start_pos, cursor);
+                return match(hint, Category::Greater, start_pos, location());
             }
         
         integer:
@@ -333,25 +366,31 @@ scan_again:
         {
             bool got_minus = false;
             bool got_float = false;
-            for(; ; ++cursor)
+            for(; ; this->getc())
             {
-                if(is_digit(cursor))
+                if(is_digit(peek_char))
                     continue;
-                else if(*cursor == '-')
+                else if(peek_char == '-')
                 {
+                    // cannot have a minus in the middle of a literal
+                    // while in expression mode.
                     if(expression_mode)
                         break;
                     got_minus = true;
                 }
-                else if(*cursor == '.' || *cursor == 'f' || *cursor == 'F')
+                else if(peek_char == '.' || peek_char == 'f' || peek_char == 'F')
                     got_float = true;
                 else
                     break;
             }
 
-            // the minus sign cannot appear in the middle of a floating-point literal
+            // the minus sign cannot appear in the middle of a
+            // floating-point literal.
             if(got_float && got_minus)
-                goto continue_as_graph_char;
+            {
+                assert(!expression_mode);
+                goto command_label_filename;
+            }
 
             category = got_float? Category::Float : Category::Integer;
             goto finish_matching_argument;
@@ -359,12 +398,15 @@ scan_again:
 
         floating_form1: case '.':
         {
-            ++cursor;
-            if(!is_digit(cursor))
-                goto continue_as_graph_char;
+            this->getc();
+            if(!is_digit(peek_char))
+                goto command_label_filename;
 
-            while(is_digit(cursor) || *cursor == '.' || *cursor == 'f' || *cursor == 'F')
-                ++cursor;
+            while(is_digit(peek_char) || peek_char == '.' 
+                    || peek_char == 'f' || peek_char == 'F')
+            {
+                this->getc();
+            }
 
             category = Category::Float;
             goto finish_matching_argument;
@@ -384,92 +426,104 @@ scan_again:
         case 'o': case 'p': case 'q': case 'r':
         case 's': case 't': case 'u': case 'v':
         case 'w': case 'x': case 'y': case 'z':
-            ++cursor;
-            while(is_graph(cursor))
+            for(getc(); is_graph(peek_char); getc())
             {
-                if(expression_mode && is_operator(cursor))
+                if(expression_mode && is_operator(peek_char))
                     break;
-                ++cursor;
             }
 
             category = Category::Identifier;
             goto finish_matching_argument;
 
         case '"':
-            ++cursor;
-            while(*cursor != '"' && !is_newline(cursor))
-                ++cursor;
+            for(getc(); peek_char != '"'; getc())
+            {
+                if(is_newline(peek_char))
+                    return std::nullopt;
+            }
 
-            if(is_newline(cursor))
-                // TODO error missing closing quote (already error recovered btw)
-                return std::nullopt;
-
-            ++cursor;
-            assert(*cursor == '"');
+            assert(peek_char == '"');
+            this->getc();
 
             category = Category::String;
             goto finish_matching_argument;
 
         default:
-            assert(is_graph(cursor));
-            ++cursor;
-            goto continue_as_graph_char;
+            assert(is_graph(peek_char));
+            goto command_label_filename;
 
-        continue_as_graph_char:
-            if(!is_set(hint, Category::Command) && !is_set(hint, Category::Label))
-                goto error_recovery;
+        command_label_filename:
+        {
+            while(is_graph(peek_char))
+                this->getc();
 
-            if(expression_mode && !is_set(hint, Category::Label))
-                goto error_recovery;
+            // by definition only whitespace, newline or quotation marks may
+            // follow a command or label. quotation marks causes a failure.
+            if(!is_whitespace(peek_char) && !is_newline(peek_char))
+            {
+                assert(peek_char == '"');
+                this->next(Category::String);
+                return std::nullopt;
+            }
 
-            while(is_graph(cursor))
-                ++cursor;
+            // This may happen if we goto'ed to command_label_filename
+            // from a string token not finished in whitespaces so that
+            // we recover from the bad token (see finish_matching_argument).
+            if(category == Category::String)
+                return std::nullopt;
 
-            if(is_set(hint, Category::Label) && *std::prev(cursor) == ':')
+            if(prev_char == ':' && is_set(hint, Category::Label))
                 category = Category::Label;
             else
                 category = Category::Command;
 
-            if(expression_mode && category != Category::Label)
-                goto error_recovery;
-
-            // following a command or label definition is always a separator
-            if(!is_whitespace(cursor) && !is_comment_start(cursor) && !is_newline(cursor))
+            if(is_set(hint, Category::Filename))
             {
-                assert(*cursor == '"');
-                goto error_recovery;
+                auto lexeme = SourceRange(start_pos, location() - start_pos);
+                if(is_filename(lexeme))
+                    category = Category::Filename;
             }
 
-            return Token(category, start_pos, cursor);
+            return match(hint, category, start_pos, location());
+        }
 
         finish_matching_argument:
-            // following a argument is always a separator
-            if(!is_whitespace(cursor) && !is_comment_start(cursor) && !is_newline(cursor))
+        {
+            assert(category == Category::Integer
+                    || category == Category::Float
+                    || category == Category::Identifier
+                    || category == Category::String);
+
+            // following an argument must be a separator
+            if(!is_whitespace(peek_char) && !is_newline(peek_char))
             {
-                if(expression_mode && is_operator(cursor))
-                    /* allow operators following a argument in such a case */;
+                if(expression_mode && is_operator(peek_char))
+                    /* allow operators following an argument in such a case */;
                 else
-                    goto continue_as_graph_char;
+                    goto command_label_filename;
             }
 
-            // Identifiers should not end in a colon.
-            if(category == Category::Identifier && *std::prev(cursor) == ':')
-                goto continue_as_graph_char;
-
-            // Give priority to commands over arguments unless we're in an expression.
-            if(!expression_mode && is_set(hint, Category::Command))
-                goto continue_as_graph_char;
-
-            return Token(category, start_pos, cursor);
-
-        error_recovery:
-            while(!is_whitespace(cursor) && !is_comment_start(cursor) && !is_newline(cursor))
+            if(category != Category::String)
             {
-                if(expression_mode && is_operator(cursor))
-                    break;
-                ++cursor;
+                if(is_set(hint, Category::Command))
+                    goto command_label_filename;
+
+                if(prev_char == ':')
+                {
+                    assert(category == Category::Identifier);
+                    goto command_label_filename;
+                }
+
+                if(is_set(hint, Category::Filename))
+                {
+                    auto lexeme = SourceRange(start_pos, location() - start_pos);
+                    if(is_filename(lexeme))
+                        goto command_label_filename;
+                }
             }
-            return std::nullopt;
+
+            return match(hint, category, start_pos, location());
+        }
 
         // clang-format on
     }
@@ -477,27 +531,39 @@ scan_again:
 
 bool Scanner::scan_expression_line()
 {
+    // The expression scanner switches the scanner into a special mode,
+    // called the expression mode, where it may match operators. Then it
+    // repeatedly calls the scanner trying to match a pattern that ressembles
+    // a expression.
+    //
+    // If a pattern is found, the expression stack is filled with the tokens
+    // of this line. Otherwise, the scanner is rewound back to the its original
+    // state at the front of the line.
+    //
+    // This is effectively a parser inside a lexer. Such improper hierarchy.
+
     Category cats[6];
     size_t num_tokens = 0;
 
-    // This function is triggered by a start of line. If we use the scanner
-    // while in this state, we'll get into a infinite loop.
-    assert(this->start_of_line == false);
+    const auto scan_mask = (CATEGORY_ARGUMENT | CATEGORY_OPERATOR 
+                            | Category::Whitespace | Category::EndOfLine);
 
-    // This function may change the state of cached tokens.
-    assert(this->num_cached_tokens == 0);
+    // This function builds the state of the expression stack.
+    assert(this->num_expr_tokens == 0);
 
     // Ensure we have enough slots for the expression and the end of line.
-    assert(std::size(this->cached_tokens) >= 1 + std::size(cats));
+    assert(std::size(this->expr_tokens) >= 1 + std::size(cats));
 
     // Save the scanner state and switch it into expression mode.
     const auto tell_pos = this->tell();
     this->expression_mode = true;
 
     // Skip any label in the start of the line.
-    auto token = this->next(Category::Label | CATEGORY_ARGUMENT);
+    auto token = this->next(Category::Label | scan_mask);
     if(token && token->category == Category::Label)
-        token = this->next(CATEGORY_ARGUMENT);
+    {
+        token = this->next(scan_mask);
+    }
 
     while(token && token->category != Category::EndOfLine)
     {
@@ -511,11 +577,11 @@ bool Scanner::scan_expression_line()
         if(token->category != Category::Whitespace)
         {
             cats[num_tokens] = token->category;
-            this->cached_tokens[num_tokens] = std::move(*token);
+            this->expr_tokens[num_tokens] = std::move(*token);
             ++num_tokens;
         }
 
-        token = this->next(CATEGORY_ARGUMENT | CATEGORY_OPERATOR);
+        token = this->next(scan_mask);
     }
 
     bool matches_valid_expr = false;
@@ -540,6 +606,13 @@ bool Scanner::scan_expression_line()
         {
             matches_valid_expr = true;
         }
+        else if(num_tokens == 3
+                && is_set(cats[0], CATEGORY_ARGUMENT) 
+                && is_set(cats[1], CATEGORY_RELATION_OPERATOR)
+                && is_set(cats[2], CATEGORY_ARGUMENT))
+        {
+            matches_valid_expr = true;
+        }
         else if(num_tokens == 5
                 && is_set(cats[0], CATEGORY_ARGUMENT) 
                 && is_set(cats[1], Category::Equal) 
@@ -554,8 +627,13 @@ bool Scanner::scan_expression_line()
     if(matches_valid_expr)
     {
         assert(token->category == Category::EndOfLine);
-        this->cached_tokens[num_tokens] = std::move(*token);
-        this->num_cached_tokens = ++num_tokens;
+        this->expr_tokens[num_tokens] = std::move(*token);
+        this->num_expr_tokens = ++num_tokens;
+
+        // Leave expression mode and reverse the stack for use by the scanner.
+        this->expression_mode = false;
+        std::reverse(&this->expr_tokens[0], &this->expr_tokens[num_tokens]);
+
         return true;
     }
 

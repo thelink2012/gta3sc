@@ -17,9 +17,15 @@ public:
         this->cursor = source.view_with_terminator().begin();
         this->start_of_line = true;
         this->end_of_stream = false;
+        this->inside_quotes = false;
         this->num_block_comments = 0;
     }
 
+    Preprocessor(const Preprocessor&) = delete;
+    Preprocessor& operator=(const Preprocessor&) = delete;
+
+    Preprocessor(Preprocessor&&) = default;
+    Preprocessor& operator=(Preprocessor&&) = default;
 
     /// Gets the next character in the stream.
     char next();
@@ -29,6 +35,9 @@ public:
 
     /// Checks whether the stream is inside a block comment.
     bool inside_block_comment() const;
+
+    /// Gets the current source location.
+    auto location() const -> SourceLocation;
 
     /// Obtains a snapshot of the stream state.
     auto tell() const -> Snapshot;
@@ -46,14 +55,16 @@ public:
         SourceLocation cursor;
         bool start_of_line;
         bool end_of_stream;
-        uint16_t num_block_comments;
+        bool inside_quotes;
+        uint8_t num_block_comments;
     };
 
 private:
     SourceLocation cursor;
     bool start_of_line;
     bool end_of_stream;
-    uint16_t num_block_comments;
+    bool inside_quotes;
+    uint8_t num_block_comments;
 
     const SourceFile& source;
 

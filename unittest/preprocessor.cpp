@@ -17,8 +17,6 @@ auto drain(gta3sc::Preprocessor& pp) -> std::string
     std::string res;
     while(!pp.eof())
         res.push_back(pp.next());
-    REQUIRE(pp.next() == '\0');
-    REQUIRE(pp.next() == '\0');
     REQUIRE(res.back() == '\0');
     res.pop_back();
     return res;
@@ -30,6 +28,55 @@ TEST_CASE("simple character stream")
     auto source = make_source("foo");
     auto pp = gta3sc::Preprocessor(source);
     CHECK(drain(pp) == "foo");
+}
+
+TEST_CASE("character stream EOF")
+{
+    auto source = make_source("foo");
+    auto pp = gta3sc::Preprocessor(source);
+    while(!pp.eof()) pp.next();
+    REQUIRE(pp.eof() == true);
+    CHECK(pp.next() == '\0');
+    CHECK(pp.next() == '\0');
+    CHECK(pp.next() == '\0');
+    CHECK(pp.eof() == true);
+}
+
+TEST_CASE("character stream snapshot")
+{
+    auto source = make_source("   foo\n/* block\n comment */  k");
+    auto pp = gta3sc::Preprocessor(source);
+
+    auto snap_start = pp.tell();
+    CHECK(pp.next() == 'f');
+    CHECK(pp.next() == 'o');
+    CHECK(pp.next() == 'o');
+    CHECK(pp.next() == '\n');
+    CHECK(pp.next() == '\n');
+    auto snap_comment = pp.tell();
+    CHECK(pp.next() == 'k');
+    CHECK(pp.next() == '\0');
+    CHECK(pp.eof() == true);
+    CHECK(!pp.inside_block_comment());
+    auto snap_end = pp.tell();
+
+    pp.seek(snap_comment);
+    CHECK(pp.eof() == false);
+    CHECK(pp.inside_block_comment());
+    CHECK(pp.next() == 'k');
+    CHECK(pp.next() == '\0');
+    CHECK(pp.eof() == true);
+    CHECK(!pp.inside_block_comment());
+
+    pp.seek(snap_start);
+    CHECK(pp.eof() == false);
+    CHECK(!pp.inside_block_comment());
+    CHECK(pp.next() == 'f');
+
+    pp.seek(snap_end);
+    CHECK(pp.eof() == true);
+    CHECK(!pp.inside_block_comment());
+    CHECK(pp.next() == '\0');
 }
 
 TEST_CASE("character stream with CR")

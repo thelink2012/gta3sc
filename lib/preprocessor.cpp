@@ -22,9 +22,15 @@ bool Preprocessor::inside_block_comment() const
     return this->num_block_comments > 0;
 }
 
+auto Preprocessor::location() const -> SourceLocation
+{
+    return this->cursor;
+}
+
 auto Preprocessor::tell() const -> Snapshot
 {
-    return Snapshot { cursor, start_of_line, end_of_stream, num_block_comments };
+    return Snapshot { cursor, start_of_line, end_of_stream, 
+                      inside_quotes, num_block_comments };
 }
 
 void Preprocessor::seek(const Snapshot& snap)
@@ -32,6 +38,7 @@ void Preprocessor::seek(const Snapshot& snap)
     this->cursor = snap.cursor;
     this->start_of_line = snap.start_of_line;
     this->end_of_stream = snap.end_of_stream;
+    this->inside_quotes = snap.inside_quotes;
     this->num_block_comments = snap.num_block_comments;
 }
 
@@ -57,6 +64,7 @@ char Preprocessor::next()
             if(*cursor == '\r') ++cursor;
             if(*cursor == '\n') ++cursor;
             this->start_of_line = true;
+            this->inside_quotes = false;
             return '\n';
         }
         else if(num_block_comments)
@@ -102,12 +110,12 @@ char Preprocessor::next()
             // We may not have skipped every blank because a comment may follow.
             // Thus continue the scan.
         }
-        else if(*cursor == '/' && *std::next(cursor) == '*')
+        else if(!inside_quotes && *cursor == '/' && *std::next(cursor) == '*')
         {
             std::advance(cursor, 2);
             num_block_comments = 1;
         }
-        else if(*cursor == '/' && *std::next(cursor) == '/')
+        else if(!inside_quotes && *cursor == '/' && *std::next(cursor) == '/')
         {
             std::advance(cursor, 2);
             while(!is_newline(cursor))
@@ -116,6 +124,10 @@ char Preprocessor::next()
         else
         {
             this->start_of_line = false;
+
+            if(*cursor == '"')
+                this->inside_quotes = !this->inside_quotes;
+
             return *cursor++;
         }
     }
