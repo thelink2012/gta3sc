@@ -12,6 +12,11 @@ bool Preprocessor::is_newline(SourceLocation p) const
     return *p == '\r' || *p == '\n' || *p == '\0';
 }
 
+auto Preprocessor::source_file() const -> const SourceFile&
+{
+    return this->source;
+}
+
 bool Preprocessor::eof() const
 {
     return this->end_of_stream;
@@ -25,21 +30,6 @@ bool Preprocessor::inside_block_comment() const
 auto Preprocessor::location() const -> SourceLocation
 {
     return this->cursor;
-}
-
-auto Preprocessor::tell() const -> Snapshot
-{
-    return Snapshot { cursor, start_of_line, end_of_stream, 
-                      inside_quotes, num_block_comments };
-}
-
-void Preprocessor::seek(const Snapshot& snap)
-{
-    this->cursor = snap.cursor;
-    this->start_of_line = snap.start_of_line;
-    this->end_of_stream = snap.end_of_stream;
-    this->inside_quotes = snap.inside_quotes;
-    this->num_block_comments = snap.num_block_comments;
 }
 
 char Preprocessor::next()

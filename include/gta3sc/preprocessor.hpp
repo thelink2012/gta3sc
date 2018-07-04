@@ -9,8 +9,6 @@ namespace gta3sc
 class Preprocessor
 {
 public:
-    struct Snapshot;
-
     explicit Preprocessor(const SourceFile& source) :
         source(source)
     {
@@ -33,31 +31,18 @@ public:
     /// Checks whether the stream reached the end of file.
     bool eof() const;
 
-    /// Checks whether the stream is inside a block comment.
+    /// Checks whether the stream has an unclosed block comment at eof.
     bool inside_block_comment() const;
 
     /// Gets the current source location.
     auto location() const -> SourceLocation;
 
-    /// Obtains a snapshot of the stream state.
-    auto tell() const -> Snapshot;
-
-    /// Restores the stream state from a snapshot.
-    void seek(const Snapshot&);
+    /// Gets the source file associated with this preprocessor.
+    auto source_file() const -> const SourceFile&;
 
 private:
     bool is_whitespace(SourceLocation) const;
     bool is_newline(SourceLocation) const;
-
-public:
-    struct Snapshot
-    {
-        SourceLocation cursor;
-        bool start_of_line;
-        bool end_of_stream;
-        bool inside_quotes;
-        uint8_t num_block_comments;
-    };
 
 private:
     SourceLocation cursor;
@@ -67,8 +52,5 @@ private:
     uint8_t num_block_comments;
 
     const SourceFile& source;
-
-    // Keep the snapshot as small as possible.
-    static_assert(sizeof(Snapshot) <= 2 * sizeof(void*));
 };
 }
