@@ -1,10 +1,17 @@
 #pragma once
-#include <memory>
 #include <cassert>
 #include <cstddef>
 
 namespace gta3sc
 {
+/// A pointer to a trivially destructible object in an arena.
+///
+/// An object encapsulated in such a pointer does not need a destructor call
+/// and may be disposed of by simply deallocating their storage.
+template<typename T>
+using arena_ptr = T*; //std::enable_if_t<std::is_trivially_destructible_v<T>, T*>;
+
+
 /// This is a memory resource that releases the allocated memory only when
 /// the resource is destroyed. It is intended for very fast memory allocations
 /// in situations where memory is used to build up a few objects and then is
@@ -25,16 +32,16 @@ public:
         region_size(),
         free_ptr(),
         owns_region(false),
-        next_region_size(0)
+        next_region_size(4096)
     {}
 
     /// Sets the current buffer to buffer and the next buffer size to
     /// buffer_size (but not less than 1). Then increase the next buffer
     /// size by an growth factor.
     explicit ArenaMemoryResource(void* buffer, size_t buffer_size) :
-        region_ptr(reinterpret_cast<char*>(buffer)),
+        region_ptr(static_cast<char*>(buffer)),
         region_size(buffer_size),
-        free_ptr(reinterpret_cast<char*>(buffer)),
+        free_ptr(static_cast<char*>(buffer)),
         owns_region(false),
         next_region_size(buffer_size * 2)
     {
@@ -63,13 +70,13 @@ public:
 
     /// Checks whether memory allocated from `rhs` can be deallocated
     /// from `this` and vice-versa.
-    bool operator==(const ArenaMemoryResource& rhs)
+    bool operator==(const ArenaMemoryResource& rhs) const
     {
         return this == &rhs;
     }
 
     /// Returns !(*this == rhs).
-    bool operator!=(const ArenaMemoryResource& rhs)
+    bool operator!=(const ArenaMemoryResource& rhs) const
     {
         return !(*this == rhs);
     }
@@ -99,32 +106,16 @@ public:
         // Either we don't have a region allocated or there's not enough
         // space in the current region. Allocate another region.
 
-        // Find the proper size for the next region.
-        // The next region must have enough space for the requested 
-        // bytes and alignment plus space for the region header.
-        {
-            if(!next_region_size)
-                next_region_size = 4096 - sizeof(OwnedHeader);
+        // The next region must have space for the header and the requested bytes.
+        // In the worst case, it also needs all the alignment bytes.
+        const auto requires_size = sizeof(OwnedHeader) + alignment + bytes;
+        if(next_region_size < requires_size)
+            next_region_size = requires_size;
 
-            if(next_region_size < alignment)
-                next_region_size = alignment;
-
-            if(next_region_size < bytes)
-                next_region_size = bytes;
-
-            auto dummy_ptr = static_cast<char*>(nullptr) + sizeof(OwnedHeader);
-            space = next_region_size;
-
-            if(!align(alignment, bytes, dummy_ptr, space))
-                next_region_size += sizeof(std::max_align_t);
-            else
-                next_region_size += sizeof(OwnedHeader);
-        }
-
-        auto next_region_ptr = upstream.allocate(next_region_size);
+        auto next_region_ptr = static_cast<char*>(operator new(next_region_size));
         if(next_region_ptr)
         {
-            auto next_region_header = reinterpret_cast<OwnedHeader*>(next_region_ptr);
+            auto next_region_header = new (next_region_ptr) OwnedHeader;
             next_region_header->prev_region_ptr = region_ptr;
             next_region_header->prev_region_size = region_size;
             next_region_header->owns_prev_region = owns_region;
@@ -167,7 +158,7 @@ public:
         while(owns_region && region_ptr)
         {
             auto header = *reinterpret_cast<OwnedHeader*>(region_ptr);
-            upstream.deallocate(region_ptr, region_size);
+            operator delete(region_ptr, region_size);
             this->region_ptr = header.prev_region_ptr;
             this->region_size = header.prev_region_size;
             this->owns_region = header.owns_prev_region;
@@ -179,8 +170,6 @@ public:
 
 
 private:
-    std::allocator<char> upstream;
-
     char* region_ptr;   //< The pointer to the current region.
     size_t region_size; //< The size of the current region.
     char* free_ptr;     //< Next free memory in the current region.
@@ -203,7 +192,7 @@ private:
        void* void_ptr = ptr;
        if(std::align(alignment, bytes, void_ptr, space))
        {
-           ptr = reinterpret_cast<char*>(void_ptr);
+           ptr = static_cast<char*>(void_ptr);
            return ptr;
        }
        return nullptr;
@@ -213,10 +202,10 @@ private:
 /// An allocator encapsulating an arena memory resource.
 ///
 /// This differs from `std::pmr::polymorphic_allocator` with an
-/// `std::pmr::monotonic_buffer_resource` in that it returns a default
-/// copy constructed polymorphic allocator (i.e. allocates from new/delete)
-/// in `select_on_container_copy_construction`, while this allocator
-/// returns itself (default allocator_traits semantics).
+/// `std::pmr::monotonic_buffer_resource` in that the standard returns a
+/// default copy constructed polymorphic allocator (i.e. allocates from
+/// new/delete) in `select_on_container_copy_construction`, while this
+/// allocator returns itself (default allocator_traits semantics).
 ///
 /// This satisfies the requirements of Allocator.
 /// https://en.cppreference.com/w/cpp/named_req/Allocator
@@ -246,7 +235,7 @@ public:
     auto allocate(size_t n) -> T*
     {
         auto ptr = arena->allocate(n * sizeof(T), alignof(T));
-        return reinterpret_cast<T*>(ptr);
+        return static_cast<T*>(ptr);
     }
 
     void deallocate(T* p, size_t n)
@@ -255,13 +244,13 @@ public:
     }
 
     template<typename U>
-    bool operator==(const ArenaAllocator<U>& rhs)
+    bool operator==(const ArenaAllocator<U>& rhs) const
     {
         return *this->arena == *rhs.arena;
     }
 
     template<typename U>
-    bool operator!=(const ArenaAllocator<U>& rhs)
+    bool operator!=(const ArenaAllocator<U>& rhs) const
     {
         return !(*this == rhs);
     }
@@ -269,4 +258,34 @@ public:
 private:
     ArenaMemoryResource* arena;
 };
+}
+
+inline // TODO can these be inline?
+void* operator new(std::size_t count,
+                   gta3sc::ArenaMemoryResource& arena,
+                   std::size_t align)
+{
+   return arena.allocate(count, align);
+}
+
+inline // TODO can these be inline?
+void* operator new[](std::size_t count,
+                     gta3sc::ArenaMemoryResource& arena,
+                     std::size_t align)
+{
+   return arena.allocate(count, align);
+}
+
+inline // TODO can these be inline?
+void* operator new(std::size_t count,
+                   gta3sc::ArenaMemoryResource& arena)
+{
+   return operator new(count, arena, alignof(std::max_align_t));
+}
+
+inline // TODO can these be inline?
+void* operator new[](std::size_t count,
+                     gta3sc::ArenaMemoryResource& arena)
+{
+   return operator new[](count, arena, alignof(std::max_align_t));
 }

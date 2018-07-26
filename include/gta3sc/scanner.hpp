@@ -64,13 +64,21 @@ public:
     Scanner& operator=(Scanner&&) = default;
 
     /// Consumes the next token in the stream of characters.
+    ///
+    /// It is guaranted that a finite number of calls to this function
+    /// (even if they fail) reaches the end of the stream.
+    ///
+    /// The end of line token is returned infinitely when the scanner
+    /// is at the end of the stream.
     auto next() -> std::optional<Token>;
 
     /// Consumes the next filename token in the stream of characters.
     ///
     /// The difference between this scan and the usual one is that it
     /// does not consider operators as individual tokens, but as part
-    /// of a word token (e.g. `file-name.sc`).
+    /// of a word token (e.g. `file-name.sc`). Additionally, it is
+    /// not guaranted that a finite number of calls to this function
+    /// reaches the end of the stream.
     /// 
     /// A filename must end in `.sc`, otherwise `std::nullopt` gets
     /// returned.

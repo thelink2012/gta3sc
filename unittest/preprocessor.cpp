@@ -17,7 +17,7 @@ auto drain(gta3sc::Preprocessor& pp) -> std::string
     std::string res;
     while(!pp.eof())
         res.push_back(pp.next());
-    REQUIRE(res.back() == '\0');
+    CHECK(res.back() == '\0');
     res.pop_back();
     return res;
 }
@@ -27,7 +27,7 @@ TEST_CASE("simple character stream")
 {
     auto source = make_source("foo");
     auto pp = gta3sc::Preprocessor(source);
-    CHECK(drain(pp) == "foo");
+    REQUIRE(drain(pp) == "foo");
 }
 
 TEST_CASE("character stream EOF")
@@ -35,83 +35,83 @@ TEST_CASE("character stream EOF")
     auto source = make_source("foo");
     auto pp = gta3sc::Preprocessor(source);
     while(!pp.eof()) pp.next();
-    REQUIRE(pp.eof() == true);
-    CHECK(pp.next() == '\0');
-    CHECK(pp.next() == '\0');
-    CHECK(pp.next() == '\0');
     CHECK(pp.eof() == true);
+    REQUIRE(pp.next() == '\0');
+    REQUIRE(pp.next() == '\0');
+    REQUIRE(pp.next() == '\0');
+    REQUIRE(pp.eof() == true);
 }
 
 TEST_CASE("character stream with CR")
 {
     auto source = make_source("foo\r\nbar\rbaz");
     auto pp = gta3sc::Preprocessor(source);
-    CHECK(drain(pp) == "foo\nbar\nbaz");
+    REQUIRE(drain(pp) == "foo\nbar\nbaz");
 }
 
 TEST_CASE("character stream with whitespaces")
 {
     auto source = make_source("foo   (bar) ,\t\t baz");
     auto pp = gta3sc::Preprocessor(source);
-    CHECK(drain(pp) == "foo   (bar) ,\t\t baz");
+    REQUIRE(drain(pp) == "foo   (bar) ,\t\t baz");
 }
 
 TEST_CASE("character stream with leading whitespaces")
 {
     auto source = make_source("   (,)    \t\tfoo\n  ,\t)  bar\n\t\tbaz");
     auto pp = gta3sc::Preprocessor(source);
-    CHECK(drain(pp) == "foo\nbar\nbaz");
+    REQUIRE(drain(pp) == "foo\nbar\nbaz");
 }
 
 TEST_CASE("character stream with trailing whitespaces")
 {
     auto source = make_source("foo,\nbar  \t, \nbaz  ()");
     auto pp = gta3sc::Preprocessor(source);
-    CHECK(drain(pp) == "foo,\nbar  \t, \nbaz  ()");
+    REQUIRE(drain(pp) == "foo,\nbar  \t, \nbaz  ()");
 }
 
 TEST_CASE("character stream with line comment")
 {
     auto source = make_source("foo // line comment\nbar\n  // more comment\nbaz");
     auto pp = gta3sc::Preprocessor(source);
-    CHECK(drain(pp) == "foo \nbar\n\nbaz");
+    REQUIRE(drain(pp) == "foo \nbar\n\nbaz");
 }
 
 TEST_CASE("character stream with leading block comment")
 {
     auto source = make_source("  /* block */ () /* more */ foo\nbar\n /**/, baz");
     auto pp = gta3sc::Preprocessor(source);
-    CHECK(drain(pp) == "foo\nbar\nbaz");
+    REQUIRE(drain(pp) == "foo\nbar\nbaz");
 }
 
 TEST_CASE("character stream with trailing block comment")
 {
     auto source = make_source("foo /* block */\nbar\nbaz/* block */");
     auto pp = gta3sc::Preprocessor(source);
-    CHECK(drain(pp) == "foo  \nbar\nbaz ");
+    REQUIRE(drain(pp) == "foo  \nbar\nbaz ");
 }
 
 TEST_CASE("character stream with block comment crossing lines")
 {
     auto source = make_source("foo /* block \n   comment \n */ \nbar\nbaz");
     auto pp = gta3sc::Preprocessor(source);
-    CHECK(drain(pp) == "foo \n\n\nbar\nbaz");
+    REQUIRE(drain(pp) == "foo \n\n\nbar\nbaz");
 }
 
 TEST_CASE("character stream with nested block comment")
 {
     auto source = make_source("foo/* this /* is a block \n /* nesting */\n */ */bar");
     auto pp = gta3sc::Preprocessor(source);
-    CHECK(drain(pp) == "foo\n\nbar");
-    CHECK(pp.inside_block_comment() == false);
+    REQUIRE(drain(pp) == "foo\n\nbar");
+    REQUIRE(pp.inside_block_comment() == false);
 }
 
 TEST_CASE("character stream with unclosed block comment")
 {
     auto source = make_source("foo/*/ this is a block \n comment \n ");
     auto pp = gta3sc::Preprocessor(source);
-    CHECK(drain(pp) == "foo\n\n");
-    CHECK(pp.inside_block_comment() == true);
+    REQUIRE(drain(pp) == "foo\n\n");
+    REQUIRE(pp.inside_block_comment() == true);
 }
 
 TEST_CASE("complicated character stream")
@@ -135,5 +135,5 @@ final   (line   )
 
 )__");
     auto pp = gta3sc::Preprocessor(source);
-    CHECK(drain(pp) == expected);
+    REQUIRE(drain(pp) == expected);
 }

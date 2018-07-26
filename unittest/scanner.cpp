@@ -35,32 +35,32 @@ TEST_CASE("scanner with empty stream")
     auto source = make_source("");
     auto scanner = make_scanner(source);
 
-    CHECK(!scanner.eof());
-    CHECK(scanner.next()->category == Category::EndOfLine);
-    CHECK(scanner.eof());
-    CHECK(scanner.next()->lexeme == "");
-    CHECK(scanner.next()->category == Category::EndOfLine);
-    CHECK(scanner.eof());
+    REQUIRE(!scanner.eof());
+    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.eof());
+    REQUIRE(scanner.next()->lexeme == "");
+    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.eof());
 }
 
 TEST_CASE("scanner with leading and trailing whitespaces")
 {
     auto source = make_source("  , COMMAND  (\t)  \n");
     auto scanner = make_scanner(source);
-    CHECK(scanner.next()->category == Category::Word);
-    CHECK(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::Word);
+    REQUIRE(scanner.next()->category == Category::EndOfLine);
 }
 
 TEST_CASE("scanner with whitespaces in the middle")
 {
     auto source = make_source("  , COMMAND  1,\t,2  (\t)  ");
     auto scanner = make_scanner(source);
-    CHECK(scanner.next()->category == Category::Word);
-    CHECK(scanner.next()->category == Category::Whitespace);
-    CHECK(scanner.next()->category == Category::Word);
-    CHECK(scanner.next()->category == Category::Whitespace);
-    CHECK(scanner.next()->category == Category::Word);
-    CHECK(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::Word);
+    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::Word);
+    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::Word);
+    REQUIRE(scanner.next()->category == Category::EndOfLine);
 }
 
 TEST_CASE("scanner with word")
@@ -74,66 +74,66 @@ TEST_CASE("scanner with word")
     gta3sc::Token token;
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "1234");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "1234");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "123a");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "123a");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "-123a");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "-123a");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "-.abc");
-    CHECK(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "-.abc");
+    REQUIRE(scanner.next()->category == Category::EndOfLine);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "4x4.sc");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "4x4.sc");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == ".sc");
-    CHECK(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == ".sc");
+    REQUIRE(scanner.next()->category == Category::EndOfLine);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "word:");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "word:");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "word:");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "word:");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "word");
-    CHECK(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "word");
+    REQUIRE(scanner.next()->category == Category::EndOfLine);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "%$&~");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "%$&~");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "AbC");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "AbC");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "{}");
-    CHECK(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "{}");
+    REQUIRE(scanner.next()->category == Category::EndOfLine);
 
-    CHECK(scanner.eof());
+    REQUIRE(scanner.eof());
 }
 
 TEST_CASE("scanner with string literal")
@@ -148,32 +148,32 @@ TEST_CASE("scanner with string literal")
     gta3sc::Token token;
 
     token = scanner.next().value();
-    CHECK(token.category == Category::String);
-    CHECK(token.lexeme == "\"this\tI$ /* a // \\n (%1teral),\"");
-    CHECK(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(token.category == Category::String);
+    REQUIRE(token.lexeme == "\"this\tI$ /* a // \\n (%1teral),\"");
+    REQUIRE(scanner.next()->category == Category::EndOfLine);
 
-    CHECK(scanner.next() == std::nullopt);
-    CHECK(scanner.next()->category == Category::EndOfLine);
-
-    token = scanner.next().value();
-    CHECK(token.category == Category::String);
-    CHECK(token.lexeme == "\"\"");
-    CHECK(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next() == std::nullopt);
+    REQUIRE(scanner.next()->category == Category::EndOfLine);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::String);
-    CHECK(token.lexeme == "\"string\"");
-    token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "abc");
-    CHECK(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(token.category == Category::String);
+    REQUIRE(token.lexeme == "\"\"");
+    REQUIRE(scanner.next()->category == Category::EndOfLine);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "not_string");
-    CHECK(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(token.category == Category::String);
+    REQUIRE(token.lexeme == "\"string\"");
+    token = scanner.next().value();
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "abc");
+    REQUIRE(scanner.next()->category == Category::EndOfLine);
 
-    CHECK(scanner.eof());
+    token = scanner.next().value();
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "not_string");
+    REQUIRE(scanner.next()->category == Category::EndOfLine);
+
+    REQUIRE(scanner.eof());
 }
 
 TEST_CASE("scanner with filename")
@@ -188,63 +188,63 @@ TEST_CASE("scanner with filename")
     gta3sc::Token token;
 
     token = scanner.next_filename().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == ".sc");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == ".sc");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next_filename().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "a.SC");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "a.SC");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next_filename().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "@.sc");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "@.sc");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next_filename().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "1.sc");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "1.sc");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
-    CHECK(scanner.next_filename() == std::nullopt); // 1.0sc
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next_filename() == std::nullopt); // 1.0sc
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
-    CHECK(scanner.next_filename() == std::nullopt); // SC
-    CHECK(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next_filename() == std::nullopt); // SC
+    REQUIRE(scanner.next()->category == Category::EndOfLine);
 
-    CHECK(scanner.next_filename() == std::nullopt); // b
+    REQUIRE(scanner.next_filename() == std::nullopt); // b
     token = scanner.next().value();
-    CHECK(token.category == Category::String);
-    CHECK(token.lexeme == "\"a\"");
+    REQUIRE(token.category == Category::String);
+    REQUIRE(token.lexeme == "\"a\"");
     token = scanner.next_filename().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == ".sc");
-    CHECK(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == ".sc");
+    REQUIRE(scanner.next()->category == Category::EndOfLine);
 
     token = scanner.next_filename().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "file-nam+@e.sc");
-    CHECK(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "file-nam+@e.sc");
+    REQUIRE(scanner.next()->category == Category::EndOfLine);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "file");
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "file");
     token = scanner.next().value();
-    CHECK(token.category == Category::Minus);
-    CHECK(token.lexeme == "-");
+    REQUIRE(token.category == Category::Minus);
+    REQUIRE(token.lexeme == "-");
     token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "nam");
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "nam");
     token = scanner.next().value();
-    CHECK(token.category == Category::PlusAt);
-    CHECK(token.lexeme == "+@");
+    REQUIRE(token.category == Category::PlusAt);
+    REQUIRE(token.lexeme == "+@");
     token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "e.sc");
-    CHECK(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "e.sc");
+    REQUIRE(scanner.next()->category == Category::EndOfLine);
 
-    CHECK(scanner.eof());
+    REQUIRE(scanner.eof());
 }
 
 TEST_CASE("scanner with operators")
@@ -262,235 +262,235 @@ TEST_CASE("scanner with operators")
     gta3sc::Token token;
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Plus);
-    CHECK(token.lexeme == "+");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Plus);
+    REQUIRE(token.lexeme == "+");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Minus);
-    CHECK(token.lexeme == "-");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Minus);
+    REQUIRE(token.lexeme == "-");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Star);
-    CHECK(token.lexeme == "*");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Star);
+    REQUIRE(token.lexeme == "*");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Slash);
-    CHECK(token.lexeme == "/");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Slash);
+    REQUIRE(token.lexeme == "/");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::PlusAt);
-    CHECK(token.lexeme == "+@");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::PlusAt);
+    REQUIRE(token.lexeme == "+@");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::MinusAt);
-    CHECK(token.lexeme == "-@");
-    CHECK(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(token.category == Category::MinusAt);
+    REQUIRE(token.lexeme == "-@");
+    REQUIRE(scanner.next()->category == Category::EndOfLine);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::PlusEqual);
-    CHECK(token.lexeme == "+=");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::PlusEqual);
+    REQUIRE(token.lexeme == "+=");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::MinusEqual);
-    CHECK(token.lexeme == "-=");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::MinusEqual);
+    REQUIRE(token.lexeme == "-=");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::StarEqual);
-    CHECK(token.lexeme == "*=");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::StarEqual);
+    REQUIRE(token.lexeme == "*=");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::SlashEqual);
-    CHECK(token.lexeme == "/=");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::SlashEqual);
+    REQUIRE(token.lexeme == "/=");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::PlusEqualAt);
-    CHECK(token.lexeme == "+=@");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::PlusEqualAt);
+    REQUIRE(token.lexeme == "+=@");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::MinusEqualAt);
-    CHECK(token.lexeme == "-=@");
-    CHECK(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(token.category == Category::MinusEqualAt);
+    REQUIRE(token.lexeme == "-=@");
+    REQUIRE(scanner.next()->category == Category::EndOfLine);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::LessEqual);
-    CHECK(token.lexeme == "<=");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::LessEqual);
+    REQUIRE(token.lexeme == "<=");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Less);
-    CHECK(token.lexeme == "<");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Less);
+    REQUIRE(token.lexeme == "<");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Equal);
-    CHECK(token.lexeme == "=");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Equal);
+    REQUIRE(token.lexeme == "=");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::EqualHash);
-    CHECK(token.lexeme == "=#");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::EqualHash);
+    REQUIRE(token.lexeme == "=#");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Greater);
-    CHECK(token.lexeme == ">");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Greater);
+    REQUIRE(token.lexeme == ">");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::GreaterEqual);
-    CHECK(token.lexeme == ">=");
-    CHECK(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(token.category == Category::GreaterEqual);
+    REQUIRE(token.lexeme == ">=");
+    REQUIRE(scanner.next()->category == Category::EndOfLine);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::MinusMinus);
-    CHECK(token.lexeme == "--");
+    REQUIRE(token.category == Category::MinusMinus);
+    REQUIRE(token.lexeme == "--");
     token = scanner.next().value();
-    CHECK(token.category == Category::PlusPlus);
-    CHECK(token.lexeme == "++");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::PlusPlus);
+    REQUIRE(token.lexeme == "++");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Minus);
-    CHECK(token.lexeme == "-");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Minus);
+    REQUIRE(token.lexeme == "-");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Minus);
-    CHECK(token.lexeme == "-");
-    CHECK(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(token.category == Category::Minus);
+    REQUIRE(token.lexeme == "-");
+    REQUIRE(scanner.next()->category == Category::EndOfLine);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Less);
-    CHECK(token.lexeme == "<");
+    REQUIRE(token.category == Category::Less);
+    REQUIRE(token.lexeme == "<");
     token = scanner.next().value();
-    CHECK(token.category == Category::Less);
-    CHECK(token.lexeme == "<");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Less);
+    REQUIRE(token.lexeme == "<");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::LessEqual);
-    CHECK(token.lexeme == "<=");
+    REQUIRE(token.category == Category::LessEqual);
+    REQUIRE(token.lexeme == "<=");
     token = scanner.next().value();
-    CHECK(token.category == Category::Greater);
-    CHECK(token.lexeme == ">");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Greater);
+    REQUIRE(token.lexeme == ">");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Plus);
-    CHECK(token.lexeme == "+");
+    REQUIRE(token.category == Category::Plus);
+    REQUIRE(token.lexeme == "+");
     token = scanner.next().value();
-    CHECK(token.category == Category::Minus);
-    CHECK(token.lexeme == "-");
+    REQUIRE(token.category == Category::Minus);
+    REQUIRE(token.lexeme == "-");
     token = scanner.next().value();
-    CHECK(token.category == Category::Star);
-    CHECK(token.lexeme == "*");
+    REQUIRE(token.category == Category::Star);
+    REQUIRE(token.lexeme == "*");
     token = scanner.next().value();
-    CHECK(token.category == Category::Slash);
-    CHECK(token.lexeme == "/");
+    REQUIRE(token.category == Category::Slash);
+    REQUIRE(token.lexeme == "/");
     token = scanner.next().value();
-    CHECK(token.category == Category::PlusAt);
-    CHECK(token.lexeme == "+@");
+    REQUIRE(token.category == Category::PlusAt);
+    REQUIRE(token.lexeme == "+@");
     token = scanner.next().value();
-    CHECK(token.category == Category::MinusAt);
-    CHECK(token.lexeme == "-@");
-    CHECK(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(token.category == Category::MinusAt);
+    REQUIRE(token.lexeme == "-@");
+    REQUIRE(scanner.next()->category == Category::EndOfLine);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "1");
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "1");
     token = scanner.next().value();
-    CHECK(token.category == Category::MinusMinus);
-    CHECK(token.lexeme == "--");
+    REQUIRE(token.category == Category::MinusMinus);
+    REQUIRE(token.lexeme == "--");
     token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "1");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "1");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "1");
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "1");
     token = scanner.next().value();
-    CHECK(token.category == Category::Minus);
-    CHECK(token.lexeme == "-");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Minus);
+    REQUIRE(token.lexeme == "-");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "-1");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "-1");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Plus);
-    CHECK(token.lexeme == "+");
+    REQUIRE(token.category == Category::Plus);
+    REQUIRE(token.lexeme == "+");
     token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "1");
-    CHECK(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "1");
+    REQUIRE(scanner.next()->category == Category::EndOfLine);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "-.");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "-.");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "-.1");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "-.1");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "-1.0");
-    CHECK(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "-1.0");
+    REQUIRE(scanner.next()->category == Category::EndOfLine);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Plus);
-    CHECK(token.lexeme == "+");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Plus);
+    REQUIRE(token.lexeme == "+");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "@");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "@");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Minus);
-    CHECK(token.lexeme == "-");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Minus);
+    REQUIRE(token.lexeme == "-");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "@");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "@");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Equal);
-    CHECK(token.lexeme == "=");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Equal);
+    REQUIRE(token.lexeme == "=");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Word);
-    CHECK(token.lexeme == "#");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.lexeme == "#");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Plus);
-    CHECK(token.lexeme == "+");
-    CHECK(scanner.next()->category == Category::Whitespace);
+    REQUIRE(token.category == Category::Plus);
+    REQUIRE(token.lexeme == "+");
+    REQUIRE(scanner.next()->category == Category::Whitespace);
 
     token = scanner.next().value();
-    CHECK(token.category == Category::Equal);
-    CHECK(token.lexeme == "=");
-    CHECK(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(token.category == Category::Equal);
+    REQUIRE(token.lexeme == "=");
+    REQUIRE(scanner.next()->category == Category::EndOfLine);
 
-    CHECK(scanner.eof());
+    REQUIRE(scanner.eof());
 }
