@@ -2,6 +2,7 @@ add_library(gta3sc
   sourceman.cpp
   preprocessor.cpp
   scanner.cpp
+  parser.cpp
 )
 target_compile_features(gta3sc PUBLIC cxx_std_17)
 target_include_directories(gta3sc
