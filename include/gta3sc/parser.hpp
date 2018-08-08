@@ -66,9 +66,10 @@ struct ParserIR
         return new (arena, alignof(SourceInfo)) SourceInfo(info);
     }
 
-    static auto create_command(const SourceInfo& info, std::string_view name, ArenaMemoryResource& arena) -> arena_ptr<ParserIR>
+    static auto create_command(const SourceInfo& info, std::string_view name_a, ArenaMemoryResource& arena) -> arena_ptr<ParserIR>
     {
         auto node = new (arena, alignof(ParserIR)) ParserIR;
+        auto name = create_upper_view(name_a, arena);
         node->op = Command { create_source_info(info, arena), name };
         return node;
     }
@@ -144,6 +145,8 @@ public:
     {
         return scanner.source_file();
     }
+
+    void skip_current_line();
 
     auto parse_command_statement()
         -> std::optional<arena_ptr<ParserIR>>;

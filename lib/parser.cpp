@@ -8,6 +8,16 @@ namespace gta3sc
 {
 constexpr std::string_view COMMAND_GOTO = "GOTO";
 
+void Parser::skip_current_line()
+{
+    while(true)
+    {
+        auto token = this->next();
+        if(token && token->category == Category::EndOfLine)
+            break;
+    }
+}
+
 bool Parser::is_integer(const Token& token) const
 {
     // integer := ['-'] digit {digit} ;
@@ -26,6 +36,7 @@ bool Parser::is_integer(const Token& token) const
         else
             return false;
     }
+
     return true;
 }
 
@@ -84,6 +95,9 @@ bool Parser::is_float(const Token& token) const
 bool Parser::is_identifier(const Token& token) const
 {
     // identifier := ('$' | 'A'..'Z') {token_char} ;
+    //
+    // Constraints: 
+    // An identifier should not end with a `:` character.
 
     if(token.category != Category::Word)
         return false;
@@ -91,13 +105,14 @@ bool Parser::is_identifier(const Token& token) const
     if(token.lexeme.size() >= 1)
     {
         const auto front = token.lexeme.front();
+        const auto back = token.lexeme.back();
+
         if(front == '$'
             || (front >= 'A' && front <= 'Z')
-            || (front <= 'a' && front <= 'z'))
+            || (front >= 'a' && front <= 'z'))
         {
-            // no need to scan the rest, the scanner
-            // would not accept this word otherwise.
-            return true;
+            if(back != ':')
+                return true;
         }
     }
 
