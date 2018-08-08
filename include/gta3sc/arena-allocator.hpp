@@ -158,7 +158,7 @@ public:
         while(owns_region && region_ptr)
         {
             auto header = *reinterpret_cast<OwnedHeader*>(region_ptr);
-            operator delete(region_ptr, region_size);
+            operator delete(region_ptr);
             this->region_ptr = header.prev_region_ptr;
             this->region_size = header.prev_region_size;
             this->owns_region = header.owns_prev_region;
@@ -260,32 +260,50 @@ private:
 };
 }
 
-inline // TODO can these be inline?
-void* operator new(std::size_t count,
-                   gta3sc::ArenaMemoryResource& arena,
-                   std::size_t align)
+inline void* operator new(std::size_t count,
+                          gta3sc::ArenaMemoryResource& arena,
+                          std::size_t align)
 {
    return arena.allocate(count, align);
 }
 
-inline // TODO can these be inline?
-void* operator new[](std::size_t count,
-                     gta3sc::ArenaMemoryResource& arena,
-                     std::size_t align)
+inline void* operator new[](std::size_t count,
+                            gta3sc::ArenaMemoryResource& arena,
+                            std::size_t align)
 {
    return arena.allocate(count, align);
 }
 
-inline // TODO can these be inline?
-void* operator new(std::size_t count,
-                   gta3sc::ArenaMemoryResource& arena)
+inline void* operator new(std::size_t count,
+                          gta3sc::ArenaMemoryResource& arena)
 {
    return operator new(count, arena, alignof(std::max_align_t));
 }
 
-inline // TODO can these be inline?
-void* operator new[](std::size_t count,
-                     gta3sc::ArenaMemoryResource& arena)
+inline void* operator new[](std::size_t count,
+                            gta3sc::ArenaMemoryResource& arena)
 {
    return operator new[](count, arena, alignof(std::max_align_t));
+}
+
+inline void operator delete(void*,
+                             gta3sc::ArenaMemoryResource&,
+                             std::size_t)
+{
+}
+
+inline void operator delete[](void*,
+                               gta3sc::ArenaMemoryResource&,
+                               std::size_t)
+{
+}
+
+inline void operator delete(void*,
+                             gta3sc::ArenaMemoryResource&)
+{
+}
+
+inline void operator delete[](void*,
+                               gta3sc::ArenaMemoryResource&)
+{
 }

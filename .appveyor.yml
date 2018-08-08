@@ -1,0 +1,14 @@
+image: Visual Studio 2017
+clone_depth: 10
+install:
+  - cd C:\projects\gta3sc
+  - git submodule update --init --recursive
+before_build:
+  - call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars32.bat"
+build_script:
+  - mkdir build
+  - cd build
+  - cmake .. -DBUILD_TESTING=true
+  - cmake --build . --config RelWithDebInfo
+test_script:
+  - ctest . --verbose -C RelWithDebInfo

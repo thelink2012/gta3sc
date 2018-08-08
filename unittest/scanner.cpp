@@ -1,4 +1,4 @@
-#include "doctest.h"
+#include <doctest.h>
 #include <gta3sc/scanner.hpp>
 #include <cstring>
 #include <ostream>

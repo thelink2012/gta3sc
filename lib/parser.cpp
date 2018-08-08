@@ -230,7 +230,7 @@ auto Parser::parse_argument()
     }
     else if(is_integer(*token))
     {
-        constexpr long min_value = -2147483648, max_value = 2147483647;
+        constexpr long min_value = (-2147483647-1), max_value = 2147483647;
 
         static_assert(std::numeric_limits<long>::min() <= min_value
                     && std::numeric_limits<long>::max() >= max_value);

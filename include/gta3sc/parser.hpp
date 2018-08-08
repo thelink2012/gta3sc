@@ -251,7 +251,7 @@ private:
     }
 
     template<typename... Args>
-    auto consume(Args&&... category) -> std::optional<Token>
+    auto consume(Args&&... category0) -> std::optional<Token>
     {
         // TODO put is same for type category
         auto token = next();
@@ -260,7 +260,7 @@ private:
             // TODO emit some error derived from the scanner
             return std::nullopt;
         }
-        if(((token->category != category) && ...))
+        if(((token->category != category0) && ...))
         {
             // TODO emit expected error
             return std::nullopt;

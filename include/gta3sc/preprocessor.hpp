@@ -12,7 +12,7 @@ public:
     explicit Preprocessor(const SourceFile& source) :
         source(source)
     {
-        this->cursor = source.view_with_terminator().begin();
+        this->cursor = &source.view_with_terminator()[0];
         this->start_of_line = true;
         this->end_of_stream = false;
         this->inside_quotes = false;

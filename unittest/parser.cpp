@@ -1,4 +1,4 @@
-#include "doctest.h"
+#include <doctest.h>
 #include <gta3sc/parser.hpp>
 #include <cstring>
 
@@ -23,7 +23,7 @@ auto make_parser(const gta3sc::SourceFile& source, gta3sc::ArenaMemoryResource& 
 
 TEST_CASE("parsing a command")
 {
-    auto arena = gta3sc::ArenaMemoryResource();
+    gta3sc::ArenaMemoryResource arena;
     auto source = make_source("waIT 10 20 30\n"
                               "C\n"
                               "c\n"
@@ -100,8 +100,9 @@ TEST_CASE("parsing a command")
 
 TEST_CASE("parsing integer argument")
 {
-    auto arena = gta3sc::ArenaMemoryResource();
+    gta3sc::ArenaMemoryResource arena;
     auto source = make_source("WAIT 123 010 -39\n"
+                              "WAIT 2147483647 -2147483648\n"
                               "WAIT -432-10\n"
                               "WAIT 123a\n"
                               "WAIT 0x10\n"
@@ -112,13 +113,22 @@ TEST_CASE("parsing integer argument")
 
     auto ir = parser.parse_command_statement();
     REQUIRE(ir != std::nullopt);
-
     auto& command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
     REQUIRE(command.name == "WAIT");
     REQUIRE(command.num_arguments == 3);
     REQUIRE(std::get<int32_t>(command.arguments[0]->value) == 123);
     REQUIRE(std::get<int32_t>(command.arguments[1]->value) == 10);
     REQUIRE(std::get<int32_t>(command.arguments[2]->value) == -39);
+
+    ir = parser.parse_command_statement();
+    REQUIRE(ir != std::nullopt);
+    command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
+    REQUIRE(command.name == "WAIT");
+    REQUIRE(command.num_arguments == 2);
+    REQUIRE(std::get<int32_t>(command.arguments[0]->value)
+            == std::numeric_limits<int32_t>::max());
+    REQUIRE(std::get<int32_t>(command.arguments[1]->value)
+            == std::numeric_limits<int32_t>::min());
 
     ir = parser.parse_command_statement();
     parser.skip_current_line(); // -432-10
@@ -148,7 +158,7 @@ TEST_CASE("parsing integer argument")
 
 TEST_CASE("parsing float argument")
 {
-    auto arena = gta3sc::ArenaMemoryResource();
+    gta3sc::ArenaMemoryResource arena;
     auto source = make_source("WAIT .1 -.1 .1f .1F .15 .1.9 -.1.\n"
                               "WAIT 1F -1f 1. 1.1 1.f 1.. -1..\n"
                               "WAIT .1a\n"
@@ -213,7 +223,7 @@ TEST_CASE("parsing float argument")
 
 TEST_CASE("parsing identifier argument")
 {
-    auto arena = gta3sc::ArenaMemoryResource();
+    gta3sc::ArenaMemoryResource arena;
     auto source = make_source("WAIT $abc abc AbC a@_1$\n"
                               "WAIT _abc\n"
                               "WAIT @abc\n"
@@ -260,7 +270,7 @@ TEST_CASE("parsing identifier argument")
 
 TEST_CASE("parsing string literal argument")
 {
-    auto arena = gta3sc::ArenaMemoryResource();
+    gta3sc::ArenaMemoryResource arena;
     auto source = make_source("WAIT \"this\tI$ /* a // \\n (%1teral),\"\n"
                               "WAIT \"\"\n"
                               "WAIT \"\n"
@@ -303,7 +313,7 @@ TEST_CASE("parsing filename argument")
     // TODO
     return;
 
-    auto arena = gta3sc::ArenaMemoryResource();
+    gta3sc::ArenaMemoryResource arena;
     auto source = make_source("LAUNCH_MISSION .sc\n"
                               "LAUNCH_MISSION a.SC\n"
                               "LAUNCH_MISSION @.sc\n"
