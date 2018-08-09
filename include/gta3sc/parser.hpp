@@ -47,7 +47,11 @@ struct ParserIR
     };
 
 
-    struct LabelDef { std::string_view name; };
+    struct LabelDef
+    {
+        arena_ptr<SourceInfo> source_info;
+        std::string_view name;
+    };
 
     struct Command
     {
@@ -61,6 +65,26 @@ struct ParserIR
     arena_ptr<ParserIR> next = nullptr;
     arena_ptr<ParserIR> prev = nullptr;
 
+    void set_next(arena_ptr<ParserIR> other)
+    {
+        if(this->next)
+        {
+            assert(this->next->prev == this);
+            this->next->prev = nullptr;
+        }
+
+        this->next = other;
+
+        if(other->prev)
+        {
+            assert(other->prev->next == other);
+            other->prev->next = nullptr;
+        }
+
+        other->prev = this;
+    }
+    
+
     static auto create_source_info(const SourceInfo& info, ArenaMemoryResource& arena) -> arena_ptr<SourceInfo>
     {
         return new (arena, alignof(SourceInfo)) SourceInfo(info);
@@ -71,6 +95,14 @@ struct ParserIR
         auto node = new (arena, alignof(ParserIR)) ParserIR;
         auto name = create_upper_view(name_a, arena);
         node->op = Command { create_source_info(info, arena), name };
+        return node;
+    }
+
+    static auto create_label_def(const SourceInfo& info, std::string_view name_a, ArenaMemoryResource& arena) -> arena_ptr<ParserIR>
+    {
+        auto node = new (arena, alignof(ParserIR)) ParserIR;
+        auto name = create_upper_view(name_a, arena);
+        node->op = LabelDef { create_source_info(info, arena), name };
         return node;
     }
                             
@@ -137,27 +169,26 @@ public:
         scanner(std::move(scanner_)),
         arena(arena_)
     {
+        assert(std::size(has_peek_token) == std::size(peek_tokens));
         std::fill(std::begin(has_peek_token), std::end(has_peek_token), false);
     }
 
-    /// Gets the source file associated with this parser.
-    auto source_file() const -> const SourceFile&
-    {
-        return scanner.source_file();
-    }
+    /// \returns the source file associated with this parser.
+    auto source_file() const -> const SourceFile&;
 
+    /// Skips to the next line in the token stream.
     void skip_current_line();
+
+    auto parse_statement()
+        -> std::optional<arena_ptr<ParserIR>>;
+
+private:
+    auto parse_embedded_statement()
+        -> std::optional<arena_ptr<ParserIR>>;
 
     auto parse_command_statement()
         -> std::optional<arena_ptr<ParserIR>>;
 
-    // TODO remove this
-    auto to_scanner() && -> Scanner
-    {
-        return std::move(scanner);
-    }
-
-private:
     auto parse_command(bool is_if_line = false) 
         -> std::optional<arena_ptr<ParserIR>>;
 
@@ -167,104 +198,55 @@ private:
     auto parse_argument() 
         -> std::optional<arena_ptr<ParserIR::Argument>>;
 
+    bool is_digit(char) const;
     bool is_integer(const Token&) const;
     bool is_float(const Token&) const;
     bool is_identifier(const Token&) const;
-    bool is_digit(char) const;
 
 private:
-    // you can only peek if you peek the previous one
-    auto peek(size_t n = 0) -> std::optional<Token>
-    {
-        assert(n < std::size(peek_tokens));
-        if(has_peek_token[n])
-            return peek_tokens[n];
+    /// Looks ahead by N tokens in the token stream.
+    /// 
+    /// In order to look into the token `N`, it is necessary to first look
+    /// into the token `N-1` (unless`N == 0`). A call to a token consumer
+    /// (such as `next` or `consume`) reduces the number of already peeked
+    /// tokens by one.
+    ///
+    /// The lookahead is restricted to the line of the current token,
+    /// thus trying to read past the end of the line yields `std::nullopt`.
+    ///
+    /// The 0th peek token is the current token in the stream.
+    ///
+    /// \returns the token at N or `std::nullopt` if such token is invalid.
+    auto peek(size_t n = 0) -> std::optional<Token>;
 
-        size_t i = 0;
-        while(i < size(peek_tokens) && has_peek_token[i])
-            ++i;
+    /// Consumes and returns the current token in the stream.
+    ///
+    /// \returns the current token or `std::nullopt` if such token is invalid.
+    auto next() -> std::optional<Token>;
 
-        if(i > 0 && peek_tokens[i-1] && peek_tokens[i-1]->category == Category::EndOfLine)
-            return std::nullopt;
-
-        while(i < n)
-        {
-            has_peek_token[i] = true;
-            peek_tokens[i] = scanner.next();
-            ++i;
-
-            if(peek_tokens[i-1]->category == Category::EndOfLine)
-                return std::nullopt;
-        }
-
-        assert(i == n);
-        has_peek_token[i] = true;
-        peek_tokens[i] = scanner.next();
-
-        return peek_tokens[n];
-    }
-
-    auto peek_category(size_t n = 0) -> std::optional<Category>
-    {
-        auto token = peek();
-        if(!token)
-            return std::nullopt;
-        return token->category;
-    }
-
-    auto next() -> std::optional<Token>
-    {
-        if(!has_peek_token[0])
-            return scanner.next();
-
-        assert(has_peek_token[0] == true);
-        auto eat_token = peek_tokens[0];
-
-        size_t n = 1;
-        for(; n < size(peek_tokens) && has_peek_token[n]; ++n)
-            peek_tokens[n-1] = peek_tokens[n];
-
-        assert(has_peek_token[n-1] == true);
-        if(peek_tokens[n-1] == std::nullopt
-            || peek_tokens[n-1]->category == Category::EndOfLine)
-        {
-            has_peek_token[n-1] = false;
-        }
-        else
-        {
-            has_peek_token[n-1] = true;
-            peek_tokens[n-1] = scanner.next();
-        }
-        
-        return eat_token;
-    }
-
-    auto consume() -> std::optional<Token>
-    {
-        auto token = next();
-        if(!token)
-        {
-            // TODO emit some error derived from scanner
-            return std::nullopt;
-        }
-        return token;
-    }
-
+    /// Consumes and returns the current token in the stream.
+    ///
+    /// If the token category is none of `categories`, then `std::nullopt`
+    /// is returned. Notice that is not the only case `std::nullopt` may
+    /// get returned. Please see `next`.
     template<typename... Args>
-    auto consume(Args&&... category0) -> std::optional<Token>
+    auto consume(Args... category0) -> std::optional<Token>
     {
-        // TODO put is same for type category
+        static_assert((std::is_same_v<Args, Category> && ...));
+
+        if(sizeof...(Args) == 0)
+            return next();
+
         auto token = next();
         if(!token)
-        {
-            // TODO emit some error derived from the scanner
             return std::nullopt;
-        }
+
         if(((token->category != category0) && ...))
         {
             // TODO emit expected error
             return std::nullopt;
         }
+
         return token;
     }
 
@@ -274,5 +256,6 @@ private:
 
     bool has_peek_token[6];
     std::optional<Token> peek_tokens[6];
+
 };
 }

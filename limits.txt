@@ -1,0 +1,1 @@
+2048 tokens per line (see parser.cpp)

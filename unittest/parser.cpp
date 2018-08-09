@@ -21,13 +21,86 @@ auto make_parser(const gta3sc::SourceFile& source, gta3sc::ArenaMemoryResource& 
 }
 }
 
+TEST_CASE("parsing a label definition")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("laBEL:\n"
+                              "laBEL: WAIT 0\n"
+                              "label:\n"
+                              "WAIT 0\n"
+                              "la:bel:\n"
+                              "1abel:\n"
+                              "lab\"el\":\n"
+                              "\"label\":\n"
+                              "lab\"el:\n"
+                              ":\n"
+                              "::\n"
+                              "label:");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+    REQUIRE((*ir)->next == nullptr);
+    REQUIRE(std::get<gta3sc::ParserIR::LabelDef>((*ir)->op).name == "LABEL");
+
+    ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+    REQUIRE((*ir)->next != nullptr);
+    REQUIRE(std::get<gta3sc::ParserIR::LabelDef>((*ir)->op).name == "LABEL");
+    REQUIRE(std::get<gta3sc::ParserIR::Command>((*ir)->next->op).name == "WAIT");
+
+    ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+    REQUIRE((*ir)->next == nullptr);
+    REQUIRE(std::get<gta3sc::ParserIR::LabelDef>((*ir)->op).name == "LABEL");
+
+    ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+    REQUIRE((*ir)->next == nullptr);
+    REQUIRE(std::get<gta3sc::ParserIR::Command>((*ir)->op).name == "WAIT");
+
+    ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+    REQUIRE((*ir)->next == nullptr);
+    REQUIRE(std::get<gta3sc::ParserIR::LabelDef>((*ir)->op).name == "LA:BEL");
+
+    ir = parser.parse_statement();
+    parser.skip_current_line(); // 1abel:
+    REQUIRE(ir == std::nullopt);
+
+    ir = parser.parse_statement();
+    parser.skip_current_line(); // lab"el":
+    REQUIRE(ir == std::nullopt);
+
+    ir = parser.parse_statement();
+    parser.skip_current_line(); // "label":
+    REQUIRE(ir == std::nullopt);
+
+    ir = parser.parse_statement();
+    parser.skip_current_line(); // lab"el:
+    REQUIRE(ir == std::nullopt);
+
+    ir = parser.parse_statement();
+    parser.skip_current_line(); // :
+    REQUIRE(ir == std::nullopt);
+
+    ir = parser.parse_statement();
+    parser.skip_current_line(); // ::
+    REQUIRE(ir == std::nullopt);
+
+    ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+    REQUIRE((*ir)->next == nullptr);
+    REQUIRE(std::get<gta3sc::ParserIR::LabelDef>((*ir)->op).name == "LABEL");
+}
+
 TEST_CASE("parsing a command")
 {
     gta3sc::ArenaMemoryResource arena;
     auto source = make_source("waIT 10 20 30\n"
                               "C\n"
                               "c\n"
-                              //"label: c:\n" TODO
+                              "l: c:\n"
                               "a.sc\n"
                               "\"a\"\n"
                               "%\n"
@@ -37,65 +110,71 @@ TEST_CASE("parsing a command")
                               "-1\n");
     auto parser = make_parser(source, arena);
 
-    auto ir = parser.parse_command_statement();
+    auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     auto& command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
     REQUIRE(command.name == "WAIT");
     REQUIRE(command.num_arguments == 3);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
     REQUIRE(command.name == "C");
     REQUIRE(command.num_arguments == 0);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
     REQUIRE(command.name == "C");
     REQUIRE(command.num_arguments == 0);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+    REQUIRE((*ir)->next != nullptr);
+    REQUIRE(std::get<gta3sc::ParserIR::LabelDef>((*ir)->op).name == "L");
+    command = std::get<gta3sc::ParserIR::Command>((*ir)->next->op);
+    REQUIRE(command.name == "C:");
+    REQUIRE(command.num_arguments == 0);
+
+    ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
     REQUIRE(command.name == "A.SC");
     REQUIRE(command.num_arguments == 0);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     parser.skip_current_line(); // "a"
     REQUIRE(ir == std::nullopt);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
     REQUIRE(command.name == "%");
     REQUIRE(command.num_arguments == 0);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
     REQUIRE(command.name == "$");
     REQUIRE(command.num_arguments == 0);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
     REQUIRE(command.name == "1");
     REQUIRE(command.num_arguments == 0);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
     REQUIRE(command.name == ".1");
     REQUIRE(command.num_arguments == 0);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
     REQUIRE(command.name == "-1");
     REQUIRE(command.num_arguments == 0);
-
-    REQUIRE(std::move(parser).to_scanner().eof());
 }
 
 TEST_CASE("parsing integer argument")
@@ -111,7 +190,7 @@ TEST_CASE("parsing integer argument")
                               "WAIT 9");
     auto parser = make_parser(source, arena);
 
-    auto ir = parser.parse_command_statement();
+    auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     auto& command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
     REQUIRE(command.name == "WAIT");
@@ -120,7 +199,7 @@ TEST_CASE("parsing integer argument")
     REQUIRE(std::get<int32_t>(command.arguments[1]->value) == 10);
     REQUIRE(std::get<int32_t>(command.arguments[2]->value) == -39);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
     REQUIRE(command.name == "WAIT");
@@ -130,30 +209,28 @@ TEST_CASE("parsing integer argument")
     REQUIRE(std::get<int32_t>(command.arguments[1]->value)
             == std::numeric_limits<int32_t>::min());
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     parser.skip_current_line(); // -432-10
     REQUIRE(ir == std::nullopt);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     parser.skip_current_line(); // 123a
     REQUIRE(ir == std::nullopt);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     parser.skip_current_line(); //0x10
     REQUIRE(ir == std::nullopt);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     parser.skip_current_line(); // +39
     REQUIRE(ir == std::nullopt);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     parser.skip_current_line(); // 432+10
     REQUIRE(ir == std::nullopt);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt); // 9
-
-    REQUIRE(std::move(parser).to_scanner().eof());
 }
 
 TEST_CASE("parsing float argument")
@@ -169,7 +246,7 @@ TEST_CASE("parsing float argument")
                               "WAIT 9");
     auto parser = make_parser(source, arena);
 
-    auto ir = parser.parse_command_statement();
+    auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     auto& command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
     REQUIRE(command.name == "WAIT");
@@ -182,7 +259,7 @@ TEST_CASE("parsing float argument")
     REQUIRE(std::get<float>(command.arguments[5]->value) == 0.1f);
     REQUIRE(std::get<float>(command.arguments[6]->value) == -0.1f);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
     REQUIRE(command.name == "WAIT");
@@ -195,30 +272,28 @@ TEST_CASE("parsing float argument")
     REQUIRE(std::get<float>(command.arguments[5]->value) == 1.0f);
     REQUIRE(std::get<float>(command.arguments[6]->value) == -1.0f);
     
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     parser.skip_current_line(); // .1a
     REQUIRE(ir == std::nullopt);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     parser.skip_current_line(); // .1fa
     REQUIRE(ir == std::nullopt);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     parser.skip_current_line(); //.1.a
     REQUIRE(ir == std::nullopt);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     parser.skip_current_line(); // 1..a
     REQUIRE(ir == std::nullopt);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     parser.skip_current_line(); // .1-.1
     REQUIRE(ir == std::nullopt);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt); // 9
-
-    REQUIRE(std::move(parser).to_scanner().eof());
 }
 
 TEST_CASE("parsing identifier argument")
@@ -228,11 +303,11 @@ TEST_CASE("parsing identifier argument")
                               "WAIT _abc\n"
                               "WAIT @abc\n"
                               "WAIT 1abc\n"
-                              "WAIT abc:\n"
+                              "WAIT abc: def\n"
                               "WAIT 9");
     auto parser = make_parser(source, arena);
 
-    auto ir = parser.parse_command_statement();
+    auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     auto& command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
     REQUIRE(command.name == "WAIT");
@@ -246,26 +321,24 @@ TEST_CASE("parsing identifier argument")
     REQUIRE(std::get<gta3sc::ParserIR::Identifier>(command.arguments[3]->value).name
             == "A@_1$");
     
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     parser.skip_current_line(); // _abc
     REQUIRE(ir == std::nullopt);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     parser.skip_current_line(); // @abc
     REQUIRE(ir == std::nullopt);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     parser.skip_current_line(); //1abc
     REQUIRE(ir == std::nullopt);
 
-    ir = parser.parse_command_statement();
-    parser.skip_current_line(); // abc:
+    ir = parser.parse_statement();
+    parser.skip_current_line(); // abc: def
     REQUIRE(ir == std::nullopt);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt); // 9
-
-    REQUIRE(std::move(parser).to_scanner().eof());
 }
 
 TEST_CASE("parsing string literal argument")
@@ -278,7 +351,7 @@ TEST_CASE("parsing string literal argument")
                               "WAIT 9");
     auto parser = make_parser(source, arena);
 
-    auto ir = parser.parse_command_statement();
+    auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     auto& command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
     REQUIRE(command.name == "WAIT");
@@ -286,7 +359,7 @@ TEST_CASE("parsing string literal argument")
     REQUIRE(std::get<gta3sc::ParserIR::String>(command.arguments[0]->value).string
             == "this\tI$ /* a // \\n (%1teral),");
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
     REQUIRE(command.name == "WAIT");
@@ -294,18 +367,16 @@ TEST_CASE("parsing string literal argument")
     REQUIRE(std::get<gta3sc::ParserIR::String>(command.arguments[0]->value).string
             == "");
     
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     parser.skip_current_line(); // "
     REQUIRE(ir == std::nullopt);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     parser.skip_current_line(); // "string"abc
     REQUIRE(ir == std::nullopt);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt); // 9
-
-    REQUIRE(std::move(parser).to_scanner().eof());
 }
 
 TEST_CASE("parsing filename argument")
@@ -324,7 +395,7 @@ TEST_CASE("parsing filename argument")
                               "LAUNCH_MISSION filename.sc\n");
     auto parser = make_parser(source, arena);
 
-    auto ir = parser.parse_command_statement();
+    auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     auto& command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
     REQUIRE(command.name == "LAUNCH_MISSION");
@@ -332,7 +403,7 @@ TEST_CASE("parsing filename argument")
     REQUIRE(std::get<gta3sc::ParserIR::Filename>(command.arguments[0]->value).filename
             == ".SC");
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
     REQUIRE(command.name == "LAUNCH_MISSION");
@@ -340,7 +411,7 @@ TEST_CASE("parsing filename argument")
     REQUIRE(std::get<gta3sc::ParserIR::Filename>(command.arguments[0]->value).filename
             == "A.SC");
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
     REQUIRE(command.name == "LAUNCH_MISSION");
@@ -348,7 +419,7 @@ TEST_CASE("parsing filename argument")
     REQUIRE(std::get<gta3sc::ParserIR::Filename>(command.arguments[0]->value).filename
             == "@.SC");
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
     REQUIRE(command.name == "LAUNCH_MISSION");
@@ -356,26 +427,24 @@ TEST_CASE("parsing filename argument")
     REQUIRE(std::get<gta3sc::ParserIR::Filename>(command.arguments[0]->value).filename
             == "1.SC");
     
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     parser.skip_current_line(); // 1.0sc
     REQUIRE(ir == std::nullopt);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     parser.skip_current_line(); // SC
     REQUIRE(ir == std::nullopt);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     parser.skip_current_line(); // C
     REQUIRE(ir == std::nullopt);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     parser.skip_current_line(); // "a".sc
     REQUIRE(ir == std::nullopt);
 
-    ir = parser.parse_command_statement();
+    ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt); // filename.sc
-
-    REQUIRE(std::move(parser).to_scanner().eof());
 }
 
 // TODO label

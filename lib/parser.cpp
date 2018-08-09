@@ -8,14 +8,70 @@ namespace gta3sc
 {
 constexpr std::string_view COMMAND_GOTO = "GOTO";
 
+auto Parser::source_file() const -> const SourceFile&
+{
+    return scanner.source_file();
+}
+
+auto Parser::peek(size_t n) -> std::optional<Token>
+{
+    assert(n < std::size(peek_tokens));
+
+    if(!has_peek_token[n])
+    {
+        assert(n == 0 || has_peek_token[n-1]);
+
+        if(n != 0 && peek_tokens[n-1]
+            && peek_tokens[n-1]->category == Category::EndOfLine)
+        {
+            has_peek_token[n] = true;
+            peek_tokens[n] = std::nullopt;
+        }
+        else
+        {
+            has_peek_token[n] = true;
+            peek_tokens[n] = scanner.next();
+        }
+    }
+
+    return peek_tokens[n];
+}
+
+auto Parser::next() -> std::optional<Token>
+{
+    if(!has_peek_token[0])
+        return scanner.next();
+
+    assert(has_peek_token[0] == true);
+    auto eat_token = peek_tokens[0];
+
+    // Move the peek tokens one position to the front since the
+    // zero position is now empty.
+    size_t n = 1;
+    for(; n < size(peek_tokens) && has_peek_token[n]; ++n)
+        peek_tokens[n-1] = peek_tokens[n];
+
+    has_peek_token[n-1] = false;
+
+    return eat_token;
+}
+
 void Parser::skip_current_line()
 {
-    while(true)
+    // Although the scanner is guaranted to return a new line at some point
+    // we'll put a limit on how many iterations we can perform before giving up.
+    size_t token_limit_per_line = 2048;
+    while(token_limit_per_line--)
     {
         auto token = this->next();
         if(token && token->category == Category::EndOfLine)
             break;
     }
+}
+
+bool Parser::is_digit(char c) const
+{
+    return c >= '0' && c <= '9';
 }
 
 bool Parser::is_integer(const Token& token) const
@@ -51,12 +107,9 @@ bool Parser::is_float(const Token& token) const
 
     auto it = token.lexeme.begin();
 
-    if(it != token.lexeme.end() && *it == '-')
+    if(token.lexeme.size() >= 2 && *it == '-')
         ++it;
 
-    if(it == token.lexeme.end())
-        return false;
-    
     if(*it == '.') // floating_form1
     {
         ++it;
@@ -67,9 +120,8 @@ bool Parser::is_float(const Token& token) const
     else if(*it >= '0' && *it <= '9') // floating_form2
     {
         ++it;
-        while(it != token.lexeme.end() && is_digit(*it))
-            ++it;
-
+        it = std::find_if_not(it, token.lexeme.end(), // {digit}
+                              [this](char c) { return is_digit(c); });
         if(it == token.lexeme.end() || (*it != '.' && *it != 'f' && *it != 'F'))
             return false;
         ++it;
@@ -79,17 +131,12 @@ bool Parser::is_float(const Token& token) const
         return false;
     }
 
-    for(; it != token.lexeme.end(); ++it)
-    {
-        if(is_digit(*it))
-            continue;
-        else if(*it == '.' || *it == 'f' || *it == 'F')
-            continue;
-        else
-            return false;
-    }
+    // Skip the final, common part: {digit | '.' | 'F'}
+    it = std::find_if_not(it, token.lexeme.end(),
+                          [this](char c) { return (c == '.' || c == 'f'
+                                                   || c == 'F' || is_digit(c)); });
 
-    return true;
+    return it == token.lexeme.end();
 }
 
 bool Parser::is_identifier(const Token& token) const
@@ -111,17 +158,93 @@ bool Parser::is_identifier(const Token& token) const
             || (front >= 'A' && front <= 'Z')
             || (front >= 'a' && front <= 'z'))
         {
-            if(back != ':')
-                return true;
+            return back != ':';
         }
     }
 
     return false;
 }
 
-bool Parser::is_digit(char c) const
+auto Parser::parse_statement()
+    -> std::optional<arena_ptr<ParserIR>>
 {
-    return c >= '0' && c <= '9';
+    // statement := labeled_statement 
+    //            | embedded_statement ;
+    //
+    // label_def := identifier ':' ;
+    // labeled_statement := label_def (sep embedded_statement | empty_statement) ;
+    //
+    // empty_statement := eol ;
+    //
+
+    arena_ptr<ParserIR> label_ir = nullptr;
+
+    if(peek() && peek()->category == Category::EndOfLine)
+    {
+        return nullptr; // caller handles this
+    }
+    else if(peek() && peek()->category == Category::Word
+            && peek()->lexeme.back() == ':')
+    {
+        auto label_def = *consume();
+        label_def.lexeme.remove_suffix(1);
+
+        if(!is_identifier(label_def))
+            return std::nullopt;
+
+        // TODO probably should move source info creation somewhere else
+        const auto source_info = ParserIR::SourceInfo {
+            this->source_file(),
+            label_def.lexeme,
+        };
+
+        label_ir = ParserIR::create_label_def(source_info, label_def.lexeme, arena);
+
+        auto token = consume(Category::Whitespace, Category::EndOfLine);
+        if(!token)
+            return std::nullopt;
+
+        if(token->category == Category::EndOfLine)
+            return label_ir;
+    }
+
+    auto resp = parse_embedded_statement();
+    if(label_ir && resp)
+    {
+        label_ir->set_next(*resp);
+        resp = label_ir;
+    }
+
+    return resp;
+}
+
+auto Parser::parse_embedded_statement()
+    -> std::optional<arena_ptr<ParserIR>>
+{
+    // embedded_statement := empty_statement
+    //                      | command_statement
+    //                      | expression_statement (TODO)
+    //                      | scope_statement (TODO)
+    //                      | var_statement (TODO)
+    //                      | if_statement (TODO)
+    //                      | ifnot_statement (TODO)
+    //                      | if_goto_statement (TODO)
+    //                      | ifnot_goto_statement (TODO)
+    //                      | while_statement (TODO)
+    //                      | whilenot_statement (TODO)
+    //                      | repeat_statement (TODO)
+    //                      | require_statement (TODO) ;
+
+    if(peek() && peek()->category == Category::EndOfLine)
+    {
+        // parse_statement already handles empty_statement
+        assert(false);
+        return std::nullopt;
+    }
+    else if(peek() && peek()->category == Category::Word)
+        return parse_command_statement();
+    else
+        return std::nullopt;
 }
 
 auto Parser::parse_command_statement() 
