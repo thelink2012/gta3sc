@@ -1,50 +1,45 @@
 # gta3sc
 
-[![Build Status](https://travis-ci.org/thelink2012/gta3sc.svg?branch=master)](https://travis-ci.org/thelink2012/gta3sc)
+[![Build Status](https://travis-ci.org/thelink2012/gta3sc.svg?branch=gta3sc-rewrite)](https://travis-ci.org/thelink2012/gta3sc)
+[![Build status](https://ci.appveyor.com/api/projects/status/ut954whp2lp81gyk/branch/gta3sc-rewrite?svg=true)](https://ci.appveyor.com/project/thelink2012/gta3sc)
 
-This is a native script compiler/decompiler for the so called [GTA3script](http://www.gtamodding.com/wiki/SCM_language) language, used to design the mission scripts of the 3D Universe of the series.
+This is a script compiler/decompiler and a library for manipulating the so called [GTA3script](http://www.gtamodding.com/wiki/SCM_language) language, which was used to design the mission scripts of the 3D Universe of the series.
 
-Due to its design, it can also be used as a framework for working with SCM data. See the README.md in the [src directory](src) for a technical overview. There's also a experimental Dynamic Recompiler in the [dynarec-x86](https://github.com/thelink2012/gta3sc/tree/dynarec-x86) branch.
+This branch is a complete rewrite of the codebase, it is **very incomplete**! The goal of the rewrite is manifold:
+
+ + Provide a simple and clean codebase.
+ + Provide a modular library based architecture.
+ + Provide a efficient and less memory hungry compiler.
+ + Provide a reference implementation for the coherent subset of the language (see [gta3script-specs](https://github.com/GTAmodding/gta3script-specs)).
+
+The previous codebase was neither of these. This rewrite is being developed in its own time (and concurrently with the language specification), so do not expect it to be complete any time soon.
 
 ## Building
 
-Windows (MSVC) and Linux (GCC/Clang) are currently supported, but you need the latest compiler toolchain of your platform due to the use of C++17.
+You need a C++17 enabled compiler. Windows (MSVC) and Linux (GCC/Clang) are officially supported.
 
-Just follow the standard CMake procedure for generating projects or makefiles.
+Before building make sure you have fetched all submodules:
+
+    git submodule update --init --recursive
+
+Then run:
 
     mkdir build
     cd build
-    cmake ..
-    
-Then `make` or use the generated project files.
+    cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
+    cmake --build .
 
 ## Using
 
-The compiler/decompiler is invoked by the file extension of the input file, or from the action `compile` or `decompile`.
-
-**Compilation example:**
-
-    gta3sc main.sc --config=gta3
-    gta3sc compile main.sc --config=gta3  # does the same thing as above
-    
-**Decompilation example:**
-    
-    gta3sc main.scm --config=gta3
-    gta3sc decompile main.scm --config=gta3  # does the same thing as above
-
-The decompiler is still very early and produces _very_ low-levelish code, so low that it cannot be recompiled back. High-level decompilation is supposed to be implemented later.
-
-**Help:**
-
-To get further instructions, try getting help from the utility.
-
-    gta3sc --help
-
+TODO
 
 ## Testing
 
-Ensuring a compiler is working correctly is a must. To help us on this task we use [llvm-lit](http://llvm.org/docs/CommandGuide/lit.html). While on the root of this tree, use the following command to run all the tests.
+TODO
 
-    lit test --verbose
-   
-For further details, please refer to the [README.md](./test/README.md) on the test directory.
+TODO the build status is for the rewrite branch
+TODO move the config directory to a community submodule
+TODO a frontend driver, plus lit tests
+TODO remove deps/
+TODO a install script
+
