@@ -40,29 +40,29 @@ TEST_CASE("parsing a label definition")
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    REQUIRE((*ir)->next == nullptr);
-    REQUIRE(std::get<gta3sc::ParserIR::LabelDef>((*ir)->op).name == "LABEL");
+    REQUIRE(ir->front()->next == nullptr);
+    REQUIRE(std::get<gta3sc::ParserIR::LabelDef>(ir->front()->op).name == "LABEL");
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    REQUIRE((*ir)->next != nullptr);
-    REQUIRE(std::get<gta3sc::ParserIR::LabelDef>((*ir)->op).name == "LABEL");
-    REQUIRE(std::get<gta3sc::ParserIR::Command>((*ir)->next->op).name == "WAIT");
+    REQUIRE(ir->front()->next != nullptr);
+    REQUIRE(std::get<gta3sc::ParserIR::LabelDef>(ir->front()->op).name == "LABEL");
+    REQUIRE(std::get<gta3sc::ParserIR::Command>(ir->front()->next->op).name == "WAIT");
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    REQUIRE((*ir)->next == nullptr);
-    REQUIRE(std::get<gta3sc::ParserIR::LabelDef>((*ir)->op).name == "LABEL");
+    REQUIRE(ir->front()->next == nullptr);
+    REQUIRE(std::get<gta3sc::ParserIR::LabelDef>(ir->front()->op).name == "LABEL");
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    REQUIRE((*ir)->next == nullptr);
-    REQUIRE(std::get<gta3sc::ParserIR::Command>((*ir)->op).name == "WAIT");
+    REQUIRE(ir->front()->next == nullptr);
+    REQUIRE(std::get<gta3sc::ParserIR::Command>(ir->front()->op).name == "WAIT");
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    REQUIRE((*ir)->next == nullptr);
-    REQUIRE(std::get<gta3sc::ParserIR::LabelDef>((*ir)->op).name == "LA:BEL");
+    REQUIRE(ir->front()->next == nullptr);
+    REQUIRE(std::get<gta3sc::ParserIR::LabelDef>(ir->front()->op).name == "LA:BEL");
 
     ir = parser.parse_statement();
     parser.skip_current_line(); // 1abel:
@@ -90,8 +90,134 @@ TEST_CASE("parsing a label definition")
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    REQUIRE((*ir)->next == nullptr);
-    REQUIRE(std::get<gta3sc::ParserIR::LabelDef>((*ir)->op).name == "LABEL");
+    REQUIRE(ir->front()->next == nullptr);
+    REQUIRE(std::get<gta3sc::ParserIR::LabelDef>(ir->front()->op).name == "LABEL");
+}
+
+TEST_CASE("parsing a valid scope block")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("{\n"
+                              "WAIT 0\n"
+                              "WAIT 1\n"
+                              "}\n"
+                              "WAIT 2\n"
+                              "{\n"
+                              "}\n"
+                              "WAIT 3\n");
+    auto parser = make_parser(source, arena);
+
+    auto linked = parser.parse_statement();
+    REQUIRE(linked != std::nullopt);
+    auto ir = linked->front();
+
+    REQUIRE(ir != nullptr);
+    {
+    ir = ir;
+    auto& command = std::get<gta3sc::ParserIR::Command>(ir->op);
+    REQUIRE(command.name == "{");
+    REQUIRE(command.num_arguments == 0);
+    }
+
+    REQUIRE(ir->next != nullptr);
+    {
+    ir = ir->next;
+    auto& command = std::get<gta3sc::ParserIR::Command>(ir->op);
+    REQUIRE(command.name == "WAIT");
+    REQUIRE(command.num_arguments == 1);
+    }
+
+    REQUIRE(ir->next != nullptr);
+    {
+    ir = ir->next;
+    auto& command = std::get<gta3sc::ParserIR::Command>(ir->op);
+    REQUIRE(command.name == "WAIT");
+    REQUIRE(command.num_arguments == 1);
+    }
+
+    REQUIRE(ir->next != nullptr);
+    {
+    ir = ir->next;
+    auto& command = std::get<gta3sc::ParserIR::Command>(ir->op);
+    REQUIRE(command.name == "}");
+    REQUIRE(command.num_arguments == 0);
+    REQUIRE(ir->next == nullptr);
+    }
+
+    linked = parser.parse_statement();
+    REQUIRE(linked != std::nullopt);
+    ir = linked->front();
+    {
+    auto& command = std::get<gta3sc::ParserIR::Command>(ir->op);
+    REQUIRE(command.name == "WAIT");
+    REQUIRE(command.num_arguments == 1);
+    }
+
+    linked = parser.parse_statement();
+    REQUIRE(linked != std::nullopt);
+    ir = linked->front();
+    {
+    ir = ir;
+    auto& command = std::get<gta3sc::ParserIR::Command>(ir->op);
+    REQUIRE(command.name == "{");
+    REQUIRE(command.num_arguments == 0);
+    }
+
+    REQUIRE(ir->next != nullptr);
+    {
+    ir = ir->next;
+    auto& command = std::get<gta3sc::ParserIR::Command>(ir->op);
+    REQUIRE(command.name == "}");
+    REQUIRE(command.num_arguments == 0);
+    REQUIRE(ir->next == nullptr);
+    }
+
+    linked = parser.parse_statement();
+    REQUIRE(linked != std::nullopt);
+    ir = linked->front();
+    {
+    auto& command = std::get<gta3sc::ParserIR::Command>(ir->op);
+    REQUIRE(command.name == "WAIT");
+    REQUIRE(command.num_arguments == 1);
+    }
+}
+
+TEST_CASE("parsing a nested scope block")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("{\n"
+                              "{\n"
+                              "}\n"
+                              "}\n");
+    auto parser = make_parser(source, arena);
+
+    auto linked = parser.parse_statement();
+    REQUIRE(linked == std::nullopt);
+}
+
+TEST_CASE("parsing a scope block with bad argument count")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("{ 1 2\n"
+                              "}\n"
+                              "{\n"
+                              "}\n"
+                              "{\n"
+                              "} 1 2\n");
+    auto parser = make_parser(source, arena);
+
+    auto linked = parser.parse_statement();
+    REQUIRE(linked == std::nullopt);
+    parser.skip_current_line();
+    parser.skip_current_line();
+
+    linked = parser.parse_statement();
+    REQUIRE(linked != std::nullopt);
+    REQUIRE(std::get<gta3sc::ParserIR::Command>(linked->front()->op).name == "{");
+    REQUIRE(std::get<gta3sc::ParserIR::Command>(linked->back()->op).name == "}");
+
+    linked = parser.parse_statement();
+    REQUIRE(linked == std::nullopt);
 }
 
 TEST_CASE("parsing a command")
@@ -112,33 +238,33 @@ TEST_CASE("parsing a command")
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    auto& command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
+    auto& command = std::get<gta3sc::ParserIR::Command>(ir->front()->op);
     REQUIRE(command.name == "WAIT");
     REQUIRE(command.num_arguments == 3);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
+    command = std::get<gta3sc::ParserIR::Command>(ir->front()->op);
     REQUIRE(command.name == "C");
     REQUIRE(command.num_arguments == 0);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
+    command = std::get<gta3sc::ParserIR::Command>(ir->front()->op);
     REQUIRE(command.name == "C");
     REQUIRE(command.num_arguments == 0);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    REQUIRE((*ir)->next != nullptr);
-    REQUIRE(std::get<gta3sc::ParserIR::LabelDef>((*ir)->op).name == "L");
-    command = std::get<gta3sc::ParserIR::Command>((*ir)->next->op);
+    REQUIRE(ir->front()->next != nullptr);
+    REQUIRE(std::get<gta3sc::ParserIR::LabelDef>(ir->front()->op).name == "L");
+    command = std::get<gta3sc::ParserIR::Command>(ir->front()->next->op);
     REQUIRE(command.name == "C:");
     REQUIRE(command.num_arguments == 0);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
+    command = std::get<gta3sc::ParserIR::Command>(ir->front()->op);
     REQUIRE(command.name == "A.SC");
     REQUIRE(command.num_arguments == 0);
 
@@ -148,31 +274,31 @@ TEST_CASE("parsing a command")
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
+    command = std::get<gta3sc::ParserIR::Command>(ir->front()->op);
     REQUIRE(command.name == "%");
     REQUIRE(command.num_arguments == 0);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
+    command = std::get<gta3sc::ParserIR::Command>(ir->front()->op);
     REQUIRE(command.name == "$");
     REQUIRE(command.num_arguments == 0);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
+    command = std::get<gta3sc::ParserIR::Command>(ir->front()->op);
     REQUIRE(command.name == "1");
     REQUIRE(command.num_arguments == 0);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
+    command = std::get<gta3sc::ParserIR::Command>(ir->front()->op);
     REQUIRE(command.name == ".1");
     REQUIRE(command.num_arguments == 0);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
+    command = std::get<gta3sc::ParserIR::Command>(ir->front()->op);
     REQUIRE(command.name == "-1");
     REQUIRE(command.num_arguments == 0);
 }
@@ -192,7 +318,7 @@ TEST_CASE("parsing integer argument")
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    auto& command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
+    auto& command = std::get<gta3sc::ParserIR::Command>(ir->front()->op);
     REQUIRE(command.name == "WAIT");
     REQUIRE(command.num_arguments == 3);
     REQUIRE(std::get<int32_t>(command.arguments[0]->value) == 123);
@@ -201,7 +327,7 @@ TEST_CASE("parsing integer argument")
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
+    command = std::get<gta3sc::ParserIR::Command>(ir->front()->op);
     REQUIRE(command.name == "WAIT");
     REQUIRE(command.num_arguments == 2);
     REQUIRE(std::get<int32_t>(command.arguments[0]->value)
@@ -248,7 +374,7 @@ TEST_CASE("parsing float argument")
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    auto& command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
+    auto& command = std::get<gta3sc::ParserIR::Command>(ir->front()->op);
     REQUIRE(command.name == "WAIT");
     REQUIRE(command.num_arguments == 7);
     REQUIRE(std::get<float>(command.arguments[0]->value) == 0.1f);
@@ -261,7 +387,7 @@ TEST_CASE("parsing float argument")
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
+    command = std::get<gta3sc::ParserIR::Command>(ir->front()->op);
     REQUIRE(command.name == "WAIT");
     REQUIRE(command.num_arguments == 7);
     REQUIRE(std::get<float>(command.arguments[0]->value) == 1.0f);
@@ -309,7 +435,7 @@ TEST_CASE("parsing identifier argument")
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    auto& command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
+    auto& command = std::get<gta3sc::ParserIR::Command>(ir->front()->op);
     REQUIRE(command.name == "WAIT");
     REQUIRE(command.num_arguments == 4);
     REQUIRE(std::get<gta3sc::ParserIR::Identifier>(command.arguments[0]->value).name 
@@ -353,7 +479,7 @@ TEST_CASE("parsing string literal argument")
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    auto& command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
+    auto& command = std::get<gta3sc::ParserIR::Command>(ir->front()->op);
     REQUIRE(command.name == "WAIT");
     REQUIRE(command.num_arguments == 1);
     REQUIRE(std::get<gta3sc::ParserIR::String>(command.arguments[0]->value).string
@@ -361,7 +487,7 @@ TEST_CASE("parsing string literal argument")
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
+    command = std::get<gta3sc::ParserIR::Command>(ir->front()->op);
     REQUIRE(command.name == "WAIT");
     REQUIRE(command.num_arguments == 1);
     REQUIRE(std::get<gta3sc::ParserIR::String>(command.arguments[0]->value).string
@@ -397,7 +523,7 @@ TEST_CASE("parsing filename argument")
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    auto& command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
+    auto& command = std::get<gta3sc::ParserIR::Command>(ir->front()->op);
     REQUIRE(command.name == "LAUNCH_MISSION");
     REQUIRE(command.num_arguments == 1);
     REQUIRE(std::get<gta3sc::ParserIR::Filename>(command.arguments[0]->value).filename
@@ -405,7 +531,7 @@ TEST_CASE("parsing filename argument")
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
+    command = std::get<gta3sc::ParserIR::Command>(ir->front()->op);
     REQUIRE(command.name == "LAUNCH_MISSION");
     REQUIRE(command.num_arguments == 1);
     REQUIRE(std::get<gta3sc::ParserIR::Filename>(command.arguments[0]->value).filename
@@ -413,7 +539,7 @@ TEST_CASE("parsing filename argument")
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
+    command = std::get<gta3sc::ParserIR::Command>(ir->front()->op);
     REQUIRE(command.name == "LAUNCH_MISSION");
     REQUIRE(command.num_arguments == 1);
     REQUIRE(std::get<gta3sc::ParserIR::Filename>(command.arguments[0]->value).filename
@@ -421,7 +547,7 @@ TEST_CASE("parsing filename argument")
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    command = std::get<gta3sc::ParserIR::Command>((*ir)->op);
+    command = std::get<gta3sc::ParserIR::Command>(ir->front()->op);
     REQUIRE(command.name == "LAUNCH_MISSION");
     REQUIRE(command.num_arguments == 1);
     REQUIRE(std::get<gta3sc::ParserIR::Filename>(command.arguments[0]->value).filename

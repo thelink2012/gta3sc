@@ -13,6 +13,14 @@ auto Parser::source_file() const -> const SourceFile&
     return scanner.source_file();
 }
 
+auto Parser::source_info(const Token& token) const -> ParserIR::SourceInfo
+{
+    return ParserIR::SourceInfo {
+        this->source_file(),
+        token.lexeme,
+    };
+}
+
 auto Parser::peek(size_t n) -> std::optional<Token>
 {
     assert(n < std::size(peek_tokens));
@@ -166,7 +174,7 @@ bool Parser::is_identifier(const Token& token) const
 }
 
 auto Parser::parse_statement()
-    -> std::optional<arena_ptr<ParserIR>>
+    -> std::optional<LinkedIR<ParserIR>>
 {
     // statement := labeled_statement 
     //            | embedded_statement ;
@@ -177,14 +185,9 @@ auto Parser::parse_statement()
     // empty_statement := eol ;
     //
 
-    arena_ptr<ParserIR> label_ir = nullptr;
+    auto linked_stmts = LinkedIR<ParserIR>();
 
-    if(peek() && peek()->category == Category::EndOfLine)
-    {
-        return nullptr; // caller handles this
-    }
-    else if(peek() && peek()->category == Category::Word
-            && peek()->lexeme.back() == ':')
+    if(is_peek(Category::Word) && peek()->lexeme.back() == ':')
     {
         auto label_def = *consume();
         label_def.lexeme.remove_suffix(1);
@@ -192,39 +195,35 @@ auto Parser::parse_statement()
         if(!is_identifier(label_def))
             return std::nullopt;
 
-        // TODO probably should move source info creation somewhere else
-        const auto source_info = ParserIR::SourceInfo {
-            this->source_file(),
-            label_def.lexeme,
-        };
-
-        label_ir = ParserIR::create_label_def(source_info, label_def.lexeme, arena);
+        auto label_ir = ParserIR::create_label_def(source_info(label_def),
+                                                   label_def.lexeme,
+                                                   arena);
 
         auto token = consume(Category::Whitespace, Category::EndOfLine);
         if(!token)
             return std::nullopt;
 
+        linked_stmts.push_front(std::move(label_ir));
+
         if(token->category == Category::EndOfLine)
-            return label_ir;
+            return linked_stmts;
     }
 
     auto resp = parse_embedded_statement();
-    if(label_ir && resp)
-    {
-        label_ir->set_next(*resp);
-        resp = label_ir;
-    }
+    if(!resp)
+        return std::nullopt;
 
-    return resp;
+    linked_stmts.splice_back(std::move(*resp));
+    return linked_stmts;
 }
 
 auto Parser::parse_embedded_statement()
-    -> std::optional<arena_ptr<ParserIR>>
+    -> std::optional<LinkedIR<ParserIR>>
 {
     // embedded_statement := empty_statement
     //                      | command_statement
     //                      | expression_statement (TODO)
-    //                      | scope_statement (TODO)
+    //                      | scope_statement
     //                      | var_statement (TODO)
     //                      | if_statement (TODO)
     //                      | ifnot_statement (TODO)
@@ -235,16 +234,72 @@ auto Parser::parse_embedded_statement()
     //                      | repeat_statement (TODO)
     //                      | require_statement (TODO) ;
 
-    if(peek() && peek()->category == Category::EndOfLine)
+    if(is_peek(Category::EndOfLine))
     {
-        // parse_statement already handles empty_statement
-        assert(false);
-        return std::nullopt;
+        return LinkedIR<ParserIR>();
     }
-    else if(peek() && peek()->category == Category::Word)
-        return parse_command_statement();
+    else if(is_peek(Category::Word, "{"))
+    {
+        return parse_scope_statement();
+    }
     else
+    {
+        auto stmt_ir = parse_command_statement();
+        if(!stmt_ir)
+            return std::nullopt;
+        return LinkedIR<ParserIR>::from_ir(std::move(*stmt_ir));
+    }
+}
+
+auto Parser::parse_scope_statement()
+    -> std::optional<LinkedIR<ParserIR>>
+{
+    // scope_statement := '{' eol
+    //                    {statement}
+    //                    '}' eol ;
+    //
+    // Constraints: 
+    // Lexical scopes cannot be nested.
+    
+    auto linked_stmts = LinkedIR<ParserIR>();
+
+    if(this->in_lexical_scope)
         return std::nullopt;
+
+    auto open_token = consume_word("{");
+    if(!open_token)
+        return std::nullopt;
+
+    auto eol = consume(Category::EndOfLine);
+    if(!eol)
+        return std::nullopt;
+
+    this->in_lexical_scope = true;
+
+    while(!is_peek(Category::Word, "}"))
+    {
+        auto stmt_ir = parse_statement();
+        if(!stmt_ir)
+            return std::nullopt;
+        linked_stmts.splice_back(std::move(*stmt_ir));
+    }
+
+    auto close_token = consume_word("}");
+    assert(close_token != std::nullopt);
+
+    eol = consume(Category::EndOfLine);
+    if(!eol)
+        return std::nullopt;
+
+    this->in_lexical_scope = false;
+
+    auto open_ir = ParserIR::create_command(source_info(*open_token),
+                                            open_token->lexeme, arena);
+    auto close_ir = ParserIR::create_command(source_info(*close_token),
+                                             close_token->lexeme, arena);
+    linked_stmts.push_front(std::move(open_ir));
+    linked_stmts.push_back(std::move(close_ir));
+    return linked_stmts;
 }
 
 auto Parser::parse_command_statement() 
@@ -277,15 +332,14 @@ auto Parser::parse_command(bool is_if_line)
     size_t acaps = 0;
     size_t acount = 0;
 
-    while(peek() && peek()->category != Category::EndOfLine)
+    while(!is_peek(Category::EndOfLine))
     {
         if(is_if_line
-           && peek() && peek()->category == Category::Whitespace
-           && peek(1)->category == Category::Word 
-           && peek(1)->lexeme == COMMAND_GOTO
-           && peek(2) && peek(2)->category == Category::Whitespace
-           && peek(3) && peek(3)->category == Category::Word
-           && peek(4) && peek(4)->category == Category::EndOfLine)
+           && is_peek(Category::Whitespace, 0)
+           && is_peek(Category::Word, COMMAND_GOTO, 1)
+           && is_peek(Category::Whitespace, 2)
+           && is_peek(Category::Word, 3)
+           && is_peek(Category::EndOfLine, 4))
             break;
 
         if(!consume(Category::Whitespace))
@@ -310,19 +364,15 @@ auto Parser::parse_command(bool is_if_line)
     if(peek() == std::nullopt)
         return std::nullopt;
 
-    const auto source_info = ParserIR::SourceInfo {
-        this->source_file(),
-        command->lexeme,
-    };
-
-    auto result = ParserIR::create_command(source_info, command->lexeme, arena);
+    auto result = ParserIR::create_command(source_info(*command),
+                                           command->lexeme,
+                                           arena);
 
     auto& command_data = std::get<ParserIR::Command>(result->op);
     command_data.arguments = args;
     command_data.num_arguments = acount;
 
-    assert(peek()->category == Category::EndOfLine
-            || peek()->category == Category::Whitespace);
+    assert(is_peek(Category::EndOfLine) || is_peek(Category::Whitespace));
 
     return result;
 }
@@ -339,17 +389,14 @@ auto Parser::parse_argument()
     if(!token)
         return std::nullopt;
 
-    const auto source_info = ParserIR::SourceInfo {
-        this->source_file(),
-        token->lexeme,
-    };
+    const auto src_info = this->source_info(*token);
 
     if(token->category == Category::String)
     {
         auto string = token->lexeme;
         string.remove_prefix(1);
         string.remove_suffix(1);
-        return ParserIR::create_string(source_info, string, arena);
+        return ParserIR::create_string(src_info, string, arena);
     }
     else if(is_integer(*token))
     {
@@ -371,7 +418,7 @@ auto Parser::parse_argument()
         if(errno == ERANGE || value < min_value || value > max_value)
             return std::nullopt;
 
-        return ParserIR::create_integer(source_info, value, arena);
+        return ParserIR::create_integer(src_info, value, arena);
     }
     else if(is_float(*token))
     {
@@ -386,11 +433,11 @@ auto Parser::parse_argument()
         if(errno == ERANGE)
             return std::nullopt;
 
-        return ParserIR::create_float(source_info, value, arena);
+        return ParserIR::create_float(src_info, value, arena);
     }
     else if(is_identifier(*token))
     {
-        return ParserIR::create_identifier(source_info, token->lexeme, arena);
+        return ParserIR::create_identifier(src_info, token->lexeme, arena);
     }
     else
     {

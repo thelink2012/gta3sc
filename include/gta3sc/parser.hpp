@@ -65,8 +65,11 @@ struct ParserIR
     arena_ptr<ParserIR> next = nullptr;
     arena_ptr<ParserIR> prev = nullptr;
 
+    // use set_next for set_prev behaviour
     void set_next(arena_ptr<ParserIR> other)
     {
+        assert(other != nullptr);
+
         if(this->next)
         {
             assert(this->next->prev == this);
@@ -83,7 +86,7 @@ struct ParserIR
 
         other->prev = this;
     }
-    
+
 
     static auto create_source_info(const SourceInfo& info, ArenaMemoryResource& arena) -> arena_ptr<SourceInfo>
     {
@@ -159,8 +162,139 @@ struct ParserIR
         return std::string_view(ptr, from.size());
     }
 };
-
 // TODO static_assert trivial destructible everything
+
+template<typename T>
+struct LinkedIR
+{
+public:
+    explicit LinkedIR() = default;
+
+    static auto from_ir(arena_ptr<T> ir) -> LinkedIR
+    {
+        LinkedIR linked;
+        linked.setup_first(ir);
+        return linked;
+    }
+
+    LinkedIR(const LinkedIR&) = delete;
+
+    LinkedIR(LinkedIR&& other) :
+        front_(other.front_), back_(other.back_)
+    {
+        other.front_ = other.back_ = nullptr;
+    }
+
+    LinkedIR& operator=(const LinkedIR&) = delete;
+
+    LinkedIR& operator=(LinkedIR&& other)
+    {
+        LinkedIR(std::move(other)).swap(*this);
+        return *this;
+    }
+
+    void swap(LinkedIR& other)
+    {
+        std::swap(this->front_, other.front_);
+        std::swap(this->back_, other.back_);
+    }
+
+    bool empty() const
+    {
+        return front_ == nullptr;
+    }
+
+    auto front() const -> arena_ptr<T>
+    {
+        assert(front_ != nullptr);
+        return front_;
+    }
+
+    auto back() const -> arena_ptr<T>
+    {
+        assert(back_ != nullptr);
+        return back_;
+    }
+
+    // O(1)
+    void push_front(arena_ptr<T> ir)
+    {
+        assert(ir && !ir->prev && !ir->next);
+
+        if(empty())
+            return setup_first(ir);
+
+        ir->set_next(this->front_);
+        this->front_ = ir;
+    }
+
+    // O(1)
+    void push_back(arena_ptr<T> ir)
+    {
+        assert(ir && !ir->prev && !ir->next);
+
+        if(empty())
+            return setup_first(ir);
+
+        this->back_->set_next(ir);
+        this->back_ = ir;
+    }
+
+    // O(1)
+    void splice_back(LinkedIR&& other)
+    {
+        if(this->empty())
+            return other.swap(*this);
+
+        if(other.empty())
+            return;
+
+        this->back_->set_next(other.front_);
+        this->back_ = other.back_;
+
+        other.front_ = other.back_ = nullptr;
+    }
+
+private:
+    static auto find_front(arena_ptr<T> ir) -> arena_ptr<T>
+    {
+        auto first = nullptr;
+        while(ir)
+        {
+            first = ir;
+            ir = ir->prev;
+        }
+        return first;
+    }
+
+    static auto find_back(arena_ptr<T> ir) -> arena_ptr<T>
+    {
+        auto last = nullptr;
+        while(ir)
+        {
+            last = ir;
+            ir = ir->next;
+        }
+        return last;
+    }
+
+    void setup_first(arena_ptr<T> ir)
+    {
+        assert(empty());
+
+        this->front_ = ir;
+        while(ir != nullptr)
+        {
+            this->back_ = ir;
+            ir = ir->next;
+        }
+    }
+
+private:
+    arena_ptr<T> front_ = nullptr;
+    arena_ptr<T> back_ = nullptr;
+};
+
 
 class Parser
 {
@@ -180,11 +314,14 @@ public:
     void skip_current_line();
 
     auto parse_statement()
-        -> std::optional<arena_ptr<ParserIR>>;
+        -> std::optional<LinkedIR<ParserIR>>;
 
 private:
     auto parse_embedded_statement()
-        -> std::optional<arena_ptr<ParserIR>>;
+        -> std::optional<LinkedIR<ParserIR>>;
+
+    auto parse_scope_statement()
+        -> std::optional<LinkedIR<ParserIR>>;
 
     auto parse_command_statement()
         -> std::optional<arena_ptr<ParserIR>>;
@@ -202,6 +339,9 @@ private:
     bool is_integer(const Token&) const;
     bool is_float(const Token&) const;
     bool is_identifier(const Token&) const;
+
+    auto source_info(const Token&) const -> ParserIR::SourceInfo;
+
 
 private:
     /// Looks ahead by N tokens in the token stream.
@@ -250,12 +390,34 @@ private:
         return token;
     }
 
+    auto consume_word(std::string_view lexeme) -> std::optional<Token>
+    {
+        auto token = consume(Category::Word);
+        if(!token)
+            return std::nullopt;
+        if(token->lexeme != lexeme)
+            return std::nullopt;
+        return token;
+    }
+
+    bool is_peek(Category category, size_t n = 0)
+    {
+        return peek(n) && peek(n)->category == category;
+    }
+
+    bool is_peek(Category category, std::string_view lexeme, size_t n = 0)
+    {
+        return is_peek(category, n) && peek(n)->lexeme == lexeme;
+    }
+
 private:
     Scanner scanner;
     ArenaMemoryResource& arena;
 
     bool has_peek_token[6];
     std::optional<Token> peek_tokens[6];
+    
+    bool in_lexical_scope = false;
 
 };
 }
