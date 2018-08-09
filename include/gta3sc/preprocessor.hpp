@@ -1,3 +1,4 @@
+#pragma once
 #include <gta3sc/sourceman.hpp>
 
 namespace gta3sc

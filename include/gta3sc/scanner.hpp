@@ -1,3 +1,4 @@
+#pragma once
 #include <gta3sc/preprocessor.hpp>
 
 namespace gta3sc
