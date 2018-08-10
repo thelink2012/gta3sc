@@ -1,4 +1,5 @@
 #pragma once
+#include <gta3sc/adt/span.hpp>
 #include <gta3sc/arena-allocator.hpp>
 #include <cstdint>
 #include <cstring>
@@ -88,8 +89,7 @@ struct ParserIR
     {
         arena_ptr<SourceInfo> source_info;
         std::string_view name;
-        arena_ptr<arena_ptr<Argument>> args = nullptr;
-        size_t num_args = 0;
+        adt::span<arena_ptr<Argument>> args;
         size_t acaps = 0;
 
         static auto create(const SourceInfo& info, std::string_view name_a, ArenaMemoryResource& arena) -> arena_ptr<Command>
@@ -101,15 +101,16 @@ struct ParserIR
         void push_arg(arena_ptr<Argument> arg, ArenaMemoryResource& arena)
         {
             assert(arg != nullptr);
-            if(num_args >= acaps)
+            if(args.size() >= acaps)
             {
                 auto new_caps = !acaps? 6 : acaps * 2;
                 auto new_args = new (arena) arena_ptr<ParserIR::Argument>[new_caps];
-                std::copy(args, args + num_args, new_args);
+                std::copy(args.begin(), args.end(), new_args);
                 acaps = new_caps;
-                args = new_args;
+                args = adt::span(new_args, args.size());
             }
-            args[num_args++] = arg;
+            args = adt::span(args.data(), args.data() + args.size() + 1);
+            *args.rbegin() = arg;
         }
     };
 

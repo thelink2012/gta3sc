@@ -114,47 +114,47 @@ TEST_CASE("parsing a valid scope block")
     auto ir = linked->front();
     REQUIRE(ir != nullptr);
     REQUIRE(ir->command->name == "{");
-    REQUIRE(ir->command->num_args == 0);
+    REQUIRE(ir->command->args.size() == 0);
 
     ir = ir->next;
     REQUIRE(ir != nullptr);
     REQUIRE(ir->command->name == "WAIT");
-    REQUIRE(ir->command->num_args == 1);
+    REQUIRE(ir->command->args.size() == 1);
 
     ir = ir->next;
     REQUIRE(ir != nullptr);
     REQUIRE(ir->command->name == "WAIT");
-    REQUIRE(ir->command->num_args == 1);
+    REQUIRE(ir->command->args.size() == 1);
 
     ir = ir->next;
     REQUIRE(ir != nullptr);
     REQUIRE(ir->command->name == "}");
-    REQUIRE(ir->command->num_args == 0);
+    REQUIRE(ir->command->args.size() == 0);
     REQUIRE(ir->next == nullptr);
 
     linked = parser.parse_statement();
     REQUIRE(linked != std::nullopt);
     ir = linked->front();
     REQUIRE(ir->command->name == "WAIT");
-    REQUIRE(ir->command->num_args == 1);
+    REQUIRE(ir->command->args.size() == 1);
 
     linked = parser.parse_statement();
     REQUIRE(linked != std::nullopt);
     ir = linked->front();
     REQUIRE(ir->command->name == "{");
-    REQUIRE(ir->command->num_args == 0);
+    REQUIRE(ir->command->args.size() == 0);
 
     ir = ir->next;
     REQUIRE(ir != nullptr);
     REQUIRE(ir->command->name == "}");
-    REQUIRE(ir->command->num_args == 0);
+    REQUIRE(ir->command->args.size() == 0);
     REQUIRE(ir->next == nullptr);
 
     linked = parser.parse_statement();
     REQUIRE(linked != std::nullopt);
     ir = linked->front();
     REQUIRE(ir->command->name == "WAIT");
-    REQUIRE(ir->command->num_args == 1);
+    REQUIRE(ir->command->args.size() == 1);
 }
 
 TEST_CASE("parsing a nested scope block")
@@ -225,29 +225,29 @@ TEST_CASE("parsing a command")
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front()->command->name == "WAIT");
-    REQUIRE(ir->front()->command->num_args == 3);
+    REQUIRE(ir->front()->command->args.size() == 3);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front()->command->name == "C");
-    REQUIRE(ir->front()->command->num_args == 0);
+    REQUIRE(ir->front()->command->args.size() == 0);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front()->command->name == "C");
-    REQUIRE(ir->front()->command->num_args == 0);
+    REQUIRE(ir->front()->command->args.size() == 0);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front()->next == nullptr);
     REQUIRE(ir->front()->label->name == "L");
     REQUIRE(ir->front()->command->name == "C:");
-    REQUIRE(ir->front()->command->num_args == 0);
+    REQUIRE(ir->front()->command->args.size() == 0);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front()->command->name == "A.SC");
-    REQUIRE(ir->front()->command->num_args == 0);
+    REQUIRE(ir->front()->command->args.size() == 0);
 
     ir = parser.parse_statement();
     parser.skip_current_line(); // "a"
@@ -256,27 +256,27 @@ TEST_CASE("parsing a command")
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front()->command->name == "%");
-    REQUIRE(ir->front()->command->num_args == 0);
+    REQUIRE(ir->front()->command->args.size() == 0);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front()->command->name == "$");
-    REQUIRE(ir->front()->command->num_args == 0);
+    REQUIRE(ir->front()->command->args.size() == 0);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front()->command->name == "1");
-    REQUIRE(ir->front()->command->num_args == 0);
+    REQUIRE(ir->front()->command->args.size() == 0);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front()->command->name == ".1");
-    REQUIRE(ir->front()->command->num_args == 0);
+    REQUIRE(ir->front()->command->args.size() == 0);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front()->command->name == "-1");
-    REQUIRE(ir->front()->command->num_args == 0);
+    REQUIRE(ir->front()->command->args.size() == 0);
 }
 
 TEST_CASE("parsing integer argument")
@@ -295,7 +295,7 @@ TEST_CASE("parsing integer argument")
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front()->command->name == "WAIT");
-    REQUIRE(ir->front()->command->num_args == 3);
+    REQUIRE(ir->front()->command->args.size() == 3);
     REQUIRE(std::get<int32_t>(ir->front()->command->args[0]->value) == 123);
     REQUIRE(std::get<int32_t>(ir->front()->command->args[1]->value) == 10);
     REQUIRE(std::get<int32_t>(ir->front()->command->args[2]->value) == -39);
@@ -303,7 +303,7 @@ TEST_CASE("parsing integer argument")
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front()->command->name == "WAIT");
-    REQUIRE(ir->front()->command->num_args == 2);
+    REQUIRE(ir->front()->command->args.size() == 2);
     REQUIRE(std::get<int32_t>(ir->front()->command->args[0]->value)
             == std::numeric_limits<int32_t>::max());
     REQUIRE(std::get<int32_t>(ir->front()->command->args[1]->value)
@@ -349,7 +349,7 @@ TEST_CASE("parsing float argument")
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front()->command->name == "WAIT");
-    REQUIRE(ir->front()->command->num_args == 7);
+    REQUIRE(ir->front()->command->args.size() == 7);
     REQUIRE(*ir->front()->command->args[0]->as_float() == 0.1f);
     REQUIRE(*ir->front()->command->args[1]->as_float() == -0.1f);
     REQUIRE(std::get<float>(ir->front()->command->args[2]->value) == 0.1f);
@@ -361,7 +361,7 @@ TEST_CASE("parsing float argument")
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front()->command->name == "WAIT");
-    REQUIRE(ir->front()->command->num_args == 7);
+    REQUIRE(ir->front()->command->args.size() == 7);
     REQUIRE(std::get<float>(ir->front()->command->args[0]->value) == 1.0f);
     REQUIRE(std::get<float>(ir->front()->command->args[1]->value) == -1.0f);
     REQUIRE(std::get<float>(ir->front()->command->args[2]->value) == 1.0f);
@@ -408,7 +408,7 @@ TEST_CASE("parsing identifier argument")
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front()->command->name == "WAIT");
-    REQUIRE(ir->front()->command->num_args == 4);
+    REQUIRE(ir->front()->command->args.size() == 4);
     REQUIRE_EQ(*ir->front()->command->args[0]->as_identifier(), "$ABC"sv);
     REQUIRE_EQ(*ir->front()->command->args[1]->as_identifier(), "ABC"sv);
     REQUIRE_EQ(*ir->front()->command->args[2]->as_identifier(), "ABC"sv);
@@ -447,14 +447,14 @@ TEST_CASE("parsing string literal argument")
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front()->command->name == "WAIT");
-    REQUIRE(ir->front()->command->num_args == 1);
+    REQUIRE(ir->front()->command->args.size() == 1);
     REQUIRE_EQ(*ir->front()->command->args[0]->as_string(),
                "this\tI$ /* a // \\n (%1teral),"sv);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front()->command->name == "WAIT");
-    REQUIRE(ir->front()->command->num_args == 1);
+    REQUIRE(ir->front()->command->args.size() == 1);
     REQUIRE_EQ(*ir->front()->command->args[0]->as_string(), ""sv);
     
     ir = parser.parse_statement();
@@ -488,13 +488,13 @@ TEST_CASE("parsing filename argument")
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front()->command->name == "LAUNCH_MISSION");
-    REQUIRE(ir->front()->command->num_args == 1);
+    REQUIRE(ir->front()->command->args.size() == 1);
     REQUIRE_EQ(*ir->front()->command->args[0]->as_filename(), ".SC"sv);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front()->command->name == "LAUNCH_MISSION");
-    REQUIRE(ir->front()->command->num_args == 1);
+    REQUIRE(ir->front()->command->args.size() == 1);
     REQUIRE_EQ(*ir->front()->command->args[0]->as_filename(), "A.SC"sv);
 
     ir = parser.parse_statement();
@@ -507,13 +507,13 @@ TEST_CASE("parsing filename argument")
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front()->command->name == "LAUNCH_MISSION");
-    REQUIRE(ir->front()->command->num_args == 1);
+    REQUIRE(ir->front()->command->args.size() == 1);
     REQUIRE_EQ(*ir->front()->command->args[0]->as_filename(), "@.SC"sv);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front()->command->name == "LAUNCH_MISSION");
-    REQUIRE(ir->front()->command->num_args == 1);
+    REQUIRE(ir->front()->command->args.size() == 1);
     REQUIRE_EQ(*ir->front()->command->args[0]->as_filename(), "1.SC"sv);
     
     ir = parser.parse_statement();
