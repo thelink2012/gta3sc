@@ -7,6 +7,9 @@
 namespace gta3sc
 {
 constexpr std::string_view COMMAND_GOTO = "GOTO";
+constexpr std::string_view COMMAND_GOSUB_FILE = "GOSUB_FILE";
+constexpr std::string_view COMMAND_LAUNCH_MISSION = "LAUNCH_MISSION";
+constexpr std::string_view COMMAND_LOAD_AND_LAUNCH_MISSION = "LOAD_AND_LAUNCH_MISSION";
 
 auto Parser::source_file() const -> const SourceFile&
 {
@@ -19,6 +22,17 @@ auto Parser::source_info(const Token& token) const -> ParserIR::SourceInfo
         this->source_file(),
         token.lexeme,
     };
+}
+
+bool Parser::iequal(std::string_view a, std::string_view b) const
+{
+    return std::equal(a.begin(), a.end(),
+                      b.begin(), b.end(),
+                      [](unsigned char ac, unsigned char bc) {
+                        if(ac >= 'a' && ac <= 'z') ac -= 32;
+                        if(bc >= 'a' && bc <= 'z') bc -= 32;
+                        return ac == bc;
+                      });
 }
 
 auto Parser::peek(size_t n) -> std::optional<Token>
@@ -62,6 +76,12 @@ auto Parser::next() -> std::optional<Token>
     has_peek_token[n-1] = false;
 
     return eat_token;
+}
+
+auto Parser::next_filename() -> std::optional<Token>
+{
+    assert(has_peek_token[0] == false);
+    return scanner.next_filename();
 }
 
 void Parser::skip_current_line()
@@ -195,17 +215,16 @@ auto Parser::parse_statement()
         if(!is_identifier(label_def))
             return std::nullopt;
 
+        auto sep = consume(Category::Whitespace, Category::EndOfLine);
+        if(!sep)
+            return std::nullopt;
+
         auto label_ir = ParserIR::create_label_def(source_info(label_def),
                                                    label_def.lexeme,
                                                    arena);
-
-        auto token = consume(Category::Whitespace, Category::EndOfLine);
-        if(!token)
-            return std::nullopt;
-
         linked_stmts.push_front(std::move(label_ir));
 
-        if(token->category == Category::EndOfLine)
+        if(sep->category == Category::EndOfLine)
             return linked_stmts;
     }
 
@@ -224,7 +243,7 @@ auto Parser::parse_embedded_statement()
     //                      | command_statement
     //                      | expression_statement (TODO)
     //                      | scope_statement
-    //                      | var_statement (TODO)
+    //                      | var_statement
     //                      | if_statement (TODO)
     //                      | ifnot_statement (TODO)
     //                      | if_goto_statement (TODO)
@@ -232,22 +251,35 @@ auto Parser::parse_embedded_statement()
     //                      | while_statement (TODO)
     //                      | whilenot_statement (TODO)
     //                      | repeat_statement (TODO)
-    //                      | require_statement (TODO) ;
+    //                      | require_statement ;
+    //
+    // empty_statement := eol ;
+    //
 
+    // TODO should var_statement be handled?
+    
     if(is_peek(Category::EndOfLine))
     {
+        consume();
         return LinkedIR<ParserIR>();
     }
     else if(is_peek(Category::Word, "{"))
     {
         return parse_scope_statement();
     }
+    else if(is_peek(Category::Word, COMMAND_GOSUB_FILE)
+         || is_peek(Category::Word, COMMAND_LAUNCH_MISSION)
+         || is_peek(Category::Word, COMMAND_LOAD_AND_LAUNCH_MISSION))
+    {
+        if(auto stmt_ir = parse_require_statement())
+            return LinkedIR<ParserIR>::from_ir(std::move(*stmt_ir));
+        return std::nullopt;
+    }
     else
     {
-        auto stmt_ir = parse_command_statement();
-        if(!stmt_ir)
-            return std::nullopt;
-        return LinkedIR<ParserIR>::from_ir(std::move(*stmt_ir));
+        if(auto stmt_ir = parse_command_statement())
+            return LinkedIR<ParserIR>::from_ir(std::move(*stmt_ir));
+        return std::nullopt;
     }
 }
 
@@ -270,25 +302,29 @@ auto Parser::parse_scope_statement()
     if(!open_token)
         return std::nullopt;
 
-    auto eol = consume(Category::EndOfLine);
-    if(!eol)
+    if(!consume(Category::EndOfLine))
         return std::nullopt;
 
+    // We'll set our current state as being in a lexical scope.
+    // This is only restored back if we successfully reach the
+    // end of the line of a closing curly.
     this->in_lexical_scope = true;
 
-    while(!is_peek(Category::Word, "}"))
+    while(!eof() && !is_peek(Category::Word, "}"))
     {
-        auto stmt_ir = parse_statement();
-        if(!stmt_ir)
+        if(auto stmt_ir = parse_statement())
+            linked_stmts.splice_back(std::move(*stmt_ir));
+        else
             return std::nullopt;
-        linked_stmts.splice_back(std::move(*stmt_ir));
     }
+
+    if(eof())
+        return std::nullopt;
 
     auto close_token = consume_word("}");
     assert(close_token != std::nullopt);
 
-    eol = consume(Category::EndOfLine);
-    if(!eol)
+    if(!consume(Category::EndOfLine))
         return std::nullopt;
 
     this->in_lexical_scope = false;
@@ -300,6 +336,74 @@ auto Parser::parse_scope_statement()
     linked_stmts.push_front(std::move(open_ir));
     linked_stmts.push_back(std::move(close_ir));
     return linked_stmts;
+}
+
+auto Parser::parse_require_statement()
+    -> std::optional<arena_ptr<ParserIR>>
+{
+    // require_statement := command_gosub_file
+    //                    | command_launch_mission
+    //                    | command_load_and_launch_mission ;
+    //
+    // command_gosub_file := 'GOSUB_FILE' sep identifier sep filename eol ;
+    // command_launch_mission := 'LAUNCH_MISSION' sep filename eol ;
+    // command_load_and_launch_mission := 'LOAD_AND_LAUNCH_MISSION' sep filename eol ;
+
+    auto command = consume(Category::Word);
+    if(!command)
+        return std::nullopt;
+
+    arena_ptr<arena_ptr<ParserIR::Argument>> args = nullptr;
+    size_t acount = 0, acurr = 0;
+
+    if(iequal(command->lexeme, COMMAND_GOSUB_FILE))
+    {
+        if(!consume(Category::Whitespace))
+            return std::nullopt;
+
+        acount = 2;
+        args = new (arena) arena_ptr<ParserIR::Argument>[acount];
+
+        auto arg = parse_argument();
+        if(!arg)
+            return std::nullopt;
+        args[acurr++] = *arg;
+    }
+    else if(iequal(command->lexeme, COMMAND_LAUNCH_MISSION)
+         || iequal(command->lexeme, COMMAND_LOAD_AND_LAUNCH_MISSION))
+    {
+        acount = 1;
+        args = new (arena) arena_ptr<ParserIR::Argument>[acount];
+    }
+    else
+    {
+        return std::nullopt;
+    }
+
+    if(!consume(Category::Whitespace))
+        return std::nullopt;
+
+    auto arg = this->next_filename();
+    if(!arg)
+        return std::nullopt;
+
+    args[acurr++] = ParserIR::create_filename(source_info(*arg),
+                                               arg->lexeme,
+                                               arena);
+    assert(acurr == acount);
+
+    if(!consume(Category::EndOfLine))
+        return std::nullopt;
+
+    // TODO too verbose, fix API
+    auto result = ParserIR::create_command(source_info(*command),
+                                           command->lexeme,
+                                           arena);
+    auto& command_data = std::get<ParserIR::Command>(result->op);
+    command_data.arguments = args;
+    command_data.num_arguments = acount;
+    
+    return result;
 }
 
 auto Parser::parse_command_statement() 
@@ -348,6 +452,7 @@ auto Parser::parse_command(bool is_if_line)
         auto arg = parse_argument();
         if(!arg)
             return std::nullopt;
+
 
         if(acount >= acaps)
         {

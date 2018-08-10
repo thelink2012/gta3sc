@@ -220,6 +220,17 @@ TEST_CASE("parsing a scope block with bad argument count")
     REQUIRE(linked == std::nullopt);
 }
 
+TEST_CASE("parsing a unclosed scope block")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("{\n"
+                              "\n");
+    auto parser = make_parser(source, arena);
+
+    auto linked = parser.parse_statement();
+    REQUIRE(linked == std::nullopt);
+}
+
 TEST_CASE("parsing a command")
 {
     gta3sc::ArenaMemoryResource arena;
@@ -507,18 +518,18 @@ TEST_CASE("parsing string literal argument")
 
 TEST_CASE("parsing filename argument")
 {
-    // TODO
-    return;
-
     gta3sc::ArenaMemoryResource arena;
     auto source = make_source("LAUNCH_MISSION .sc\n"
                               "LAUNCH_MISSION a.SC\n"
+                              "WAIT a.SC\n"
+                              "WAIT 1.SC\n"
                               "LAUNCH_MISSION @.sc\n"
                               "LAUNCH_MISSION 1.sc\n"
                               "LAUNCH_MISSION 1.0sc\n"                                                                      "LAUNCH_MISSION SC\n"
                               "LAUNCH_MISSION C\n"
                               "LAUNCH_MISSION \"a\".sc\n"
-                              "LAUNCH_MISSION filename.sc\n");
+                              "LOAD_AND_LAUNCH_MISSION filename.sc\n"
+                              "GOSUB_FILE label filename.sc\n");
     auto parser = make_parser(source, arena);
 
     auto ir = parser.parse_statement();
@@ -536,6 +547,13 @@ TEST_CASE("parsing filename argument")
     REQUIRE(command.num_arguments == 1);
     REQUIRE(std::get<gta3sc::ParserIR::Filename>(command.arguments[0]->value).filename
             == "A.SC");
+
+    ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt); // WAIT a.SC
+
+    ir = parser.parse_statement();
+    REQUIRE(ir == std::nullopt); // WAIT 1.sc
+    parser.skip_current_line();
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
@@ -570,7 +588,10 @@ TEST_CASE("parsing filename argument")
     REQUIRE(ir == std::nullopt);
 
     ir = parser.parse_statement();
-    REQUIRE(ir != std::nullopt); // filename.sc
+    REQUIRE(ir != std::nullopt); // LOAD_AND_LAUNCH_MISSION
+
+    ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt); // GOSUB_FILE
 }
 
 // TODO label

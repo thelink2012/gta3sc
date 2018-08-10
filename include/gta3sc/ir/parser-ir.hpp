@@ -20,6 +20,11 @@ namespace gta3sc
 /// many of the following instructions are part of the conditional
 /// list, much like the unstructured ANDOR command.
 ///
+/// Do note however that no argument matching is performed whatsoever.
+/// This implies commands with a syntactical specification (e.g. GOSUB_FILE,
+/// VAR_INT) might not follow it (e.g. the first argument of GOSUB_FILE might
+/// not be an identifier). The amount of arguments might be wrong as well.
+///
 /// This IR preserves source code information such as the location of
 /// each of its identifiers.
 struct ParserIR
@@ -134,6 +139,15 @@ struct ParserIR
     {
         auto arg = create_integer(info, 0, arena);
         arg->value = Identifier { create_upper_view(name, arena) };
+        return arg;
+    }
+
+    static auto create_filename(const SourceInfo& info,
+                                std::string_view name,
+                                ArenaMemoryResource& arena) -> arena_ptr<Argument>
+    {
+        auto arg = create_integer(info, 0, arena);
+        arg->value = Filename { create_upper_view(name, arena) };
         return arg;
     }
 

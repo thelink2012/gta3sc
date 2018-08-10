@@ -33,6 +33,9 @@ private:
     auto parse_scope_statement()
         -> std::optional<LinkedIR<ParserIR>>;
 
+    auto parse_require_statement()
+        -> std::optional<arena_ptr<ParserIR>>;
+
     auto parse_command_statement()
         -> std::optional<arena_ptr<ParserIR>>;
 
@@ -51,7 +54,6 @@ private:
     bool is_identifier(const Token&) const;
 
     auto source_info(const Token&) const -> ParserIR::SourceInfo;
-
 
 private:
     /// Looks ahead by N tokens in the token stream.
@@ -73,6 +75,12 @@ private:
     ///
     /// \returns the current token or `std::nullopt` if such token is invalid.
     auto next() -> std::optional<Token>;
+
+    /// Consumes and returns the current token in the stream assuming its
+    /// category is of a filename.
+    ///
+    /// All peek tokens must have been consumed for this to work.
+    auto next_filename() -> std::optional<Token>;
 
     /// Consumes and returns the current token in the stream.
     ///
@@ -100,6 +108,8 @@ private:
         return token;
     }
 
+    /// Produces the same effect as `consume(Category::Word)`, but additionally
+    /// returns `std::nullopt` if the word lexeme is not equal `lexeme`.
     auto consume_word(std::string_view lexeme) -> std::optional<Token>
     {
         auto token = consume(Category::Word);
@@ -110,15 +120,27 @@ private:
         return token;
     }
 
+    /// Returns whether the lookahead token N has the specified category.
     bool is_peek(Category category, size_t n = 0)
     {
         return peek(n) && peek(n)->category == category;
     }
 
+    /// Returns whether the lookahead token N has the specified category
+    /// and compares equal to lexeme. The comparision is case insensitive.
     bool is_peek(Category category, std::string_view lexeme, size_t n = 0)
     {
-        return is_peek(category, n) && peek(n)->lexeme == lexeme;
+        return is_peek(category, n) && iequal(peek(n)->lexeme, lexeme);
     }
+
+    bool eof() const
+    {
+        if(has_peek_token[0])
+            return false;
+        return scanner.eof();
+    }
+
+    bool iequal(std::string_view lhs, std::string_view rhs) const;
 
 private:
     Scanner scanner;
