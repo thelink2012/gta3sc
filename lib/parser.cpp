@@ -205,7 +205,7 @@ auto Parser::parse_statement()
     // empty_statement := eol ;
     //
 
-    auto linked_stmts = LinkedIR<ParserIR>();
+    arena_ptr<ParserIR::LabelDef> label = nullptr;
 
     if(is_peek(Category::Word) && peek()->lexeme.back() == ':')
     {
@@ -215,25 +215,32 @@ auto Parser::parse_statement()
         if(!is_identifier(label_def))
             return std::nullopt;
 
-        auto sep = consume(Category::Whitespace, Category::EndOfLine);
-        if(!sep)
-            return std::nullopt;
+        if(!is_peek(Category::EndOfLine))
+        {
+            if(!consume(Category::Whitespace))
+                return std::nullopt;
+        }
 
-        auto label_ir = ParserIR::create_label_def(source_info(label_def),
-                                                   label_def.lexeme,
-                                                   arena);
-        linked_stmts.push_front(std::move(label_ir));
-
-        if(sep->category == Category::EndOfLine)
-            return linked_stmts;
+        label = ParserIR::LabelDef::create(source_info(label_def),
+                                           label_def.lexeme,
+                                           arena);
     }
 
-    auto resp = parse_embedded_statement();
-    if(!resp)
+    auto linked_stmts = parse_embedded_statement();
+    if(!linked_stmts)
         return std::nullopt;
 
-    linked_stmts.splice_back(std::move(*resp));
-    return linked_stmts;
+    if(label)
+    {
+        if(linked_stmts->empty())
+            linked_stmts->push_back(ParserIR::create(arena));
+
+        assert(linked_stmts->front()->label == nullptr);
+        linked_stmts->front()->label = label;
+    }
+
+    return *std::move(linked_stmts);
+    // FIXME https://stackoverflow.com/q/51379597/2679626
 }
 
 auto Parser::parse_embedded_statement()
@@ -353,29 +360,23 @@ auto Parser::parse_require_statement()
     if(!command)
         return std::nullopt;
 
-    arena_ptr<arena_ptr<ParserIR::Argument>> args = nullptr;
-    size_t acount = 0, acurr = 0;
+    auto result = ParserIR::create_command(source_info(*command),
+                                           command->lexeme,
+                                           arena);
 
     if(iequal(command->lexeme, COMMAND_GOSUB_FILE))
     {
         if(!consume(Category::Whitespace))
             return std::nullopt;
 
-        acount = 2;
-        args = new (arena) arena_ptr<ParserIR::Argument>[acount];
-
         auto arg = parse_argument();
         if(!arg)
             return std::nullopt;
-        args[acurr++] = *arg;
+
+        result->command->push_arg(*arg, arena);
     }
-    else if(iequal(command->lexeme, COMMAND_LAUNCH_MISSION)
-         || iequal(command->lexeme, COMMAND_LOAD_AND_LAUNCH_MISSION))
-    {
-        acount = 1;
-        args = new (arena) arena_ptr<ParserIR::Argument>[acount];
-    }
-    else
+    else if(!iequal(command->lexeme, COMMAND_LAUNCH_MISSION)
+         && !iequal(command->lexeme, COMMAND_LOAD_AND_LAUNCH_MISSION))
     {
         return std::nullopt;
     }
@@ -387,22 +388,14 @@ auto Parser::parse_require_statement()
     if(!arg)
         return std::nullopt;
 
-    args[acurr++] = ParserIR::create_filename(source_info(*arg),
-                                               arg->lexeme,
-                                               arena);
-    assert(acurr == acount);
-
     if(!consume(Category::EndOfLine))
         return std::nullopt;
 
-    // TODO too verbose, fix API
-    auto result = ParserIR::create_command(source_info(*command),
-                                           command->lexeme,
-                                           arena);
-    auto& command_data = std::get<ParserIR::Command>(result->op);
-    command_data.arguments = args;
-    command_data.num_arguments = acount;
-    
+    auto filename = ParserIR::create_filename(source_info(*arg),
+                                              arg->lexeme,
+                                              arena);
+    result->command->push_arg(filename, arena);
+
     return result;
 }
 
@@ -432,9 +425,9 @@ auto Parser::parse_command(bool is_if_line)
     if(!command)
         return std::nullopt;
 
-    arena_ptr<arena_ptr<ParserIR::Argument>> args = nullptr;
-    size_t acaps = 0;
-    size_t acount = 0;
+    auto result = ParserIR::create_command(source_info(*command),
+                                           command->lexeme,
+                                           arena);
 
     while(!is_peek(Category::EndOfLine))
     {
@@ -453,29 +446,8 @@ auto Parser::parse_command(bool is_if_line)
         if(!arg)
             return std::nullopt;
 
-
-        if(acount >= acaps)
-        {
-            auto new_caps = !acaps? 6 : acaps * 2;
-            auto new_args = new (arena) arena_ptr<ParserIR::Argument>[new_caps];
-            std::copy(args, args + acount, new_args);
-            acaps = new_caps;
-            args = new_args;
-        }
-
-        args[acount++] = arg.value();
+        result->command->push_arg(*arg, arena);
     }
-
-    if(peek() == std::nullopt)
-        return std::nullopt;
-
-    auto result = ParserIR::create_command(source_info(*command),
-                                           command->lexeme,
-                                           arena);
-
-    auto& command_data = std::get<ParserIR::Command>(result->op);
-    command_data.arguments = args;
-    command_data.num_arguments = acount;
 
     assert(is_peek(Category::EndOfLine) || is_peek(Category::Whitespace));
 

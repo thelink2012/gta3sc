@@ -36,11 +36,23 @@ struct ParserIR
     };
 
 
-    struct Identifier { std::string_view name; };
+    struct Identifier
+    {
+        std::string_view name;
+        constexpr operator std::string_view() const { return name; }
+    };
 
-    struct Filename { std::string_view filename; };
+    struct Filename
+    {
+        std::string_view filename;
+        constexpr operator std::string_view() const { return filename; }
+    };
 
-    struct String { std::string_view string; };
+    struct String
+    {
+        std::string_view string;
+        constexpr operator std::string_view() const { return string; }
+    };
 
     struct Argument
     {
@@ -51,6 +63,12 @@ struct ParserIR
             Identifier,
             Filename,
             String> value;
+
+        constexpr int32_t* as_integer() { return std::get_if<int32_t>(&value); }
+        constexpr float* as_float() { return std::get_if<float>(&value); }
+        constexpr Identifier* as_identifier() { return std::get_if<Identifier>(&value); }
+        constexpr Filename* as_filename() { return std::get_if<Filename>(&value); }
+        constexpr String* as_string() { return std::get_if<String>(&value); }
     };
 
 
@@ -58,17 +76,45 @@ struct ParserIR
     {
         arena_ptr<SourceInfo> source_info;
         std::string_view name;
+
+        static auto create(const SourceInfo& info, std::string_view name_a, ArenaMemoryResource& arena) -> arena_ptr<LabelDef>
+        {
+            auto name = create_upper_view(name_a, arena);
+            return new (arena, alignof(LabelDef)) LabelDef { create_source_info(info, arena), name };
+        }
     };
 
     struct Command
     {
         arena_ptr<SourceInfo> source_info;
         std::string_view name;
-        arena_ptr<arena_ptr<Argument>> arguments = nullptr;
-        size_t num_arguments = 0;
+        arena_ptr<arena_ptr<Argument>> args = nullptr;
+        size_t num_args = 0;
+        size_t acaps = 0;
+
+        static auto create(const SourceInfo& info, std::string_view name_a, ArenaMemoryResource& arena) -> arena_ptr<Command>
+        {
+            auto name = create_upper_view(name_a, arena);
+            return new (arena, alignof(Command)) Command { create_source_info(info, arena), name };
+        }
+
+        void push_arg(arena_ptr<Argument> arg, ArenaMemoryResource& arena)
+        {
+            assert(arg != nullptr);
+            if(num_args >= acaps)
+            {
+                auto new_caps = !acaps? 6 : acaps * 2;
+                auto new_args = new (arena) arena_ptr<ParserIR::Argument>[new_caps];
+                std::copy(args, args + num_args, new_args);
+                acaps = new_caps;
+                args = new_args;
+            }
+            args[num_args++] = arg;
+        }
     };
 
-    std::variant<LabelDef, Command> op;
+    arena_ptr<LabelDef> label = nullptr;
+    arena_ptr<Command> command = nullptr;
     arena_ptr<ParserIR> next = nullptr;
     arena_ptr<ParserIR> prev = nullptr;
 
@@ -94,28 +140,22 @@ struct ParserIR
         other->prev = this;
     }
 
+    static auto create(ArenaMemoryResource& arena) -> arena_ptr<ParserIR>
+    {
+        return new (arena, alignof(ParserIR)) ParserIR;
+    }
+
+    static auto create_command(const SourceInfo& info, std::string_view name_a, ArenaMemoryResource& arena) -> arena_ptr<ParserIR>
+    {
+        auto ir = create(arena);
+        ir->command = Command::create(info, name_a, arena);
+        return ir;
+    }
 
     static auto create_source_info(const SourceInfo& info, ArenaMemoryResource& arena) -> arena_ptr<SourceInfo>
     {
         return new (arena, alignof(SourceInfo)) SourceInfo(info);
     }
-
-    static auto create_command(const SourceInfo& info, std::string_view name_a, ArenaMemoryResource& arena) -> arena_ptr<ParserIR>
-    {
-        auto node = new (arena, alignof(ParserIR)) ParserIR;
-        auto name = create_upper_view(name_a, arena);
-        node->op = Command { create_source_info(info, arena), name };
-        return node;
-    }
-
-    static auto create_label_def(const SourceInfo& info, std::string_view name_a, ArenaMemoryResource& arena) -> arena_ptr<ParserIR>
-    {
-        auto node = new (arena, alignof(ParserIR)) ParserIR;
-        auto name = create_upper_view(name_a, arena);
-        node->op = LabelDef { create_source_info(info, arena), name };
-        return node;
-    }
-                            
 
     static auto create_integer(const SourceInfo& info, int32_t value_,
                               ArenaMemoryResource& arena) -> arena_ptr<Argument>
