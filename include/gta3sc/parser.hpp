@@ -36,6 +36,15 @@ private:
     auto parse_require_statement()
         -> std::optional<arena_ptr<ParserIR>>;
 
+    auto parse_assignment_expression()
+        -> std::optional<LinkedIR<ParserIR>>;
+
+    auto parse_conditional_expression()
+        -> std::optional<LinkedIR<ParserIR>>;
+
+    auto parse_expression_internal(bool is_conditional)
+        -> std::optional<LinkedIR<ParserIR>>;
+
     auto parse_command_statement()
         -> std::optional<arena_ptr<ParserIR>>;
 
@@ -54,6 +63,9 @@ private:
     bool is_identifier(const Token&) const;
 
     auto source_info(const Token&) const -> ParserIR::SourceInfo;
+
+    auto source_info(SourceLocation begin, SourceLocation end) const
+        -> ParserIR::SourceInfo;
 
 private:
     /// Looks ahead by N tokens in the token stream.

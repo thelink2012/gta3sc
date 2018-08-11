@@ -95,6 +95,22 @@ TEST_CASE("parsing a label definition")
     REQUIRE(ir->front()->label->name == "LABEL");
 }
 
+TEST_CASE("parsing a empty line")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("\n"
+                              "WAIT 0\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+    REQUIRE(ir->empty());
+
+    ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+    REQUIRE(ir->front()->command->name == "WAIT");
+}
+
 TEST_CASE("parsing a valid scope block")
 {
     gta3sc::ArenaMemoryResource arena;
@@ -539,6 +555,393 @@ TEST_CASE("parsing filename argument")
     REQUIRE(ir != std::nullopt); // GOSUB_FILE
 }
 
-// TODO label
-// TODO expressions
-// TODO expr or operator
+TEST_CASE("parsing permutations of absolute expressions")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("x = aBs y\n"
+                              "x = ABS x\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+    REQUIRE(ir->front()->command->name == "SET");
+    REQUIRE(ir->front()->command->args.size() == 2);
+    REQUIRE_EQ(*ir->front()->command->args[0]->as_identifier(), "X"sv);
+    REQUIRE_EQ(*ir->front()->command->args[1]->as_identifier(), "Y"sv);
+    REQUIRE(ir->front()->next->command->name == "ABS");
+    REQUIRE(ir->front()->next->command->args.size() == 1);
+    REQUIRE_EQ(*ir->front()->next->command->args[0]->as_identifier(), "X"sv);
+    REQUIRE(ir->front()->next->next == nullptr);
+
+    ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+    REQUIRE(ir->front()->command->name == "ABS");
+    REQUIRE(ir->front()->command->args.size() == 1);
+    REQUIRE_EQ(*ir->front()->command->args[0]->as_identifier(), "X"sv);
+    REQUIRE(ir->front()->next == nullptr);
+}
+
+TEST_CASE("parsing permutations of unary expressions")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("++x\n"
+                              "x++\n"
+                              "--x\n"
+                              "x--\n");
+    auto parser = make_parser(source, arena);
+
+    constexpr std::string_view expects_table[] = {
+        "ADD_THING_TO_THING",
+        "ADD_THING_TO_THING",
+        "SUB_THING_FROM_THING",
+        "SUB_THING_FROM_THING",
+    };
+
+    for(auto& command_name : expects_table)
+    {
+        auto ir = parser.parse_statement();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(ir->front()->command->name == command_name);
+        REQUIRE(ir->front()->command->args.size() == 2);
+        REQUIRE_EQ(*ir->front()->command->args[0]->as_identifier(), "X"sv);
+        REQUIRE_EQ(*ir->front()->command->args[1]->as_integer(), 1);
+        REQUIRE(ir->front()->next == nullptr);
+    }
+}
+
+TEST_CASE("parsing permutations of binary expressions")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("x = y\n"
+                              "x = x\n"
+                              "x =# y\n"
+                              "x =# x\n"
+                              "x += y\n"
+                              "x += x\n"
+                              "x -= y\n"
+                              "x -= x\n"
+                              "x *= y\n"
+                              "x *= x\n"
+                              "x /= y\n"
+                              "x /= x\n"
+                              "x +=@ y\n"
+                              "x +=@ x\n"
+                              "x -=@ y\n"
+                              "x -=@ x\n");
+    auto parser = make_parser(source, arena);
+
+    constexpr std::string_view expects_table[] = {
+        "SET",
+        "CSET",
+        "ADD_THING_TO_THING",
+        "SUB_THING_FROM_THING",
+        "MULT_THING_BY_THING",
+        "DIV_THING_BY_THING",
+        "ADD_THING_TO_THING_TIMED",
+        "SUB_THING_FROM_THING_TIMED",
+    };
+
+    for(auto& command_name : expects_table)
+    {
+        auto ir = parser.parse_statement();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(ir->front()->command->name == command_name);
+        REQUIRE(ir->front()->command->args.size() == 2);
+        REQUIRE_EQ(*ir->front()->command->args[0]->as_identifier(), "X"sv);
+        REQUIRE_EQ(*ir->front()->command->args[1]->as_identifier(), "Y"sv);
+        REQUIRE(ir->front()->next == nullptr);
+
+        ir = parser.parse_statement();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(ir->front()->command->name == command_name);
+        REQUIRE(ir->front()->command->args.size() == 2);
+        REQUIRE_EQ(*ir->front()->command->args[0]->as_identifier(), "X"sv);
+        REQUIRE_EQ(*ir->front()->command->args[1]->as_identifier(), "X"sv);
+        REQUIRE(ir->front()->next == nullptr);
+    }
+}
+
+TEST_CASE("parsing permutations of conditional expressions")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source(//"x = y\n" TODO
+                              //"x = x\n"
+                              "x < y\n"
+                              "x < x\n"
+                              "x <= y\n"
+                              "x > y\n"
+                              "x >= y\n");
+    auto parser = make_parser(source, arena);
+
+    constexpr std::array<std::string_view, 3> expects_table[] = {
+        //{ "IS_THING_EQUAL_TO_THING", "X" "Y" },
+        //{ "IS_THING_EQUAL_TO_THING", "X" "X" },
+        { "IS_THING_GREATER_THAN_THING", "Y", "X" },
+        { "IS_THING_GREATER_THAN_THING", "X", "X" },
+        { "IS_THING_GREATER_OR_EQUAL_TO_THING", "Y", "X" },
+        { "IS_THING_GREATER_THAN_THING", "X", "Y" },
+        { "IS_THING_GREATER_OR_EQUAL_TO_THING", "X", "Y" },
+    };
+
+    for(auto& [command_name, a, b] : expects_table)
+    {
+        auto ir = parser.parse_statement();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(ir->front()->command->name == command_name);
+        REQUIRE(ir->front()->command->args.size() == 2);
+        REQUIRE_EQ(*ir->front()->command->args[0]->as_identifier(), a);
+        REQUIRE_EQ(*ir->front()->command->args[1]->as_identifier(), b);
+        REQUIRE(ir->front()->next == nullptr);
+    }
+}
+
+TEST_CASE("parsing permutations of ternary expressions")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("x = x + x\n"
+                              "x = x + y\n"
+                              "x = y + x\n"
+                              "x = y + z\n"
+                              "x = x - x\n"
+                              "x = x - y\n"
+                              "x = y - x\n" // invalid
+                              "x = y - z\n"
+                              "x = x * x\n"
+                              "x = x * y\n"
+                              "x = y * x\n"
+                              "x = y * z\n"
+                              "x = x / x\n"
+                              "x = x / y\n"
+                              "x = y / x\n" // invalid
+                              "x = y / z\n"
+                              "x = x +@ x\n"
+                              "x = x +@ y\n"
+                              "x = y +@ x\n" // invalid
+                              "x = y +@ z\n"
+                              "x = x -@ x\n"
+                              "x = x -@ y\n"
+                              "x = y -@ x\n" // invalid
+                              "x = y -@ z\n");
+    auto parser = make_parser(source, arena);
+
+    constexpr std::string_view expects_table[] = {
+        "ADD_THING_TO_THING",
+        "SUB_THING_FROM_THING",
+        "MULT_THING_BY_THING",
+        "DIV_THING_BY_THING",
+        "ADD_THING_TO_THING_TIMED",
+        "SUB_THING_FROM_THING_TIMED",
+    };
+
+    for(auto& command_name : expects_table)
+    {
+        // x = x + x
+        auto ir = parser.parse_statement();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(ir->front()->command->name == command_name);
+        REQUIRE(ir->front()->command->args.size() == 2);
+        REQUIRE_EQ(*ir->front()->command->args[0]->as_identifier(), "X"sv);
+        REQUIRE_EQ(*ir->front()->command->args[1]->as_identifier(), "X"sv);
+        REQUIRE(ir->front()->next == nullptr);
+
+        // x = x + y
+        ir = parser.parse_statement();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(ir->front()->command->name == command_name);
+        REQUIRE(ir->front()->command->args.size() == 2);
+        REQUIRE_EQ(*ir->front()->command->args[0]->as_identifier(), "X"sv);
+        REQUIRE_EQ(*ir->front()->command->args[1]->as_identifier(), "Y"sv);
+        REQUIRE(ir->front()->next == nullptr);
+
+        // x = y + x
+        if(command_name == "ADD_THING_TO_THING"
+                || command_name == "MULT_THING_BY_THING")
+        {
+            ir = parser.parse_statement();
+            REQUIRE(ir != std::nullopt);
+            REQUIRE(ir->front()->command->name == command_name);
+            REQUIRE(ir->front()->command->args.size() == 2);
+            REQUIRE_EQ(*ir->front()->command->args[0]->as_identifier(), "X"sv);
+            REQUIRE_EQ(*ir->front()->command->args[1]->as_identifier(), "Y"sv);
+            REQUIRE(ir->front()->next == nullptr);
+        }
+        else
+        {
+            ir = parser.parse_statement();
+            REQUIRE(ir == std::nullopt);
+            parser.skip_current_line();
+        }
+
+        // x = y + z
+        ir = parser.parse_statement();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(ir->front()->command->name == "SET");
+        REQUIRE(ir->front()->command->args.size() == 2);
+        REQUIRE_EQ(*ir->front()->command->args[0]->as_identifier(), "X"sv);
+        REQUIRE_EQ(*ir->front()->command->args[1]->as_identifier(), "Y"sv);
+        REQUIRE(ir->front()->next->command->name == command_name);
+        REQUIRE(ir->front()->next->command->args.size() == 2);
+        REQUIRE_EQ(*ir->front()->next->command->args[0]->as_identifier(), "X"sv);
+        REQUIRE_EQ(*ir->front()->next->command->args[1]->as_identifier(), "Z"sv);
+        REQUIRE(ir->front()->next->next == nullptr);
+    }
+}
+
+TEST_CASE("parsing the ternary minus one ambiguity")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("x = 1-1\n"
+                              "x = 1 -1\n"
+                              "x = 1 - 1\n"
+                              "x = 1--1\n"
+                              "x = 1- -1\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir == std::nullopt);
+    parser.skip_current_line();
+
+    ir = parser.parse_statement();
+    REQUIRE(ir == std::nullopt);
+    parser.skip_current_line();
+
+    ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+
+    ir = parser.parse_statement();
+    REQUIRE(ir == std::nullopt);
+
+    ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+}
+
+TEST_CASE("parsing operators not in expression")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("+= 1\n"
+                              "x / 2\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir == std::nullopt);
+    parser.skip_current_line();
+
+    ir = parser.parse_statement();
+    REQUIRE(ir == std::nullopt);
+    parser.skip_current_line();
+}
+
+TEST_CASE("parsing invalid expressions")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("--x c\n"
+                              "x++ c\n"
+                              "x = ABS y z\n"
+                              "x = y +\n"
+                              "x = + y\n"
+                              "x = y + z + w\n"
+                              "x = y z\n"
+                              "x += y + z\n"
+                              "x =#\n"
+                              "x < y + z\n"
+                              "x <\n"
+                              "x + y\n"
+                              "x = y += z\n");
+    auto parser = make_parser(source, arena);
+
+    for(size_t count = 0; ; ++count)
+    {
+        auto ir = parser.parse_statement();
+        if(ir != std::nullopt && ir->empty())
+        {
+            REQUIRE(count == 13);
+            break;
+        }
+        REQUIRE(ir == std::nullopt);
+        parser.skip_current_line();
+    }
+}
+
+TEST_CASE("parsing expressions with no whitespaces")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("-- x\n"
+                              "x ++\n"
+                              "x=ABS y\n"
+                              "x=y+z\n"
+                              "x+=y\n"
+                              "x<y\n"
+                              "x<=y\n");
+    auto parser = make_parser(source, arena);
+
+    for(size_t count = 0; ; ++count)
+    {
+        auto ir = parser.parse_statement();
+        if(ir != std::nullopt && ir->empty())
+        {
+            REQUIRE(count == 7);
+            break;
+        }
+        REQUIRE(ir != std::nullopt);
+    }
+}
+
+TEST_CASE("parsing commands with operators in the middle")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("COMMAND x - y\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir == std::nullopt);
+}
+
+TEST_CASE("parsing special words in expressions")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source(// The following is invalid:
+                              "GOSUB_FILE++\n"
+                              "++GOSUB_FILE\n"
+                              "GOSUB_FILE ++\n"
+                              "++ GOSUB_FILE\n"
+                              "LAUNCH_MISSION ++\n"
+                              "GOSUB_FILE = OTHER\n"
+                              "LOAD_AND_LAUNCH_MISSION = OTHER\n"
+                              "MISSION_START = OTHER\n"
+                              "MISSION_END = OTHER\n"
+                              "MISSION_START ++\n"
+                              "MISSION_END ++\n"
+                              "++ MISSION_START\n"
+                              "++MISSION_START\n"
+                              "++MISSION_END\n"
+                              // The following is valid:
+                              "OTHER = GOSUB_FILE\n"
+                              "VAR_INT = LVAR_INT\n"
+                              "WHILE = ENDWHILE\n"
+                              "ENDIF = IF\n"
+                              "ELSE = ENDIF\n"
+                              "IFNOT = IFNOT\n"
+                              "REPEAT = ENDREPEAT\n"
+                              "ABS = ABS ABS\n");
+    auto parser = make_parser(source, arena);
+
+    for(int invalid = 14; invalid > 0; --invalid)
+    {
+        auto ir = parser.parse_statement();
+        REQUIRE(ir == std::nullopt);
+        parser.skip_current_line();
+    }
+
+    for(int valid = 8; valid > 0; --valid)
+    {
+        auto ir = parser.parse_statement();
+        REQUIRE(ir != std::nullopt);
+    }
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+    REQUIRE(ir->empty());
+}
+
+// TODO test IF x = y + z GOTO label
+// TODO test assignment in conditional context (e.g. IF x += y)

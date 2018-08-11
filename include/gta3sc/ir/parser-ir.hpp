@@ -70,6 +70,16 @@ struct ParserIR
         constexpr Identifier* as_identifier() { return std::get_if<Identifier>(&value); }
         constexpr Filename* as_filename() { return std::get_if<Filename>(&value); }
         constexpr String* as_string() { return std::get_if<String>(&value); }
+
+        constexpr bool is_same_name(/*const*/ Argument& other)
+        {
+            const Identifier *a = 0, *b = 0;
+            if((a = this->as_identifier()) && (b = other.as_identifier()))
+            {
+                return a->name == b->name;
+            }
+            return false;
+        }
     };
 
 

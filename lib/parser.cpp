@@ -1,15 +1,33 @@
 #include <gta3sc/parser.hpp>
 #include <cstring>
 #include <cassert>
+using namespace std::literals::string_view_literals;
 
 // grammar from gta3script-specs de0049f5258dc11d3e409371a8981f8a01b28d93
 
+// TODO produce diagnostics
+// TODO perform parsing recovery
+
 namespace gta3sc
 {
-constexpr std::string_view COMMAND_GOTO = "GOTO";
-constexpr std::string_view COMMAND_GOSUB_FILE = "GOSUB_FILE";
-constexpr std::string_view COMMAND_LAUNCH_MISSION = "LAUNCH_MISSION";
-constexpr std::string_view COMMAND_LOAD_AND_LAUNCH_MISSION = "LOAD_AND_LAUNCH_MISSION";
+constexpr auto COMMAND_MISSION_START = "MISSION_START"sv;
+constexpr auto COMMAND_MISSION_END = "MISSION_END"sv;
+constexpr auto COMMAND_GOTO = "GOTO"sv;
+constexpr auto COMMAND_GOSUB_FILE = "GOSUB_FILE"sv;
+constexpr auto COMMAND_LAUNCH_MISSION = "LAUNCH_MISSION"sv;
+constexpr auto COMMAND_LOAD_AND_LAUNCH_MISSION = "LOAD_AND_LAUNCH_MISSION"sv;
+constexpr auto COMMAND_SET = "SET"sv;
+constexpr auto COMMAND_CSET = "CSET"sv;
+constexpr auto COMMAND_ABS = "ABS"sv;
+constexpr auto COMMAND_ADD_THING_TO_THING = "ADD_THING_TO_THING"sv;
+constexpr auto COMMAND_SUB_THING_FROM_THING = "SUB_THING_FROM_THING"sv;
+constexpr auto COMMAND_MULT_THING_BY_THING = "MULT_THING_BY_THING"sv;
+constexpr auto COMMAND_DIV_THING_BY_THING = "DIV_THING_BY_THING"sv;
+constexpr auto COMMAND_ADD_THING_TO_THING_TIMED = "ADD_THING_TO_THING_TIMED"sv;
+constexpr auto COMMAND_SUB_THING_FROM_THING_TIMED = "SUB_THING_FROM_THING_TIMED"sv;
+constexpr auto COMMAND_IS_THING_EQUAL_TO_THING = "IS_THING_EQUAL_TO_THING"sv;
+constexpr auto COMMAND_IS_THING_GREATER_THAN_THING = "IS_THING_GREATER_THAN_THING"sv;
+constexpr auto COMMAND_IS_THING_GREATER_OR_EQUAL_TO_THING = "IS_THING_GREATER_OR_EQUAL_TO_THING"sv;
 
 auto Parser::source_file() const -> const SourceFile&
 {
@@ -21,6 +39,14 @@ auto Parser::source_info(const Token& token) const -> ParserIR::SourceInfo
     return ParserIR::SourceInfo {
         this->source_file(),
         token.lexeme,
+    };
+}
+auto Parser::source_info(SourceLocation begin, SourceLocation end) const
+    -> ParserIR::SourceInfo
+{
+    return ParserIR::SourceInfo {
+        this->source_file(),
+        SourceRange(begin, end - begin),
     };
 }
 
@@ -248,7 +274,7 @@ auto Parser::parse_embedded_statement()
 {
     // embedded_statement := empty_statement
     //                      | command_statement
-    //                      | expression_statement (TODO)
+    //                      | expression_statement
     //                      | scope_statement
     //                      | var_statement
     //                      | if_statement (TODO)
@@ -262,6 +288,9 @@ auto Parser::parse_embedded_statement()
     //
     // empty_statement := eol ;
     //
+    // expression_statement := assignment_expression eol
+    //                       | conditional_expression eol ;
+    //
 
     // TODO should var_statement be handled?
     
@@ -269,10 +298,6 @@ auto Parser::parse_embedded_statement()
     {
         consume();
         return LinkedIR<ParserIR>();
-    }
-    else if(is_peek(Category::Word, "{"))
-    {
-        return parse_scope_statement();
     }
     else if(is_peek(Category::Word, COMMAND_GOSUB_FILE)
          || is_peek(Category::Word, COMMAND_LAUNCH_MISSION)
@@ -282,10 +307,68 @@ auto Parser::parse_embedded_statement()
             return LinkedIR<ParserIR>::from_ir(std::move(*stmt_ir));
         return std::nullopt;
     }
+    else if(is_peek(Category::Word, "{"))
+    {
+        return parse_scope_statement();
+    }
+    else if(is_peek(Category::Word))
+    {
+        const auto opos = is_peek(Category::Whitespace, 1)? 2 : 1;
+        switch(peek(opos)? peek(opos)->category : Category::Word)
+        {
+            case Category::Equal:
+            case Category::EqualHash:
+            case Category::PlusEqual:
+            case Category::MinusEqual:
+            case Category::StarEqual:
+            case Category::SlashEqual:
+            case Category::PlusEqualAt:
+            case Category::MinusEqualAt:
+            case Category::PlusPlus:
+            case Category::MinusMinus:
+            {
+                if(auto expr_ir = parse_assignment_expression())
+                {
+                    if(consume(Category::EndOfLine))
+                    {
+                        return *std::move(expr_ir); // FIXME clang bug
+                    }
+                }
+                return std::nullopt;
+            }
+            case Category::Less:
+            case Category::LessEqual:
+            case Category::Greater:
+            case Category::GreaterEqual:
+            {
+                if(auto expr_ir = parse_conditional_expression())
+                {
+                    if(consume(Category::EndOfLine))
+                        return *std::move(expr_ir); // FIXME clang bug
+                }
+                return std::nullopt;
+            }
+            default:
+            {
+                if(auto stmt_ir = parse_command_statement())
+                    return LinkedIR<ParserIR>::from_ir(std::move(*stmt_ir));
+                return std::nullopt;
+            }
+        }
+    }
+    else if(is_peek(Category::PlusPlus) || is_peek(Category::MinusMinus))
+    {
+        if(auto expr_ir = parse_assignment_expression())
+        {
+            if(consume(Category::EndOfLine))
+            {
+                return *std::move(expr_ir); // FIXME clang bug
+            }
+        }
+        return std::nullopt;
+    }
     else
     {
-        if(auto stmt_ir = parse_command_statement())
-            return LinkedIR<ParserIR>::from_ir(std::move(*stmt_ir));
         return std::nullopt;
     }
 }
@@ -433,7 +516,7 @@ auto Parser::parse_command(bool is_if_line)
     {
         if(is_if_line
            && is_peek(Category::Whitespace, 0)
-           && is_peek(Category::Word, COMMAND_GOTO, 1)
+           && is_peek(Category::Word, "GOTO", 1)
            && is_peek(Category::Whitespace, 2)
            && is_peek(Category::Word, 3)
            && is_peek(Category::EndOfLine, 4))
@@ -520,5 +603,310 @@ auto Parser::parse_argument()
     {
         return std::nullopt;
     }
+}
+
+auto Parser::parse_assignment_expression()
+    -> std::optional<LinkedIR<ParserIR>>
+{
+    return parse_expression_internal(false);
+}
+
+auto Parser::parse_conditional_expression()
+    -> std::optional<LinkedIR<ParserIR>>
+{
+    return parse_expression_internal(true);
+}
+
+auto Parser::parse_expression_internal(bool is_conditional)
+    -> std::optional<LinkedIR<ParserIR>>
+{
+    // binop := '+' | '-' | '*' | '/' | '+@' | '-@' ;
+    // asop := '=' | '=#' | '+=' | '-=' | '*=' | '/=' | '+=@' | '-=@' ;
+    // unop := '--' | '++' ;
+    // 
+    // expr_assign_abs := identifier {whitespace} '=' {whitespace} 'ABS' 
+    //                    {whitespace} argument ;
+    // expr_assign_binary := identifier {whitespace} asop {whitespace} argument ;
+    // expr_assign_ternary := identifier {whitespace} '=' {whitespace} argument 
+    //                        {whitespace} binop {whitespace} argument ;
+    // expr_assign_unary := (unop {whitespace} identifier) 
+    //                    | (identifier {whitespace} unop) ;
+    // 
+    // assignment_expression := expr_assign_unary
+    //                        | expr_assign_binary
+    //                        | expr_assign_ternary
+    //                        | expr_assign_abs ;
+    //
+    // relop := '=' | '<' | '>' | '>=' | '<=' ;
+    // conditional_expression := argument {whitespace} relop {whitespace} argument ;
+    //
+    // FOLLOW(assignment_expression) = {eol}
+    // FOLLOW(conditional_expression) = {eol, sep 'GOTO'}
+    
+    Category cats[6];
+    SourceRange locs[6];
+    arena_ptr<ParserIR::Argument> args[6];
+
+    size_t num_toks = 0;
+    size_t num_args = 0;
+
+    assert(std::size(cats) >= std::size(args));
+    assert(std::size(cats) == std::size(locs));
+
+    while(!is_peek(Category::EndOfLine))
+    {
+        if(is_conditional
+           && is_peek(Category::Whitespace, 0)
+           && is_peek(Category::Word, "GOTO", 1)
+           && is_peek(Category::Whitespace, 2)
+           && is_peek(Category::Word, 3)
+           && is_peek(Category::EndOfLine, 4))
+            break;
+
+        if(num_toks == std::size(cats))
+            return std::nullopt;
+
+        if(peek() == std::nullopt)
+            return std::nullopt;
+
+        switch(peek()->category)
+        {
+            case Category::Equal:
+            case Category::EqualHash:
+            case Category::PlusEqual:
+            case Category::MinusEqual:
+            case Category::StarEqual:
+            case Category::SlashEqual:
+            case Category::PlusEqualAt:
+            case Category::MinusEqualAt:
+            case Category::PlusPlus:
+            case Category::MinusMinus:
+            case Category::Less:
+            case Category::LessEqual:
+            case Category::Greater:
+            case Category::GreaterEqual:
+            case Category::Plus:
+            case Category::Minus:
+            case Category::Star:
+            case Category::Slash:
+            case Category::PlusAt:
+            case Category::MinusAt:
+            {
+                locs[num_toks] = peek()->lexeme;
+                cats[num_toks++] = consume()->category;
+                break;
+            }
+            case Category::Word:
+            {
+                locs[num_toks] = peek()->lexeme;
+                cats[num_toks++] = Category::Word;
+                if(auto arg = parse_argument(); arg)
+                {
+                    args[num_args++] = *arg;
+                    assert(num_args <= std::size(args));
+                }
+                else
+                {
+                    return std::nullopt;
+                }
+                break;
+            }
+            case Category::Whitespace:
+            {
+                consume();
+                break;
+            }
+            case Category::String:
+            {
+                // needs special care when comparing for name equality.
+                // not implemented yet.
+                assert(false);
+                return std::nullopt;
+            }
+            default:
+            {
+                assert(false);
+                return std::nullopt;
+            }
+        }
+    }
+
+    if(num_toks == 0)
+        return std::nullopt;
+
+    if(is_conditional && num_toks != 3)
+        return std::nullopt;
+
+    if(num_args > 0 && args[0]->as_identifier())
+    {
+        auto lhs = args[0]->as_identifier();
+        if(*lhs == COMMAND_GOSUB_FILE
+            || *lhs == COMMAND_LAUNCH_MISSION
+            || *lhs == COMMAND_LOAD_AND_LAUNCH_MISSION
+            || *lhs == COMMAND_MISSION_START
+            || *lhs == COMMAND_MISSION_END)
+        {
+            return std::nullopt;
+        }
+    }
+
+    using LookupItem = std::pair<Category, std::string_view>;
+
+    auto src_info = source_info(locs[0].begin(), locs[num_toks-1].end());
+    arena_ptr<ParserIR> ir = nullptr;
+
+    if(num_toks == 2
+        && ((cats[0] == Category::Word && cats[1] == Category::PlusPlus)
+            || (cats[0] == Category::PlusPlus && cats[1] == Category::Word)))
+    {
+        ir = ParserIR::create_command(src_info, COMMAND_ADD_THING_TO_THING, arena);
+        ir->command->push_arg(args[0], arena);
+        ir->command->push_arg(ParserIR::create_integer(src_info, 1, arena), arena);
+    }
+    else if(num_toks == 2
+        && ((cats[0] == Category::Word && cats[1] == Category::MinusMinus)
+            || (cats[0] == Category::MinusMinus && cats[1] == Category::Word)))
+    {
+        ir = ParserIR::create_command(src_info, COMMAND_SUB_THING_FROM_THING, arena);
+        ir->command->push_arg(args[0], arena);
+        ir->command->push_arg(ParserIR::create_integer(src_info, 1, arena), arena);
+    }
+    else if(num_toks == 4
+        && cats[0] == Category::Word
+        && cats[1] == Category::Equal
+        && cats[2] == Category::Word
+        && args[1]->as_identifier() && *args[1]->as_identifier() == "ABS"sv
+        && cats[3] == Category::Word)
+    {
+        const auto a = args[0], b = args[2];
+        if(a->is_same_name(*b))
+        {
+            ir = ParserIR::create_command(src_info, COMMAND_ABS, arena);
+            ir->command->push_arg(a, arena);
+        }
+        else
+        {
+            ir = ParserIR::create_command(src_info, COMMAND_SET, arena);
+            ir->command->push_arg(a, arena);
+            ir->command->push_arg(b, arena);
+            ir->set_next(ParserIR::create_command(src_info, COMMAND_ABS, arena));
+            ir->next->command->push_arg(a, arena);
+        }
+    }
+    else if(num_toks == 3
+        && cats[0] == Category::Word
+        && cats[1] != Category::Word
+        && cats[2] == Category::Word)
+    {
+        static constexpr LookupItem lookup_assignment[] = {
+            LookupItem { Category::Equal, COMMAND_SET },
+            LookupItem { Category::EqualHash, COMMAND_CSET },
+            LookupItem { Category::PlusEqual, COMMAND_ADD_THING_TO_THING },
+            LookupItem { Category::MinusEqual, COMMAND_SUB_THING_FROM_THING },
+            LookupItem { Category::StarEqual, COMMAND_MULT_THING_BY_THING },
+            LookupItem { Category::SlashEqual, COMMAND_DIV_THING_BY_THING },
+            LookupItem { Category::PlusEqualAt, COMMAND_ADD_THING_TO_THING_TIMED },
+            LookupItem { Category::MinusEqualAt, COMMAND_SUB_THING_FROM_THING_TIMED },
+        };
+
+        static constexpr LookupItem lookup_conditional[] = {
+            LookupItem { Category::Equal, COMMAND_IS_THING_EQUAL_TO_THING },
+            LookupItem { Category::Less, COMMAND_IS_THING_GREATER_THAN_THING },
+            LookupItem { Category::LessEqual, COMMAND_IS_THING_GREATER_OR_EQUAL_TO_THING },
+            LookupItem { Category::Greater, COMMAND_IS_THING_GREATER_THAN_THING },
+            LookupItem { Category::GreaterEqual, COMMAND_IS_THING_GREATER_OR_EQUAL_TO_THING },
+        };
+
+        std::string_view command_name;
+        auto a = args[0], b = args[1];
+
+        if(is_conditional)
+        {
+            auto it = std::find_if(std::begin(lookup_conditional),
+                                   std::end(lookup_conditional),
+                                   [&](const auto& pair) { return pair.first == cats[1]; });
+            if(it == std::end(lookup_conditional))
+                return std::nullopt;
+
+            command_name = it->second;
+
+            if(it->first == Category::Less || it->first == Category::LessEqual)
+                std::swap(a, b);
+
+        }
+        else
+        {
+            auto it = std::find_if(std::begin(lookup_assignment),
+                                   std::end(lookup_assignment),
+                                   [&](const auto& pair) { return pair.first == cats[1]; });
+            if(it == std::end(lookup_assignment))
+                return std::nullopt;
+
+            command_name = it->second;
+        }
+
+        ir = ParserIR::create_command(src_info, command_name, arena);
+        ir->command->push_arg(a, arena);
+        ir->command->push_arg(b, arena);
+    }
+    else if(num_toks == 5
+            && cats[0] == Category::Word
+            && cats[1] == Category::Equal
+            && cats[2] == Category::Word
+            && cats[3] != Category::Word
+            && cats[4] == Category::Word)
+    {
+        static constexpr LookupItem lookup_ternary[] = {
+            LookupItem { Category::Plus, COMMAND_ADD_THING_TO_THING },
+            LookupItem { Category::Minus, COMMAND_SUB_THING_FROM_THING },
+            LookupItem { Category::Star, COMMAND_MULT_THING_BY_THING },
+            LookupItem { Category::Slash, COMMAND_DIV_THING_BY_THING },
+            LookupItem { Category::PlusAt, COMMAND_ADD_THING_TO_THING_TIMED },
+            LookupItem { Category::MinusAt, COMMAND_SUB_THING_FROM_THING_TIMED },
+        };
+
+        auto it = std::find_if(std::begin(lookup_ternary), std::end(lookup_ternary),
+                               [&](const auto& pair) { return pair.first == cats[3]; });
+
+        if(it == std::end(lookup_ternary))
+            return std::nullopt;
+
+        const auto a = args[0], b = args[1], c = args[2];
+
+        const bool is_associative = (cats[3] == Category::Plus
+                                        || cats[3] == Category::Star);
+
+        if(a->is_same_name(*b))
+        {
+            ir = ParserIR::create_command(src_info, it->second, arena);
+            ir->command->push_arg(a, arena);
+            ir->command->push_arg(c, arena);
+        }
+        else if(a->is_same_name(*c))
+        {
+            if(!is_associative)
+                return std::nullopt;
+            ir = ParserIR::create_command(src_info, it->second, arena);
+            ir->command->push_arg(a, arena);
+            ir->command->push_arg(b, arena);
+        }
+        else
+        {
+            ir = ParserIR::create_command(src_info, COMMAND_SET, arena);
+            ir->command->push_arg(a, arena);
+            ir->command->push_arg(b, arena);
+            ir->set_next(ParserIR::create_command(src_info, it->second, arena));
+            ir->next->command->push_arg(a, arena);
+            ir->next->command->push_arg(c, arena);
+        }
+    }
+    else
+    {
+        return std::nullopt;
+    }
+
+    assert(is_peek(Category::EndOfLine) || is_peek(Category::Whitespace));
+
+    return LinkedIR<ParserIR>::from_ir(std::move(ir));
 }
 }
