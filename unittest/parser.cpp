@@ -1401,3 +1401,27 @@ TEST_CASE("parsing a WHILE without ENDWHILE")
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
 }
+
+TEST_CASE("parsing nested blocks with empty statement list")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("WHILE THING_1\n"
+                              "    WHILE THING_2\n"
+                              "    ENDWHILE\n"
+                              "ENDWHILE\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+
+    auto it = ir->begin();
+    REQUIRE(it->command->name == "WHILE");
+    REQUIRE((++it)->command->name == "THING_1");
+    REQUIRE((++it)->command->name == "WHILE");
+    REQUIRE((++it)->command->name == "THING_2");
+    REQUIRE((++it)->command->name == "ENDWHILE");
+    REQUIRE((++it)->command->name == "ENDWHILE");
+    REQUIRE(++it == ir->end()); 
+}
+
+// TODO test labels on each of the unexpected places (see updated specs)
