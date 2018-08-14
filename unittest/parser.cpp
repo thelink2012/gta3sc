@@ -1146,7 +1146,7 @@ TEST_CASE("parsing a IF...ELSE without ENDIF")
 
 TEST_CASE("parsing a ELSE/ENDIF with no IF")
 {
-    return; // TODO
+    return; // TODO and actually test for all special words
 
     gta3sc::ArenaMemoryResource arena;
     auto source = make_source("ENDIF\n"
@@ -1304,6 +1304,98 @@ TEST_CASE("parsing a conditionless AND/OR")
                               "    DO_1\n"
                               "    DO_2\n"
                               "ENDIF\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir == std::nullopt);
+}
+
+TEST_CASE("parsing a valid WHILE...ENDWHILE")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("WHILE SOMETHING\n"
+                              "    DO_1\n"
+                              "    DO_2\n"
+                              "ENDWHILE\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+
+    auto it = ir->begin();
+    REQUIRE(it->command->name == "WHILE");
+    REQUIRE(*it->command->args[0]->as_integer() == 0);
+    REQUIRE(it->command->args.size() == 1);
+    REQUIRE((++it)->command->name == "SOMETHING");
+    REQUIRE((++it)->command->name == "DO_1");
+    REQUIRE((++it)->command->name == "DO_2");
+    REQUIRE((++it)->command->name == "ENDWHILE");
+    REQUIRE(++it == ir->end()); 
+}
+
+TEST_CASE("parsing a valid WHILENOT...ENDWHILE")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("WHILENOT SOMETHING\n"
+                              "    DO_1\n"
+                              "    DO_2\n"
+                              "ENDWHILE\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+
+    auto it = ir->begin();
+    REQUIRE(it->command->name == "WHILENOT");
+    REQUIRE(*it->command->args[0]->as_integer() == 0);
+    REQUIRE(it->command->args.size() == 1);
+    REQUIRE((++it)->command->name == "SOMETHING");
+    REQUIRE((++it)->command->name == "DO_1");
+    REQUIRE((++it)->command->name == "DO_2");
+    REQUIRE((++it)->command->name == "ENDWHILE");
+    REQUIRE(++it == ir->end()); 
+}
+
+TEST_CASE("parsing a valid WHILE...ENDWHILE with AND/OR/NOT")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("WHILE SOMETHING\n"
+                              "AND OTHER_THING\n"
+                              "AND NOT ANOTHER_THING\n"
+                              "    DO_1\n"
+                              "    DO_2\n"
+                              "ENDWHILE\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+
+    auto it = ir->begin();
+    REQUIRE(it->command->name == "WHILE");
+    REQUIRE(it->command->not_flag == false);
+    REQUIRE(*it->command->args[0]->as_integer() == 2);
+    REQUIRE(it->command->args.size() == 1);
+    REQUIRE((++it)->command->name == "SOMETHING");
+    REQUIRE(it->command->not_flag == false);
+    REQUIRE((++it)->command->name == "OTHER_THING");
+    REQUIRE(it->command->not_flag == false);
+    REQUIRE((++it)->command->name == "ANOTHER_THING");
+    REQUIRE(it->command->not_flag == true);
+    REQUIRE((++it)->command->name == "DO_1");
+    REQUIRE(it->command->not_flag == false);
+    REQUIRE((++it)->command->name == "DO_2");
+    REQUIRE(it->command->not_flag == false);
+    REQUIRE((++it)->command->name == "ENDWHILE");
+    REQUIRE(it->command->not_flag == false);
+    REQUIRE(++it == ir->end()); 
+}
+
+TEST_CASE("parsing a WHILE without ENDWHILE")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("WHILE SOMETHING\n"
+                              "    DO_1\n"
+                              "    DO_2\n");
     auto parser = make_parser(source, arena);
 
     auto ir = parser.parse_statement();

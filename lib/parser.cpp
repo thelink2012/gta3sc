@@ -18,6 +18,9 @@ constexpr auto COMMAND_IF = "IF"sv;
 constexpr auto COMMAND_IFNOT = "IFNOT"sv;
 constexpr auto COMMAND_ELSE = "ELSE"sv;
 constexpr auto COMMAND_ENDIF = "ENDIF"sv;
+constexpr auto COMMAND_WHILE = "WHILE"sv;
+constexpr auto COMMAND_WHILENOT = "WHILENOT"sv;
+constexpr auto COMMAND_ENDWHILE = "ENDWHILE"sv;
 constexpr auto COMMAND_GOTO_IF_FALSE = "GOTO_IF_FALSE"sv;
 constexpr auto COMMAND_GOTO_IF_TRUE = "GOTO_IF_TRUE"sv;
 constexpr auto COMMAND_GOSUB_FILE = "GOSUB_FILE"sv;
@@ -288,8 +291,8 @@ auto Parser::parse_embedded_statement()
     //                      | ifnot_statement
     //                      | if_goto_statement
     //                      | ifnot_goto_statement
-    //                      | while_statement (TODO)
-    //                      | whilenot_statement (TODO)
+    //                      | while_statement
+    //                      | whilenot_statement
     //                      | repeat_statement (TODO)
     //                      | require_statement ;
     //
@@ -349,6 +352,14 @@ auto Parser::parse_embedded_statement()
     else if(is_peek(Category::Word, "IFNOT"))
     {
         return parse_ifnot_statement();
+    }
+    else if(is_peek(Category::Word, "WHILE"))
+    {
+        return parse_while_statement();
+    }
+    else if(is_peek(Category::Word, "WHILENOT"))
+    {
+        return parse_whilenot_statement();
     }
     else
     {
@@ -507,6 +518,58 @@ auto Parser::parse_if_statement_internal(bool is_ifnot)
     }
 }
 
+auto Parser::parse_while_statement()
+    -> std::optional<LinkedIR<ParserIR>>
+{
+    return parse_while_statement_internal(false);
+}
+
+auto Parser::parse_whilenot_statement()
+    -> std::optional<LinkedIR<ParserIR>>
+{
+    return parse_while_statement_internal(true);
+}
+
+auto Parser::parse_while_statement_internal(bool is_whilenot)
+    -> std::optional<LinkedIR<ParserIR>>
+{
+    // while_statement := 'WHILE' sep conditional_list
+    //                    {statement}
+    //                    'ENDWHILE' eol ;
+    // 
+    // whilenot_statement := 'WHILENOT' sep conditional_list
+    //                       {statement}
+    //                       'ENDWHILE' eol ;
+    // 
+   
+    const auto while_command = is_whilenot? COMMAND_WHILENOT : COMMAND_WHILE;
+
+    auto while_token = consume_word(while_command);
+    if(!while_token)
+        return std::nullopt;
+
+    if(!consume(Category::Whitespace))
+        return std::nullopt;
+
+    auto [andor_list, andor_count] = parse_conditional_list();
+    if(!andor_list)
+        return std::nullopt;
+
+    auto body_stms = parse_statement_list("ENDWHILE");
+    if(!body_stms)
+        return std::nullopt;
+
+    const auto src_info = source_info(*while_token);
+
+    auto op_while = ParserIR::create_command(src_info, while_command, arena);
+    op_while->command->push_arg(ParserIR::create_integer(src_info, andor_count, arena), arena);
+
+    body_stms->splice_front(*std::move(andor_list));
+    body_stms->push_front(op_while);
+
+    return *std::move(body_stms); // FIXME clang bug
+}
+
 auto Parser::parse_conditional_element(bool is_if_line)
     -> std::optional<arena_ptr<ParserIR>>
 {
@@ -540,6 +603,19 @@ auto Parser::parse_conditional_element(bool is_if_line)
     ir->command->not_flag = not_flag;
 
     return ir;
+}
+
+auto Parser::parse_conditional_list()
+    -> std::pair<std::optional<LinkedIR<ParserIR>>, int32_t>
+{
+    // conditional_list := conditional_element eol
+    //                     ({and_conditional_stmt} | {or_conditional_stmt}) ;
+    auto op_cond0 = parse_conditional_element();
+    if(!op_cond0)
+        return {std::nullopt, 0};
+    if(!consume(Category::EndOfLine))
+        return {std::nullopt, 0};
+    return parse_conditional_list(*op_cond0);
 }
 
 auto Parser::parse_conditional_list(arena_ptr<ParserIR> op_cond0)
@@ -1098,15 +1174,10 @@ auto Parser::parse_expression_internal(bool is_conditional, bool is_if_line)
 }
 }
 
-// INTERESTING TEST CASES:
+// INTERESTING TEST CASES (aka inner stms).
 // REPEAT
-// REPEAT
-// ENDREPEAT
+//     REPEAT
+//     ENDREPEAT // will parse_statement_list handle this correctly? :)
 // ENDRPEEAT
 //
-// IF
-// // unclosed
-//
-// label on each unexpected place?
-//
-// 
+// label on each unexpected place (see updated specs)

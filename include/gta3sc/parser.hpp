@@ -78,8 +78,20 @@ private:
     auto parse_if_statement_internal(bool is_ifnot)
         -> std::optional<LinkedIR<ParserIR>>;
 
+    auto parse_while_statement()
+        -> std::optional<LinkedIR<ParserIR>>;
+
+    auto parse_whilenot_statement()
+        -> std::optional<LinkedIR<ParserIR>>;
+
+    auto parse_while_statement_internal(bool is_whilenot)
+        -> std::optional<LinkedIR<ParserIR>>;
+
     auto parse_conditional_element(bool is_if_line = false)
         -> std::optional<arena_ptr<ParserIR>>;
+
+    auto parse_conditional_list()
+        -> std::pair<std::optional<LinkedIR<ParserIR>>, int32_t>;
 
     auto parse_conditional_list(arena_ptr<ParserIR> op_cond0)
         -> std::pair<std::optional<LinkedIR<ParserIR>>, int32_t>;
