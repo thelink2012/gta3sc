@@ -950,6 +950,26 @@ TEST_CASE("parsing a valid IF...GOTO statement")
     REQUIRE(++it == ir->end()); 
 }
 
+TEST_CASE("parsing a valid IFNOT...GOTO statement")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("IFNOT SOMETHING GOTO elsewhere\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+
+    auto it = ir->begin();
+    REQUIRE(it->command->name == "ANDOR");
+    REQUIRE(*it->command->args[0]->as_integer() == 0);
+    REQUIRE(it->command->args.size() == 1);
+    REQUIRE((++it)->command->name == "SOMETHING");
+    REQUIRE((++it)->command->name == "GOTO_IF_FALSE");
+    REQUIRE(it->command->args.size() == 1);
+    REQUIRE_EQ(*it->command->args[0]->as_identifier(), "ELSEWHERE"sv);
+    REQUIRE(++it == ir->end()); 
+}
+
 TEST_CASE("parsing a valid conditional element with equal operator")
 {
     gta3sc::ArenaMemoryResource arena;
@@ -1038,6 +1058,29 @@ TEST_CASE("parsing a valid IF...ELSE...ENDIF block")
     REQUIRE((++it)->command->name == "ELSE");
     REQUIRE((++it)->command->name == "DO_3");
     REQUIRE((++it)->command->name == "DO_4");
+    REQUIRE((++it)->command->name == "ENDIF");
+    REQUIRE(++it == ir->end()); 
+}
+
+TEST_CASE("parsing a valid IFNOT...ENDIF block")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("IFNOT SOMETHING\n"
+                              "    DO_1\n"
+                              "    DO_2\n"
+                              "ENDIF\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+
+    auto it = ir->begin();
+    REQUIRE(it->command->name == "IFNOT");
+    REQUIRE(*it->command->args[0]->as_integer() == 0);
+    REQUIRE(it->command->args.size() == 1);
+    REQUIRE((++it)->command->name == "SOMETHING");
+    REQUIRE((++it)->command->name == "DO_1");
+    REQUIRE((++it)->command->name == "DO_2");
     REQUIRE((++it)->command->name == "ENDIF");
     REQUIRE(++it == ir->end()); 
 }

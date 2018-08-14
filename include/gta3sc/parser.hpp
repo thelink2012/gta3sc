@@ -61,13 +61,21 @@ public:
     }
 
 private:
+    auto peek_expression_type()
+        -> std::optional<Category>;
+
+    bool is_relational_operator(Category category);
+
     auto parse_embedded_statement()
         -> std::optional<LinkedIR<ParserIR>>;
 
-    auto parse_command_or_expression(bool is_condition, bool is_if_line = false)
+    auto parse_if_statement()
         -> std::optional<LinkedIR<ParserIR>>;
 
-    auto parse_if_statement()
+    auto parse_ifnot_statement()
+        -> std::optional<LinkedIR<ParserIR>>;
+
+    auto parse_if_statement_internal(bool is_ifnot)
         -> std::optional<LinkedIR<ParserIR>>;
 
     auto parse_conditional_element(bool is_if_line = false)
@@ -85,10 +93,10 @@ private:
     auto parse_assignment_expression()
         -> std::optional<LinkedIR<ParserIR>>;
 
-    auto parse_conditional_expression()
+    auto parse_conditional_expression(bool is_if_line = false)
         -> std::optional<LinkedIR<ParserIR>>;
 
-    auto parse_expression_internal(bool is_conditional)
+    auto parse_expression_internal(bool is_conditional, bool is_if_line)
         -> std::optional<LinkedIR<ParserIR>>;
 
     auto parse_command(bool is_if_line = false) 

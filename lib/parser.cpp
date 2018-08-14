@@ -15,6 +15,7 @@ constexpr auto COMMAND_MISSION_END = "MISSION_END"sv;
 constexpr auto COMMAND_ANDOR = "ANDOR"sv;
 constexpr auto COMMAND_GOTO = "GOTO"sv;
 constexpr auto COMMAND_IF = "IF"sv;
+constexpr auto COMMAND_IFNOT = "IFNOT"sv;
 constexpr auto COMMAND_ELSE = "ELSE"sv;
 constexpr auto COMMAND_ENDIF = "ENDIF"sv;
 constexpr auto COMMAND_GOTO_IF_FALSE = "GOTO_IF_FALSE"sv;
@@ -284,9 +285,9 @@ auto Parser::parse_embedded_statement()
     //                      | scope_statement
     //                      | var_statement
     //                      | if_statement
-    //                      | ifnot_statement (TODO)
+    //                      | ifnot_statement
     //                      | if_goto_statement
-    //                      | ifnot_goto_statement (TODO)
+    //                      | ifnot_goto_statement
     //                      | while_statement (TODO)
     //                      | whilenot_statement (TODO)
     //                      | repeat_statement (TODO)
@@ -299,9 +300,15 @@ auto Parser::parse_embedded_statement()
     // expression_statement := assignment_expression eol
     //                       | conditional_expression eol ;
     //
+    // command_var_name := 'VAR_INT' 
+    //                     | 'LVAR_INT'
+    //                     | 'VAR_FLOAT'
+    //                     | 'LVAR_FLOAT' ;
+    // command_var_param := sep identifier ;
+    // 
+    // var_statement := command_var_name command_var_param {command_var_param} eol ;
+    //
 
-    // TODO should var_statement be handled?
-    
     if(is_peek(Category::EndOfLine))
     {
         consume();
@@ -315,6 +322,22 @@ auto Parser::parse_embedded_statement()
             return LinkedIR<ParserIR>::from_ir(*stmt_ir);
         return std::nullopt;
     }
+    else if(auto category = peek_expression_type())
+    {
+        auto linked = std::optional<LinkedIR<ParserIR>>();
+        if(is_relational_operator(*category))
+            linked = parse_conditional_expression();
+        else
+            linked = parse_assignment_expression();
+
+        if(!linked)
+            return std::nullopt;
+
+        if(!consume(Category::EndOfLine))
+            return std::nullopt;
+
+        return *std::move(linked); // FIXME clang bug
+    }
     else if(is_peek(Category::Word, "{"))
     {
         return parse_scope_statement();
@@ -323,46 +346,31 @@ auto Parser::parse_embedded_statement()
     {
         return parse_if_statement();
     }
-    else if(is_peek(Category::Word))
+    else if(is_peek(Category::Word, "IFNOT"))
     {
-        if(auto linked = parse_command_or_expression(false))
-        {
-            if(consume(Category::EndOfLine))
-                return *std::move(linked); // FIXME clang bug
-        }
-        return std::nullopt;
-    }
-    else if(is_peek(Category::PlusPlus) || is_peek(Category::MinusMinus))
-    {
-        if(auto linked = parse_assignment_expression())
-        {
-            if(consume(Category::EndOfLine))
-            {
-                return *std::move(linked); // FIXME clang bug
-            }
-        }
-        return std::nullopt;
+        return parse_ifnot_statement();
     }
     else
     {
+        if(auto ir = parse_command())
+        {
+            if(consume(Category::EndOfLine))
+                return LinkedIR<ParserIR>::from_ir(*ir);
+        }
         return std::nullopt;
     }
 }
 
-auto Parser::parse_command_or_expression(bool is_condition, bool is_if_line)
-    -> std::optional<LinkedIR<ParserIR>>
+auto Parser::peek_expression_type()
+    -> std::optional<Category>
 {
-    // TODO grammar spec of this
-    const auto opos = peek(0) && is_peek(Category::Whitespace, 1)? 2 : 1;
+    if(is_peek(Category::PlusPlus) || is_peek(Category::MinusMinus))
+        return peek()->category;
+
+    const auto opos = is_peek(Category::Whitespace, 1)? 2 : 1;
     switch(peek(opos)? peek(opos)->category : Category::Word)
     {
         case Category::Equal:
-        {
-            if(is_condition)
-                return parse_conditional_expression();
-            else
-                return parse_assignment_expression();
-        }
         case Category::EqualHash:
         case Category::PlusEqual:
         case Category::MinusEqual:
@@ -372,28 +380,43 @@ auto Parser::parse_command_or_expression(bool is_condition, bool is_if_line)
         case Category::MinusEqualAt:
         case Category::PlusPlus:
         case Category::MinusMinus:
-        {
-            if(is_condition)
-                return std::nullopt;
-            return parse_assignment_expression();
-        }
         case Category::Less:
         case Category::LessEqual:
         case Category::Greater:
         case Category::GreaterEqual:
-        {
-            return parse_conditional_expression();
-        }
+            return peek(opos)->category;
         default:
-        {
-            if(auto stmt_ir = parse_command(is_if_line))
-                return LinkedIR<ParserIR>::from_ir(*stmt_ir);
             return std::nullopt;
-        }
+    }
+}
+
+bool Parser::is_relational_operator(Category category)
+{
+    switch(category)
+    {
+        case Category::Less:
+        case Category::LessEqual:
+        case Category::Greater:
+        case Category::GreaterEqual:
+            return true;
+        default:
+            return false;
     }
 }
 
 auto Parser::parse_if_statement()
+    -> std::optional<LinkedIR<ParserIR>>
+{
+    return parse_if_statement_internal(false);
+}
+
+auto Parser::parse_ifnot_statement()
+    -> std::optional<LinkedIR<ParserIR>>
+{
+    return parse_if_statement_internal(true);
+}
+
+auto Parser::parse_if_statement_internal(bool is_ifnot)
     -> std::optional<LinkedIR<ParserIR>>
 {
     // if_statement := 'IF' sep conditional_list
@@ -404,8 +427,19 @@ auto Parser::parse_if_statement()
     //
     // if_goto_statement := 'IF' sep conditional_element sep 'GOTO' sep identifier eol ;
     // 
-    
-    auto if_token = consume_word("IF");
+    // ifnot_statement := 'IFNOT' sep conditional_list
+    //                 {statement}
+    //                 ['ELSE'
+    //                 {statement}]
+    //                 'ENDIF' ;
+    //
+    // ifnot_goto_statement := 'IFNOT' sep conditional_element sep 'GOTO' sep identifier eol; 
+    //
+
+    const auto if_command = is_ifnot? COMMAND_IFNOT : COMMAND_IF;
+    const auto if_true_command = is_ifnot? COMMAND_GOTO_IF_FALSE : COMMAND_GOTO_IF_TRUE;
+   
+    auto if_token = consume_word(if_command);
     if(!if_token)
         return std::nullopt;
 
@@ -429,7 +463,7 @@ auto Parser::parse_if_statement()
 
         auto op_andor = ParserIR::create_command(src_info, COMMAND_ANDOR, arena);
         op_andor->command->push_arg(ParserIR::create_integer(src_info, 0, arena), arena);
-        auto op_goto = ParserIR::create_command(src_info, COMMAND_GOTO_IF_TRUE, arena);
+        auto op_goto = ParserIR::create_command(src_info, if_true_command, arena);
         op_goto->command->push_arg(*goto_arg, arena);
 
         auto linked = LinkedIR<ParserIR>();
@@ -460,13 +494,13 @@ auto Parser::parse_if_statement()
             body_stms->splice_back(*std::move(else_stms));
         }
 
-        auto op_if = ParserIR::create_command(src_info, COMMAND_IF, arena);
+        auto op_if = ParserIR::create_command(src_info, if_command, arena);
         op_if->command->push_arg(ParserIR::create_integer(src_info, andor_count, arena), arena);
 
         body_stms->splice_front(*std::move(andor_list));
         body_stms->push_front(op_if);
 
-        assert(body_stms->front()->command->name == COMMAND_IF);
+        assert(body_stms->front()->command->name == if_command);
         assert(body_stms->back()->command->name == COMMAND_ENDIF);
 
         return *std::move(body_stms); // FIXME clang bug
@@ -487,7 +521,17 @@ auto Parser::parse_conditional_element(bool is_if_line)
         not_flag = true;
     }
 
-    auto linked = parse_command_or_expression(true, is_if_line);
+    auto linked = std::optional<LinkedIR<ParserIR>>();
+    if(peek_expression_type())
+    {
+        linked = parse_conditional_expression(is_if_line);
+    }
+    else
+    {
+        if(auto ir = parse_command(is_if_line))
+            linked = LinkedIR<ParserIR>::from_ir(*ir);
+    }
+
     if(!linked)
         return std::nullopt;
 
@@ -751,16 +795,16 @@ auto Parser::parse_argument()
 auto Parser::parse_assignment_expression()
     -> std::optional<LinkedIR<ParserIR>>
 {
-    return parse_expression_internal(false);
+    return parse_expression_internal(false, false);
 }
 
-auto Parser::parse_conditional_expression()
+auto Parser::parse_conditional_expression(bool is_if_line)
     -> std::optional<LinkedIR<ParserIR>>
 {
-    return parse_expression_internal(true);
+    return parse_expression_internal(true, is_if_line);
 }
 
-auto Parser::parse_expression_internal(bool is_conditional)
+auto Parser::parse_expression_internal(bool is_conditional, bool is_if_line)
     -> std::optional<LinkedIR<ParserIR>>
 {
     // binop := '+' | '-' | '*' | '/' | '+@' | '-@' ;
@@ -798,7 +842,7 @@ auto Parser::parse_expression_internal(bool is_conditional)
 
     while(!is_peek(Category::EndOfLine))
     {
-        if(is_conditional
+        if(is_if_line
            && is_peek(Category::Whitespace, 0)
            && is_peek(Category::Word, "GOTO", 1)
            && is_peek(Category::Whitespace, 2)
