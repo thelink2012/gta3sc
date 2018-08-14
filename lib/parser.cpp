@@ -12,7 +12,13 @@ namespace gta3sc
 {
 constexpr auto COMMAND_MISSION_START = "MISSION_START"sv;
 constexpr auto COMMAND_MISSION_END = "MISSION_END"sv;
+constexpr auto COMMAND_ANDOR = "ANDOR"sv;
 constexpr auto COMMAND_GOTO = "GOTO"sv;
+constexpr auto COMMAND_IF = "IF"sv;
+constexpr auto COMMAND_ELSE = "ELSE"sv;
+constexpr auto COMMAND_ENDIF = "ENDIF"sv;
+constexpr auto COMMAND_GOTO_IF_FALSE = "GOTO_IF_FALSE"sv;
+constexpr auto COMMAND_GOTO_IF_TRUE = "GOTO_IF_TRUE"sv;
 constexpr auto COMMAND_GOSUB_FILE = "GOSUB_FILE"sv;
 constexpr auto COMMAND_LAUNCH_MISSION = "LAUNCH_MISSION"sv;
 constexpr auto COMMAND_LOAD_AND_LAUNCH_MISSION = "LOAD_AND_LAUNCH_MISSION"sv;
@@ -277,9 +283,9 @@ auto Parser::parse_embedded_statement()
     //                      | expression_statement
     //                      | scope_statement
     //                      | var_statement
-    //                      | if_statement (TODO)
+    //                      | if_statement
     //                      | ifnot_statement (TODO)
-    //                      | if_goto_statement (TODO)
+    //                      | if_goto_statement
     //                      | ifnot_goto_statement (TODO)
     //                      | while_statement (TODO)
     //                      | whilenot_statement (TODO)
@@ -287,6 +293,8 @@ auto Parser::parse_embedded_statement()
     //                      | require_statement ;
     //
     // empty_statement := eol ;
+    //
+    // command_statement := command eol ;
     //
     // expression_statement := assignment_expression eol
     //                       | conditional_expression eol ;
@@ -304,65 +312,33 @@ auto Parser::parse_embedded_statement()
          || is_peek(Category::Word, COMMAND_LOAD_AND_LAUNCH_MISSION))
     {
         if(auto stmt_ir = parse_require_statement())
-            return LinkedIR<ParserIR>::from_ir(std::move(*stmt_ir));
+            return LinkedIR<ParserIR>::from_ir(*stmt_ir);
         return std::nullopt;
     }
     else if(is_peek(Category::Word, "{"))
     {
         return parse_scope_statement();
     }
+    else if(is_peek(Category::Word, "IF"))
+    {
+        return parse_if_statement();
+    }
     else if(is_peek(Category::Word))
     {
-        const auto opos = is_peek(Category::Whitespace, 1)? 2 : 1;
-        switch(peek(opos)? peek(opos)->category : Category::Word)
+        if(auto linked = parse_command_or_expression(false))
         {
-            case Category::Equal:
-            case Category::EqualHash:
-            case Category::PlusEqual:
-            case Category::MinusEqual:
-            case Category::StarEqual:
-            case Category::SlashEqual:
-            case Category::PlusEqualAt:
-            case Category::MinusEqualAt:
-            case Category::PlusPlus:
-            case Category::MinusMinus:
-            {
-                if(auto expr_ir = parse_assignment_expression())
-                {
-                    if(consume(Category::EndOfLine))
-                    {
-                        return *std::move(expr_ir); // FIXME clang bug
-                    }
-                }
-                return std::nullopt;
-            }
-            case Category::Less:
-            case Category::LessEqual:
-            case Category::Greater:
-            case Category::GreaterEqual:
-            {
-                if(auto expr_ir = parse_conditional_expression())
-                {
-                    if(consume(Category::EndOfLine))
-                        return *std::move(expr_ir); // FIXME clang bug
-                }
-                return std::nullopt;
-            }
-            default:
-            {
-                if(auto stmt_ir = parse_command_statement())
-                    return LinkedIR<ParserIR>::from_ir(std::move(*stmt_ir));
-                return std::nullopt;
-            }
+            if(consume(Category::EndOfLine))
+                return *std::move(linked); // FIXME clang bug
         }
+        return std::nullopt;
     }
     else if(is_peek(Category::PlusPlus) || is_peek(Category::MinusMinus))
     {
-        if(auto expr_ir = parse_assignment_expression())
+        if(auto linked = parse_assignment_expression())
         {
             if(consume(Category::EndOfLine))
             {
-                return *std::move(expr_ir); // FIXME clang bug
+                return *std::move(linked); // FIXME clang bug
             }
         }
         return std::nullopt;
@@ -371,6 +347,208 @@ auto Parser::parse_embedded_statement()
     {
         return std::nullopt;
     }
+}
+
+auto Parser::parse_command_or_expression(bool is_condition, bool is_if_line)
+    -> std::optional<LinkedIR<ParserIR>>
+{
+    // TODO grammar spec of this
+    const auto opos = peek(0) && is_peek(Category::Whitespace, 1)? 2 : 1;
+    switch(peek(opos)? peek(opos)->category : Category::Word)
+    {
+        case Category::Equal:
+        {
+            if(is_condition)
+                return parse_conditional_expression();
+            else
+                return parse_assignment_expression();
+        }
+        case Category::EqualHash:
+        case Category::PlusEqual:
+        case Category::MinusEqual:
+        case Category::StarEqual:
+        case Category::SlashEqual:
+        case Category::PlusEqualAt:
+        case Category::MinusEqualAt:
+        case Category::PlusPlus:
+        case Category::MinusMinus:
+        {
+            if(is_condition)
+                return std::nullopt;
+            return parse_assignment_expression();
+        }
+        case Category::Less:
+        case Category::LessEqual:
+        case Category::Greater:
+        case Category::GreaterEqual:
+        {
+            return parse_conditional_expression();
+        }
+        default:
+        {
+            if(auto stmt_ir = parse_command(is_if_line))
+                return LinkedIR<ParserIR>::from_ir(*stmt_ir);
+            return std::nullopt;
+        }
+    }
+}
+
+auto Parser::parse_if_statement()
+    -> std::optional<LinkedIR<ParserIR>>
+{
+    // if_statement := 'IF' sep conditional_list
+    //                 {statement}
+    //                 ['ELSE'
+    //                 {statement}]
+    //                 'ENDIF' ;
+    //
+    // if_goto_statement := 'IF' sep conditional_element sep 'GOTO' sep identifier eol ;
+    // 
+    
+    auto if_token = consume_word("IF");
+    if(!if_token)
+        return std::nullopt;
+
+    if(!consume(Category::Whitespace))
+        return std::nullopt;
+
+    auto op_cond0 = parse_conditional_element(true);
+    if(!op_cond0)
+        return std::nullopt;
+
+    const auto src_info = source_info(*if_token);
+
+    if(is_peek(Category::Whitespace))
+    {
+        if(!consume() || !consume_word("GOTO") || !consume(Category::Whitespace))
+            return std::nullopt;
+
+        auto goto_arg = parse_argument();
+        if(!goto_arg)
+            return std::nullopt;
+
+        auto op_andor = ParserIR::create_command(src_info, COMMAND_ANDOR, arena);
+        op_andor->command->push_arg(ParserIR::create_integer(src_info, 0, arena), arena);
+        auto op_goto = ParserIR::create_command(src_info, COMMAND_GOTO_IF_TRUE, arena);
+        op_goto->command->push_arg(*goto_arg, arena);
+
+        auto linked = LinkedIR<ParserIR>();
+        linked.push_back(op_andor);
+        linked.push_back(*op_cond0);
+        linked.push_back(op_goto);
+        return linked;
+    }
+    else
+    {
+        if(!consume(Category::EndOfLine))
+            return std::nullopt;
+
+        auto [andor_list, andor_count] = parse_conditional_list(*op_cond0);
+        if(!andor_list)
+            return std::nullopt;
+
+        auto body_stms = parse_statement_list("ELSE", "ENDIF");
+        if(!body_stms)
+            return std::nullopt;
+
+        if(body_stms->back()->command->name == COMMAND_ELSE)
+        {
+            auto else_stms = parse_statement_list("ENDIF");
+            if(!else_stms)
+                return std::nullopt;
+
+            body_stms->splice_back(*std::move(else_stms));
+        }
+
+        auto op_if = ParserIR::create_command(src_info, COMMAND_IF, arena);
+        op_if->command->push_arg(ParserIR::create_integer(src_info, andor_count, arena), arena);
+
+        body_stms->splice_front(*std::move(andor_list));
+        body_stms->push_front(op_if);
+
+        assert(body_stms->front()->command->name == COMMAND_IF);
+        assert(body_stms->back()->command->name == COMMAND_ENDIF);
+
+        return *std::move(body_stms); // FIXME clang bug
+    }
+}
+
+auto Parser::parse_conditional_element(bool is_if_line)
+    -> std::optional<arena_ptr<ParserIR>>
+{
+    // conditional_element := ['NOT' sep] (command | conditional_expression) ;
+
+    bool not_flag = false;
+
+    if(is_peek(Category::Word, "NOT"))
+    {
+        if(!consume() || !consume(Category::Whitespace))
+            return std::nullopt;
+        not_flag = true;
+    }
+
+    auto linked = parse_command_or_expression(true, is_if_line);
+    if(!linked)
+        return std::nullopt;
+
+    auto ir = std::move(*linked).into_ir();
+    assert(ir->next == nullptr); // assume single command in the list
+    ir->command->not_flag = not_flag;
+
+    return ir;
+}
+
+auto Parser::parse_conditional_list(arena_ptr<ParserIR> op_cond0)
+    -> std::pair<std::optional<LinkedIR<ParserIR>>, int32_t>
+{
+    // and_conditional_stmt := 'AND' sep conditional_element eol ;
+    // or_conditional_stmt := 'OR' sep conditional_element eol ;
+    // 
+    // conditional_list := conditional_element eol
+    //                     ({and_conditional_stmt} | {or_conditional_stmt}) ;
+
+    assert(op_cond0 && op_cond0->command);
+
+    const auto src_info = op_cond0->command->source_info;
+    auto andor_list = LinkedIR<ParserIR>::from_ir(op_cond0);
+
+    size_t num_conds = 1;
+    int32_t andor_count = 0;
+
+    if(is_peek(Category::Word, "AND")
+        || is_peek(Category::Word, "OR"))
+    {
+        const auto is_and = is_peek(Category::Word, "AND");
+        const auto andor_prefix = is_and? "AND" : "OR";
+        const auto anti_prefix = is_and? "OR" : "AND";
+
+        while(is_peek(Category::Word, andor_prefix))
+        {
+            if(!consume() || !consume(Category::Whitespace))
+                return {std::nullopt, 0};
+
+            auto op_elem = parse_conditional_element();
+            if(!op_elem)
+                return {std::nullopt, 0};
+
+            if(!consume(Category::EndOfLine))
+                return {std::nullopt, 0};
+
+            assert((*op_elem)->next == nullptr); // assume single command
+            andor_list.push_back(*op_elem);
+            ++num_conds;
+        }
+
+        if(is_peek(Category::Word, anti_prefix))
+            return {std::nullopt, 0};
+
+        andor_count = is_and? num_conds - 1 : 20 + num_conds - 1;
+    }
+
+    if(num_conds > 6)
+        return {std::nullopt, 0};
+
+    return {std::move(andor_list), andor_count};
 }
 
 auto Parser::parse_scope_statement()
@@ -383,49 +561,29 @@ auto Parser::parse_scope_statement()
     // Constraints: 
     // Lexical scopes cannot be nested.
     
-    auto linked_stmts = LinkedIR<ParserIR>();
-
     if(this->in_lexical_scope)
         return std::nullopt;
 
-    auto open_token = consume_word("{");
-    if(!open_token)
+    if(!is_peek(Category::Word, "{"))
         return std::nullopt;
 
+    auto open_command = parse_command();
+    if(!open_command)
+        return std::nullopt;
     if(!consume(Category::EndOfLine))
         return std::nullopt;
 
-    // We'll set our current state as being in a lexical scope.
-    // This is only restored back if we successfully reach the
-    // end of the line of a closing curly.
+    // Restore back only if we reach the closing curly.
     this->in_lexical_scope = true;
 
-    while(!eof() && !is_peek(Category::Word, "}"))
-    {
-        if(auto stmt_ir = parse_statement())
-            linked_stmts.splice_back(std::move(*stmt_ir));
-        else
-            return std::nullopt;
-    }
-
-    if(eof())
-        return std::nullopt;
-
-    auto close_token = consume_word("}");
-    assert(close_token != std::nullopt);
-
-    if(!consume(Category::EndOfLine))
+    auto linked_stmts = parse_statement_list("}");
+    if(!linked_stmts)
         return std::nullopt;
 
     this->in_lexical_scope = false;
 
-    auto open_ir = ParserIR::create_command(source_info(*open_token),
-                                            open_token->lexeme, arena);
-    auto close_ir = ParserIR::create_command(source_info(*close_token),
-                                             close_token->lexeme, arena);
-    linked_stmts.push_front(std::move(open_ir));
-    linked_stmts.push_back(std::move(close_ir));
-    return linked_stmts;
+    linked_stmts->push_front(*open_command);
+    return *std::move(linked_stmts); // FIXME clang bug
 }
 
 auto Parser::parse_require_statement()
@@ -478,21 +636,6 @@ auto Parser::parse_require_statement()
                                               arg->lexeme,
                                               arena);
     result->command->push_arg(filename, arena);
-
-    return result;
-}
-
-auto Parser::parse_command_statement() 
-    -> std::optional<arena_ptr<ParserIR>>
-{
-    // command_statement := command eol ;
-    
-    auto result = parse_command();
-    if(!result)
-        return std::nullopt;
-
-    if(!consume(Category::EndOfLine))
-        return std::nullopt;
 
     return result;
 }
@@ -907,6 +1050,19 @@ auto Parser::parse_expression_internal(bool is_conditional)
 
     assert(is_peek(Category::EndOfLine) || is_peek(Category::Whitespace));
 
-    return LinkedIR<ParserIR>::from_ir(std::move(ir));
+    return LinkedIR<ParserIR>::from_ir(ir);
 }
 }
+
+// INTERESTING TEST CASES:
+// REPEAT
+// REPEAT
+// ENDREPEAT
+// ENDRPEEAT
+//
+// IF
+// // unclosed
+//
+// label on each unexpected place?
+//
+// 

@@ -26,9 +26,55 @@ public:
     auto parse_statement()
         -> std::optional<LinkedIR<ParserIR>>;
 
+    // must be upper
+    template<typename... Args>
+    auto parse_statement_list(Args... stop_when_command0)
+        -> std::optional<LinkedIR<ParserIR>>
+    {
+        static_assert((std::is_convertible_v<Args, std::string_view> && ...));
+
+        auto linked_stms = LinkedIR<ParserIR>();
+
+        while(!eof())
+        {
+            auto stmt_list = parse_statement();
+            if(!stmt_list)
+                return std::nullopt;
+
+            if(stmt_list->size() == 1)
+            {
+                auto command = stmt_list->back()->command;
+                if(command && ((command->name == stop_when_command0) || ...))
+                {
+                    linked_stms.splice_back(*std::move(stmt_list));
+                    return linked_stms;
+                }
+            }
+
+            linked_stms.splice_back(*std::move(stmt_list));
+        }
+
+        if(sizeof...(Args) == 0)
+            return linked_stms;
+
+        return std::nullopt;
+    }
+
 private:
     auto parse_embedded_statement()
         -> std::optional<LinkedIR<ParserIR>>;
+
+    auto parse_command_or_expression(bool is_condition, bool is_if_line = false)
+        -> std::optional<LinkedIR<ParserIR>>;
+
+    auto parse_if_statement()
+        -> std::optional<LinkedIR<ParserIR>>;
+
+    auto parse_conditional_element(bool is_if_line = false)
+        -> std::optional<arena_ptr<ParserIR>>;
+
+    auto parse_conditional_list(arena_ptr<ParserIR> op_cond0)
+        -> std::pair<std::optional<LinkedIR<ParserIR>>, int32_t>;
 
     auto parse_scope_statement()
         -> std::optional<LinkedIR<ParserIR>>;
@@ -44,9 +90,6 @@ private:
 
     auto parse_expression_internal(bool is_conditional)
         -> std::optional<LinkedIR<ParserIR>>;
-
-    auto parse_command_statement()
-        -> std::optional<arena_ptr<ParserIR>>;
 
     auto parse_command(bool is_if_line = false) 
         -> std::optional<arena_ptr<ParserIR>>;
@@ -104,7 +147,7 @@ private:
     {
         static_assert((std::is_same_v<Args, Category> && ...));
 
-        if(sizeof...(Args) == 0)
+        if constexpr(sizeof...(Args) == 0)
             return next();
 
         auto token = next();
@@ -127,7 +170,7 @@ private:
         auto token = consume(Category::Word);
         if(!token)
             return std::nullopt;
-        if(token->lexeme != lexeme)
+        if(!iequal(token->lexeme, lexeme))
             return std::nullopt;
         return token;
     }
@@ -162,6 +205,8 @@ private:
     std::optional<Token> peek_tokens[6];
     
     bool in_lexical_scope = false;
+
+    size_t num_ifs = 0;
 
 };
 }

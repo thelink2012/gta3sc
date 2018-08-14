@@ -186,28 +186,15 @@ TEST_CASE("parsing a nested scope block")
     REQUIRE(linked == std::nullopt);
 }
 
-TEST_CASE("parsing a scope block with bad argument count")
+TEST_CASE("parsing a } outside a scope block")
 {
+    // TODO
+    return;
     gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("{ 1 2\n"
-                              "}\n"
-                              "{\n"
-                              "}\n"
-                              "{\n"
-                              "} 1 2\n");
+    auto source = make_source("}\n");
     auto parser = make_parser(source, arena);
 
     auto ir = parser.parse_statement();
-    REQUIRE(ir == std::nullopt);
-    parser.skip_current_line();
-    parser.skip_current_line();
-
-    ir = parser.parse_statement();
-    REQUIRE(ir != std::nullopt);
-    REQUIRE(ir->front()->command->name == "{");
-    REQUIRE(ir->back()->command->name == "}");
-
-    ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
 }
 
@@ -943,5 +930,339 @@ TEST_CASE("parsing special words in expressions")
     REQUIRE(ir->empty());
 }
 
-// TODO test IF x = y + z GOTO label
-// TODO test assignment in conditional context (e.g. IF x += y)
+TEST_CASE("parsing a valid IF...GOTO statement")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("IF SOMETHING GOTO elsewhere\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+
+    auto it = ir->begin();
+    REQUIRE(it->command->name == "ANDOR");
+    REQUIRE(*it->command->args[0]->as_integer() == 0);
+    REQUIRE(it->command->args.size() == 1);
+    REQUIRE((++it)->command->name == "SOMETHING");
+    REQUIRE((++it)->command->name == "GOTO_IF_TRUE");
+    REQUIRE(it->command->args.size() == 1);
+    REQUIRE_EQ(*it->command->args[0]->as_identifier(), "ELSEWHERE"sv);
+    REQUIRE(++it == ir->end()); 
+}
+
+TEST_CASE("parsing a valid conditional element with equal operator")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("IF x = y GOTO elsewhere\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+
+    auto it = ir->begin();
+    REQUIRE(it->command->name == "ANDOR");
+    REQUIRE(*it->command->args[0]->as_integer() == 0);
+    REQUIRE(it->command->args.size() == 1);
+    REQUIRE((++it)->command->name == "IS_THING_EQUAL_TO_THING");
+    REQUIRE((++it)->command->name == "GOTO_IF_TRUE");
+    REQUIRE(it->command->args.size() == 1);
+    REQUIRE(*it->command->args[0]->as_identifier() == "ELSEWHERE"sv);
+    REQUIRE(++it == ir->end()); 
+}
+
+TEST_CASE("parsing a ternary expression with a GOTO following it")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("IF x = y + z GOTO elsewhere\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir == std::nullopt);
+}
+
+TEST_CASE("parsing a conditional element with assignment expression")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("IF x += y GOTO elsewhere\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir == std::nullopt);
+}
+
+TEST_CASE("parsing a valid IF...ENDIF block")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("IF SOMETHING\n"
+                              "    DO_1\n"
+                              "    DO_2\n"
+                              "ENDIF\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+
+    auto it = ir->begin();
+    REQUIRE(it->command->name == "IF");
+    REQUIRE(*it->command->args[0]->as_integer() == 0);
+    REQUIRE(it->command->args.size() == 1);
+    REQUIRE((++it)->command->name == "SOMETHING");
+    REQUIRE((++it)->command->name == "DO_1");
+    REQUIRE((++it)->command->name == "DO_2");
+    REQUIRE((++it)->command->name == "ENDIF");
+    REQUIRE(++it == ir->end()); 
+}
+
+TEST_CASE("parsing a valid IF...ELSE...ENDIF block")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("IF SOMETHING\n"
+                              "    DO_1\n"
+                              "    DO_2\n"
+                              "ELSE\n"
+                              "    DO_3\n"
+                              "    DO_4\n"
+                              "ENDIF\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+
+    auto it = ir->begin();
+    REQUIRE(it->command->name == "IF");
+    REQUIRE(*it->command->args[0]->as_integer() == 0);
+    REQUIRE(it->command->args.size() == 1);
+    REQUIRE((++it)->command->name == "SOMETHING");
+    REQUIRE((++it)->command->name == "DO_1");
+    REQUIRE((++it)->command->name == "DO_2");
+    REQUIRE((++it)->command->name == "ELSE");
+    REQUIRE((++it)->command->name == "DO_3");
+    REQUIRE((++it)->command->name == "DO_4");
+    REQUIRE((++it)->command->name == "ENDIF");
+    REQUIRE(++it == ir->end()); 
+}
+
+TEST_CASE("parsing a valid NOT")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("IF NOT SOMETHING\n"
+                              "OR NOT OTHER_THING\n"
+                              "OR ANOTHER_THING\n"
+                              "    DO_1\n"
+                              "    DO_2\n"
+                              "ENDIF\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+
+    auto it = ir->begin();
+    REQUIRE(it->command->name == "IF");
+    REQUIRE(*it->command->args[0]->as_integer() == 22);
+    REQUIRE(it->command->args.size() == 1);
+    REQUIRE((++it)->command->name == "SOMETHING");
+    REQUIRE(it->command->not_flag == true);
+    REQUIRE((++it)->command->name == "OTHER_THING");
+    REQUIRE(it->command->not_flag == true);
+    REQUIRE((++it)->command->name == "ANOTHER_THING");
+    REQUIRE(it->command->not_flag == false);
+    REQUIRE((++it)->command->name == "DO_1");
+    REQUIRE(it->command->not_flag == false);
+    REQUIRE((++it)->command->name == "DO_2");
+    REQUIRE(it->command->not_flag == false);
+    REQUIRE((++it)->command->name == "ENDIF");
+    REQUIRE(++it == ir->end()); 
+}
+
+TEST_CASE("parsing a IF without ENDIF")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("IF SOMETHING\n"
+                              "    DO_1\n"
+                              "    DO_2\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir == std::nullopt);
+}
+
+TEST_CASE("parsing a IF...ELSE without ENDIF")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("IF SOMETHING\n"
+                              "    DO_1\n"
+                              "    DO_2\n"
+                              "ELSE\n"
+                              "    DO_3\n"
+                              "    DO_4\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir == std::nullopt);
+}
+
+TEST_CASE("parsing a ELSE/ENDIF with no IF")
+{
+    return; // TODO
+
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("ENDIF\n"
+                              "ELSE\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir == std::nullopt);
+    parser.skip_current_line();
+
+    ir = parser.parse_statement();
+    REQUIRE(ir == std::nullopt);
+    parser.skip_current_line();
+}
+
+TEST_CASE("parsing a conditionless IF")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("IF \n"
+                              "    DO_1\n"
+                              "    DO_2\n"
+                              "ENDIF\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir == std::nullopt);
+}
+
+TEST_CASE("parsing a valid AND list")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("IF SOMETHING\n"
+                              "AND OTHER_THING\n"
+                              "AND ANOTHER_THING\n"
+                              "AND THING_4\n"
+                              "AND THING_5\n"
+                              "AND THING_6\n"
+                              "    DO_1\n"
+                              "    DO_2\n"
+                              "ENDIF\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+
+    auto it = ir->begin();
+    REQUIRE(it->command->name == "IF");
+    REQUIRE(*it->command->args[0]->as_integer() == 5);
+    REQUIRE(it->command->args.size() == 1);
+    REQUIRE((++it)->command->name == "SOMETHING");
+    REQUIRE((++it)->command->name == "OTHER_THING");
+    REQUIRE((++it)->command->name == "ANOTHER_THING");
+    REQUIRE((++it)->command->name == "THING_4");
+    REQUIRE((++it)->command->name == "THING_5");
+    REQUIRE((++it)->command->name == "THING_6");
+    REQUIRE((++it)->command->name == "DO_1");
+    REQUIRE((++it)->command->name == "DO_2");
+    REQUIRE((++it)->command->name == "ENDIF");
+    REQUIRE(++it == ir->end()); 
+}
+
+TEST_CASE("parsing a valid OR list")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("IF SOMETHING\n"
+                              "OR OTHER_THING\n"
+                              "OR ANOTHER_THING\n"
+                              "OR THING_4\n"
+                              "OR THING_5\n"
+                              "OR THING_6\n"
+                              "    DO_1\n"
+                              "    DO_2\n"
+                              "ENDIF\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+
+    auto it = ir->begin();
+    REQUIRE(it->command->name == "IF");
+    REQUIRE(*it->command->args[0]->as_integer() == 25);
+    REQUIRE(it->command->args.size() == 1);
+    REQUIRE((++it)->command->name == "SOMETHING");
+    REQUIRE((++it)->command->name == "OTHER_THING");
+    REQUIRE((++it)->command->name == "ANOTHER_THING");
+    REQUIRE((++it)->command->name == "THING_4");
+    REQUIRE((++it)->command->name == "THING_5");
+    REQUIRE((++it)->command->name == "THING_6");
+    REQUIRE((++it)->command->name == "DO_1");
+    REQUIRE((++it)->command->name == "DO_2");
+    REQUIRE((++it)->command->name == "ENDIF");
+    REQUIRE(++it == ir->end()); 
+}
+
+TEST_CASE("parsing AND/OR/NOT outside of condition")
+{
+    return; // TODO
+
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("AND SOMETHING\n"
+                              "OR OTHER_THING\n"
+                              "NOT AAAA\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir == std::nullopt);
+    parser.skip_current_line();
+
+    ir = parser.parse_statement();
+    REQUIRE(ir == std::nullopt);
+    parser.skip_current_line();
+
+    ir = parser.parse_statement();
+    REQUIRE(ir == std::nullopt);
+}
+TEST_CASE("parsing mixed AND/OR")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("IF SOMETHING\n"
+                              "OR OTHER_THING\n"
+                              "AND ANOTHER_THING\n"
+                              "    DO_1\n"
+                              "    DO_2\n"
+                              "ENDIF\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir == std::nullopt);
+}
+
+TEST_CASE("parsing too many AND/OR")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("IF SOMETHING\n"
+                              "OR OTHER_THING\n"
+                              "OR ANOTHER_THING\n"
+                              "OR THING_4\n"
+                              "OR THING_5\n"
+                              "OR THING_6\n"
+                              "OR THING_7\n"
+                              "    DO_1\n"
+                              "    DO_2\n"
+                              "ENDIF\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir == std::nullopt);
+}
+
+TEST_CASE("parsing a conditionless AND/OR")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("IF SOMETHING\n"
+                              "OR \n"
+                              "    DO_1\n"
+                              "    DO_2\n"
+                              "ENDIF\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir == std::nullopt);
+}

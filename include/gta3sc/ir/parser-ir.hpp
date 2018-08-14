@@ -8,6 +8,8 @@
 
 #include <algorithm> // TODO take me off please!
 
+// TODO please specify behaviour of using multiple arenas
+
 namespace gta3sc
 {
 /// This is an intermediate representation for syntactically
@@ -23,8 +25,9 @@ namespace gta3sc
 ///
 /// Do note however that no argument matching is performed whatsoever.
 /// This implies commands with a syntactical specification (e.g. GOSUB_FILE,
-/// VAR_INT) might not follow it (e.g. the first argument of GOSUB_FILE might
-/// not be an identifier). The amount of arguments might be wrong as well.
+/// VAR_INT, ENDWHILE) might not follow it (e.g. the first argument of
+/// GOSUB_FILE might not be an identifier). The amount of arguments might be
+/// wrong as well (e.g. ENDWHILE with two arguments).
 ///
 /// This IR preserves source code information such as the location of
 /// each of its identifiers.
@@ -55,6 +58,7 @@ struct ParserIR
         constexpr operator std::string_view() const { return string; }
     };
 
+    // ARGUMENT MUST BE CONST MAY BE SHARED BY MANY COMMANDS!
     struct Argument
     {
         arena_ptr<SourceInfo> source_info;
@@ -65,13 +69,13 @@ struct ParserIR
             Filename,
             String> value;
 
-        constexpr int32_t* as_integer() { return std::get_if<int32_t>(&value); }
-        constexpr float* as_float() { return std::get_if<float>(&value); }
-        constexpr Identifier* as_identifier() { return std::get_if<Identifier>(&value); }
-        constexpr Filename* as_filename() { return std::get_if<Filename>(&value); }
-        constexpr String* as_string() { return std::get_if<String>(&value); }
+        constexpr const int32_t* as_integer() const { return std::get_if<int32_t>(&value); }
+        constexpr const float* as_float() const { return std::get_if<float>(&value); }
+        constexpr const Identifier* as_identifier()const { return std::get_if<Identifier>(&value); }
+        constexpr const Filename* as_filename() const { return std::get_if<Filename>(&value); }
+        constexpr const String* as_string() const  { return std::get_if<String>(&value); }
 
-        constexpr bool is_same_name(/*const*/ Argument& other)
+        constexpr bool is_same_name(const Argument& other) const
         {
             const Identifier *a = 0, *b = 0;
             if((a = this->as_identifier()) && (b = other.as_identifier()))
@@ -102,6 +106,8 @@ struct ParserIR
         adt::span<arena_ptr<Argument>> args;
         size_t acaps = 0;
 
+        bool not_flag = false;
+
         static auto create(const SourceInfo& info, std::string_view name_a, ArenaMemoryResource& arena) -> arena_ptr<Command>
         {
             auto name = create_upper_view(name_a, arena);
@@ -128,6 +134,7 @@ struct ParserIR
     arena_ptr<Command> command = nullptr;
     arena_ptr<ParserIR> next = nullptr;
     arena_ptr<ParserIR> prev = nullptr;
+
 
     // use set_next for set_prev behaviour
     void set_next(arena_ptr<ParserIR> other)
