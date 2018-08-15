@@ -23,7 +23,7 @@ public:
     /// Skips to the next line in the token stream.
     void skip_current_line();
 
-    auto parse_statement()
+    auto parse_statement(bool allow_internal_name = false)
         -> std::optional<LinkedIR<ParserIR>>;
 
     // must be upper
@@ -37,7 +37,7 @@ public:
 
         while(!eof())
         {
-            auto stmt_list = parse_statement();
+            auto stmt_list = parse_statement(true);
             if(!stmt_list)
                 return std::nullopt;
 
@@ -48,6 +48,10 @@ public:
                 {
                     linked_stms.splice_back(*std::move(stmt_list));
                     return linked_stms;
+                }
+                else if(command && is_internal_name(command->name))
+                {
+                    return std::nullopt;
                 }
             }
 
@@ -61,12 +65,14 @@ public:
     }
 
 private:
+    bool is_internal_name(std::string_view command_name) const;
+
     auto peek_expression_type()
         -> std::optional<Category>;
 
     bool is_relational_operator(Category category);
 
-    auto parse_embedded_statement()
+    auto parse_embedded_statement(bool allow_internal_name)
         -> std::optional<LinkedIR<ParserIR>>;
 
     auto parse_if_statement()

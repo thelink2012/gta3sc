@@ -651,8 +651,8 @@ TEST_CASE("parsing permutations of binary expressions")
 TEST_CASE("parsing permutations of conditional expressions")
 {
     gta3sc::ArenaMemoryResource arena;
-    auto source = make_source(//"x = y\n" TODO
-                              //"x = x\n"
+    auto source = make_source("IF x = y GOTO elsewhere\n"
+                              "IFNOT x = x GOTO elsewhere\n"
                               "x < y\n"
                               "x < x\n"
                               "x <= y\n"
@@ -660,9 +660,17 @@ TEST_CASE("parsing permutations of conditional expressions")
                               "x >= y\n");
     auto parser = make_parser(source, arena);
 
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+    REQUIRE(ir->size() == 3);
+    REQUIRE(ir->front()->next->command->name == "IS_THING_EQUAL_TO_THING");
+
+    ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+    REQUIRE(ir->size() == 3);
+    REQUIRE(ir->front()->next->command->name == "IS_THING_EQUAL_TO_THING");
+
     constexpr std::array<std::string_view, 3> expects_table[] = {
-        //{ "IS_THING_EQUAL_TO_THING", "X" "Y" },
-        //{ "IS_THING_EQUAL_TO_THING", "X" "X" },
         { "IS_THING_GREATER_THAN_THING", "Y", "X" },
         { "IS_THING_GREATER_THAN_THING", "X", "X" },
         { "IS_THING_GREATER_OR_EQUAL_TO_THING", "Y", "X" },
@@ -1457,6 +1465,75 @@ TEST_CASE("parsing a REPEAT without ENDREPEAT")
 
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
+}
+
+TEST_CASE("parsing valid var declaration commands")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("VAR_INT x y z\n"
+                              "LVAR_INT x y z\n"
+                              "VAR_FLOAT x y z\n"
+                              "LVAR_FLOAT x y z\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+
+    ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+
+    ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+
+    ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+    REQUIRE(ir->size() == 1);
+    REQUIRE(ir->front()->command->name == "LVAR_FLOAT");
+    REQUIRE(ir->front()->command->args.size() == 3);
+    REQUIRE_EQ(*ir->front()->command->args[0]->as_identifier(), "X"sv);
+    REQUIRE_EQ(*ir->front()->command->args[1]->as_identifier(), "Y"sv);
+    REQUIRE_EQ(*ir->front()->command->args[2]->as_identifier(), "Z"sv);
+}
+
+TEST_CASE("parsing invalid use of internal names")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("MISSION_END\n"
+                              "MISSION_START\n"
+                              "}\n"
+                              "NOT\n"
+                              "AND\n"
+                              "OR\n"
+                              "ELSE\n"
+                              "ENDIF\n"
+                              "ENDWHILE\n"
+                              "ENDREPEAT\n"
+                              "IF {\n"
+                              "IF NOT NOT\n"
+                              "IF AND\n"
+                              "IF IF 0\n"
+                              "IF IFNOT 0\n"
+                              "IF WHILE 0\n"
+                              "IF REPEAT 4 x\n"
+                              "IF GOSUB_FILE a b.sc\n"
+                              "IF LAUNCH_MISSION b.sc\n"
+                              "IF LOAD_AND_LAUNCH_MISSION b.sc\n"
+                              "IF MISSION_START\n"
+                              "IF MISSION_END\n"
+                              "WAIT 0\n"); // valid sync point
+
+    auto parser = make_parser(source, arena);
+
+    for(auto invalid = 0; invalid < 22; ++invalid)
+    {
+        auto ir = parser.parse_statement();
+        REQUIRE(ir == std::nullopt);
+        parser.skip_current_line();
+    }
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+    REQUIRE(ir->front()->command->name == "WAIT");
 }
 
 // TODO test labels on each of the unexpected places (see updated specs)

@@ -10,6 +10,10 @@ using namespace std::literals::string_view_literals;
 
 namespace gta3sc
 {
+constexpr auto COMMAND_VAR_INT = "VAR_INT"sv;
+constexpr auto COMMAND_LVAR_INT = "LVAR_INT"sv;
+constexpr auto COMMAND_VAR_FLOAT = "VAR_FLOAT"sv;
+constexpr auto COMMAND_LVAR_FLOAT = "LVAR_FLOAT"sv;
 constexpr auto COMMAND_MISSION_START = "MISSION_START"sv;
 constexpr auto COMMAND_MISSION_END = "MISSION_END"sv;
 constexpr auto COMMAND_ANDOR = "ANDOR"sv;
@@ -21,6 +25,8 @@ constexpr auto COMMAND_ENDIF = "ENDIF"sv;
 constexpr auto COMMAND_WHILE = "WHILE"sv;
 constexpr auto COMMAND_WHILENOT = "WHILENOT"sv;
 constexpr auto COMMAND_ENDWHILE = "ENDWHILE"sv;
+constexpr auto COMMAND_REPEAT = "REPEAT"sv;
+constexpr auto COMMAND_ENDREPEAT = "ENDREPEAT"sv;
 constexpr auto COMMAND_GOTO_IF_FALSE = "GOTO_IF_FALSE"sv;
 constexpr auto COMMAND_GOTO_IF_TRUE = "GOTO_IF_TRUE"sv;
 constexpr auto COMMAND_GOSUB_FILE = "GOSUB_FILE"sv;
@@ -229,7 +235,7 @@ bool Parser::is_identifier(const Token& token) const
     return false;
 }
 
-auto Parser::parse_statement()
+auto Parser::parse_statement(bool allow_internal)
     -> std::optional<LinkedIR<ParserIR>>
 {
     // statement := labeled_statement 
@@ -262,7 +268,7 @@ auto Parser::parse_statement()
                                            arena);
     }
 
-    auto linked_stmts = parse_embedded_statement();
+    auto linked_stmts = parse_embedded_statement(allow_internal);
     if(!linked_stmts)
         return std::nullopt;
 
@@ -279,7 +285,7 @@ auto Parser::parse_statement()
     // FIXME https://stackoverflow.com/q/51379597/2679626
 }
 
-auto Parser::parse_embedded_statement()
+auto Parser::parse_embedded_statement(bool allow_internal)
     -> std::optional<LinkedIR<ParserIR>>
 {
     // embedded_statement := empty_statement
@@ -369,11 +375,49 @@ auto Parser::parse_embedded_statement()
     {
         if(auto ir = parse_command())
         {
+            if(!allow_internal && is_internal_name((*ir)->command->name))
+            {
+                if((*ir)->command->name != COMMAND_VAR_INT
+                && (*ir)->command->name != COMMAND_LVAR_INT
+                && (*ir)->command->name != COMMAND_VAR_FLOAT
+                && (*ir)->command->name != COMMAND_LVAR_FLOAT)
+                    return std::nullopt;
+            }
+
             if(consume(Category::EndOfLine))
                 return LinkedIR<ParserIR>::from_ir(*ir);
         }
         return std::nullopt;
     }
+}
+
+bool Parser::is_internal_name(std::string_view name) const
+{
+    if(name == "{"
+    || name == "}"
+    || name == "NOT"
+    || name == "AND"
+    || name == "OR"
+    || name == COMMAND_IF
+    || name == COMMAND_IFNOT
+    || name == COMMAND_ELSE
+    || name == COMMAND_ENDIF
+    || name == COMMAND_WHILE
+    || name == COMMAND_WHILENOT
+    || name == COMMAND_ENDWHILE
+    || name == COMMAND_REPEAT
+    || name == COMMAND_ENDREPEAT
+    || name == COMMAND_GOSUB_FILE
+    || name == COMMAND_LAUNCH_MISSION
+    || name == COMMAND_LOAD_AND_LAUNCH_MISSION
+    || name == COMMAND_MISSION_START
+    || name == COMMAND_MISSION_END
+    || name == COMMAND_VAR_INT
+    || name == COMMAND_LVAR_INT
+    || name == COMMAND_VAR_FLOAT
+    || name == COMMAND_LVAR_FLOAT)
+        return true;
+    return false;
 }
 
 auto Parser::peek_expression_type()
@@ -474,6 +518,9 @@ auto Parser::parse_if_statement_internal(bool is_ifnot)
 
         auto goto_arg = parse_argument();
         if(!goto_arg)
+            return std::nullopt;
+
+        if(!consume(Category::EndOfLine))
             return std::nullopt;
 
         auto op_andor = ParserIR::create_command(src_info, COMMAND_ANDOR, arena);
@@ -620,7 +667,11 @@ auto Parser::parse_conditional_element(bool is_if_line)
     else
     {
         if(auto ir = parse_command(is_if_line))
+        {
+            if(is_internal_name((*ir)->command->name))
+                return std::nullopt;
             linked = LinkedIR<ParserIR>::from_ir(*ir);
+        }
     }
 
     if(!linked)
