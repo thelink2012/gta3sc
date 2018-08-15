@@ -293,7 +293,7 @@ auto Parser::parse_embedded_statement()
     //                      | ifnot_goto_statement
     //                      | while_statement
     //                      | whilenot_statement
-    //                      | repeat_statement (TODO)
+    //                      | repeat_statement
     //                      | require_statement ;
     //
     // empty_statement := eol ;
@@ -360,6 +360,10 @@ auto Parser::parse_embedded_statement()
     else if(is_peek(Category::Word, "WHILENOT"))
     {
         return parse_whilenot_statement();
+    }
+    else if(is_peek(Category::Word, "REPEAT"))
+    {
+        return parse_repeat_statement();
     }
     else
     {
@@ -567,6 +571,30 @@ auto Parser::parse_while_statement_internal(bool is_whilenot)
     body_stms->splice_front(*std::move(andor_list));
     body_stms->push_front(op_while);
 
+    return *std::move(body_stms); // FIXME clang bug
+}
+
+auto Parser::parse_repeat_statement()
+    -> std::optional<LinkedIR<ParserIR>>
+{
+    // repeat_statement := 'REPEAT' sep integer sep identifier eol
+    //                     {statement}
+    //                     'ENDREPEAT' eol ;
+
+    if(!is_peek(Category::Word, "REPEAT"))
+        return std::nullopt;
+
+    auto repeat_command = parse_command();
+    if(!repeat_command)
+        return std::nullopt;
+    if(!consume(Category::EndOfLine))
+        return std::nullopt;
+
+    auto body_stms = parse_statement_list("ENDREPEAT");
+    if(!body_stms)
+        return std::nullopt;
+
+    body_stms->push_front(*repeat_command);
     return *std::move(body_stms); // FIXME clang bug
 }
 

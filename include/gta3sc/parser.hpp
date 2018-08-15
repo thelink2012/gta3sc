@@ -87,6 +87,9 @@ private:
     auto parse_while_statement_internal(bool is_whilenot)
         -> std::optional<LinkedIR<ParserIR>>;
 
+    auto parse_repeat_statement()
+        -> std::optional<LinkedIR<ParserIR>>;
+
     auto parse_conditional_element(bool is_if_line = false)
         -> std::optional<arena_ptr<ParserIR>>;
 

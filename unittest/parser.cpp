@@ -1424,4 +1424,39 @@ TEST_CASE("parsing nested blocks with empty statement list")
     REQUIRE(++it == ir->end()); 
 }
 
+TEST_CASE("parsing valid REPEAT...ENDREPEAT")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("REPEAT 5 var\n"
+                              "    DO_1\n"
+                              "    DO_2\n"
+                              "ENDREPEAT\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+
+    auto it = ir->begin();
+    REQUIRE(it->command->name == "REPEAT");
+    REQUIRE(it->command->args.size() == 2);
+    REQUIRE(*it->command->args[0]->as_integer() == 5);
+    REQUIRE_EQ(*it->command->args[1]->as_identifier(), "VAR"sv);
+    REQUIRE((++it)->command->name == "DO_1");
+    REQUIRE((++it)->command->name == "DO_2");
+    REQUIRE((++it)->command->name == "ENDREPEAT");
+    REQUIRE(++it == ir->end()); 
+}
+
+TEST_CASE("parsing a REPEAT without ENDREPEAT")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("REPEAT 5 var\n"
+                              "    DO_1\n"
+                              "    DO_2\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir == std::nullopt);
+}
+
 // TODO test labels on each of the unexpected places (see updated specs)
