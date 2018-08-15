@@ -51,8 +51,10 @@ char Preprocessor::next()
         }
         else if(is_newline(cursor))
         {
-            if(*cursor == '\r') ++cursor;
-            if(*cursor == '\n') ++cursor;
+            if(*cursor == '\r')
+                ++cursor;
+            if(*cursor == '\n')
+                ++cursor;
             this->start_of_line = true;
             this->inside_quotes = false;
             return '\n';
@@ -71,7 +73,6 @@ char Preprocessor::next()
                 {
                     std::advance(cursor, 2);
                     --num_block_comments;
-
                 }
                 else
                 {
@@ -85,8 +86,9 @@ char Preprocessor::next()
             // 2) The block comment has ended, but we have not found any
             //    non-blank char in this line; Continue the scan, until we
             //    leave the state of being in the start of the line.
-            // 3) The block comment has ended and we are not at the beggining of the line;
-            //    Then return a whitespace to represent the contents of the comment.
+            // 3) The block comment has ended and we are not at the beggining of
+            //    the line; Then return a whitespace to represent the contents
+            //    of the comment.
             if(num_block_comments == 0 && !start_of_line)
                 return ' ';
         }

@@ -1,6 +1,7 @@
 #pragma once
 #include <gta3sc/adt/span.hpp>
 #include <gta3sc/arena-allocator.hpp>
+#include <gta3sc/sourceman.hpp>
 #include <cstdint>
 #include <cstring>
 #include <variant>

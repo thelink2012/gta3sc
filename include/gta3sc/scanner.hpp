@@ -35,15 +35,12 @@ enum class Category : uint8_t
 /// Classified lexeme.
 struct Token
 {
-    Category category;  //< Category of this token.
-    SourceRange lexeme; //< Characters of this token.
+    Category category;  ///< Category of this token.
+    SourceRange lexeme; ///< Characters of this token.
 
-    explicit Token() :
-        category(Category::EndOfLine), lexeme()
-    {}
+    explicit Token() : category(Category::EndOfLine), lexeme() {}
 
-    explicit Token(Category category, 
-                   SourceLocation begin, 
+    explicit Token(Category category, SourceLocation begin,
                    SourceLocation end) :
         category(category),
         lexeme(std::addressof(*begin), end - begin)
@@ -54,10 +51,7 @@ struct Token
 class Scanner
 {
 public:
-    explicit Scanner(Preprocessor pp_) :
-        pp(std::move(pp_)), peek_char(0)
-    {
-    }
+    explicit Scanner(Preprocessor pp_) : pp(std::move(pp_)), peek_char(0) {}
 
     Scanner(const Scanner&) = delete;
     Scanner& operator=(const Scanner&) = delete;
@@ -81,7 +75,7 @@ public:
     /// of a word token (e.g. `file-name.sc`). Additionally, it is
     /// not guaranted that a finite number of calls to this function
     /// reaches the end of the stream.
-    /// 
+    ///
     /// A filename must end in `.sc`, otherwise `std::nullopt` gets
     /// returned.
     ///

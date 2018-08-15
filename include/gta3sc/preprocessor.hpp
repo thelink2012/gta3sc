@@ -5,13 +5,12 @@ namespace gta3sc
 {
 /// The preprocessor is a character stream over a source file.
 ///
-/// This stream is stripped of comments, leading whitespaces in lines 
+/// This stream is stripped of comments, leading whitespaces in lines
 /// and line terminators are normalized to LF.
 class Preprocessor
 {
 public:
-    explicit Preprocessor(const SourceFile& source) :
-        source(source)
+    explicit Preprocessor(const SourceFile& source) : source(source)
     {
         this->cursor = source.view_with_terminator().begin();
         this->start_of_line = true;

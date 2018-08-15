@@ -1,5 +1,5 @@
-#include <gta3sc/scanner.hpp>
 #include <cassert>
+#include <gta3sc/scanner.hpp>
 
 namespace gta3sc
 {
@@ -11,7 +11,8 @@ auto Scanner::source_file() const -> const SourceFile&
 auto Scanner::location() const -> SourceLocation
 {
     auto loc = pp.location();
-    if(peek_char) --loc;
+    if(peek_char)
+        --loc;
     return loc;
 }
 
@@ -51,16 +52,16 @@ bool Scanner::is_word_char(char c) const
 {
     if(is_print(c))
     {
-        return !is_whitespace(c) 
-            && c != '"' && c != '+' && c != '-' && c != '*' 
-            && c != '/' && c != '=' && c != '<' && c != '>';
+        return !is_whitespace(c) && c != '"' && c != '+' && c != '-' && c != '*'
+               && c != '/' && c != '=' && c != '<' && c != '>';
     }
     return false;
 }
 
 auto Scanner::next_filename() -> std::optional<Token>
 {
-    if(!peek_char) getc(); // first cycle
+    if(!peek_char)
+        getc(); // first cycle
 
     auto start_pos = this->location();
 
@@ -74,7 +75,7 @@ auto Scanner::next_filename() -> std::optional<Token>
         auto c2 = *it++;
         auto c1 = *it++;
         auto c0 = *it++;
-        if(c0 == '.'  && (c1 == 's' || c1 == 'S') && (c2 == 'c' || c2 == 'C'))
+        if(c0 == '.' && (c1 == 's' || c1 == 'S') && (c2 == 'c' || c2 == 'C'))
         {
             return token;
         }
@@ -84,7 +85,8 @@ auto Scanner::next_filename() -> std::optional<Token>
 
 auto Scanner::next() -> std::optional<Token>
 {
-    if(!peek_char) getc(); // first cycle
+    if(!peek_char)
+        getc(); // first cycle
 
     auto start_pos = this->location();
 
@@ -260,7 +262,7 @@ auto Scanner::next() -> std::optional<Token>
 
             return Token(Category::Word, start_pos, location());
 
-        // clang-format on
+            // clang-format on
     }
 }
 }

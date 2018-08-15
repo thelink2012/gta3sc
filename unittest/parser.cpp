@@ -292,6 +292,8 @@ TEST_CASE("parsing integer argument")
                               "WAIT 0x10\n"
                               "WAIT +39\n"
                               "WAIT 432+10\n"
+                              "WAIT x -\n"
+                              "WAIT x --\n"
                               "WAIT 9");
     auto parser = make_parser(source, arena);
 
@@ -330,6 +332,14 @@ TEST_CASE("parsing integer argument")
 
     ir = parser.parse_statement();
     parser.skip_current_line(); // 432+10
+    REQUIRE(ir == std::nullopt);
+
+    ir = parser.parse_statement();
+    parser.skip_current_line(); // -
+    REQUIRE(ir == std::nullopt);
+
+    ir = parser.parse_statement();
+    parser.skip_current_line(); // --
     REQUIRE(ir == std::nullopt);
 
     ir = parser.parse_statement();
@@ -481,11 +491,12 @@ TEST_CASE("parsing filename argument")
                               "WAIT 1.SC\n"
                               "LAUNCH_MISSION @.sc\n"
                               "LAUNCH_MISSION 1.sc\n"
-                              "LAUNCH_MISSION 1.0sc\n"                                                                      "LAUNCH_MISSION SC\n"
+                              "LAUNCH_MISSION 1.0sc\n"
+                              "LAUNCH_MISSION SC\n"
                               "LAUNCH_MISSION C\n"
                               "LAUNCH_MISSION \"a\".sc\n"
-                              "LOAD_AND_LAUNCH_MISSION filename.sc\n"
-                              "GOSUB_FILE label filename.sc\n");
+                              "LOAD_AND_LAUNCH_MISSION file-name.sc\n"
+                              "GOSUB_FILE label file-name.sc\n");
     auto parser = make_parser(source, arena);
 
     auto ir = parser.parse_statement();
@@ -537,9 +548,14 @@ TEST_CASE("parsing filename argument")
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt); // LOAD_AND_LAUNCH_MISSION
+    REQUIRE(ir->front()->command->args.size() == 1);
+    REQUIRE_EQ(*ir->front()->command->args[0]->as_filename(), "FILE-NAME.SC"sv);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt); // GOSUB_FILE
+    REQUIRE(ir->front()->command->args.size() == 2);
+    REQUIRE_EQ(*ir->front()->command->args[0]->as_identifier(), "LABEL"sv);
+    REQUIRE_EQ(*ir->front()->command->args[1]->as_filename(), "FILE-NAME.SC"sv);
 }
 
 TEST_CASE("parsing permutations of absolute expressions")
@@ -1495,7 +1511,7 @@ TEST_CASE("parsing valid var declaration commands")
     REQUIRE_EQ(*ir->front()->command->args[2]->as_identifier(), "Z"sv);
 }
 
-TEST_CASE("parsing invalid use of internal names")
+TEST_CASE("parsing invalid use of special names")
 {
     gta3sc::ArenaMemoryResource arena;
     auto source = make_source("MISSION_END\n"
@@ -1534,6 +1550,19 @@ TEST_CASE("parsing invalid use of internal names")
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front()->command->name == "WAIT");
+}
+
+TEST_CASE("parsing var decl while trying to match a special name")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("WHILE x = 0\n"
+                              "VAR_INT y\n"
+                              "ENDWHILE\n");
+
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
 }
 
 // TODO test labels on each of the unexpected places (see updated specs)

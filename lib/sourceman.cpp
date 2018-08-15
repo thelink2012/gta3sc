@@ -1,12 +1,14 @@
 #include <algorithm>
 #include <cassert>
-#include <gta3sc/sourceman.hpp>
 #include <cstring>
+#include <gta3sc/sourceman.hpp>
 
 namespace gta3sc
 {
-SourceFile::SourceFile(std::unique_ptr<char[]> source_data_a, size_t source_size_a) :
-    source_data(std::move(source_data_a)), source_size(source_size_a)
+SourceFile::SourceFile(std::unique_ptr<char[]> source_data_a,
+                       size_t source_size_a) :
+    source_data(std::move(source_data_a)),
+    source_size(source_size_a)
 {
     // Discover line locations.
     this->lines.reserve(source_size_a / 80);
@@ -33,12 +35,14 @@ auto SourceFile::from_stream(std::FILE* stream, size_t hint_size)
         auto block_pos = source_size;
 
         // Reallocate the unique pointer (plus space for null terminator).
-        temp_source_data = std::make_unique<char[]>(1 + source_size + block_size);
+        temp_source_data = std::make_unique<char[]>(1 + source_size
+                                                    + block_size);
         std::memcpy(temp_source_data.get(), source_data.get(), source_size);
         std::swap(source_data, temp_source_data);
         source_size += block_size;
 
-        auto ncount = std::fread(&source_data[block_pos], 1, block_size, stream);
+        auto ncount = std::fread(&source_data[block_pos], 1, block_size,
+                                 stream);
 
         if(ncount < block_size)
         {
@@ -59,10 +63,12 @@ auto SourceFile::find_line_and_column(SourceLocation loc_it) const
         -> std::pair<unsigned, unsigned>
 {
     const auto loc = std::addressof(*loc_it);
-    assert(loc >= &this->source_data[0] && loc <= &this->source_data[source_size]);
+    assert(loc >= &this->source_data[0]
+           && loc <= &this->source_data[source_size]);
 
     auto it_line_end = std::upper_bound(lines.begin(), lines.end(), loc);
-    auto line = static_cast<unsigned>(std::distance(lines.begin(), it_line_end));
+    auto line = static_cast<unsigned>(
+            std::distance(lines.begin(), it_line_end));
 
     assert(it_line_end != lines.begin());
     auto it_line_begin = std::prev(it_line_end);
