@@ -34,7 +34,7 @@ public:
             { return curr == rhs.curr; }
 
         protected:
-            friend class LinkedIR<T>;
+            friend struct LinkedIR<T>;
 
             explicit iterator() = default;
             explicit iterator(T* p) : curr(p)

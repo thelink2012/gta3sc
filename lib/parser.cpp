@@ -56,7 +56,7 @@ auto Parser::source_info(SourceLocation begin, SourceLocation end) const
 {
     return ParserIR::SourceInfo {
         this->source_file(),
-        SourceRange(begin, end - begin),
+        SourceRange(std::addressof(*begin), end - begin),
     };
 }
 
@@ -1173,11 +1173,3 @@ auto Parser::parse_expression_internal(bool is_conditional, bool is_if_line)
     return LinkedIR<ParserIR>::from_ir(ir);
 }
 }
-
-// INTERESTING TEST CASES (aka inner stms).
-// REPEAT
-//     REPEAT
-//     ENDREPEAT // will parse_statement_list handle this correctly? :)
-// ENDRPEEAT
-//
-// label on each unexpected place (see updated specs)

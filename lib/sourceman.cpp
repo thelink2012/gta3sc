@@ -55,9 +55,10 @@ auto SourceFile::from_stream(std::FILE* stream, size_t hint_size)
     return SourceFile{std::move(source_data), source_size};
 }
 
-auto SourceFile::find_line_and_column(SourceLocation loc) const
+auto SourceFile::find_line_and_column(SourceLocation loc_it) const
         -> std::pair<unsigned, unsigned>
 {
+    const auto loc = std::addressof(*loc_it);
     assert(loc >= &this->source_data[0] && loc <= &this->source_data[source_size]);
 
     auto it_line_end = std::upper_bound(lines.begin(), lines.end(), loc);

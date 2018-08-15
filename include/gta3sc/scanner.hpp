@@ -45,7 +45,8 @@ struct Token
     explicit Token(Category category, 
                    SourceLocation begin, 
                    SourceLocation end) :
-        category(category), lexeme(begin, std::distance(begin, end))
+        category(category),
+        lexeme(std::addressof(*begin), end - begin)
     {}
 };
 

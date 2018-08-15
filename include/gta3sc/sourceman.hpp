@@ -7,11 +7,11 @@
 
 namespace gta3sc
 {
-/// Handle to a location in the source file.
-using SourceLocation = const char*;
-
 /// Handle to a range of characters in the source file.
 using SourceRange = std::string_view;
+
+/// Handle to a location in the source file.
+using SourceLocation = std::string_view::const_iterator;
 
 /// Information about a source file.
 class SourceFile
@@ -46,7 +46,7 @@ public:
 private:
     std::unique_ptr<char[]> source_data;
     size_t source_size;
-    std::vector<SourceLocation> lines;
+    std::vector<const char*> lines;
 };
 
 // Assume SourceLocation and SourceRange are simple types,

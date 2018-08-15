@@ -1,6 +1,9 @@
 /docs/
 /Testing/
 /build/
+/build-clang/
+/build-gcc/
+/build-msvc/
 /debug/
 /test/**/Output
 *.pyc
