@@ -1537,7 +1537,6 @@ TEST_CASE("parsing invalid use of special names")
                               "IF MISSION_START\n"
                               "IF MISSION_END\n"
                               "WAIT 0\n"); // valid sync point
-
     auto parser = make_parser(source, arena);
 
     for(auto invalid = 0; invalid < 22; ++invalid)
@@ -1558,11 +1557,140 @@ TEST_CASE("parsing var decl while trying to match a special name")
     auto source = make_source("WHILE x = 0\n"
                               "VAR_INT y\n"
                               "ENDWHILE\n");
-
     auto parser = make_parser(source, arena);
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
+}
+
+TEST_CASE("parsing weird closing blocks")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("WHILE x = 0\n"
+                              "    IF y = 0\n"
+                              "        WAIT 0\n"
+                              "ENDWHILE\n"
+                              "    ENDIF\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir == std::nullopt);
+}
+
+TEST_CASE("parsing labels in AND/OR")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("IF x = 0\n"
+                              "label: AND y = 0\n"
+                              "    WAIT 0\n"
+                              "ENDIF\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir == std::nullopt);
+}
+
+TEST_CASE("parsing labels in }")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("{\n"
+                              "WAIT 0\n"
+                              "label: }\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+    REQUIRE(ir->size() == 3);
+    
+    auto it = ir->begin();
+    REQUIRE(it->command->name == "{");
+    REQUIRE(it->label == nullptr);
+    REQUIRE((++it)->command->name == "WAIT");
+    REQUIRE(it->label == nullptr);
+    REQUIRE((++it)->command->name == "}");
+    REQUIRE(it->label != nullptr);
+    REQUIRE(it->label->name == "LABEL");
+    REQUIRE(++it == ir->end());
+}
+
+TEST_CASE("parsing labels in ELSE/ENDIF")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("IF x = 0\n"
+                              "    WAIT 0\n"
+                              "lab1: ELSE\n"
+                              "    WAIT 1\n"
+                              "lab2: ENDIF\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+    REQUIRE(ir->size() == 6);
+    
+    auto it = ir->begin();
+    REQUIRE(it->command->name == "IF");
+    REQUIRE(it->label == nullptr);
+    REQUIRE((++it)->command->name == "IS_THING_EQUAL_TO_THING");
+    REQUIRE(it->label == nullptr);
+    REQUIRE((++it)->command->name == "WAIT");
+    REQUIRE(it->label == nullptr);
+    REQUIRE((++it)->command->name == "ELSE");
+    REQUIRE(it->label != nullptr);
+    REQUIRE(it->label->name == "LAB1");
+    REQUIRE((++it)->command->name == "WAIT");
+    REQUIRE(it->label == nullptr);
+    REQUIRE((++it)->command->name == "ENDIF");
+    REQUIRE(it->label != nullptr);
+    REQUIRE(it->label->name == "LAB2");
+    REQUIRE(++it == ir->end());
+}
+
+TEST_CASE("parsing labels in ENDWHILE")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("WHILE x = 0\n"
+                              "    WAIT 0\n"
+                              "label: ENDWHILE\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+    REQUIRE(ir->size() == 4);
+    
+    auto it = ir->begin();
+    REQUIRE(it->command->name == "WHILE");
+    REQUIRE(it->label == nullptr);
+    REQUIRE((++it)->command->name == "IS_THING_EQUAL_TO_THING");
+    REQUIRE(it->label == nullptr);
+    REQUIRE((++it)->command->name == "WAIT");
+    REQUIRE(it->label == nullptr);
+    REQUIRE((++it)->command->name == "ENDWHILE");
+    REQUIRE(it->label != nullptr);
+    REQUIRE(it->label->name == "LABEL");
+    REQUIRE(++it == ir->end());
+}
+
+TEST_CASE("parsing labels in ENDREPEAT")
+{
+    gta3sc::ArenaMemoryResource arena;
+    auto source = make_source("REPEAT 2 x\n"
+                              "    WAIT 0\n"
+                              "label: ENDREPEAT\n");
+    auto parser = make_parser(source, arena);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+    REQUIRE(ir->size() == 3);
+    
+    auto it = ir->begin();
+    REQUIRE(it->command->name == "REPEAT");
+    REQUIRE(it->label == nullptr);
+    REQUIRE((++it)->command->name == "WAIT");
+    REQUIRE(it->label == nullptr);
+    REQUIRE((++it)->command->name == "ENDREPEAT");
+    REQUIRE(it->label != nullptr);
+    REQUIRE(it->label->name == "LABEL");
+    REQUIRE(++it == ir->end());
 }
 
 // TODO test labels on each of the unexpected places (see updated specs)

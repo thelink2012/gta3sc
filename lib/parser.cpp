@@ -1,9 +1,7 @@
-#include <cassert>
-#include <cstring>
 #include <gta3sc/parser.hpp>
 using namespace std::literals::string_view_literals;
 
-// grammar from https://git.io/fNxZP de0049f5258dc11d3e409371a8981f8a01b28d93
+// grammar from https://git.io/fNxZP f1f8a9096cb7a861e410d3f208f2589737220327
 
 namespace gta3sc
 {
@@ -460,7 +458,10 @@ auto Parser::parse_statement(bool allow_special_name)
     //            | embedded_statement ;
     //
     // label_def := identifier ':' ;
-    // labeled_statement := label_def (sep embedded_statement | empty_statement) ;
+    // label_prefix := label_def sep ;
+    //
+    // labeled_statement := label_prefix embedded_statement
+    //                    | label_def empty_statement ;
     //
     // empty_statement := eol ;
     //
@@ -660,7 +661,7 @@ auto Parser::parse_scope_statement() -> std::optional<LinkedIR<ParserIR>>
 {
     // scope_statement := '{' eol
     //                    {statement}
-    //                    '}' eol ;
+    //                    [label_prefix] '}' eol ;
     //
     // Constraints:
     // Lexical scopes cannot be nested.
@@ -810,18 +811,18 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
 {
     // if_statement := 'IF' sep conditional_list
     //                 {statement}
-    //                 ['ELSE'
+    //                 [[label_prefix] 'ELSE' eol
     //                 {statement}]
-    //                 'ENDIF' ;
+    //                 [label_prefix] 'ENDIF' eol ;
     //
     // if_goto_statement := 'IF' sep conditional_element sep 'GOTO' sep
     //                      identifier eol ;
     //
     // ifnot_statement := 'IFNOT' sep conditional_list
     //                 {statement}
-    //                 ['ELSE'
+    //                 [[label_prefix] 'ELSE' eol
     //                 {statement}]
-    //                 'ENDIF' ;
+    //                 [label_prefix] 'ENDIF' eol ;
     //
     // ifnot_goto_statement := 'IFNOT' sep conditional_element sep 'GOTO' sep
     //                          identifier eol;
@@ -920,11 +921,11 @@ auto Parser::parse_while_statement_detail(bool is_whilenot)
 {
     // while_statement := 'WHILE' sep conditional_list
     //                    {statement}
-    //                    'ENDWHILE' eol ;
+    //                    [label_prefix] 'ENDWHILE' eol ;
     //
     // whilenot_statement := 'WHILENOT' sep conditional_list
     //                       {statement}
-    //                       'ENDWHILE' eol ;
+    //                       [label_prefix] 'ENDWHILE' eol ;
     //
 
     const auto while_command = is_whilenot ? COMMAND_WHILENOT : COMMAND_WHILE;
@@ -960,7 +961,7 @@ auto Parser::parse_repeat_statement() -> std::optional<LinkedIR<ParserIR>>
 {
     // repeat_statement := 'REPEAT' sep integer sep identifier eol
     //                     {statement}
-    //                     'ENDREPEAT' eol ;
+    //                     [label_prefix] 'ENDREPEAT' eol ;
 
     if(!is_peek(Category::Word, "REPEAT"))
         return std::nullopt;
