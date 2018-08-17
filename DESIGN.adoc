@@ -1,0 +1,181 @@
+:toc: macro
+:toc-title:
+:toclevels: 9
+
+= gta3sc Design Internals
+
+toc::[]
+
+== Introduction
+
+This document describes the internals of the gta3sc project. It is meant to capture a high-level overview of the infrastructure and reason about some of the design choices behind it.
+
+== Design Goals
+
+The current codebase is a complete rewrite of a previous one. Clear goals were made in order to avoid the same mistakes as before.
+
+The project has four design goals and many decisions are based upon them:
+
+ * The code base should be **simple**: There should be no magic tricks. Triviality should be chosen whenever possible. Understanding the code base quickly is a must.
+ * The code base should be **modular**: Each module should work as a simple "program" in charge of a very specific task. Modules should be easily replaceable. Understanding a single module should be enough for hacking on it.
+ * The code base should be **efficient**: Asymptotic complexity matters. Sources of unpredictable performance (such as memory allocations) should be avoided.
+ * The translator should be **conformant**: Whereas the authoritative source is https://github.com/GTAmodding/gta3script-specs[gta3script-specs].
+
+== Language Conformance
+
+The original language is very hard to get right. There are many hidden tricky parts. This observation comes from the previous codebase not handling many of them. 
+
+It was clear a formal specification had to be written before touching code. The big picture had to be seen in order to understand and handle the corner cases.
+
+As this is a compiler infrastructure, not a language-wide repository, a separate project for reversing the language and formalizing it has been created. It can be found at https://github.com/GTAmodding/gta3script-specs[GTAModding/gta3script-specs].
+
+== Language Configuration
+
+TODO
+
+== Compiler
+
+=== Overview
+
++++
+<p align="center">
+<img src="https://public.thelink2012.xyz/gta3sc/pipeline.svg?v2" alt="gta3sc pipeline">
+<img src="https://public.thelink2012.xyz/gta3sc/pipeline-miss2.svg" alt="miss2 pipeline">
+</p>
++++
+
+_The architecture of gta3sc (on the left) is very different from the original DMA Design compiler (on the right)._
+
+The https://en.wikipedia.org/wiki/Rockstar_North[DMA Design] compiler (hereafter https://public.thelink2012.xyz/gta3/miss2_v413.zip[miss2]) is a scannerless parser followed by multiple lowering passes. Semantic checks are performed every phase as more information is gathered.
+
+The diagram on the right is a oversimplification of miss2. In reality, the compiler phases are all over the place. It is enough for in-house usage, but the same design cannot be used in name of maintenance and extensibility.
+
+Instead, a different architecture has been designed. Each phase deals with a single problem and no mystic hacks are performed.
+
+Each script needs to run under a parsing pass whereas the source text is transformed into a intermediate representation. This pass consists of three phases: preprocessing, scanning and parsing.
+
+The preprocessor performs normalization of the input text. This includes removal of comments and duplicated whitespaces.
+
+The scanner transforms the stream of characters given by the preprocessor into a stream of tokens.
+
+The parser takes the stream of tokens and verifies whether it forms a syntactically valid script. In the process, it builds an intermediate representation for further processing by other passes.
+
+The scanner and the preprocessor are streams. Therefore, the three phases are run concurrently. The parser asks the scanner for the next token. The scanner asks the preprocessor for the next character. This is very beneficial. The preprocessor and scanner, despite introducing two phases, do not bring in any additional overhead.
+
+The IR produced by the parser do not carry any semantic information. Semantic checking and annotation of the IR with this information is a task for the next phase.
+
+The semantic analyzer requires to see the full content of all scripts in a very specific order. Thus, the IR produced by the parsing of each script is merged into a single big IR which can be used for semantic checking.
+
+An observation regarding the previous pass is that the parser may be run in parallel for different scripts and then the result joint together. This was not a design decision, but rather a mere consequence of the modularity of the phases.
+
+TODO overview of sema
+
+TODO overview of lowering
+
+TODO overview of codegen
+
+
+=== Preprocessor
+
+The preprocessor's job is to normalize the character stream of the source code.
+
+It strips comments and blank characters from the beginning and end of each line, as well as transforms multiple whitespaces into a single one. CRLF to LF normalization is also performed.
+
+Notice whitespaces are not ignored in this language. So normalizing them is very important.
+
+This step could be in the scanner, but given the specifics of the language, it would cause lexing to become too complicated. The scanner would leave the scope of regular languages and go far beyond (e.g. nested block comments are context free).
+
+Another scenario that would work against the scanner is, for instance, when there is an interleaving sequence of whitespaces and block comments preceding the first word in a line. Handling this requires too many state changes, resulting in spaghetti code.
+
+This phase is analogous to the line reconstruction phase of miss2, except it is capable of doing so character by character.
+
+Instead of reconstructor, it is called a preprocessor because it's the future home of a preprocessor similar to that of GTA2script.
+
+=== Scanner
+
+The scanner takes the normalized stream of characters produced by the preprocessor and classifies them into tokens.
+
+The GTA3script language is itself context sensitive. In order for the scanner to be simple and regular, it must perform a conservative form of classification. Unlike in other languages, integers, floats and identifiers are not classified individually, instead they are classified into a generic category named _word_.
+
+Later on the parser has enough contextual information to disambiguate whether this _word_ is a command, label, integer, float or identifier.
+
+There is a kind of token that cannot be classified by the main automata. The _filename_. Such token may contain arithmetic characters (e.g. `file-name.sc`) in it, which usually would mean three separate tokens. The scanner classifies filenames only upon explicit request by the parser.
+
+The other lexical categories are _whitespace_, _end of line_, _string_, and  one for each _arithmetic operator_.
+
+The motivation for having a scanning phase is that it severely simplifies the parser. The process of looking ahead becomes much easier. Even the scannerless miss2 have a scanner hidden in its parsing cruft by the need to lookahead during expression parsing.
+
+=== Parser
+
+The parser checks the syntactical validity of the stream of tokens produced by the scanner and constructs an intermediate representation of the language in the process.
+
+The grammar and more details about the language itself can be found at the https://github.com/GTAmodding/gta3script-specs[language specification].
+
+The intermediate representation is not an abstract syntax tree, but a linear code. The properties of the language do not call for an AST. There is no nested expressions, for instance, and control-flow structures can be easily represented as code.
+
+The IR is guaranted to be syntactically valid, but semantic validation is left to its own phase. The parser does not know anything about commands, selectors and types. Please see the section on <<ParserIR, Parser IR>> for the properties of this representation.
+
+The entire IR shares the same lifetime. Consequently it benefits from the use of a <<ArenaMemoryResource,region-based memory manager>>. This mechanism guarantees us lightning fast allocation/deallocation and little to no memory fragmentation.
+
+The parser does not perform syntax-directed translation, which would make parsing and semantic checking a single pass. This is not possible because the semantic phase requires global information about the program. For example, variable declarations of a script must be seen by every other script, and the order of declarations is relevant (each variable has an id that cannot change between compilers). More details about this can be seen on the language specification.
+
+Addition of new features to the language only touches this phase onwards, specially because the scanner is conservative and produces no keywords.
+
+=== Sema
+
+TODO
+
+// The previous codebase has shown that trying to make this an out-of-order process produces complicated algorithms that do not bring enough benefit for the code complexity.
+
+=== Lowering
+
+TODO
+
+=== Codegen
+
+TODO
+
+== Decompiler
+
+The decompiler is still a dream. Hopefully it is written before the end of this century. Meanwhile take a look at https://github.com/x87/scout.js[scout.js].
+
+== Support Library
+
+[#ArenaMemoryResource]
+=== Memory Arena
+
+TODO
+
+== Data Structures
+
+[#ParserIR]
+=== Parser IR
+
+//image:https://public.thelink2012.xyz/gta3sc/parser-ir.svg[role="related left", width="250"]
+++++
+<img style="margin-right: .625em;" role="left" align="left" src="https://public.thelink2012.xyz/gta3sc/parser-ir.svg" width="250">
+++++
+
+The intermediate representation generated by the parser is a linear code whereas each instruction is a tuple _(label, command, argument...)_.
+
+Both label and commands may be null, and the same label name may appear more than once.
+
+The intermediate language is very similar to GTA3script itself, with few little changes. These changes are better detailed in the _Code Shape_ section of the language specification.
+
+Since the parser does not know anything about commands and its parameters, command names are directly stored in the IR and the commands themselves may not exist. The amount of arguments may be wrong (e.g. three arguments in an `ADD_SCORE` instead of two). The typing may also be wrong (e.g. instead of a integer argument for `WAIT`, a floating one is given).
+
+This property extends to all other commands, even special ones like `VAR_INT`, `REPEAT` and `{`. Commands generated by the parsing process itself (e.g. `IF 0`) should not be trusted either.
+
+It is guaranteed, however, that control-flow and scoping instructions are properly matched (e.g. for every `IF` there is an `ENDIF`).
+
+The type of an arguments is either an _integer_, _float_, _string_, _identifier_ or _filename_. Identifiers are not yet resolved. Their names are guaranteed to be syntactically valid but the semantic phase have to decide whether it is a variable, label, string identifier or string constant.
+
+++++
+<div style="clear:both"></div>
+++++
+
+[#SemaIR]
+=== Sema IR
+
+TODO
+

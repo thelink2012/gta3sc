@@ -14,6 +14,8 @@ This branch is a complete rewrite of the codebase, it is **very incomplete**! Th
 
 The previous codebase was neither of these. This rewrite is being developed in its own time (and concurrently with the language specification), so do not expect it to be complete any time soon.
 
+For a high-level overview of the project, see the [gta3sc Design Internals](./DESIGN.adoc).
+
 ## Building
 
 You need a C++17 enabled compiler. Windows (MSVC) and Linux (GCC/Clang) are officially supported.

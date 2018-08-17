@@ -5,6 +5,8 @@ using namespace std::literals::string_view_literals;
 
 namespace gta3sc
 {
+// The parser does not know anything about commands, so we have to
+// hardcode the special commands in here.
 constexpr auto COMMAND_MISSION_START = "MISSION_START"sv;
 constexpr auto COMMAND_MISSION_END = "MISSION_END"sv;
 constexpr auto COMMAND_VAR_INT = "VAR_INT"sv;
@@ -513,7 +515,7 @@ auto Parser::parse_statement_list(
     {
         // Call `parse_statement` with the error handling for special names
         // at the top level (i.e. for `command_statement` only) disabled
-        // because the `stop_when` commands are usually special.
+        // because the `stop_when` commands are usually special names.
         auto stmt_list = parse_statement(true);
         if(!stmt_list)
             return std::nullopt;
@@ -1076,11 +1078,6 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line)
     // FOLLOW(assignment_expression) = {eol}
     // FOLLOW(conditional_expression) = {eol, sep 'GOTO'}
 
-    // This is a very special part of the language grammar. We can quickly
-    // and cleanly parse this by applying some pattern matching on the tokens
-    // of the line. That is what we gonna do, take all the tokens in this line
-    // and match them against the production rules.
-
     Category cats[6];
     SourceRange locs[6];
     arena_ptr<ParserIR::Argument> args[6];
@@ -1090,6 +1087,11 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line)
 
     assert(std::size(cats) >= std::size(args));
     assert(std::size(cats) == std::size(locs));
+
+    // This is a very special part of the language grammar. We can quickly
+    // and cleanly parse this by applying some pattern matching on the tokens
+    // of the line. That is what we gonna do, take all the tokens in this line
+    // and match them against the production rules.
 
     while(!is_peek(Category::EndOfLine))
     {

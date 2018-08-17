@@ -12,6 +12,7 @@ utils/**.ir2
 utils/**.sc
 utils/**.scm
 utils/test
+/*.html
 
 #################
 ## C++

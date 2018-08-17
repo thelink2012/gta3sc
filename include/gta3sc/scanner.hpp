@@ -66,6 +66,9 @@ public:
     ///
     /// The end of line token is returned infinitely when the scanner
     /// is at the end of the stream.
+    ///
+    /// When the next token is lexically invalid, an error is reported
+    /// to the `DiagnosticManager` and `std::nullopt` is returned.
     auto next() -> std::optional<Token>;
 
     /// Consumes the next filename token in the stream of characters.
@@ -80,6 +83,9 @@ public:
     /// returned.
     ///
     /// The category of a filename is `Category::Word`.
+    ///
+    /// If the next token is not a valid filename, an error is reported
+    /// to the `DiagnosticManager` and `std::nullopt` is returned.
     auto next_filename() -> std::optional<Token>;
 
     /// Checks whether the end of stream has been reached.
