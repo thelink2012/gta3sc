@@ -13,7 +13,7 @@
 namespace gta3sc
 {
 template<typename T>
-struct LinkedIR
+class LinkedIR
 {
 private:
     using list_type = std::list<arena_ptr<T>, ArenaAllocator<arena_ptr<T>>>;
@@ -75,6 +75,9 @@ public:
     iterator erase(iterator pos) { return iterator(list.erase(pos.it)); }
 
     // if the list becomes intrusive this method should be on the node
+    //
+    // THIS WASTES MEMORY, THE list_type::Node STAYS IN MEMORY
+    // this is not a problem with intrusive lists!
     arena_pointer detach(iterator pos)
     {
         auto ptr = std::addressof(*pos);

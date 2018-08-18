@@ -484,7 +484,7 @@ auto Parser::parse_statement_list(
         std::initializer_list<std::string_view> stop_when)
         -> std::optional<LinkedIR<ParserIR>>
 {
-    auto linked_stms = LinkedIR<ParserIR>(arena);
+    auto linked_stms = LinkedIR<ParserIR>(*arena);
 
     while(!eof())
     {
@@ -568,7 +568,7 @@ auto Parser::parse_embedded_statement(bool allow_special_name)
     if(is_peek(Category::EndOfLine))
     {
         consume();
-        return LinkedIR<ParserIR>(arena);
+        return LinkedIR<ParserIR>(*arena);
     }
     else if(is_peek(Category::Word, COMMAND_GOSUB_FILE)
             || is_peek(Category::Word, COMMAND_LAUNCH_MISSION)
@@ -576,7 +576,7 @@ auto Parser::parse_embedded_statement(bool allow_special_name)
     {
         if(auto require_ir = parse_require_statement())
         {
-            auto linked = LinkedIR<ParserIR>(arena);
+            auto linked = LinkedIR<ParserIR>(*arena);
             linked.push_back(*require_ir);
             return linked;
         }
@@ -633,7 +633,7 @@ auto Parser::parse_embedded_statement(bool allow_special_name)
 
             if(consume(Category::EndOfLine))
             {
-                auto linked = LinkedIR<ParserIR>(arena);
+                auto linked = LinkedIR<ParserIR>(*arena);
                 linked.push_back(*ir);
                 return linked;
             }
@@ -736,7 +736,7 @@ auto Parser::parse_conditional_list(arena_ptr<ParserIR> op_cond0)
 
     assert(op_cond0 && op_cond0->command);
 
-    auto andor_list = LinkedIR<ParserIR>(arena);
+    auto andor_list = LinkedIR<ParserIR>(*arena);
     andor_list.push_back(op_cond0);
 
     size_t num_conds = 1;
@@ -851,7 +851,7 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
                                                 arena);
         op_goto->command->push_arg(*arg_label, arena);
 
-        auto linked = LinkedIR<ParserIR>(arena);
+        auto linked = LinkedIR<ParserIR>(*arena);
         linked.push_back(op_andor);
         linked.push_back(*op_cond0);
         linked.push_back(op_goto);
@@ -1174,10 +1174,10 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line)
         }
     }
 
-    auto linked = LinkedIR<ParserIR>(arena);
+    auto linked = LinkedIR<ParserIR>(*arena);
 
     const auto src_info = SourceRange(
-            spans[0].begin(), spans[num_toks - 1].end() - spans[0].begin());
+            spans[0].data(), spans[num_toks - 1].end() - spans[0].begin());
 
     if(num_toks == 2
        && ((cats[0] == Category::Word && cats[1] == Category::PlusPlus)

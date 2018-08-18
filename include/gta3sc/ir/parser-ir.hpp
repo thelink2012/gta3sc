@@ -50,43 +50,43 @@ public:
     ParserIR& operator=(ParserIR&&) = delete;
 
     /// Creates an empty instruction.
-    static auto create(ArenaMemoryResource&) -> arena_ptr<ParserIR>;
+    static auto create(ArenaMemoryResource*) -> arena_ptr<ParserIR>;
 
     /// Creates an instruction containing a command.
     ///
     /// The name of the command is automatically converted to uppercase
     /// during the creation of the object.
     static auto create_command(std::string_view name, SourceRange source,
-                               ArenaMemoryResource&) -> arena_ptr<ParserIR>;
+                               ArenaMemoryResource*) -> arena_ptr<ParserIR>;
 
     /// Creates an integer argument.
     static auto create_integer(int32_t value, SourceRange source,
-                               ArenaMemoryResource&) -> arena_ptr<Argument>;
+                               ArenaMemoryResource*) -> arena_ptr<Argument>;
 
     /// Creates a floating-point argument.
     static auto create_float(float value, SourceRange source,
-                             ArenaMemoryResource&) -> arena_ptr<Argument>;
+                             ArenaMemoryResource*) -> arena_ptr<Argument>;
 
     /// Creates an identifier argument.
     ///
     /// The identifier is automatically converted to uppercase during the
     /// creation of the object.
     static auto create_identifier(std::string_view value, SourceRange source,
-                                  ArenaMemoryResource&) -> arena_ptr<Argument>;
+                                  ArenaMemoryResource*) -> arena_ptr<Argument>;
 
     /// Creates a filename argument.
     ///
     /// The filename is automatically converted to uppercase during the
     /// creation of the object.
     static auto create_filename(std::string_view filename, SourceRange source,
-                                ArenaMemoryResource&) -> arena_ptr<Argument>;
+                                ArenaMemoryResource*) -> arena_ptr<Argument>;
 
     /// Creates a string argument.
     ///
     /// The quotation marks that surrounds the string should not be present
     /// in `string`. The string is not converted to uppercase.
     static auto create_string(std::string_view string, SourceRange source,
-                              ArenaMemoryResource&) -> arena_ptr<Argument>;
+                              ArenaMemoryResource*) -> arena_ptr<Argument>;
 
     struct Command
     {
@@ -105,10 +105,10 @@ public:
         //
         /// The name of the command is automatically made uppercase.
         static auto create(std::string_view name, SourceRange source,
-                           ArenaMemoryResource&) -> arena_ptr<Command>;
+                           ArenaMemoryResource*) -> arena_ptr<Command>;
 
         /// Adds a new argument to the command.
-        void push_arg(arena_ptr<Argument>, ArenaMemoryResource&);
+        void push_arg(arena_ptr<Argument>, ArenaMemoryResource*);
 
     private:
         size_t args_capacity = 0;
@@ -134,7 +134,7 @@ public:
         ///
         /// The name of the label is automatically made uppercase.
         static auto create(std::string_view name, SourceRange source,
-                           ArenaMemoryResource&) -> arena_ptr<LabelDef>;
+                           ArenaMemoryResource*) -> arena_ptr<LabelDef>;
 
     private:
         explicit LabelDef(SourceRange source, std::string_view name) :
@@ -215,79 +215,87 @@ protected:
     friend struct LabelDef;
     friend struct Argument;
 
-    static auto create_chars(std::string_view from, ArenaMemoryResource&)
+    static auto create_chars(std::string_view from, ArenaMemoryResource*)
             -> std::string_view;
 
-    static auto create_chars_upper(std::string_view from, ArenaMemoryResource&)
+    static auto create_chars_upper(std::string_view from, ArenaMemoryResource*)
             -> std::string_view;
 
 private:
     explicit ParserIR(arena_ptr<Command> command) : command(command) {}
+
 };
 
-inline auto ParserIR::create(ArenaMemoryResource& arena) -> arena_ptr<ParserIR>
+// These resources are stored in a memory arena. Disposing storage
+// **must** be enough for destruction of these objects.
+static_assert(std::is_trivially_destructible_v<ParserIR>);
+static_assert(std::is_trivially_destructible_v<ParserIR::Command>);
+static_assert(std::is_trivially_destructible_v<ParserIR::LabelDef>);
+static_assert(std::is_trivially_destructible_v<ParserIR::Argument>);
+
+inline auto ParserIR::create(ArenaMemoryResource* arena) -> arena_ptr<ParserIR>
 {
-    return new(arena, alignof(ParserIR)) ParserIR(nullptr);
+    return new(*arena, alignof(ParserIR)) ParserIR(nullptr);
 }
 
 inline auto ParserIR::create_command(std::string_view name, SourceRange source,
-                                     ArenaMemoryResource& arena)
+                                     ArenaMemoryResource* arena)
         -> arena_ptr<ParserIR>
 {
     auto command = Command::create(name, source, arena);
-    return new(arena, alignof(ParserIR)) ParserIR(command);
+    return new(*arena, alignof(ParserIR)) ParserIR(command);
 }
 
 inline auto ParserIR::create_integer(int32_t value, SourceRange source,
-                                     ArenaMemoryResource& arena)
+                                     ArenaMemoryResource* arena)
         -> arena_ptr<Argument>
 {
-    return new(arena, alignof(Argument)) Argument(value, source);
+    return new(*arena, alignof(Argument)) Argument(value, source);
 }
 
 inline auto ParserIR::create_float(float value, SourceRange source,
-                                   ArenaMemoryResource& arena)
+                                   ArenaMemoryResource* arena)
         -> arena_ptr<Argument>
 {
-    return new(arena, alignof(Argument)) Argument(value, source);
+    return new(*arena, alignof(Argument)) Argument(value, source);
 }
 
 inline auto ParserIR::create_identifier(std::string_view name,
                                         SourceRange source,
-                                        ArenaMemoryResource& arena)
+                                        ArenaMemoryResource* arena)
         -> arena_ptr<Argument>
 {
-    return new(arena, alignof(Argument)) Argument(
+    return new(*arena, alignof(Argument)) Argument(
             Argument::IdentifierTag{}, create_chars_upper(name, arena), source);
 }
 
 inline auto ParserIR::create_filename(std::string_view name, SourceRange source,
-                                      ArenaMemoryResource& arena)
+                                      ArenaMemoryResource* arena)
         -> arena_ptr<Argument>
 {
-    return new(arena, alignof(Argument)) Argument(
+    return new(*arena, alignof(Argument)) Argument(
             Argument::FilenameTag{}, create_chars_upper(name, arena), source);
 }
 
 inline auto ParserIR::create_string(std::string_view string, SourceRange source,
-                                    ArenaMemoryResource& arena)
+                                    ArenaMemoryResource* arena)
         -> arena_ptr<Argument>
 {
-    return new(arena, alignof(Argument))
+    return new(*arena, alignof(Argument))
             Argument(Argument::StringTag{}, string, source);
 }
 
 inline auto ParserIR::create_chars(std::string_view from,
-                                   ArenaMemoryResource& arena)
+                                   ArenaMemoryResource* arena)
         -> std::string_view
 {
-    auto ptr = new(arena, alignof(char)) char[from.size()];
+    auto ptr = new(*arena, alignof(char)) char[from.size()];
     std::memcpy(ptr, from.data(), from.size());
     return {ptr, from.size()};
 }
 
 inline auto ParserIR::create_chars_upper(std::string_view from,
-                                         ArenaMemoryResource& arena)
+                                         ArenaMemoryResource* arena)
         -> std::string_view
 {
     auto chars = create_chars(from, arena);
@@ -300,31 +308,31 @@ inline auto ParserIR::create_chars_upper(std::string_view from,
 }
 
 inline auto ParserIR::Command::create(std::string_view name, SourceRange source,
-                                      ArenaMemoryResource& arena)
+                                      ArenaMemoryResource* arena)
         -> arena_ptr<Command>
 {
-    return new(arena, alignof(Command))
+    return new(*arena, alignof(Command))
             Command{source, create_chars_upper(name, arena)};
 }
 
 inline auto ParserIR::LabelDef::create(std::string_view name,
                                        SourceRange source,
-                                       ArenaMemoryResource& arena)
+                                       ArenaMemoryResource* arena)
         -> arena_ptr<LabelDef>
 {
-    return new(arena, alignof(LabelDef))
+    return new(*arena, alignof(LabelDef))
             LabelDef{source, create_chars_upper(name, arena)};
 }
 
 inline void ParserIR::Command::push_arg(arena_ptr<Argument> arg,
-                                        ArenaMemoryResource& arena)
+                                        ArenaMemoryResource* arena)
 {
     assert(arg != nullptr);
 
     if(this->args.size() >= args_capacity)
     {
         auto new_caps = !args_capacity ? 6 : args_capacity * 2;
-        auto new_args = new(arena) arena_ptr<Argument>[new_caps];
+        auto new_args = new(*arena) arena_ptr<Argument>[new_caps];
         std::move(args.begin(), args.end(), new_args);
 
         this->args = adt::span(new_args, args.size());

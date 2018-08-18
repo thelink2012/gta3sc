@@ -10,7 +10,7 @@ namespace gta3sc
 class Preprocessor
 {
 public:
-    explicit Preprocessor(const SourceFile& source) : source(source)
+    explicit Preprocessor(const SourceFile& source) : source(&source)
     {
         this->cursor = source.view_with_terminator().begin();
         this->start_of_line = true;
@@ -45,12 +45,12 @@ private:
     bool is_newline(SourceLocation) const;
 
 private:
+    const SourceFile* source;
+
     SourceLocation cursor;
     bool start_of_line;
     bool end_of_stream;
     bool inside_quotes;
     uint8_t num_block_comments;
-
-    const SourceFile& source;
 };
 }

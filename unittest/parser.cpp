@@ -1,44 +1,66 @@
+#include <cstring>
 #include <doctest.h>
 #include <gta3sc/parser.hpp>
-#include <cstring>
 #include <iterator>
 using namespace std::literals::string_view_literals;
 
 namespace
 {
-template<std::size_t N>
-auto make_source(const char (&data)[N]) -> gta3sc::SourceFile
+class ParserFixture
 {
-    auto ptr = std::make_unique<char[]>(N);
-    std::memcpy(ptr.get(), data, N);
-    return gta3sc::SourceFile(std::move(ptr), N-1);
-}
+public:
+    ParserFixture() :
+        source_file(make_source("")),
+        parser(make_parser(source_file, arena))
+    {}
 
-auto make_parser(const gta3sc::SourceFile& source, gta3sc::ArenaMemoryResource& arena)
-    -> gta3sc::Parser
-{
-    auto pp = gta3sc::Preprocessor(source);
-    auto scanner = gta3sc::Scanner(std::move(pp));
-    return gta3sc::Parser(std::move(scanner), arena);
-}
-}
+protected:
+    void build_parser(std::string_view src)
+    {
+        this->source_file = make_source(src);
+        this->parser = make_parser(source_file, arena);
+    }
 
-TEST_CASE("parsing a label definition")
-{
+private:
+    static auto make_source(std::string_view src) -> gta3sc::SourceFile
+    {
+        const auto n = src.size();
+        auto ptr = std::make_unique<char[]>(n+1);
+        std::memcpy(ptr.get(), src.data(), n);
+        ptr[n] = '\n';
+        return gta3sc::SourceFile(std::move(ptr), n);
+    }
+
+    static auto make_parser(const gta3sc::SourceFile& source,
+                            gta3sc::ArenaMemoryResource& arena)
+            -> gta3sc::Parser
+    {
+        auto pp = gta3sc::Preprocessor(source);
+        auto scanner = gta3sc::Scanner(std::move(pp));
+        return gta3sc::Parser(std::move(scanner), arena);
+    }
+
     gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("laBEL:\n"
-                              "laBEL: WAIT 0\n"
-                              "label:\n"
-                              "WAIT 0\n"
-                              "la:bel:\n"
-                              "1abel:\n"
-                              "lab\"el\":\n"
-                              "\"label\":\n"
-                              "lab\"el:\n"
-                              ":\n"
-                              "::\n"
-                              "label:");
-    auto parser = make_parser(source, arena);
+    gta3sc::SourceFile source_file;
+protected:
+    gta3sc::Parser parser;
+};
+}
+
+TEST_CASE_FIXTURE(ParserFixture, "parsing a label definition")
+{
+    build_parser("laBEL:\n"
+                 "laBEL: WAIT 0\n"
+                 "label:\n"
+                 "WAIT 0\n"
+                 "la:bel:\n"
+                 "1abel:\n"
+                 "lab\"el\":\n"
+                 "\"label\":\n"
+                 "lab\"el:\n"
+                 ":\n"
+                 "::\n"
+                 "label:");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
@@ -96,12 +118,10 @@ TEST_CASE("parsing a label definition")
     REQUIRE(ir->front().label->name == "LABEL");
 }
 
-TEST_CASE("parsing a empty line")
+TEST_CASE_FIXTURE(ParserFixture, "parsing a empty line")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("\n"
-                              "WAIT 0\n");
-    auto parser = make_parser(source, arena);
+    build_parser("\n"
+                 "WAIT 0\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
@@ -112,18 +132,16 @@ TEST_CASE("parsing a empty line")
     REQUIRE(ir->front().command->name == "WAIT");
 }
 
-TEST_CASE("parsing a valid scope block")
+TEST_CASE_FIXTURE(ParserFixture, "parsing a valid scope block")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("{\n"
-                              "WAIT 0\n"
-                              "WAIT 1\n"
-                              "}\n"
-                              "WAIT 2\n"
-                              "{\n"
-                              "}\n"
-                              "WAIT 3\n");
-    auto parser = make_parser(source, arena);
+    build_parser("{\n"
+                 "WAIT 0\n"
+                 "WAIT 1\n"
+                 "}\n"
+                 "WAIT 2\n"
+                 "{\n"
+                 "}\n"
+                 "WAIT 3\n");
 
     auto linked = parser.parse_statement();
     REQUIRE(linked != std::nullopt);
@@ -157,7 +175,8 @@ TEST_CASE("parsing a valid scope block")
 
     linked = parser.parse_statement();
     REQUIRE(linked != std::nullopt);
-    ir = linked->begin();;
+    ir = linked->begin();
+    ;
     REQUIRE(ir->command->name == "{");
     REQUIRE(ir->command->args.size() == 0);
 
@@ -174,57 +193,47 @@ TEST_CASE("parsing a valid scope block")
     REQUIRE(ir->command->args.size() == 1);
 }
 
-TEST_CASE("parsing a nested scope block")
+TEST_CASE_FIXTURE(ParserFixture, "parsing a nested scope block")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("{\n"
-                              "{\n"
-                              "}\n"
-                              "}\n");
-    auto parser = make_parser(source, arena);
+    build_parser("{\n"
+                 "{\n"
+                 "}\n"
+                 "}\n");
 
     auto linked = parser.parse_statement();
     REQUIRE(linked == std::nullopt);
 }
 
-TEST_CASE("parsing a } outside a scope block")
+TEST_CASE_FIXTURE(ParserFixture, "parsing a } outside a scope block")
 {
-    // TODO
-    return;
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("}\n");
-    auto parser = make_parser(source, arena);
+    build_parser("}\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
 }
 
-TEST_CASE("parsing a unclosed scope block")
+TEST_CASE_FIXTURE(ParserFixture, "parsing a unclosed scope block")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("{\n"
-                              "\n");
-    auto parser = make_parser(source, arena);
+    build_parser("{\n"
+                 "\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
 }
 
-TEST_CASE("parsing a command")
+TEST_CASE_FIXTURE(ParserFixture, "parsing a command")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("waIT 10 20 30\n"
-                              "C\n"
-                              "c\n"
-                              "l: c:\n"
-                              "a.sc\n"
-                              "\"a\"\n"
-                              "%\n"
-                              "$\n"
-                              "1\n"
-                              ".1\n"
-                              "-1\n");
-    auto parser = make_parser(source, arena);
+    build_parser("waIT 10 20 30\n"
+                 "C\n"
+                 "c\n"
+                 "l: c:\n"
+                 "a.sc\n"
+                 "\"a\"\n"
+                 "%\n"
+                 "$\n"
+                 "1\n"
+                 ".1\n"
+                 "-1\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
@@ -283,20 +292,18 @@ TEST_CASE("parsing a command")
     REQUIRE(ir->front().command->args.size() == 0);
 }
 
-TEST_CASE("parsing integer argument")
+TEST_CASE_FIXTURE(ParserFixture, "parsing integer argument")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("WAIT 123 010 -39\n"
-                              "WAIT 2147483647 -2147483648\n"
-                              "WAIT -432-10\n"
-                              "WAIT 123a\n"
-                              "WAIT 0x10\n"
-                              "WAIT +39\n"
-                              "WAIT 432+10\n"
-                              "WAIT x -\n"
-                              "WAIT x --\n"
-                              "WAIT 9");
-    auto parser = make_parser(source, arena);
+    build_parser("WAIT 123 010 -39\n"
+                 "WAIT 2147483647 -2147483648\n"
+                 "WAIT -432-10\n"
+                 "WAIT 123a\n"
+                 "WAIT 0x10\n"
+                 "WAIT +39\n"
+                 "WAIT 432+10\n"
+                 "WAIT x -\n"
+                 "WAIT x --\n"
+                 "WAIT 9");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
@@ -324,7 +331,7 @@ TEST_CASE("parsing integer argument")
     REQUIRE(ir == std::nullopt);
 
     ir = parser.parse_statement();
-    parser.skip_current_line(); //0x10
+    parser.skip_current_line(); // 0x10
     REQUIRE(ir == std::nullopt);
 
     ir = parser.parse_statement();
@@ -347,18 +354,16 @@ TEST_CASE("parsing integer argument")
     REQUIRE(ir != std::nullopt); // 9
 }
 
-TEST_CASE("parsing float argument")
+TEST_CASE_FIXTURE(ParserFixture, "parsing float argument")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("WAIT .1 -.1 .1f .1F .15 .1.9 -.1.\n"
-                              "WAIT 1F -1f 1. 1.1 1.f 1.. -1..\n"
-                              "WAIT .1a\n"
-                              "WAIT .1fa\n"
-                              "WAIT .1.a\n"
-                              "WAIT 1..a\n"
-                              "WAIT .1-.1\n"
-                              "WAIT 9");
-    auto parser = make_parser(source, arena);
+    build_parser("WAIT .1 -.1 .1f .1F .15 .1.9 -.1.\n"
+                 "WAIT 1F -1f 1. 1.1 1.f 1.. -1..\n"
+                 "WAIT .1a\n"
+                 "WAIT .1fa\n"
+                 "WAIT .1.a\n"
+                 "WAIT 1..a\n"
+                 "WAIT .1-.1\n"
+                 "WAIT 9");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
@@ -383,7 +388,7 @@ TEST_CASE("parsing float argument")
     REQUIRE(*ir->front().command->args[4]->as_float() == 1.0f);
     REQUIRE(*ir->front().command->args[5]->as_float() == 1.0f);
     REQUIRE(*ir->front().command->args[6]->as_float() == -1.0f);
-    
+
     ir = parser.parse_statement();
     parser.skip_current_line(); // .1a
     REQUIRE(ir == std::nullopt);
@@ -408,16 +413,14 @@ TEST_CASE("parsing float argument")
     REQUIRE(ir != std::nullopt); // 9
 }
 
-TEST_CASE("parsing identifier argument")
+TEST_CASE_FIXTURE(ParserFixture, "parsing identifier argument")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("WAIT $abc abc AbC a@_1$\n"
-                              "WAIT _abc\n"
-                              "WAIT @abc\n"
-                              "WAIT 1abc\n"
-                              "WAIT abc: def\n"
-                              "WAIT 9");
-    auto parser = make_parser(source, arena);
+    build_parser("WAIT $abc abc AbC a@_1$\n"
+                 "WAIT _abc\n"
+                 "WAIT @abc\n"
+                 "WAIT 1abc\n"
+                 "WAIT abc: def\n"
+                 "WAIT 9");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
@@ -427,7 +430,7 @@ TEST_CASE("parsing identifier argument")
     REQUIRE_EQ(*ir->front().command->args[1]->as_identifier(), "ABC"sv);
     REQUIRE_EQ(*ir->front().command->args[2]->as_identifier(), "ABC"sv);
     REQUIRE_EQ(*ir->front().command->args[3]->as_identifier(), "A@_1$"sv);
-    
+
     ir = parser.parse_statement();
     parser.skip_current_line(); // _abc
     REQUIRE(ir == std::nullopt);
@@ -437,7 +440,7 @@ TEST_CASE("parsing identifier argument")
     REQUIRE(ir == std::nullopt);
 
     ir = parser.parse_statement();
-    parser.skip_current_line(); //1abc
+    parser.skip_current_line(); // 1abc
     REQUIRE(ir == std::nullopt);
 
     ir = parser.parse_statement();
@@ -448,15 +451,13 @@ TEST_CASE("parsing identifier argument")
     REQUIRE(ir != std::nullopt); // 9
 }
 
-TEST_CASE("parsing string literal argument")
+TEST_CASE_FIXTURE(ParserFixture, "parsing string literal argument")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("WAIT \"this\tI$ /* a // \\n (%1teral),\"\n"
-                              "WAIT \"\"\n"
-                              "WAIT \"\n"
-                              "WAIT \"string\"abc\n"
-                              "WAIT 9");
-    auto parser = make_parser(source, arena);
+    build_parser("WAIT \"this\tI$ /* a // \\n (%1teral),\"\n"
+                 "WAIT \"\"\n"
+                 "WAIT \"\n"
+                 "WAIT \"string\"abc\n"
+                 "WAIT 9");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
@@ -470,7 +471,7 @@ TEST_CASE("parsing string literal argument")
     REQUIRE(ir->front().command->name == "WAIT");
     REQUIRE(ir->front().command->args.size() == 1);
     REQUIRE_EQ(*ir->front().command->args[0]->as_string(), ""sv);
-    
+
     ir = parser.parse_statement();
     parser.skip_current_line(); // "
     REQUIRE(ir == std::nullopt);
@@ -483,22 +484,20 @@ TEST_CASE("parsing string literal argument")
     REQUIRE(ir != std::nullopt); // 9
 }
 
-TEST_CASE("parsing filename argument")
+TEST_CASE_FIXTURE(ParserFixture, "parsing filename argument")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("LAUNCH_MISSION .sc\n"
-                              "LAUNCH_MISSION a.SC\n"
-                              "WAIT a.SC\n"
-                              "WAIT 1.SC\n"
-                              "LAUNCH_MISSION @.sc\n"
-                              "LAUNCH_MISSION 1.sc\n"
-                              "LAUNCH_MISSION 1.0sc\n"
-                              "LAUNCH_MISSION SC\n"
-                              "LAUNCH_MISSION C\n"
-                              "LAUNCH_MISSION \"a\".sc\n"
-                              "LOAD_AND_LAUNCH_MISSION file-name.sc\n"
-                              "GOSUB_FILE label file-name.sc\n");
-    auto parser = make_parser(source, arena);
+    build_parser("LAUNCH_MISSION .sc\n"
+                 "LAUNCH_MISSION a.SC\n"
+                 "WAIT a.SC\n"
+                 "WAIT 1.SC\n"
+                 "LAUNCH_MISSION @.sc\n"
+                 "LAUNCH_MISSION 1.sc\n"
+                 "LAUNCH_MISSION 1.0sc\n"
+                 "LAUNCH_MISSION SC\n"
+                 "LAUNCH_MISSION C\n"
+                 "LAUNCH_MISSION \"a\".sc\n"
+                 "LOAD_AND_LAUNCH_MISSION file-name.sc\n"
+                 "GOSUB_FILE label file-name.sc\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
@@ -530,7 +529,7 @@ TEST_CASE("parsing filename argument")
     REQUIRE(ir->front().command->name == "LAUNCH_MISSION");
     REQUIRE(ir->front().command->args.size() == 1);
     REQUIRE_EQ(*ir->front().command->args[0]->as_filename(), "1.SC"sv);
-    
+
     ir = parser.parse_statement();
     parser.skip_current_line(); // 1.0sc
     REQUIRE(ir == std::nullopt);
@@ -559,12 +558,10 @@ TEST_CASE("parsing filename argument")
     REQUIRE_EQ(*ir->front().command->args[1]->as_filename(), "FILE-NAME.SC"sv);
 }
 
-TEST_CASE("parsing permutations of absolute expressions")
+TEST_CASE_FIXTURE(ParserFixture, "parsing permutations of absolute expressions")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("x = aBs y\n"
-                              "x = ABS x\n");
-    auto parser = make_parser(source, arena);
+    build_parser("x = aBs y\n"
+                 "x = ABS x\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
@@ -588,20 +585,18 @@ TEST_CASE("parsing permutations of absolute expressions")
     REQUIRE(ir->size() == 1);
 }
 
-TEST_CASE("parsing permutations of unary expressions")
+TEST_CASE_FIXTURE(ParserFixture, "parsing permutations of unary expressions")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("++x\n"
-                              "x++\n"
-                              "--x\n"
-                              "x--\n");
-    auto parser = make_parser(source, arena);
+    build_parser("++x\n"
+                 "x++\n"
+                 "--x\n"
+                 "x--\n");
 
     constexpr std::string_view expects_table[] = {
-        "ADD_THING_TO_THING",
-        "ADD_THING_TO_THING",
-        "SUB_THING_FROM_THING",
-        "SUB_THING_FROM_THING",
+            "ADD_THING_TO_THING",
+            "ADD_THING_TO_THING",
+            "SUB_THING_FROM_THING",
+            "SUB_THING_FROM_THING",
     };
 
     for(auto& command_name : expects_table)
@@ -616,36 +611,34 @@ TEST_CASE("parsing permutations of unary expressions")
     }
 }
 
-TEST_CASE("parsing permutations of binary expressions")
+TEST_CASE_FIXTURE(ParserFixture, "parsing permutations of binary expressions")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("x = y\n"
-                              "x = x\n"
-                              "x =# y\n"
-                              "x =# x\n"
-                              "x += y\n"
-                              "x += x\n"
-                              "x -= y\n"
-                              "x -= x\n"
-                              "x *= y\n"
-                              "x *= x\n"
-                              "x /= y\n"
-                              "x /= x\n"
-                              "x +=@ y\n"
-                              "x +=@ x\n"
-                              "x -=@ y\n"
-                              "x -=@ x\n");
-    auto parser = make_parser(source, arena);
+    build_parser("x = y\n"
+                 "x = x\n"
+                 "x =# y\n"
+                 "x =# x\n"
+                 "x += y\n"
+                 "x += x\n"
+                 "x -= y\n"
+                 "x -= x\n"
+                 "x *= y\n"
+                 "x *= x\n"
+                 "x /= y\n"
+                 "x /= x\n"
+                 "x +=@ y\n"
+                 "x +=@ x\n"
+                 "x -=@ y\n"
+                 "x -=@ x\n");
 
     constexpr std::string_view expects_table[] = {
-        "SET",
-        "CSET",
-        "ADD_THING_TO_THING",
-        "SUB_THING_FROM_THING",
-        "MULT_THING_BY_THING",
-        "DIV_THING_BY_THING",
-        "ADD_THING_TO_THING_TIMED",
-        "SUB_THING_FROM_THING_TIMED",
+            "SET",
+            "CSET",
+            "ADD_THING_TO_THING",
+            "SUB_THING_FROM_THING",
+            "MULT_THING_BY_THING",
+            "DIV_THING_BY_THING",
+            "ADD_THING_TO_THING_TIMED",
+            "SUB_THING_FROM_THING_TIMED",
     };
 
     for(auto& command_name : expects_table)
@@ -668,17 +661,16 @@ TEST_CASE("parsing permutations of binary expressions")
     }
 }
 
-TEST_CASE("parsing permutations of conditional expressions")
+TEST_CASE_FIXTURE(ParserFixture,
+                  "parsing permutations of conditional expressions")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("IF x = y GOTO elsewhere\n"
-                              "IFNOT x = x GOTO elsewhere\n"
-                              "x < y\n"
-                              "x < x\n"
-                              "x <= y\n"
-                              "x > y\n"
-                              "x >= y\n");
-    auto parser = make_parser(source, arena);
+    build_parser("IF x = y GOTO elsewhere\n"
+                 "IFNOT x = x GOTO elsewhere\n"
+                 "x < y\n"
+                 "x < x\n"
+                 "x <= y\n"
+                 "x > y\n"
+                 "x >= y\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
@@ -693,11 +685,11 @@ TEST_CASE("parsing permutations of conditional expressions")
     REQUIRE(std::next(it)->command->name == "IS_THING_EQUAL_TO_THING");
 
     constexpr std::array<std::string_view, 3> expects_table[] = {
-        { "IS_THING_GREATER_THAN_THING", "Y", "X" },
-        { "IS_THING_GREATER_THAN_THING", "X", "X" },
-        { "IS_THING_GREATER_OR_EQUAL_TO_THING", "Y", "X" },
-        { "IS_THING_GREATER_THAN_THING", "X", "Y" },
-        { "IS_THING_GREATER_OR_EQUAL_TO_THING", "X", "Y" },
+            {"IS_THING_GREATER_THAN_THING", "Y", "X"},
+            {"IS_THING_GREATER_THAN_THING", "X", "X"},
+            {"IS_THING_GREATER_OR_EQUAL_TO_THING", "Y", "X"},
+            {"IS_THING_GREATER_THAN_THING", "X", "Y"},
+            {"IS_THING_GREATER_OR_EQUAL_TO_THING", "X", "Y"},
     };
 
     for(auto& [command_name, a, b] : expects_table)
@@ -712,42 +704,37 @@ TEST_CASE("parsing permutations of conditional expressions")
     }
 }
 
-TEST_CASE("parsing permutations of ternary expressions")
+TEST_CASE_FIXTURE(ParserFixture, "parsing permutations of ternary expressions")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("x = x + x\n"
-                              "x = x + y\n"
-                              "x = y + x\n"
-                              "x = y + z\n"
-                              "x = x - x\n"
-                              "x = x - y\n"
-                              "x = y - x\n" // invalid
-                              "x = y - z\n"
-                              "x = x * x\n"
-                              "x = x * y\n"
-                              "x = y * x\n"
-                              "x = y * z\n"
-                              "x = x / x\n"
-                              "x = x / y\n"
-                              "x = y / x\n" // invalid
-                              "x = y / z\n"
-                              "x = x +@ x\n"
-                              "x = x +@ y\n"
-                              "x = y +@ x\n" // invalid
-                              "x = y +@ z\n"
-                              "x = x -@ x\n"
-                              "x = x -@ y\n"
-                              "x = y -@ x\n" // invalid
-                              "x = y -@ z\n");
-    auto parser = make_parser(source, arena);
+    build_parser("x = x + x\n"
+                 "x = x + y\n"
+                 "x = y + x\n"
+                 "x = y + z\n"
+                 "x = x - x\n"
+                 "x = x - y\n"
+                 "x = y - x\n" // invalid
+                 "x = y - z\n"
+                 "x = x * x\n"
+                 "x = x * y\n"
+                 "x = y * x\n"
+                 "x = y * z\n"
+                 "x = x / x\n"
+                 "x = x / y\n"
+                 "x = y / x\n" // invalid
+                 "x = y / z\n"
+                 "x = x +@ x\n"
+                 "x = x +@ y\n"
+                 "x = y +@ x\n" // invalid
+                 "x = y +@ z\n"
+                 "x = x -@ x\n"
+                 "x = x -@ y\n"
+                 "x = y -@ x\n" // invalid
+                 "x = y -@ z\n");
 
     constexpr std::string_view expects_table[] = {
-        "ADD_THING_TO_THING",
-        "SUB_THING_FROM_THING",
-        "MULT_THING_BY_THING",
-        "DIV_THING_BY_THING",
-        "ADD_THING_TO_THING_TIMED",
-        "SUB_THING_FROM_THING_TIMED",
+            "ADD_THING_TO_THING",       "SUB_THING_FROM_THING",
+            "MULT_THING_BY_THING",      "DIV_THING_BY_THING",
+            "ADD_THING_TO_THING_TIMED", "SUB_THING_FROM_THING_TIMED",
     };
 
     for(auto& command_name : expects_table)
@@ -772,7 +759,7 @@ TEST_CASE("parsing permutations of ternary expressions")
 
         // x = y + x
         if(command_name == "ADD_THING_TO_THING"
-                || command_name == "MULT_THING_BY_THING")
+           || command_name == "MULT_THING_BY_THING")
         {
             ir = parser.parse_statement();
             REQUIRE(ir != std::nullopt);
@@ -805,15 +792,13 @@ TEST_CASE("parsing permutations of ternary expressions")
     }
 }
 
-TEST_CASE("parsing the ternary minus one ambiguity")
+TEST_CASE_FIXTURE(ParserFixture, "parsing the ternary minus one ambiguity")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("x = 1-1\n"
-                              "x = 1 -1\n"
-                              "x = 1 - 1\n"
-                              "x = 1--1\n"
-                              "x = 1- -1\n");
-    auto parser = make_parser(source, arena);
+    build_parser("x = 1-1\n"
+                 "x = 1 -1\n"
+                 "x = 1 - 1\n"
+                 "x = 1--1\n"
+                 "x = 1- -1\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
@@ -833,12 +818,10 @@ TEST_CASE("parsing the ternary minus one ambiguity")
     REQUIRE(ir != std::nullopt);
 }
 
-TEST_CASE("parsing operators not in expression")
+TEST_CASE_FIXTURE(ParserFixture, "parsing operators not in expression")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("+= 1\n"
-                              "x / 2\n");
-    auto parser = make_parser(source, arena);
+    build_parser("+= 1\n"
+                 "x / 2\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
@@ -849,25 +832,23 @@ TEST_CASE("parsing operators not in expression")
     parser.skip_current_line();
 }
 
-TEST_CASE("parsing invalid expressions")
+TEST_CASE_FIXTURE(ParserFixture, "parsing invalid expressions")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("--x c\n"
-                              "x++ c\n"
-                              "x = ABS y z\n"
-                              "x = y +\n"
-                              "x = + y\n"
-                              "x = y + z + w\n"
-                              "x = y z\n"
-                              "x += y + z\n"
-                              "x =#\n"
-                              "x < y + z\n"
-                              "x <\n"
-                              "x + y\n"
-                              "x = y += z\n");
-    auto parser = make_parser(source, arena);
+    build_parser("--x c\n"
+                 "x++ c\n"
+                 "x = ABS y z\n"
+                 "x = y +\n"
+                 "x = + y\n"
+                 "x = y + z + w\n"
+                 "x = y z\n"
+                 "x += y + z\n"
+                 "x =#\n"
+                 "x < y + z\n"
+                 "x <\n"
+                 "x + y\n"
+                 "x = y += z\n");
 
-    for(size_t count = 0; ; ++count)
+    for(size_t count = 0;; ++count)
     {
         auto ir = parser.parse_statement();
         if(ir != std::nullopt && ir->empty())
@@ -880,19 +861,17 @@ TEST_CASE("parsing invalid expressions")
     }
 }
 
-TEST_CASE("parsing expressions with no whitespaces")
+TEST_CASE_FIXTURE(ParserFixture, "parsing expressions with no whitespaces")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("-- x\n"
-                              "x ++\n"
-                              "x=ABS y\n"
-                              "x=y+z\n"
-                              "x+=y\n"
-                              "x<y\n"
-                              "x<=y\n");
-    auto parser = make_parser(source, arena);
+    build_parser("-- x\n"
+                 "x ++\n"
+                 "x=ABS y\n"
+                 "x=y+z\n"
+                 "x+=y\n"
+                 "x<y\n"
+                 "x<=y\n");
 
-    for(size_t count = 0; ; ++count)
+    for(size_t count = 0;; ++count)
     {
         auto ir = parser.parse_statement();
         if(ir != std::nullopt && ir->empty())
@@ -904,44 +883,41 @@ TEST_CASE("parsing expressions with no whitespaces")
     }
 }
 
-TEST_CASE("parsing commands with operators in the middle")
+TEST_CASE_FIXTURE(ParserFixture,
+                  "parsing commands with operators in the middle")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("COMMAND x - y\n");
-    auto parser = make_parser(source, arena);
+    build_parser("COMMAND x - y\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
 }
 
-TEST_CASE("parsing special words in expressions")
+TEST_CASE_FIXTURE(ParserFixture, "parsing special words in expressions")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source(// The following is invalid:
-                              "GOSUB_FILE++\n"
-                              "++GOSUB_FILE\n"
-                              "GOSUB_FILE ++\n"
-                              "++ GOSUB_FILE\n"
-                              "LAUNCH_MISSION ++\n"
-                              "GOSUB_FILE = OTHER\n"
-                              "LOAD_AND_LAUNCH_MISSION = OTHER\n"
-                              "MISSION_START = OTHER\n"
-                              "MISSION_END = OTHER\n"
-                              "MISSION_START ++\n"
-                              "MISSION_END ++\n"
-                              "++ MISSION_START\n"
-                              "++MISSION_START\n"
-                              "++MISSION_END\n"
-                              // The following is valid:
-                              "OTHER = GOSUB_FILE\n"
-                              "VAR_INT = LVAR_INT\n"
-                              "WHILE = ENDWHILE\n"
-                              "ENDIF = IF\n"
-                              "ELSE = ENDIF\n"
-                              "IFNOT = IFNOT\n"
-                              "REPEAT = ENDREPEAT\n"
-                              "ABS = ABS ABS\n");
-    auto parser = make_parser(source, arena);
+    build_parser( // The following is invalid:
+            "GOSUB_FILE++\n"
+            "++GOSUB_FILE\n"
+            "GOSUB_FILE ++\n"
+            "++ GOSUB_FILE\n"
+            "LAUNCH_MISSION ++\n"
+            "GOSUB_FILE = OTHER\n"
+            "LOAD_AND_LAUNCH_MISSION = OTHER\n"
+            "MISSION_START = OTHER\n"
+            "MISSION_END = OTHER\n"
+            "MISSION_START ++\n"
+            "MISSION_END ++\n"
+            "++ MISSION_START\n"
+            "++MISSION_START\n"
+            "++MISSION_END\n"
+            // The following is valid:
+            "OTHER = GOSUB_FILE\n"
+            "VAR_INT = LVAR_INT\n"
+            "WHILE = ENDWHILE\n"
+            "ENDIF = IF\n"
+            "ELSE = ENDIF\n"
+            "IFNOT = IFNOT\n"
+            "REPEAT = ENDREPEAT\n"
+            "ABS = ABS ABS\n");
 
     for(int invalid = 14; invalid > 0; --invalid)
     {
@@ -961,11 +937,9 @@ TEST_CASE("parsing special words in expressions")
     REQUIRE(ir->empty());
 }
 
-TEST_CASE("parsing a valid IF...GOTO statement")
+TEST_CASE_FIXTURE(ParserFixture, "parsing a valid IF...GOTO statement")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("IF SOMETHING GOTO elsewhere\n");
-    auto parser = make_parser(source, arena);
+    build_parser("IF SOMETHING GOTO elsewhere\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
@@ -978,14 +952,12 @@ TEST_CASE("parsing a valid IF...GOTO statement")
     REQUIRE((++it)->command->name == "GOTO_IF_TRUE");
     REQUIRE(it->command->args.size() == 1);
     REQUIRE_EQ(*it->command->args[0]->as_identifier(), "ELSEWHERE"sv);
-    REQUIRE(++it == ir->end()); 
+    REQUIRE(++it == ir->end());
 }
 
-TEST_CASE("parsing a valid IFNOT...GOTO statement")
+TEST_CASE_FIXTURE(ParserFixture, "parsing a valid IFNOT...GOTO statement")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("IFNOT SOMETHING GOTO elsewhere\n");
-    auto parser = make_parser(source, arena);
+    build_parser("IFNOT SOMETHING GOTO elsewhere\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
@@ -998,14 +970,13 @@ TEST_CASE("parsing a valid IFNOT...GOTO statement")
     REQUIRE((++it)->command->name == "GOTO_IF_FALSE");
     REQUIRE(it->command->args.size() == 1);
     REQUIRE_EQ(*it->command->args[0]->as_identifier(), "ELSEWHERE"sv);
-    REQUIRE(++it == ir->end()); 
+    REQUIRE(++it == ir->end());
 }
 
-TEST_CASE("parsing a valid conditional element with equal operator")
+TEST_CASE_FIXTURE(ParserFixture,
+                  "parsing a valid conditional element with equal operator")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("IF x = y GOTO elsewhere\n");
-    auto parser = make_parser(source, arena);
+    build_parser("IF x = y GOTO elsewhere\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
@@ -1018,37 +989,33 @@ TEST_CASE("parsing a valid conditional element with equal operator")
     REQUIRE((++it)->command->name == "GOTO_IF_TRUE");
     REQUIRE(it->command->args.size() == 1);
     REQUIRE(*it->command->args[0]->as_identifier() == "ELSEWHERE"sv);
-    REQUIRE(++it == ir->end()); 
+    REQUIRE(++it == ir->end());
 }
 
-TEST_CASE("parsing a ternary expression with a GOTO following it")
+TEST_CASE_FIXTURE(ParserFixture,
+                  "parsing a ternary expression with a GOTO following it")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("IF x = y + z GOTO elsewhere\n");
-    auto parser = make_parser(source, arena);
+    build_parser("IF x = y + z GOTO elsewhere\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
 }
 
-TEST_CASE("parsing a conditional element with assignment expression")
+TEST_CASE_FIXTURE(ParserFixture,
+                  "parsing a conditional element with assignment expression")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("IF x += y GOTO elsewhere\n");
-    auto parser = make_parser(source, arena);
+    build_parser("IF x += y GOTO elsewhere\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
 }
 
-TEST_CASE("parsing a valid IF...ENDIF block")
+TEST_CASE_FIXTURE(ParserFixture, "parsing a valid IF...ENDIF block")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("IF SOMETHING\n"
-                              "    DO_1\n"
-                              "    DO_2\n"
-                              "ENDIF\n");
-    auto parser = make_parser(source, arena);
+    build_parser("IF SOMETHING\n"
+                 "    DO_1\n"
+                 "    DO_2\n"
+                 "ENDIF\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
@@ -1061,20 +1028,18 @@ TEST_CASE("parsing a valid IF...ENDIF block")
     REQUIRE((++it)->command->name == "DO_1");
     REQUIRE((++it)->command->name == "DO_2");
     REQUIRE((++it)->command->name == "ENDIF");
-    REQUIRE(++it == ir->end()); 
+    REQUIRE(++it == ir->end());
 }
 
-TEST_CASE("parsing a valid IF...ELSE...ENDIF block")
+TEST_CASE_FIXTURE(ParserFixture, "parsing a valid IF...ELSE...ENDIF block")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("IF SOMETHING\n"
-                              "    DO_1\n"
-                              "    DO_2\n"
-                              "ELSE\n"
-                              "    DO_3\n"
-                              "    DO_4\n"
-                              "ENDIF\n");
-    auto parser = make_parser(source, arena);
+    build_parser("IF SOMETHING\n"
+                 "    DO_1\n"
+                 "    DO_2\n"
+                 "ELSE\n"
+                 "    DO_3\n"
+                 "    DO_4\n"
+                 "ENDIF\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
@@ -1090,17 +1055,15 @@ TEST_CASE("parsing a valid IF...ELSE...ENDIF block")
     REQUIRE((++it)->command->name == "DO_3");
     REQUIRE((++it)->command->name == "DO_4");
     REQUIRE((++it)->command->name == "ENDIF");
-    REQUIRE(++it == ir->end()); 
+    REQUIRE(++it == ir->end());
 }
 
-TEST_CASE("parsing a valid IFNOT...ENDIF block")
+TEST_CASE_FIXTURE(ParserFixture, "parsing a valid IFNOT...ENDIF block")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("IFNOT SOMETHING\n"
-                              "    DO_1\n"
-                              "    DO_2\n"
-                              "ENDIF\n");
-    auto parser = make_parser(source, arena);
+    build_parser("IFNOT SOMETHING\n"
+                 "    DO_1\n"
+                 "    DO_2\n"
+                 "ENDIF\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
@@ -1113,19 +1076,17 @@ TEST_CASE("parsing a valid IFNOT...ENDIF block")
     REQUIRE((++it)->command->name == "DO_1");
     REQUIRE((++it)->command->name == "DO_2");
     REQUIRE((++it)->command->name == "ENDIF");
-    REQUIRE(++it == ir->end()); 
+    REQUIRE(++it == ir->end());
 }
 
-TEST_CASE("parsing a valid NOT")
+TEST_CASE_FIXTURE(ParserFixture, "parsing a valid NOT")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("IF NOT SOMETHING\n"
-                              "OR NOT OTHER_THING\n"
-                              "OR ANOTHER_THING\n"
-                              "    DO_1\n"
-                              "    DO_2\n"
-                              "ENDIF\n");
-    auto parser = make_parser(source, arena);
+    build_parser("IF NOT SOMETHING\n"
+                 "OR NOT OTHER_THING\n"
+                 "OR ANOTHER_THING\n"
+                 "    DO_1\n"
+                 "    DO_2\n"
+                 "ENDIF\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
@@ -1145,44 +1106,36 @@ TEST_CASE("parsing a valid NOT")
     REQUIRE((++it)->command->name == "DO_2");
     REQUIRE(it->command->not_flag == false);
     REQUIRE((++it)->command->name == "ENDIF");
-    REQUIRE(++it == ir->end()); 
+    REQUIRE(++it == ir->end());
 }
 
-TEST_CASE("parsing a IF without ENDIF")
+TEST_CASE_FIXTURE(ParserFixture, "parsing a IF without ENDIF")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("IF SOMETHING\n"
-                              "    DO_1\n"
-                              "    DO_2\n");
-    auto parser = make_parser(source, arena);
+    build_parser("IF SOMETHING\n"
+                 "    DO_1\n"
+                 "    DO_2\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
 }
 
-TEST_CASE("parsing a IF...ELSE without ENDIF")
+TEST_CASE_FIXTURE(ParserFixture, "parsing a IF...ELSE without ENDIF")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("IF SOMETHING\n"
-                              "    DO_1\n"
-                              "    DO_2\n"
-                              "ELSE\n"
-                              "    DO_3\n"
-                              "    DO_4\n");
-    auto parser = make_parser(source, arena);
+    build_parser("IF SOMETHING\n"
+                 "    DO_1\n"
+                 "    DO_2\n"
+                 "ELSE\n"
+                 "    DO_3\n"
+                 "    DO_4\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
 }
 
-TEST_CASE("parsing a ELSE/ENDIF with no IF")
+TEST_CASE_FIXTURE(ParserFixture, "parsing a ELSE/ENDIF with no IF")
 {
-    return; // TODO and actually test for all special words
-
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("ENDIF\n"
-                              "ELSE\n");
-    auto parser = make_parser(source, arena);
+    build_parser("ENDIF\n"
+                 "ELSE\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
@@ -1193,32 +1146,28 @@ TEST_CASE("parsing a ELSE/ENDIF with no IF")
     parser.skip_current_line();
 }
 
-TEST_CASE("parsing a conditionless IF")
+TEST_CASE_FIXTURE(ParserFixture, "parsing a conditionless IF")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("IF \n"
-                              "    DO_1\n"
-                              "    DO_2\n"
-                              "ENDIF\n");
-    auto parser = make_parser(source, arena);
+    build_parser("IF \n"
+                 "    DO_1\n"
+                 "    DO_2\n"
+                 "ENDIF\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
 }
 
-TEST_CASE("parsing a valid AND list")
+TEST_CASE_FIXTURE(ParserFixture, "parsing a valid AND list")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("IF SOMETHING\n"
-                              "AND OTHER_THING\n"
-                              "AND ANOTHER_THING\n"
-                              "AND THING_4\n"
-                              "AND THING_5\n"
-                              "AND THING_6\n"
-                              "    DO_1\n"
-                              "    DO_2\n"
-                              "ENDIF\n");
-    auto parser = make_parser(source, arena);
+    build_parser("IF SOMETHING\n"
+                 "AND OTHER_THING\n"
+                 "AND ANOTHER_THING\n"
+                 "AND THING_4\n"
+                 "AND THING_5\n"
+                 "AND THING_6\n"
+                 "    DO_1\n"
+                 "    DO_2\n"
+                 "ENDIF\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
@@ -1236,22 +1185,20 @@ TEST_CASE("parsing a valid AND list")
     REQUIRE((++it)->command->name == "DO_1");
     REQUIRE((++it)->command->name == "DO_2");
     REQUIRE((++it)->command->name == "ENDIF");
-    REQUIRE(++it == ir->end()); 
+    REQUIRE(++it == ir->end());
 }
 
-TEST_CASE("parsing a valid OR list")
+TEST_CASE_FIXTURE(ParserFixture, "parsing a valid OR list")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("IF SOMETHING\n"
-                              "OR OTHER_THING\n"
-                              "OR ANOTHER_THING\n"
-                              "OR THING_4\n"
-                              "OR THING_5\n"
-                              "OR THING_6\n"
-                              "    DO_1\n"
-                              "    DO_2\n"
-                              "ENDIF\n");
-    auto parser = make_parser(source, arena);
+    build_parser("IF SOMETHING\n"
+                 "OR OTHER_THING\n"
+                 "OR ANOTHER_THING\n"
+                 "OR THING_4\n"
+                 "OR THING_5\n"
+                 "OR THING_6\n"
+                 "    DO_1\n"
+                 "    DO_2\n"
+                 "ENDIF\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
@@ -1269,18 +1216,14 @@ TEST_CASE("parsing a valid OR list")
     REQUIRE((++it)->command->name == "DO_1");
     REQUIRE((++it)->command->name == "DO_2");
     REQUIRE((++it)->command->name == "ENDIF");
-    REQUIRE(++it == ir->end()); 
+    REQUIRE(++it == ir->end());
 }
 
-TEST_CASE("parsing AND/OR/NOT outside of condition")
+TEST_CASE_FIXTURE(ParserFixture, "parsing AND/OR/NOT outside of condition")
 {
-    return; // TODO
-
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("AND SOMETHING\n"
-                              "OR OTHER_THING\n"
-                              "NOT AAAA\n");
-    auto parser = make_parser(source, arena);
+    build_parser("AND SOMETHING\n"
+                 "OR OTHER_THING\n"
+                 "NOT AAAA\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
@@ -1293,62 +1236,54 @@ TEST_CASE("parsing AND/OR/NOT outside of condition")
     ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
 }
-TEST_CASE("parsing mixed AND/OR")
+TEST_CASE_FIXTURE(ParserFixture, "parsing mixed AND/OR")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("IF SOMETHING\n"
-                              "OR OTHER_THING\n"
-                              "AND ANOTHER_THING\n"
-                              "    DO_1\n"
-                              "    DO_2\n"
-                              "ENDIF\n");
-    auto parser = make_parser(source, arena);
+    build_parser("IF SOMETHING\n"
+                 "OR OTHER_THING\n"
+                 "AND ANOTHER_THING\n"
+                 "    DO_1\n"
+                 "    DO_2\n"
+                 "ENDIF\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
 }
 
-TEST_CASE("parsing too many AND/OR")
+TEST_CASE_FIXTURE(ParserFixture, "parsing too many AND/OR")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("IF SOMETHING\n"
-                              "OR OTHER_THING\n"
-                              "OR ANOTHER_THING\n"
-                              "OR THING_4\n"
-                              "OR THING_5\n"
-                              "OR THING_6\n"
-                              "OR THING_7\n"
-                              "    DO_1\n"
-                              "    DO_2\n"
-                              "ENDIF\n");
-    auto parser = make_parser(source, arena);
+    build_parser("IF SOMETHING\n"
+                 "OR OTHER_THING\n"
+                 "OR ANOTHER_THING\n"
+                 "OR THING_4\n"
+                 "OR THING_5\n"
+                 "OR THING_6\n"
+                 "OR THING_7\n"
+                 "    DO_1\n"
+                 "    DO_2\n"
+                 "ENDIF\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
 }
 
-TEST_CASE("parsing a conditionless AND/OR")
+TEST_CASE_FIXTURE(ParserFixture, "parsing a conditionless AND/OR")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("IF SOMETHING\n"
-                              "OR \n"
-                              "    DO_1\n"
-                              "    DO_2\n"
-                              "ENDIF\n");
-    auto parser = make_parser(source, arena);
+    build_parser("IF SOMETHING\n"
+                 "OR \n"
+                 "    DO_1\n"
+                 "    DO_2\n"
+                 "ENDIF\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
 }
 
-TEST_CASE("parsing a valid WHILE...ENDWHILE")
+TEST_CASE_FIXTURE(ParserFixture, "parsing a valid WHILE...ENDWHILE")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("WHILE SOMETHING\n"
-                              "    DO_1\n"
-                              "    DO_2\n"
-                              "ENDWHILE\n");
-    auto parser = make_parser(source, arena);
+    build_parser("WHILE SOMETHING\n"
+                 "    DO_1\n"
+                 "    DO_2\n"
+                 "ENDWHILE\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
@@ -1361,17 +1296,15 @@ TEST_CASE("parsing a valid WHILE...ENDWHILE")
     REQUIRE((++it)->command->name == "DO_1");
     REQUIRE((++it)->command->name == "DO_2");
     REQUIRE((++it)->command->name == "ENDWHILE");
-    REQUIRE(++it == ir->end()); 
+    REQUIRE(++it == ir->end());
 }
 
-TEST_CASE("parsing a valid WHILENOT...ENDWHILE")
+TEST_CASE_FIXTURE(ParserFixture, "parsing a valid WHILENOT...ENDWHILE")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("WHILENOT SOMETHING\n"
-                              "    DO_1\n"
-                              "    DO_2\n"
-                              "ENDWHILE\n");
-    auto parser = make_parser(source, arena);
+    build_parser("WHILENOT SOMETHING\n"
+                 "    DO_1\n"
+                 "    DO_2\n"
+                 "ENDWHILE\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
@@ -1384,19 +1317,18 @@ TEST_CASE("parsing a valid WHILENOT...ENDWHILE")
     REQUIRE((++it)->command->name == "DO_1");
     REQUIRE((++it)->command->name == "DO_2");
     REQUIRE((++it)->command->name == "ENDWHILE");
-    REQUIRE(++it == ir->end()); 
+    REQUIRE(++it == ir->end());
 }
 
-TEST_CASE("parsing a valid WHILE...ENDWHILE with AND/OR/NOT")
+TEST_CASE_FIXTURE(ParserFixture,
+                  "parsing a valid WHILE...ENDWHILE with AND/OR/NOT")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("WHILE SOMETHING\n"
-                              "AND OTHER_THING\n"
-                              "AND NOT ANOTHER_THING\n"
-                              "    DO_1\n"
-                              "    DO_2\n"
-                              "ENDWHILE\n");
-    auto parser = make_parser(source, arena);
+    build_parser("WHILE SOMETHING\n"
+                 "AND OTHER_THING\n"
+                 "AND NOT ANOTHER_THING\n"
+                 "    DO_1\n"
+                 "    DO_2\n"
+                 "ENDWHILE\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
@@ -1418,29 +1350,26 @@ TEST_CASE("parsing a valid WHILE...ENDWHILE with AND/OR/NOT")
     REQUIRE(it->command->not_flag == false);
     REQUIRE((++it)->command->name == "ENDWHILE");
     REQUIRE(it->command->not_flag == false);
-    REQUIRE(++it == ir->end()); 
+    REQUIRE(++it == ir->end());
 }
 
-TEST_CASE("parsing a WHILE without ENDWHILE")
+TEST_CASE_FIXTURE(ParserFixture, "parsing a WHILE without ENDWHILE")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("WHILE SOMETHING\n"
-                              "    DO_1\n"
-                              "    DO_2\n");
-    auto parser = make_parser(source, arena);
+    build_parser("WHILE SOMETHING\n"
+                 "    DO_1\n"
+                 "    DO_2\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
 }
 
-TEST_CASE("parsing nested blocks with empty statement list")
+TEST_CASE_FIXTURE(ParserFixture,
+                  "parsing nested blocks with empty statement list")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("WHILE THING_1\n"
-                              "    WHILE THING_2\n"
-                              "    ENDWHILE\n"
-                              "ENDWHILE\n");
-    auto parser = make_parser(source, arena);
+    build_parser("WHILE THING_1\n"
+                 "    WHILE THING_2\n"
+                 "    ENDWHILE\n"
+                 "ENDWHILE\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
@@ -1452,17 +1381,15 @@ TEST_CASE("parsing nested blocks with empty statement list")
     REQUIRE((++it)->command->name == "THING_2");
     REQUIRE((++it)->command->name == "ENDWHILE");
     REQUIRE((++it)->command->name == "ENDWHILE");
-    REQUIRE(++it == ir->end()); 
+    REQUIRE(++it == ir->end());
 }
 
-TEST_CASE("parsing valid REPEAT...ENDREPEAT")
+TEST_CASE_FIXTURE(ParserFixture, "parsing valid REPEAT...ENDREPEAT")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("REPEAT 5 var\n"
-                              "    DO_1\n"
-                              "    DO_2\n"
-                              "ENDREPEAT\n");
-    auto parser = make_parser(source, arena);
+    build_parser("REPEAT 5 var\n"
+                 "    DO_1\n"
+                 "    DO_2\n"
+                 "ENDREPEAT\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
@@ -1475,29 +1402,25 @@ TEST_CASE("parsing valid REPEAT...ENDREPEAT")
     REQUIRE((++it)->command->name == "DO_1");
     REQUIRE((++it)->command->name == "DO_2");
     REQUIRE((++it)->command->name == "ENDREPEAT");
-    REQUIRE(++it == ir->end()); 
+    REQUIRE(++it == ir->end());
 }
 
-TEST_CASE("parsing a REPEAT without ENDREPEAT")
+TEST_CASE_FIXTURE(ParserFixture, "parsing a REPEAT without ENDREPEAT")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("REPEAT 5 var\n"
-                              "    DO_1\n"
-                              "    DO_2\n");
-    auto parser = make_parser(source, arena);
+    build_parser("REPEAT 5 var\n"
+                 "    DO_1\n"
+                 "    DO_2\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
 }
 
-TEST_CASE("parsing valid var declaration commands")
+TEST_CASE_FIXTURE(ParserFixture, "parsing valid var declaration commands")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("VAR_INT x y z\n"
-                              "LVAR_INT x y z\n"
-                              "VAR_FLOAT x y z\n"
-                              "LVAR_FLOAT x y z\n");
-    auto parser = make_parser(source, arena);
+    build_parser("VAR_INT x y z\n"
+                 "LVAR_INT x y z\n"
+                 "VAR_FLOAT x y z\n"
+                 "LVAR_FLOAT x y z\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
@@ -1518,33 +1441,31 @@ TEST_CASE("parsing valid var declaration commands")
     REQUIRE_EQ(*ir->front().command->args[2]->as_identifier(), "Z"sv);
 }
 
-TEST_CASE("parsing invalid use of special names")
+TEST_CASE_FIXTURE(ParserFixture, "parsing invalid use of special names")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("MISSION_END\n"
-                              "MISSION_START\n"
-                              "}\n"
-                              "NOT\n"
-                              "AND\n"
-                              "OR\n"
-                              "ELSE\n"
-                              "ENDIF\n"
-                              "ENDWHILE\n"
-                              "ENDREPEAT\n"
-                              "IF {\n"
-                              "IF NOT NOT\n"
-                              "IF AND\n"
-                              "IF IF 0\n"
-                              "IF IFNOT 0\n"
-                              "IF WHILE 0\n"
-                              "IF REPEAT 4 x\n"
-                              "IF GOSUB_FILE a b.sc\n"
-                              "IF LAUNCH_MISSION b.sc\n"
-                              "IF LOAD_AND_LAUNCH_MISSION b.sc\n"
-                              "IF MISSION_START\n"
-                              "IF MISSION_END\n"
-                              "WAIT 0\n"); // valid sync point
-    auto parser = make_parser(source, arena);
+    build_parser("MISSION_END\n"
+                 "MISSION_START\n"
+                 "}\n"
+                 "NOT\n"
+                 "AND\n"
+                 "OR\n"
+                 "ELSE\n"
+                 "ENDIF\n"
+                 "ENDWHILE\n"
+                 "ENDREPEAT\n"
+                 "IF {\n"
+                 "IF NOT NOT\n"
+                 "IF AND\n"
+                 "IF IF 0\n"
+                 "IF IFNOT 0\n"
+                 "IF WHILE 0\n"
+                 "IF REPEAT 4 x\n"
+                 "IF GOSUB_FILE a b.sc\n"
+                 "IF LAUNCH_MISSION b.sc\n"
+                 "IF LOAD_AND_LAUNCH_MISSION b.sc\n"
+                 "IF MISSION_START\n"
+                 "IF MISSION_END\n"
+                 "WAIT 0\n"); // valid sync point
 
     for(auto invalid = 0; invalid < 22; ++invalid)
     {
@@ -1558,57 +1479,50 @@ TEST_CASE("parsing invalid use of special names")
     REQUIRE(ir->front().command->name == "WAIT");
 }
 
-TEST_CASE("parsing var decl while trying to match a special name")
+TEST_CASE_FIXTURE(ParserFixture,
+                  "parsing var decl while trying to match a special name")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("WHILE x = 0\n"
-                              "VAR_INT y\n"
-                              "ENDWHILE\n");
-    auto parser = make_parser(source, arena);
+    build_parser("WHILE x = 0\n"
+                 "VAR_INT y\n"
+                 "ENDWHILE\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
 }
 
-TEST_CASE("parsing weird closing blocks")
+TEST_CASE_FIXTURE(ParserFixture, "parsing weird closing blocks")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("WHILE x = 0\n"
-                              "    IF y = 0\n"
-                              "        WAIT 0\n"
-                              "ENDWHILE\n"
-                              "    ENDIF\n");
-    auto parser = make_parser(source, arena);
+    build_parser("WHILE x = 0\n"
+                 "    IF y = 0\n"
+                 "        WAIT 0\n"
+                 "ENDWHILE\n"
+                 "    ENDIF\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
 }
 
-TEST_CASE("parsing labels in AND/OR")
+TEST_CASE_FIXTURE(ParserFixture, "parsing labels in AND/OR")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("IF x = 0\n"
-                              "label: AND y = 0\n"
-                              "    WAIT 0\n"
-                              "ENDIF\n");
-    auto parser = make_parser(source, arena);
+    build_parser("IF x = 0\n"
+                 "label: AND y = 0\n"
+                 "    WAIT 0\n"
+                 "ENDIF\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
 }
 
-TEST_CASE("parsing labels in }")
+TEST_CASE_FIXTURE(ParserFixture, "parsing labels in }")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("{\n"
-                              "WAIT 0\n"
-                              "label: }\n");
-    auto parser = make_parser(source, arena);
+    build_parser("{\n"
+                 "WAIT 0\n"
+                 "label: }\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->size() == 3);
-    
+
     auto it = ir->begin();
     REQUIRE(it->command->name == "{");
     REQUIRE(it->label == nullptr);
@@ -1620,20 +1534,18 @@ TEST_CASE("parsing labels in }")
     REQUIRE(++it == ir->end());
 }
 
-TEST_CASE("parsing labels in ELSE/ENDIF")
+TEST_CASE_FIXTURE(ParserFixture, "parsing labels in ELSE/ENDIF")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("IF x = 0\n"
-                              "    WAIT 0\n"
-                              "lab1: ELSE\n"
-                              "    WAIT 1\n"
-                              "lab2: ENDIF\n");
-    auto parser = make_parser(source, arena);
+    build_parser("IF x = 0\n"
+                 "    WAIT 0\n"
+                 "lab1: ELSE\n"
+                 "    WAIT 1\n"
+                 "lab2: ENDIF\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->size() == 6);
-    
+
     auto it = ir->begin();
     REQUIRE(it->command->name == "IF");
     REQUIRE(it->label == nullptr);
@@ -1652,18 +1564,16 @@ TEST_CASE("parsing labels in ELSE/ENDIF")
     REQUIRE(++it == ir->end());
 }
 
-TEST_CASE("parsing labels in ENDWHILE")
+TEST_CASE_FIXTURE(ParserFixture, "parsing labels in ENDWHILE")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("WHILE x = 0\n"
-                              "    WAIT 0\n"
-                              "label: ENDWHILE\n");
-    auto parser = make_parser(source, arena);
+    build_parser("WHILE x = 0\n"
+                 "    WAIT 0\n"
+                 "label: ENDWHILE\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->size() == 4);
-    
+
     auto it = ir->begin();
     REQUIRE(it->command->name == "WHILE");
     REQUIRE(it->label == nullptr);
@@ -1677,18 +1587,16 @@ TEST_CASE("parsing labels in ENDWHILE")
     REQUIRE(++it == ir->end());
 }
 
-TEST_CASE("parsing labels in ENDREPEAT")
+TEST_CASE_FIXTURE(ParserFixture, "parsing labels in ENDREPEAT")
 {
-    gta3sc::ArenaMemoryResource arena;
-    auto source = make_source("REPEAT 2 x\n"
-                              "    WAIT 0\n"
-                              "label: ENDREPEAT\n");
-    auto parser = make_parser(source, arena);
+    build_parser("REPEAT 2 x\n"
+                 "    WAIT 0\n"
+                 "label: ENDREPEAT\n");
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->size() == 3);
-    
+
     auto it = ir->begin();
     REQUIRE(it->command->name == "REPEAT");
     REQUIRE(it->label == nullptr);
@@ -1699,5 +1607,3 @@ TEST_CASE("parsing labels in ENDREPEAT")
     REQUIRE(it->label->name == "LABEL");
     REQUIRE(++it == ir->end());
 }
-
-// TODO test labels on each of the unexpected places (see updated specs)

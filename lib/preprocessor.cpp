@@ -14,7 +14,7 @@ bool Preprocessor::is_newline(SourceLocation p) const
 
 auto Preprocessor::source_file() const -> const SourceFile&
 {
-    return this->source;
+    return *this->source;
 }
 
 bool Preprocessor::eof() const

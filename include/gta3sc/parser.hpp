@@ -4,8 +4,6 @@
 #include <gta3sc/ir/parser-ir.hpp>
 #include <gta3sc/scanner.hpp>
 
-// TODO make arena a pointer, allowing move assignment
-
 namespace gta3sc
 {
 /// The parser checks the syntactical validity of a stream of tokens.
@@ -29,7 +27,7 @@ class Parser
 public:
     explicit Parser(Scanner scanner_, ArenaMemoryResource& arena_) :
         scanner(std::move(scanner_)),
-        arena(arena_)
+        arena(&arena_)
     {
         assert(std::size(has_peek_token) == std::size(peek_tokens));
     }
@@ -237,9 +235,9 @@ private:
     bool is_float(std::string_view) const;
     bool is_identifier(std::string_view) const;
 
-private:
+public:
     Scanner scanner;
-    ArenaMemoryResource& arena;
+    ArenaMemoryResource* arena;
 
     bool in_lexical_scope = false;
     bool has_peek_token[6] = {};
