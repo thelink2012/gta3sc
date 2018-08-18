@@ -5,7 +5,9 @@
 
 This is a script compiler/decompiler and a library for manipulating the so called [GTA3script](http://www.gtamodding.com/wiki/SCM_language) language, which was used to design the mission scripts of the 3D Universe of the series.
 
-This branch is a complete rewrite of the codebase, it is **very incomplete**! The goal of the rewrite is manifold:
+This branch is a complete rewrite of the codebase, it is **very incomplete**! Please switch to the **master branch** for the stable codebase.
+
+The goal of the rewrite is manifold:
 
  + Provide a simple and clean codebase.
  + Provide a modular library based architecture.
@@ -14,7 +16,7 @@ This branch is a complete rewrite of the codebase, it is **very incomplete**! Th
 
 The previous codebase was neither of these. This rewrite is being developed in its own time (and concurrently with the language specification), so do not expect it to be complete any time soon.
 
-For a high-level overview of the project, see the [gta3sc Design Internals](./DESIGN.adoc).
+For a high-level overview of the project, see the [Design Internals](./DESIGN.adoc) document.
 
 ## Building
 
