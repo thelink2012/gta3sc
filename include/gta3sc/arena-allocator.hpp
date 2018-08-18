@@ -10,8 +10,9 @@ namespace gta3sc
 /// An object encapsulated in such a pointer does not need a destructor call
 /// and may be disposed of by simply deallocating their storage.
 template<typename T>
-using arena_ptr
-        = T*; // std::enable_if_t<std::is_trivially_destructible_v<T>, T*>;
+using arena_ptr = T*;
+//using arena_ptr = std::enable_if_t<std::is_trivially_destructible_v<T>, T*>;
+//The above causes problems when the full class definition is still not known.
 
 /// This is a memory resource that releases the allocated memory only when
 /// the resource is destroyed. It is intended for very fast memory allocations
@@ -248,8 +249,11 @@ public:
         return !(*this == rhs);
     }
 
-private:
+protected:
     ArenaMemoryResource* arena;
+
+    template<typename U>
+    friend class ArenaAllocator;
 };
 }
 

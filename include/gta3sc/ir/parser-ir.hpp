@@ -1,21 +1,18 @@
 #pragma once
+#include <algorithm>
+#include <cstdint>
+#include <cstring>
 #include <gta3sc/adt/span.hpp>
 #include <gta3sc/arena-allocator.hpp>
 #include <gta3sc/sourceman.hpp>
-#include <cstdint>
-#include <cstring>
-#include <variant>
 #include <string_view>
-
-#include <algorithm> // TODO take me off please!
-
-// TODO please specify behaviour of using multiple arenas
+#include <variant>
 
 namespace gta3sc
 {
 /// This is an intermediate representation for syntactically
 /// valid GTA3script.
-/// 
+///
 /// The implication of this being syntatically valid is that e.g.
 /// for every WHILE command, there is a matching ENDWHILE one.
 ///
@@ -32,210 +29,345 @@ namespace gta3sc
 ///
 /// This IR preserves source code information such as the location of
 /// each of its identifiers.
-struct ParserIR
+class ParserIR
 {
-    struct SourceInfo
-    {
-        const SourceFile& source;
-        SourceRange range;
-    };
+public:
+    struct LabelDef;
+    struct Command;
+    struct Argument;
 
+public:
+    arena_ptr<LabelDef> label = nullptr;
+    arena_ptr<Command> command = nullptr;
 
-    struct Identifier
-    {
-        std::string_view name;
-        constexpr operator std::string_view() const { return name; }
-    };
+public:
+    ParserIR() = delete;
 
-    struct Filename
-    {
-        std::string_view filename;
-        constexpr operator std::string_view() const { return filename; }
-    };
+    ParserIR(const ParserIR&) = delete;
+    ParserIR& operator=(const ParserIR&) = delete;
 
-    struct String
-    {
-        std::string_view string;
-        constexpr operator std::string_view() const { return string; }
-    };
+    ParserIR(ParserIR&&) = delete;
+    ParserIR& operator=(ParserIR&&) = delete;
 
-    // ARGUMENT MUST BE CONST MAY BE SHARED BY MANY COMMANDS!
-    struct Argument
-    {
-        arena_ptr<SourceInfo> source_info;
-        std::variant<
-            int32_t,
-            float,
-            Identifier,
-            Filename,
-            String> value;
+    /// Creates an empty instruction.
+    static auto create(ArenaMemoryResource&) -> arena_ptr<ParserIR>;
 
-        constexpr const int32_t* as_integer() const { return std::get_if<int32_t>(&value); }
-        constexpr const float* as_float() const { return std::get_if<float>(&value); }
-        constexpr const Identifier* as_identifier()const { return std::get_if<Identifier>(&value); }
-        constexpr const Filename* as_filename() const { return std::get_if<Filename>(&value); }
-        constexpr const String* as_string() const  { return std::get_if<String>(&value); }
+    /// Creates an instruction containing a command.
+    ///
+    /// The name of the command is automatically converted to uppercase
+    /// during the creation of the object.
+    static auto create_command(std::string_view name, SourceRange source,
+                               ArenaMemoryResource&) -> arena_ptr<ParserIR>;
 
-        constexpr bool is_same_name(const Argument& other) const
-        {
-            const Identifier *a = 0, *b = 0;
-            if((a = this->as_identifier()) && (b = other.as_identifier()))
-            {
-                return a->name == b->name;
-            }
-            return false;
-        }
-    };
+    /// Creates an integer argument.
+    static auto create_integer(int32_t value, SourceRange source,
+                               ArenaMemoryResource&) -> arena_ptr<Argument>;
 
+    /// Creates a floating-point argument.
+    static auto create_float(float value, SourceRange source,
+                             ArenaMemoryResource&) -> arena_ptr<Argument>;
 
-    struct LabelDef
-    {
-        arena_ptr<SourceInfo> source_info;
-        std::string_view name;
+    /// Creates an identifier argument.
+    ///
+    /// The identifier is automatically converted to uppercase during the
+    /// creation of the object.
+    static auto create_identifier(std::string_view value, SourceRange source,
+                                  ArenaMemoryResource&) -> arena_ptr<Argument>;
 
-        static auto create(const SourceInfo& info, std::string_view name_a, ArenaMemoryResource& arena) -> arena_ptr<LabelDef>
-        {
-            auto name = create_upper_view(name_a, arena);
-            return new (arena, alignof(LabelDef)) LabelDef { create_source_info(info, arena), name };
-        }
-    };
+    /// Creates a filename argument.
+    ///
+    /// The filename is automatically converted to uppercase during the
+    /// creation of the object.
+    static auto create_filename(std::string_view filename, SourceRange source,
+                                ArenaMemoryResource&) -> arena_ptr<Argument>;
+
+    /// Creates a string argument.
+    ///
+    /// The quotation marks that surrounds the string should not be present
+    /// in `string`. The string is not converted to uppercase.
+    static auto create_string(std::string_view string, SourceRange source,
+                              ArenaMemoryResource&) -> arena_ptr<Argument>;
 
     struct Command
     {
-        arena_ptr<SourceInfo> source_info;
-        std::string_view name;
-        adt::span<arena_ptr<Argument>> args;
-        size_t acaps = 0;
+    public:
+        const SourceRange source;    ///< Source code location of the argument.
+        const std::string_view name; ///< The name of this command.
+        adt::span<arena_ptr<Argument>> args; ///< View into the arguments.
+        bool not_flag = false; ///< Whether the result of the command is NOTed.
 
-        bool not_flag = false;
+        Command() = delete;
 
-        static auto create(const SourceInfo& info, std::string_view name_a, ArenaMemoryResource& arena) -> arena_ptr<Command>
-        {
-            auto name = create_upper_view(name_a, arena);
-            return new (arena, alignof(Command)) Command { create_source_info(info, arena), name };
-        }
+        /// Creates a command instance.
+        ///
+        /// This is useful over `ParserIR::create_command` to replace the
+        /// command in an already existing IR instruction.
+        //
+        /// The name of the command is automatically made uppercase.
+        static auto create(std::string_view name, SourceRange source,
+                           ArenaMemoryResource&) -> arena_ptr<Command>;
 
-        void push_arg(arena_ptr<Argument> arg, ArenaMemoryResource& arena)
-        {
-            assert(arg != nullptr);
-            if(args.size() >= acaps)
-            {
-                auto new_caps = !acaps? 6 : acaps * 2;
-                auto new_args = new (arena) arena_ptr<ParserIR::Argument>[new_caps];
-                std::copy(args.begin(), args.end(), new_args);
-                acaps = new_caps;
-                args = adt::span(new_args, args.size());
-            }
-            args = adt::span(args.data(), args.data() + args.size() + 1);
-            *args.rbegin() = arg;
-        }
+        /// Adds a new argument to the command.
+        void push_arg(arena_ptr<Argument>, ArenaMemoryResource&);
+
+    private:
+        size_t args_capacity = 0;
+
+        explicit Command(SourceRange source, std::string_view name) :
+            source(source),
+            name(name)
+        {}
     };
 
-    arena_ptr<LabelDef> label = nullptr;
-    arena_ptr<Command> command = nullptr;
-    arena_ptr<ParserIR> next = nullptr;
-    arena_ptr<ParserIR> prev = nullptr;
-
-
-    // use set_next for set_prev behaviour
-    void set_next(arena_ptr<ParserIR> other)
+    struct LabelDef
     {
-        assert(other != nullptr);
+    public:
+        const SourceRange source;
+        const std::string_view name;
 
-        if(this->next)
+        LabelDef() = delete;
+
+        /// Creates a label definition.
+        ///
+        /// The definition should be assigned to a command by replacing
+        /// the `ParserIR::label` variable of an IR instruction.
+        ///
+        /// The name of the label is automatically made uppercase.
+        static auto create(std::string_view name, SourceRange source,
+                           ArenaMemoryResource&) -> arena_ptr<LabelDef>;
+
+    private:
+        explicit LabelDef(SourceRange source, std::string_view name) :
+            source(source),
+            name(name)
+        {}
+    };
+
+    /// Arguments are immutable and may be shared by multiple commands.
+    struct Argument
+    {
+    public:
+        const SourceRange source; ///< Source code location of the argument.
+
+        Argument() = delete;
+
+        /// Returns the contained integer or `nullptr` if this argument is not
+        /// an integer.
+        auto as_integer() const -> const int32_t*;
+
+        /// Returns the contained float or `nullptr` if this argument is not
+        /// an float.
+        auto as_float() const -> const float*;
+
+        /// Returns the contained identifier or `nullptr` if this argument is
+        /// not an identifier.
+        auto as_identifier() const -> const std::string_view*;
+
+        /// Returns the contained filename or `nullptr` if this argument is not
+        /// an filename.
+        auto as_filename() const -> const std::string_view*;
+
+        /// Returns the contained string or `nullptr` if this argument is not
+        /// an string.
+        auto as_string() const -> const std::string_view*;
+
+        /// Returns whether the value of this is equal the value of another
+        /// argument.
+        bool is_same_value(const Argument& other) const;
+
+    protected:
+        enum class IdentifierTag
         {
-            assert(this->next->prev == this);
-            this->next->prev = nullptr;
-        }
-
-        this->next = other;
-
-        if(other->prev)
+        };
+        enum class FilenameTag
         {
-            assert(other->prev->next == other);
-            other->prev->next = nullptr;
-        }
+        };
+        enum class StringTag
+        {
+        };
 
-        other->prev = this;
-    }
+        // Tagging adds one word of overhead to the memory used by an
+        // argument, but is cleaner than a EqualityComparable wrapper.
+        using Identifier = std::pair<IdentifierTag, std::string_view>;
+        using Filename = std::pair<FilenameTag, std::string_view>;
+        using String = std::pair<StringTag, std::string_view>;
 
-    static auto create(ArenaMemoryResource& arena) -> arena_ptr<ParserIR>
-    {
-        return new (arena, alignof(ParserIR)) ParserIR;
-    }
+        template<typename T>
+        explicit Argument(T&& value, SourceRange source) :
+            source(source),
+            value(std::forward<T>(value))
+        {}
 
-    static auto create_command(const SourceInfo& info, std::string_view name_a, ArenaMemoryResource& arena) -> arena_ptr<ParserIR>
-    {
-        auto ir = create(arena);
-        ir->command = Command::create(info, name_a, arena);
-        return ir;
-    }
+        template<typename Tag>
+        explicit Argument(Tag tag, std::string_view value, SourceRange source) :
+            source(source),
+            value(std::pair{tag, value})
+        {}
 
-    static auto create_source_info(const SourceInfo& info, ArenaMemoryResource& arena) -> arena_ptr<SourceInfo>
-    {
-        return new (arena, alignof(SourceInfo)) SourceInfo(info);
-    }
+        const std::variant<int32_t, float, Identifier, Filename, String> value;
 
-    static auto create_integer(const SourceInfo& info, int32_t value_,
-                              ArenaMemoryResource& arena) -> arena_ptr<Argument>
-    {
-        decltype(Argument::value) value = value_;
-        arena_ptr<Argument> arg_ptr = new (arena, alignof(Argument)) Argument { create_source_info(info, arena), value };
-        return arg_ptr;
-    }
+        friend class ParserIR;
+    };
 
-    static auto create_float(const SourceInfo& info, float value_,
-                           ArenaMemoryResource& arena) -> arena_ptr<Argument>
-    {
-        auto arg = create_integer(info, 0, arena);
-        arg->value = value_;
-        return arg;
-    }
 
-    static auto create_identifier(const SourceInfo& info,
-                                std::string_view name,
-                                ArenaMemoryResource& arena) -> arena_ptr<Argument>
-    {
-        auto arg = create_integer(info, 0, arena);
-        arg->value = Identifier { create_upper_view(name, arena) };
-        return arg;
-    }
+protected:
+    friend struct Command;
+    friend struct LabelDef;
+    friend struct Argument;
 
-    static auto create_filename(const SourceInfo& info,
-                                std::string_view name,
-                                ArenaMemoryResource& arena) -> arena_ptr<Argument>
-    {
-        auto arg = create_integer(info, 0, arena);
-        arg->value = Filename { create_upper_view(name, arena) };
-        return arg;
-    }
+    static auto create_chars(std::string_view from, ArenaMemoryResource&)
+            -> std::string_view;
 
-    static auto create_string(const SourceInfo& info,
-                            std::string_view string,
-                            ArenaMemoryResource& arena) -> arena_ptr<Argument>
-    {
-        auto arg = create_integer(info, 0, arena);
-        arg->value = String { create_string_view(string, arena) };
-        return arg;
-    }
+    static auto create_chars_upper(std::string_view from, ArenaMemoryResource&)
+            -> std::string_view;
 
-    static auto create_upper_view(std::string_view from, ArenaMemoryResource& arena)
-        -> std::string_view
-    {
-        auto ptr = (char*) arena.allocate(from.size(), alignof(char));
-        std::transform(from.begin(), from.end(), ptr, [](unsigned char c) {
-            return c >= 'a' && c <= 'z'? (c - 32) : c;
-        });
-        return std::string_view(ptr, from.size());
-    }
-
-    static auto create_string_view(std::string_view from, ArenaMemoryResource& arena)
-        -> std::string_view
-    {
-        auto ptr = (char*) arena.allocate(from.size(), alignof(char));
-        std::memcpy(ptr, from.data(), from.size());
-        return std::string_view(ptr, from.size());
-    }
+private:
+    explicit ParserIR(arena_ptr<Command> command) : command(command) {}
 };
-// TODO static_assert trivial destructible everything
+
+inline auto ParserIR::create(ArenaMemoryResource& arena) -> arena_ptr<ParserIR>
+{
+    return new(arena, alignof(ParserIR)) ParserIR(nullptr);
+}
+
+inline auto ParserIR::create_command(std::string_view name, SourceRange source,
+                                     ArenaMemoryResource& arena)
+        -> arena_ptr<ParserIR>
+{
+    auto command = Command::create(name, source, arena);
+    return new(arena, alignof(ParserIR)) ParserIR(command);
+}
+
+inline auto ParserIR::create_integer(int32_t value, SourceRange source,
+                                     ArenaMemoryResource& arena)
+        -> arena_ptr<Argument>
+{
+    return new(arena, alignof(Argument)) Argument(value, source);
+}
+
+inline auto ParserIR::create_float(float value, SourceRange source,
+                                   ArenaMemoryResource& arena)
+        -> arena_ptr<Argument>
+{
+    return new(arena, alignof(Argument)) Argument(value, source);
+}
+
+inline auto ParserIR::create_identifier(std::string_view name,
+                                        SourceRange source,
+                                        ArenaMemoryResource& arena)
+        -> arena_ptr<Argument>
+{
+    return new(arena, alignof(Argument)) Argument(
+            Argument::IdentifierTag{}, create_chars_upper(name, arena), source);
+}
+
+inline auto ParserIR::create_filename(std::string_view name, SourceRange source,
+                                      ArenaMemoryResource& arena)
+        -> arena_ptr<Argument>
+{
+    return new(arena, alignof(Argument)) Argument(
+            Argument::FilenameTag{}, create_chars_upper(name, arena), source);
+}
+
+inline auto ParserIR::create_string(std::string_view string, SourceRange source,
+                                    ArenaMemoryResource& arena)
+        -> arena_ptr<Argument>
+{
+    return new(arena, alignof(Argument))
+            Argument(Argument::StringTag{}, string, source);
+}
+
+inline auto ParserIR::create_chars(std::string_view from,
+                                   ArenaMemoryResource& arena)
+        -> std::string_view
+{
+    auto ptr = new(arena, alignof(char)) char[from.size()];
+    std::memcpy(ptr, from.data(), from.size());
+    return {ptr, from.size()};
+}
+
+inline auto ParserIR::create_chars_upper(std::string_view from,
+                                         ArenaMemoryResource& arena)
+        -> std::string_view
+{
+    auto chars = create_chars(from, arena);
+    for(auto& c : chars)
+    {
+        if(c >= 'a' && c <= 'z')
+            const_cast<char&>(c) = c - 32;
+    }
+    return chars;
+}
+
+inline auto ParserIR::Command::create(std::string_view name, SourceRange source,
+                                      ArenaMemoryResource& arena)
+        -> arena_ptr<Command>
+{
+    return new(arena, alignof(Command))
+            Command{source, create_chars_upper(name, arena)};
+}
+
+inline auto ParserIR::LabelDef::create(std::string_view name,
+                                       SourceRange source,
+                                       ArenaMemoryResource& arena)
+        -> arena_ptr<LabelDef>
+{
+    return new(arena, alignof(LabelDef))
+            LabelDef{source, create_chars_upper(name, arena)};
+}
+
+inline void ParserIR::Command::push_arg(arena_ptr<Argument> arg,
+                                        ArenaMemoryResource& arena)
+{
+    assert(arg != nullptr);
+
+    if(this->args.size() >= args_capacity)
+    {
+        auto new_caps = !args_capacity ? 6 : args_capacity * 2;
+        auto new_args = new(arena) arena_ptr<Argument>[new_caps];
+        std::move(args.begin(), args.end(), new_args);
+
+        this->args = adt::span(new_args, args.size());
+        this->args_capacity = new_caps;
+    }
+
+    this->args = adt::span(args.data(), args.size() + 1);
+    *(this->args.rbegin()) = arg;
+}
+
+inline auto ParserIR::Argument::as_integer() const -> const int32_t*
+{
+    return std::get_if<int32_t>(&this->value);
+}
+
+inline auto ParserIR::Argument::as_float() const -> const float*
+{
+    return std::get_if<float>(&this->value);
+}
+
+inline auto ParserIR::Argument::as_identifier() const -> const std::string_view*
+{
+    if(auto ident = std::get_if<Identifier>(&this->value))
+        return &ident->second;
+    return nullptr;
+}
+
+inline auto ParserIR::Argument::as_filename() const -> const std::string_view*
+{
+    if(auto fi = std::get_if<Filename>(&this->value))
+        return &fi->second;
+    return nullptr;
+}
+
+inline auto ParserIR::Argument::as_string() const -> const std::string_view*
+{
+    if(auto s = std::get_if<String>(&this->value))
+        return &s->second;
+    return nullptr;
+}
+
+inline bool ParserIR::Argument::is_same_value(const Argument& other) const
+{
+    return this->value == other.value;
+}
 }

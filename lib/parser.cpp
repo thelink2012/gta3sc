@@ -57,22 +57,6 @@ auto Parser::source_file() const -> const SourceFile&
     return scanner.source_file();
 }
 
-auto Parser::source_info(const Token& token) const -> ParserIR::SourceInfo
-{
-    return ParserIR::SourceInfo{
-            this->source_file(),
-            token.lexeme,
-    };
-}
-auto Parser::source_info(SourceLocation begin, SourceLocation end) const
-        -> ParserIR::SourceInfo
-{
-    return ParserIR::SourceInfo{
-            this->source_file(),
-            SourceRange(std::addressof(*begin), end - begin),
-    };
-}
-
 bool Parser::iequal(std::string_view a, std::string_view b) const
 {
     return std::equal(a.begin(), a.end(), b.begin(), b.end(),
@@ -360,8 +344,8 @@ auto Parser::parse_command(bool is_if_line)
     if(!command)
         return std::nullopt;
 
-    auto result = ParserIR::create_command(source_info(*command),
-                                           command->lexeme, arena);
+    auto result = ParserIR::create_command(command->lexeme, command->lexeme,
+                                           arena);
 
     while(!is_peek(Category::EndOfLine))
     {
@@ -397,14 +381,12 @@ auto Parser::parse_argument() -> std::optional<arena_ptr<ParserIR::Argument>>
     if(!token)
         return std::nullopt;
 
-    const auto src_info = this->source_info(*token);
-
     if(token->category == Category::String)
     {
         auto string = token->lexeme;
         string.remove_prefix(1);
         string.remove_suffix(1);
-        return ParserIR::create_string(src_info, string, arena);
+        return ParserIR::create_string(string, token->lexeme, arena);
     }
     else if(is_integer(*token))
     {
@@ -426,7 +408,7 @@ auto Parser::parse_argument() -> std::optional<arena_ptr<ParserIR::Argument>>
         if(errno == ERANGE || value < min_value || value > max_value)
             return std::nullopt;
 
-        return ParserIR::create_integer(src_info, value, arena);
+        return ParserIR::create_integer(value, token->lexeme, arena);
     }
     else if(is_float(*token))
     {
@@ -441,11 +423,11 @@ auto Parser::parse_argument() -> std::optional<arena_ptr<ParserIR::Argument>>
         if(errno == ERANGE)
             return std::nullopt;
 
-        return ParserIR::create_float(src_info, value, arena);
+        return ParserIR::create_float(value, token->lexeme, arena);
     }
     else if(is_identifier(*token))
     {
-        return ParserIR::create_identifier(src_info, token->lexeme, arena);
+        return ParserIR::create_identifier(token->lexeme, token->lexeme, arena);
     }
     else
     {
@@ -473,6 +455,8 @@ auto Parser::parse_statement(bool allow_special_name)
     if(is_peek(Category::Word) && peek()->lexeme.back() == ':')
     {
         auto label_def = *consume();
+        const auto src_info = label_def.lexeme;
+
         label_def.lexeme.remove_suffix(1);
 
         if(!is_identifier(label_def))
@@ -484,8 +468,7 @@ auto Parser::parse_statement(bool allow_special_name)
                 return std::nullopt;
         }
 
-        label = ParserIR::LabelDef::create(source_info(label_def),
-                                           label_def.lexeme, arena);
+        label = ParserIR::LabelDef::create(label_def.lexeme, src_info, arena);
     }
 
     auto linked_stmts = parse_embedded_statement(allow_special_name);
@@ -497,8 +480,8 @@ auto Parser::parse_statement(bool allow_special_name)
         if(linked_stmts->empty())
             linked_stmts->push_back(ParserIR::create(arena));
 
-        assert(linked_stmts->front()->label == nullptr);
-        linked_stmts->front()->label = label;
+        assert(linked_stmts->front().label == nullptr);
+        linked_stmts->front().label = label;
     }
 
     return *std::move(linked_stmts); // FIXME clang bug
@@ -509,7 +492,7 @@ auto Parser::parse_statement_list(
         std::initializer_list<std::string_view> stop_when)
         -> std::optional<LinkedIR<ParserIR>>
 {
-    auto linked_stms = LinkedIR<ParserIR>();
+    auto linked_stms = LinkedIR<ParserIR>(arena);
 
     while(!eof())
     {
@@ -523,7 +506,7 @@ auto Parser::parse_statement_list(
         // Command statements are characterized by a single command in the IR.
         if(stmt_list->size() == 1)
         {
-            if(auto command = stmt_list->front()->command)
+            if(auto command = stmt_list->front().command)
             {
                 for(auto& name : stop_when)
                 {
@@ -593,14 +576,18 @@ auto Parser::parse_embedded_statement(bool allow_special_name)
     if(is_peek(Category::EndOfLine))
     {
         consume();
-        return LinkedIR<ParserIR>();
+        return LinkedIR<ParserIR>(arena);
     }
     else if(is_peek(Category::Word, COMMAND_GOSUB_FILE)
             || is_peek(Category::Word, COMMAND_LAUNCH_MISSION)
             || is_peek(Category::Word, COMMAND_LOAD_AND_LAUNCH_MISSION))
     {
-        if(auto stmt_ir = parse_require_statement())
-            return LinkedIR<ParserIR>::from_ir(*stmt_ir);
+        if(auto require_ir = parse_require_statement())
+        {
+            auto linked = LinkedIR<ParserIR>(arena);
+            linked.push_back(*require_ir);
+            return linked;
+        }
         return std::nullopt;
     }
     else if(auto category = peek_expression_type())
@@ -653,7 +640,11 @@ auto Parser::parse_embedded_statement(bool allow_special_name)
                 return std::nullopt;
 
             if(consume(Category::EndOfLine))
-                return LinkedIR<ParserIR>::from_ir(*ir);
+            {
+                auto linked = LinkedIR<ParserIR>(arena);
+                linked.push_back(*ir);
+                return linked;
+            }
         }
         return std::nullopt;
     }
@@ -710,7 +701,7 @@ auto Parser::parse_conditional_element(bool is_if_line)
     if(peek_expression_type())
     {
         if(auto linked = parse_conditional_expression(is_if_line))
-            ir = std::move(*linked).into_ir();
+            ir = linked->detach(linked->begin());
         else
             return std::nullopt;
     }
@@ -722,9 +713,7 @@ auto Parser::parse_conditional_element(bool is_if_line)
             return std::nullopt;
     }
 
-    assert((*ir)->next == nullptr); // assume single command in the list
     (*ir)->command->not_flag = not_flag;
-
     return ir;
 }
 
@@ -755,7 +744,8 @@ auto Parser::parse_conditional_list(arena_ptr<ParserIR> op_cond0)
 
     assert(op_cond0 && op_cond0->command);
 
-    auto andor_list = LinkedIR<ParserIR>::from_ir(op_cond0);
+    auto andor_list = LinkedIR<ParserIR>(arena);
+    andor_list.push_back(op_cond0);
 
     size_t num_conds = 1;
     int32_t andor_count = 0;
@@ -845,7 +835,7 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
     if(!op_cond0)
         return std::nullopt;
 
-    const auto src_info = source_info(*if_token);
+    const auto src_info = if_token->lexeme;
 
     if(is_peek(Category::Whitespace))
     {
@@ -860,16 +850,16 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
         if(!consume(Category::EndOfLine))
             return std::nullopt;
 
-        auto arg_zero = ParserIR::create_integer(src_info, 0, arena);
-        auto op_andor = ParserIR::create_command(src_info, COMMAND_ANDOR,
+        auto arg_zero = ParserIR::create_integer(0, src_info, arena);
+        auto op_andor = ParserIR::create_command(COMMAND_ANDOR, src_info,
                                                  arena);
         op_andor->command->push_arg(arg_zero, arena);
 
-        auto op_goto = ParserIR::create_command(src_info, if_true_command,
+        auto op_goto = ParserIR::create_command(if_true_command, src_info,
                                                 arena);
         op_goto->command->push_arg(*arg_label, arena);
 
-        auto linked = LinkedIR<ParserIR>();
+        auto linked = LinkedIR<ParserIR>(arena);
         linked.push_back(op_andor);
         linked.push_back(*op_cond0);
         linked.push_back(op_goto);
@@ -888,7 +878,7 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
         if(!body_stms)
             return std::nullopt;
 
-        if(body_stms->back()->command->name == COMMAND_ELSE)
+        if(body_stms->back().command->name == COMMAND_ELSE)
         {
             auto else_stms = parse_statement_list("ENDIF");
             if(!else_stms)
@@ -897,8 +887,8 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
             body_stms->splice_back(*std::move(else_stms));
         }
 
-        auto arg_andor = ParserIR::create_integer(src_info, andor_count, arena);
-        auto op_if = ParserIR::create_command(src_info, if_command, arena);
+        auto arg_andor = ParserIR::create_integer(andor_count, src_info, arena);
+        auto op_if = ParserIR::create_command(if_command, src_info, arena);
         op_if->command->push_arg(arg_andor, arena);
 
         body_stms->splice_front(*std::move(andor_list));
@@ -947,10 +937,10 @@ auto Parser::parse_while_statement_detail(bool is_whilenot)
     if(!body_stms)
         return std::nullopt;
 
-    const auto src_info = source_info(*while_token);
+    const auto src_info = while_token->lexeme;
 
-    auto arg_andor = ParserIR::create_integer(src_info, andor_count, arena);
-    auto op_while = ParserIR::create_command(src_info, while_command, arena);
+    auto arg_andor = ParserIR::create_integer(andor_count, src_info, arena);
+    auto op_while = ParserIR::create_command(while_command, src_info, arena);
     op_while->command->push_arg(arg_andor, arena);
 
     body_stms->splice_front(*std::move(andor_list));
@@ -996,8 +986,8 @@ auto Parser::parse_require_statement() -> std::optional<arena_ptr<ParserIR>>
     if(!command)
         return std::nullopt;
 
-    auto result = ParserIR::create_command(source_info(*command),
-                                           command->lexeme, arena);
+    auto result = ParserIR::create_command(command->lexeme, command->lexeme,
+                                           arena);
 
     if(iequal(command->lexeme, COMMAND_GOSUB_FILE))
     {
@@ -1026,7 +1016,7 @@ auto Parser::parse_require_statement() -> std::optional<arena_ptr<ParserIR>>
     if(!consume(Category::EndOfLine))
         return std::nullopt;
 
-    auto arg_filename = ParserIR::create_filename(source_info(*tok_filename),
+    auto arg_filename = ParserIR::create_filename(tok_filename->lexeme,
                                                   tok_filename->lexeme, arena);
     result->command->push_arg(arg_filename, arena);
 
@@ -1192,30 +1182,33 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line)
         }
     }
 
-    const auto src_info = source_info(locs[0].begin(),
-                                      locs[num_toks - 1].end());
-    arena_ptr<ParserIR> ir = nullptr;
+    auto linked = LinkedIR<ParserIR>(arena);
+
+    const auto src_info = SourceRange(
+            locs[0].begin(), locs[num_toks - 1].end() - locs[0].begin());
 
     if(num_toks == 2
        && ((cats[0] == Category::Word && cats[1] == Category::PlusPlus)
            || (cats[0] == Category::PlusPlus && cats[1] == Category::Word)))
     {
-        ir = ParserIR::create_command(src_info, COMMAND_ADD_THING_TO_THING,
-                                      arena);
+        auto ir = ParserIR::create_command(COMMAND_ADD_THING_TO_THING, src_info,
+                                           arena);
         ir->command->push_arg(args[0], arena);
-        ir->command->push_arg(ParserIR::create_integer(src_info, 1, arena),
+        ir->command->push_arg(ParserIR::create_integer(1, src_info, arena),
                               arena);
+        linked.push_back(ir);
     }
     else if(num_toks == 2
             && ((cats[0] == Category::Word && cats[1] == Category::MinusMinus)
                 || (cats[0] == Category::MinusMinus
                     && cats[1] == Category::Word)))
     {
-        ir = ParserIR::create_command(src_info, COMMAND_SUB_THING_FROM_THING,
-                                      arena);
+        auto ir = ParserIR::create_command(COMMAND_SUB_THING_FROM_THING,
+                                           src_info, arena);
         ir->command->push_arg(args[0], arena);
-        ir->command->push_arg(ParserIR::create_integer(src_info, 1, arena),
+        ir->command->push_arg(ParserIR::create_integer(1, src_info, arena),
                               arena);
+        linked.push_back(ir);
     }
     else if(num_toks == 4 && cats[0] == Category::Word
             && cats[1] == Category::Equal && cats[2] == Category::Word
@@ -1223,19 +1216,22 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line)
             && cats[3] == Category::Word)
     {
         const auto a = args[0], b = args[2];
-        if(a->is_same_name(*b))
+        if(a->is_same_value(*b))
         {
-            ir = ParserIR::create_command(src_info, COMMAND_ABS, arena);
+            auto ir = ParserIR::create_command(COMMAND_ABS, src_info, arena);
             ir->command->push_arg(a, arena);
+            linked.push_back(ir);
         }
         else
         {
-            ir = ParserIR::create_command(src_info, COMMAND_SET, arena);
+            auto ir = ParserIR::create_command(COMMAND_SET, src_info, arena);
             ir->command->push_arg(a, arena);
             ir->command->push_arg(b, arena);
-            ir->set_next(
-                    ParserIR::create_command(src_info, COMMAND_ABS, arena));
-            ir->next->command->push_arg(a, arena);
+            linked.push_back(ir);
+
+            ir = ParserIR::create_command(COMMAND_ABS, src_info, arena);
+            ir->command->push_arg(a, arena);
+            linked.push_back(ir);
         }
     }
     else if(num_toks == 3 && cats[0] == Category::Word
@@ -1300,9 +1296,10 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line)
             command_name = it->second;
         }
 
-        ir = ParserIR::create_command(src_info, command_name, arena);
+        auto ir = ParserIR::create_command(command_name, src_info, arena);
         ir->command->push_arg(a, arena);
         ir->command->push_arg(b, arena);
+        linked.push_back(ir);
     }
     else if(num_toks == 5 && cats[0] == Category::Word
             && cats[1] == Category::Equal && cats[2] == Category::Word
@@ -1332,28 +1329,34 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line)
         const bool is_associative = (cats[3] == Category::Plus
                                      || cats[3] == Category::Star);
 
-        if(a->is_same_name(*b))
+        if(a->is_same_value(*b))
         {
-            ir = ParserIR::create_command(src_info, it->second, arena);
+            auto ir = ParserIR::create_command(it->second, src_info, arena);
             ir->command->push_arg(a, arena);
             ir->command->push_arg(c, arena);
+            linked.push_back(ir);
         }
-        else if(a->is_same_name(*c))
+        else if(a->is_same_value(*c))
         {
             if(!is_associative)
                 return std::nullopt;
-            ir = ParserIR::create_command(src_info, it->second, arena);
+
+            auto ir = ParserIR::create_command(it->second, src_info, arena);
             ir->command->push_arg(a, arena);
             ir->command->push_arg(b, arena);
+            linked.push_back(ir);
         }
         else
         {
-            ir = ParserIR::create_command(src_info, COMMAND_SET, arena);
+            auto ir = ParserIR::create_command(COMMAND_SET, src_info, arena);
             ir->command->push_arg(a, arena);
             ir->command->push_arg(b, arena);
-            ir->set_next(ParserIR::create_command(src_info, it->second, arena));
-            ir->next->command->push_arg(a, arena);
-            ir->next->command->push_arg(c, arena);
+            linked.push_back(ir);
+
+            ir = ParserIR::create_command(it->second, src_info, arena);
+            ir->command->push_arg(a, arena);
+            ir->command->push_arg(c, arena);
+            linked.push_back(ir);
         }
     }
     else
@@ -1363,7 +1366,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line)
 
     assert(is_peek(Category::EndOfLine) || is_peek(Category::Whitespace));
 
-    return LinkedIR<ParserIR>::from_ir(ir);
+    return linked;
 }
 }
 

@@ -166,13 +166,6 @@ private:
     /// comparision operator (i.e. `<=`, `<`, `>`, `>=`).
     bool is_relational_operator(Category) const;
 
-    /// Gets the source-level information about a token.
-    auto source_info(const Token&) const -> ParserIR::SourceInfo;
-
-    /// Gets the source-level information about a span of characters.
-    auto source_info(SourceLocation begin, SourceLocation end) const
-            -> ParserIR::SourceInfo;
-
 private:
     // The following should behave according to the language grammar.
     // Please see https://git.io/fNxZP for details.

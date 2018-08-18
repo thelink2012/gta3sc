@@ -1,203 +1,117 @@
 #pragma once
 #include <gta3sc/arena-allocator.hpp>
 
-// TODO bad things will happen if one manually adds things to a IR while it is
-// inside a LinkedIR, document this
-//
-// e.g. LinkedIR has [A, B, C]
-// then one manually changes B => A to be B => D => C
-// then LinkedIR.size() is wrong
+// XXX: This data-structure is still under heavy work! Semantics are
+// not very well defined. Implementation neither. It should probably
+// be rewritten and properly documented once we have enough experience
+// with its usage.
+// 
+// Semantics first, implementation later.
+
+#include <list>
 
 namespace gta3sc
 {
 template<typename T>
 struct LinkedIR
 {
+private:
+    using list_type = std::list<arena_ptr<T>, ArenaAllocator<arena_ptr<T>>>;
+    list_type list;
+
 public:
-    // TODO this is all WIP
+    struct iterator;
+    using size_type = typename list_type::size_type;
+    using arena_pointer = arena_ptr<T>;
+    using reference = T&;
+    using pointer = T*;
+    using value_type = T;
 
-    // TODO this could be generalized to any T
-    struct iterator
-    {
-        public:
-            iterator& operator++()
-            {
-                assert(curr != nullptr);
-                this->curr = curr->next;
-                return *this;
-            }
+    using difference_type = typename list_type::difference_type;
 
-            T& operator*() { return *curr; }
-            T* operator->() { return curr; }
-
-            bool operator==(const iterator& rhs) const
-            { return curr == rhs.curr; }
-
-        protected:
-            friend struct LinkedIR<T>;
-
-            explicit iterator() = default;
-            explicit iterator(T* p) : curr(p)
-            {}
-
-        private:
-            T* curr = nullptr;
-    };
-
-    auto begin() { return iterator(front_); }
-    auto end() { return iterator(); }
-
-    explicit LinkedIR() = default;
-
-    static auto from_ir(arena_ptr<T> ir) -> LinkedIR
-    {
-        LinkedIR linked;
-        linked.setup_first(ir);
-        return linked;
-    }
-
-    auto into_ir() && -> arena_ptr<T>
-    {
-        auto result = this->front_;
-        LinkedIR().swap(*this);
-        return result;
-    }
+public:
+    explicit LinkedIR(ArenaMemoryResource& arena) :
+        list(&arena)
+    {}
 
     LinkedIR(const LinkedIR&) = delete;
-
-    LinkedIR(LinkedIR&& other) :
-        front_(other.front_), back_(other.back_), size_(other.size_)
-    {
-        LinkedIR().swap(other);
-    }
-
     LinkedIR& operator=(const LinkedIR&) = delete;
 
-    LinkedIR& operator=(LinkedIR&& other)
+    LinkedIR(LinkedIR&&) = default;
+    LinkedIR& operator=(LinkedIR&&) = default;
+
+    iterator begin() noexcept { return iterator(list.begin()); }
+    iterator end() noexcept { return iterator(list.end()); }
+
+    bool empty() const noexcept { return list.empty(); }
+
+    // Hmm should this be O(1) really? If this becomes an intrusive list, we 
+    // cannot guarante O(1) without nasty tricks.
+    // Please rename the method if this becomes O(n).
+    size_type size() const noexcept { return list.size(); }
+
+    void push_front(arena_pointer ir) { return list.push_front(ir); }
+
+    void push_back(arena_pointer ir) { return list.push_back(ir); }
+
+    reference front() { return *list.front(); }
+    reference back() { return *list.back(); }
+
+    void splice(iterator pos, LinkedIR&& other)
     {
-        LinkedIR(std::move(other)).swap(*this);
-        return *this;
+        list.splice(pos.it, std::move(other.list));
     }
 
-    void swap(LinkedIR& other)
-    {
-        std::swap(this->front_, other.front_);
-        std::swap(this->back_, other.back_);
-        std::swap(this->size_, other.size_);
-    }
-
-    bool empty() const
-    {
-        return size_ == 0;
-    }
-
-    size_t size() const
-    {
-        return size_;
-    }
-
-    auto front() const -> arena_ptr<T>
-    {
-        assert(front_ != nullptr);
-        return front_;
-    }
-
-    auto back() const -> arena_ptr<T>
-    {
-        assert(back_ != nullptr);
-        return back_;
-    }
-
-    // O(1)
-    void push_front(arena_ptr<T> ir)
-    {
-        assert(ir && !ir->prev && !ir->next);
-
-        if(empty())
-            return setup_first(ir);
-
-        ir->set_next(this->front_);
-        this->front_ = ir;
-        this->size_ += 1;
-    }
-
-    // O(1)
-    void push_back(arena_ptr<T> ir)
-    {
-        assert(ir && !ir->prev && !ir->next);
-
-        if(empty())
-            return setup_first(ir);
-
-        this->back_->set_next(ir);
-        this->back_ = ir;
-        this->size_ += 1;
-    }
-
-    // O(1)
-    void splice_back(LinkedIR&& other)
-    {
-        if(this->empty())
-            return other.swap(*this);
-
-        if(other.empty())
-            return;
-
-        this->back_->set_next(other.front_);
-        this->back_ = other.back_;
-        this->size_ += other.size_;
-
-        LinkedIR().swap(other);
-    }
-
-    // O(1)
     void splice_front(LinkedIR&& other)
     {
-        other.splice_back(std::move(*this));
-        *this = std::move(other);
+        splice(begin(), std::move(other));
     }
 
-private:
-    static auto find_front(arena_ptr<T> ir) -> arena_ptr<T>
+    void splice_back(LinkedIR&& other)
     {
-        auto first = nullptr;
-        while(ir)
-        {
-            first = ir;
-            ir = ir->prev;
-        }
-        return first;
+        splice(end(), std::move(other));
     }
 
-    static auto find_back(arena_ptr<T> ir) -> arena_ptr<T>
+    iterator erase(iterator pos) { return iterator(list.erase(pos.it)); }
+
+    // if the list becomes intrusive this method should be on the node
+    arena_pointer detach(iterator pos)
     {
-        auto last = nullptr;
-        while(ir)
-        {
-            last = ir;
-            ir = ir->next;
-        }
-        return last;
+        auto ptr = std::addressof(*pos);
+        erase(pos);
+        return ptr;
     }
 
-    void setup_first(arena_ptr<T> ir)
+
+public:
+    struct iterator
     {
-        assert(empty());
+    public:
+        using difference_type = typename list_type::iterator::difference_type;
+        using iterator_category = typename list_type::iterator::iterator_category;
+        using reference = LinkedIR::reference;
+        using pointer = LinkedIR::pointer;
+        using value_type = LinkedIR::value_type;
 
-        this->front_ = ir;
-        this->size_ = 0;
+        reference operator*() { return **it; }
+        arena_pointer operator->() { return *it; }
 
-        while(ir != nullptr)
-        {
-            ++this->size_;
-            this->back_ = ir;
-            ir = ir->next;
-        }
-    }
+        iterator& operator++() { ++it; return *this; }
+        iterator operator++(int) { auto temp = *this; ++(*this); return temp; }
 
-private:
-    arena_ptr<T> front_ = nullptr;
-    arena_ptr<T> back_ = nullptr;
-    size_t size_ = 0;
+        iterator& operator--() { --it; return *this; }
+        iterator operator--(int) { auto temp = *this; --(*this); return temp; }
+
+        bool operator==(const iterator& rhs) const { return it == rhs.it; }
+        bool operator!=(const iterator& rhs) const { return !(*this == rhs); }
+
+    protected:
+        typename list_type::iterator it;
+
+        explicit iterator(typename list_type::iterator it) : it(it)
+        {}
+
+        friend class LinkedIR;
+    };
 };
 }

@@ -170,6 +170,8 @@ It is guaranteed, however, that control-flow and scoping instructions are proper
 
 The type of an arguments is either an _integer_, _float_, _string_, _identifier_ or _filename_. Identifiers are not yet resolved. Their names are guaranteed to be syntactically valid but the semantic phase have to decide whether it is a variable, label, string identifier or string constant.
 
+Information about the location in the source code that originated each element is maintained.
+
 ++++
 <div style="clear:both"></div>
 ++++
