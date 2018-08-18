@@ -69,9 +69,9 @@ auto Scanner::next_filename() -> std::optional<Token>
         this->getc();
 
     auto token = Token(Category::Word, start_pos, location());
-    if(token.lexeme.size() >= 3)
+    if(token.spelling().size() >= 3)
     {
-        auto it = token.lexeme.rbegin();
+        auto it = token.spelling().rbegin();
         auto c2 = *it++;
         auto c1 = *it++;
         auto c0 = *it++;
@@ -92,7 +92,7 @@ auto Scanner::next() -> std::optional<Token>
 
     switch(peek_char)
     {
-        // clang-format off
+    // clang-format off
         newline: case '\r': case '\n': case '\0':
             if(peek_char == '\r') getc();
             if(peek_char == '\n') getc();

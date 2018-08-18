@@ -233,9 +233,9 @@ private:
             -> std::optional<LinkedIR<ParserIR>>;
 
     bool is_digit(char) const;
-    bool is_integer(const Token&) const;
-    bool is_float(const Token&) const;
-    bool is_identifier(const Token&) const;
+    bool is_integer(std::string_view) const;
+    bool is_float(std::string_view) const;
+    bool is_identifier(std::string_view) const;
 
 private:
     Scanner scanner;

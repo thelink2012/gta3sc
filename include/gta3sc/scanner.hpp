@@ -36,15 +36,18 @@ enum class Category : uint8_t
 struct Token
 {
     Category category;  ///< Category of this token.
-    SourceRange lexeme; ///< Characters of this token.
+    SourceRange source; ///< Origin of this token.
 
-    explicit Token() : category(Category::EndOfLine), lexeme() {}
+    explicit Token() : category(Category::EndOfLine), source() {}
 
     explicit Token(Category category, SourceLocation begin,
                    SourceLocation end) :
         category(category),
-        lexeme(std::addressof(*begin), end - begin)
+        source(std::addressof(*begin), end - begin)
     {}
+
+    /// Returns the textual representation of this token.
+    std::string_view spelling() { return source; }
 };
 
 /// The scanner transforms a stream of characters into a stream of tokens.

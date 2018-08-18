@@ -133,7 +133,7 @@ bool Parser::is_peek(Category category, size_t n)
 
 bool Parser::is_peek(Category category, std::string_view lexeme, size_t n)
 {
-    return is_peek(category, n) && iequal(peek(n)->lexeme, lexeme);
+    return is_peek(category, n) && iequal(peek(n)->spelling(), lexeme);
 }
 
 auto Parser::peek_expression_type() -> std::optional<Category>
@@ -219,7 +219,7 @@ auto Parser::consume_word(std::string_view lexeme) -> std::optional<Token>
     auto token = consume(Category::Word);
     if(!token)
         return std::nullopt;
-    if(!iequal(token->lexeme, lexeme))
+    if(!iequal(token->spelling(), lexeme))
         return std::nullopt;
     return token;
 }
@@ -241,17 +241,14 @@ bool Parser::is_digit(char c) const
     return c >= '0' && c <= '9';
 }
 
-bool Parser::is_integer(const Token& token) const
+bool Parser::is_integer(std::string_view lexeme) const
 {
     // integer := ['-'] digit {digit} ;
-
-    if(token.category != Category::Word)
-        return false;
 
     size_t num_digits = 0;
     size_t char_pos = 0;
 
-    for(auto c : token.lexeme)
+    for(auto c : lexeme)
     {
         ++char_pos;
         if(c == '-' && char_pos == 1)
@@ -265,33 +262,30 @@ bool Parser::is_integer(const Token& token) const
     return num_digits > 0;
 }
 
-bool Parser::is_float(const Token& token) const
+bool Parser::is_float(std::string_view lexeme) const
 {
     // floating_form1 := '.' digit { digit | '.' | 'F' } ;
     // floating_form2 := digit { digit } ('.' | 'F') { digit | '.' | 'F' } ;
     // floating := ['-'] (floating_form1 | floating_form2) ;
 
-    if(token.category != Category::Word)
-        return false;
+    auto it = lexeme.begin();
 
-    auto it = token.lexeme.begin();
-
-    if(token.lexeme.size() >= 2 && *it == '-')
+    if(lexeme.size() >= 2 && *it == '-')
         ++it;
 
     if(*it == '.') // floating_form1
     {
         ++it;
-        if(it == token.lexeme.end() || !is_digit(*it))
+        if(it == lexeme.end() || !is_digit(*it))
             return false;
         ++it;
     }
     else if(*it >= '0' && *it <= '9') // floating_form2
     {
         ++it;
-        it = std::find_if_not(it, token.lexeme.end(), // {digit}
+        it = std::find_if_not(it, lexeme.end(), // {digit}
                               [this](char c) { return is_digit(c); });
-        if(it == token.lexeme.end() || (*it != '.' && *it != 'f' && *it != 'F'))
+        if(it == lexeme.end() || (*it != '.' && *it != 'f' && *it != 'F'))
             return false;
         ++it;
     }
@@ -301,27 +295,24 @@ bool Parser::is_float(const Token& token) const
     }
 
     // Skip the final, common part: {digit | '.' | 'F'}
-    it = std::find_if_not(it, token.lexeme.end(), [this](char c) {
+    it = std::find_if_not(it, lexeme.end(), [this](char c) {
         return (c == '.' || c == 'f' || c == 'F' || is_digit(c));
     });
 
-    return it == token.lexeme.end();
+    return it == lexeme.end();
 }
 
-bool Parser::is_identifier(const Token& token) const
+bool Parser::is_identifier(std::string_view lexeme) const
 {
     // identifier := ('$' | 'A'..'Z') {token_char} ;
     //
     // Constraints:
     // An identifier should not end with a `:` character.
 
-    if(token.category != Category::Word)
-        return false;
-
-    if(token.lexeme.size() >= 1)
+    if(lexeme.size() >= 1)
     {
-        const auto front = token.lexeme.front();
-        const auto back = token.lexeme.back();
+        const auto front = lexeme.front();
+        const auto back = lexeme.back();
 
         if(front == '$' || (front >= 'A' && front <= 'Z')
            || (front >= 'a' && front <= 'z'))
@@ -344,7 +335,7 @@ auto Parser::parse_command(bool is_if_line)
     if(!command)
         return std::nullopt;
 
-    auto result = ParserIR::create_command(command->lexeme, command->lexeme,
+    auto result = ParserIR::create_command(command->spelling(), command->source,
                                            arena);
 
     while(!is_peek(Category::EndOfLine))
@@ -381,14 +372,16 @@ auto Parser::parse_argument() -> std::optional<arena_ptr<ParserIR::Argument>>
     if(!token)
         return std::nullopt;
 
+    const auto lexeme = token->spelling();
+
     if(token->category == Category::String)
     {
-        auto string = token->lexeme;
+        auto string = lexeme;
         string.remove_prefix(1);
         string.remove_suffix(1);
-        return ParserIR::create_string(string, token->lexeme, arena);
+        return ParserIR::create_string(string, token->source, arena);
     }
-    else if(is_integer(*token))
+    else if(token->category == Category::Word && is_integer(lexeme))
     {
         constexpr long min_value = (-2147483647 - 1), max_value = 2147483647;
 
@@ -398,8 +391,8 @@ auto Parser::parse_argument() -> std::optional<arena_ptr<ParserIR::Argument>>
         // Avoid using std::string for this. Use the C library std::strtol
         // function. We may also use std::from_chars when widely available.
         char buffer[64];
-        auto length = std::min(token->lexeme.size(), std::size(buffer) - 1);
-        std::memcpy(buffer, token->lexeme.data(), length);
+        auto length = std::min(lexeme.size(), std::size(buffer) - 1);
+        std::memcpy(buffer, lexeme.data(), length);
         buffer[length] = '\0';
 
         errno = 0;
@@ -408,13 +401,13 @@ auto Parser::parse_argument() -> std::optional<arena_ptr<ParserIR::Argument>>
         if(errno == ERANGE || value < min_value || value > max_value)
             return std::nullopt;
 
-        return ParserIR::create_integer(value, token->lexeme, arena);
+        return ParserIR::create_integer(value, token->source, arena);
     }
-    else if(is_float(*token))
+    else if(token->category == Category::Word && is_float(lexeme))
     {
         char buffer[64];
-        auto length = std::min(token->lexeme.size(), std::size(buffer) - 1);
-        std::memcpy(buffer, token->lexeme.data(), length);
+        auto length = std::min(lexeme.size(), std::size(buffer) - 1);
+        std::memcpy(buffer, lexeme.data(), length);
         buffer[length] = '\0';
 
         errno = 0;
@@ -423,11 +416,11 @@ auto Parser::parse_argument() -> std::optional<arena_ptr<ParserIR::Argument>>
         if(errno == ERANGE)
             return std::nullopt;
 
-        return ParserIR::create_float(value, token->lexeme, arena);
+        return ParserIR::create_float(value, token->source, arena);
     }
-    else if(is_identifier(*token))
+    else if(token->category == Category::Word && is_identifier(lexeme))
     {
-        return ParserIR::create_identifier(token->lexeme, token->lexeme, arena);
+        return ParserIR::create_identifier(lexeme, token->source, arena);
     }
     else
     {
@@ -452,14 +445,13 @@ auto Parser::parse_statement(bool allow_special_name)
 
     arena_ptr<ParserIR::LabelDef> label = nullptr;
 
-    if(is_peek(Category::Word) && peek()->lexeme.back() == ':')
+    if(is_peek(Category::Word) && peek()->spelling().back() == ':')
     {
         auto label_def = *consume();
-        const auto src_info = label_def.lexeme;
+        auto label_name = label_def.spelling();
+        label_name.remove_suffix(1);
 
-        label_def.lexeme.remove_suffix(1);
-
-        if(!is_identifier(label_def))
+        if(!is_identifier(label_name))
             return std::nullopt;
 
         if(!is_peek(Category::EndOfLine))
@@ -468,7 +460,7 @@ auto Parser::parse_statement(bool allow_special_name)
                 return std::nullopt;
         }
 
-        label = ParserIR::LabelDef::create(label_def.lexeme, src_info, arena);
+        label = ParserIR::LabelDef::create(label_name, label_def.source, arena);
     }
 
     auto linked_stmts = parse_embedded_statement(allow_special_name);
@@ -835,7 +827,7 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
     if(!op_cond0)
         return std::nullopt;
 
-    const auto src_info = if_token->lexeme;
+    const auto src_info = if_token->source;
 
     if(is_peek(Category::Whitespace))
     {
@@ -937,7 +929,7 @@ auto Parser::parse_while_statement_detail(bool is_whilenot)
     if(!body_stms)
         return std::nullopt;
 
-    const auto src_info = while_token->lexeme;
+    const auto src_info = while_token->source;
 
     auto arg_andor = ParserIR::create_integer(andor_count, src_info, arena);
     auto op_while = ParserIR::create_command(while_command, src_info, arena);
@@ -986,10 +978,10 @@ auto Parser::parse_require_statement() -> std::optional<arena_ptr<ParserIR>>
     if(!command)
         return std::nullopt;
 
-    auto result = ParserIR::create_command(command->lexeme, command->lexeme,
+    auto result = ParserIR::create_command(command->spelling(), command->source,
                                            arena);
 
-    if(iequal(command->lexeme, COMMAND_GOSUB_FILE))
+    if(iequal(command->spelling(), COMMAND_GOSUB_FILE))
     {
         if(!consume(Category::Whitespace))
             return std::nullopt;
@@ -1000,8 +992,8 @@ auto Parser::parse_require_statement() -> std::optional<arena_ptr<ParserIR>>
 
         result->command->push_arg(*arg_label, arena);
     }
-    else if(!iequal(command->lexeme, COMMAND_LAUNCH_MISSION)
-            && !iequal(command->lexeme, COMMAND_LOAD_AND_LAUNCH_MISSION))
+    else if(!iequal(command->spelling(), COMMAND_LAUNCH_MISSION)
+            && !iequal(command->spelling(), COMMAND_LOAD_AND_LAUNCH_MISSION))
     {
         return std::nullopt;
     }
@@ -1016,8 +1008,8 @@ auto Parser::parse_require_statement() -> std::optional<arena_ptr<ParserIR>>
     if(!consume(Category::EndOfLine))
         return std::nullopt;
 
-    auto arg_filename = ParserIR::create_filename(tok_filename->lexeme,
-                                                  tok_filename->lexeme, arena);
+    auto arg_filename = ParserIR::create_filename(tok_filename->spelling(),
+                                                  tok_filename->source, arena);
     result->command->push_arg(arg_filename, arena);
 
     return result;
@@ -1069,14 +1061,14 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line)
     // FOLLOW(conditional_expression) = {eol, sep 'GOTO'}
 
     Category cats[6];
-    SourceRange locs[6];
+    SourceRange spans[6];
     arena_ptr<ParserIR::Argument> args[6];
 
     size_t num_toks = 0;
     size_t num_args = 0;
 
     assert(std::size(cats) >= std::size(args));
-    assert(std::size(cats) == std::size(locs));
+    assert(std::size(cats) == std::size(spans));
 
     // This is a very special part of the language grammar. We can quickly
     // and cleanly parse this by applying some pattern matching on the tokens
@@ -1122,13 +1114,13 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line)
             case Category::PlusAt:
             case Category::MinusAt:
             {
-                locs[num_toks] = peek()->lexeme;
+                spans[num_toks] = peek()->source;
                 cats[num_toks++] = consume()->category;
                 break;
             }
             case Category::Word:
             {
-                locs[num_toks] = peek()->lexeme;
+                spans[num_toks] = peek()->source;
                 cats[num_toks++] = Category::Word;
                 if(auto arg = parse_argument())
                 {
@@ -1185,7 +1177,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line)
     auto linked = LinkedIR<ParserIR>(arena);
 
     const auto src_info = SourceRange(
-            locs[0].begin(), locs[num_toks - 1].end() - locs[0].begin());
+            spans[0].begin(), spans[num_toks - 1].end() - spans[0].begin());
 
     if(num_toks == 2
        && ((cats[0] == Category::Word && cats[1] == Category::PlusPlus)
