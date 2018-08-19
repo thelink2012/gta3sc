@@ -1,2 +1,0 @@
-+ Thanks to Wesser for organizing the data present on miss2.exe, helped a lot when making the III/VC definitions.
-+ Thanks to Deji for 1. GTAG Database; 2. SCRambl definitions; which helped on the making of the SA definitions (in fact, those were derived off SCRambl defs).
