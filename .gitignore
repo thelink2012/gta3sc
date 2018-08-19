@@ -3,6 +3,7 @@
 /build/
 /build-clang/
 /build-gcc/
+/build-gcov/
 /build-msvc/
 /debug/
 /test/**/Output

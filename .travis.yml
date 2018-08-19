@@ -5,11 +5,13 @@ matrix:
     - os: linux
       addons:
         apt:
-          sources:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['g++-8']
       env:
         - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+        - CMAKE_BUILD_TYPE=Debug
+        - COVERAGE=1
+        - CMAKE_PREFIX_PATH="$HOME/.local/usr/local"
     - os: linux
       addons:
         apt:
@@ -17,11 +19,22 @@ matrix:
           packages: ['libstdc++-8-dev', 'clang-6.0']
       env:
         - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
+        - CMAKE_BUILD_TYPE=RelWithDebInfo
+        - COVERAGE=0
 before_install:
   - eval "${MATRIX_EVAL}"
+install:
+  - |
+    test $COVERAGE = 1 && {
+      wget https://github.com/linux-test-project/lcov/archive/master.zip -O lcov.zip &&
+      unzip lcov.zip &&
+      make -C lcov-master install DESTDIR=$HOME/.local &&
+      cp /usr/bin/gcov-8 $HOME/.local/usr/local/bin/gcov
+    } || echo "Coverage disabled, skipping gcov/lcov installation..."
 script:
   - mkdir build
   - cd build
-  - cmake .. -DBUILD_TESTING=true -DCMAKE_BUILD_TYPE=RelWithDebInfo
-  - cmake --build .
-  - ctest . --verbose
+  - cmake .. -DBUILD_TESTING=1 -DGTA3SC_COVERAGE=$COVERAGE -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE
+  - cmake --build . --target coverage
+after_success:
+  - bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"

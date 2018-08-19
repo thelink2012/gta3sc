@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/thelink2012/gta3sc.svg?branch=gta3sc-rewrite)](https://travis-ci.org/thelink2012/gta3sc)
 [![Build status](https://ci.appveyor.com/api/projects/status/ut954whp2lp81gyk/branch/gta3sc-rewrite?svg=true)](https://ci.appveyor.com/project/thelink2012/gta3sc)
+[![codecov](https://codecov.io/gh/thelink2012/gta3sc/branch/gta3sc-rewrite/graph/badge.svg)](https://codecov.io/gh/thelink2012/gta3sc)
 
 This is a script compiler/decompiler and a library for manipulating the so called [GTA3script](http://www.gtamodding.com/wiki/SCM_language) language, which was used to design the mission scripts of the 3D Universe of the series.
 
