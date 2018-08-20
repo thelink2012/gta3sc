@@ -10,7 +10,6 @@ set(CMAKE_MODULE_PATH
 include(CTest)
 
 if(GTA3SC_COVERAGE)
-  find_program( GCOV_PATH gcov-8 )
   include(CodeCoverage)
   append_coverage_compiler_flags()
   set(COVERAGE_LCOV_EXCLUDES '/usr/*' '${CMAKE_CURRENT_SOURCE_DIR}/unittest/*')
