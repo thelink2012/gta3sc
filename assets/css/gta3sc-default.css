@@ -1,0 +1,21 @@
+header {
+  padding-right: 0px !important; /* override template media query */
+}
+
+header h1 a {
+  display: block;
+  text-align: center;
+}
+
+header img {
+  display: block;
+  margin: 10px auto;
+}
+
+header p {
+  text-align: center;
+}
+
+header .menu {
+  text-align: center;
+}
