@@ -26,8 +26,7 @@ github_username:  thelink2012
 # Build settings
 markdown: kramdown
 theme: jekyll-theme-minimal
-plugins:
-  - jekyll-feed
+exclude: ["vendor"]
 
 # Exclude from processing.
 # The following items will not be processed, by default. Create a custom list
