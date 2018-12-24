@@ -17,14 +17,14 @@ auto Preprocessor::source_file() const -> const SourceFile&
     return *this->source;
 }
 
+auto Preprocessor::diagnostics() const -> DiagnosticHandler&
+{
+    return *this->diag;
+}
+
 bool Preprocessor::eof() const
 {
     return this->end_of_stream;
-}
-
-bool Preprocessor::inside_block_comment() const
-{
-    return this->num_block_comments > 0;
 }
 
 auto Preprocessor::location() const -> SourceLocation
@@ -41,11 +41,17 @@ char Preprocessor::next()
     // the front of a line. We cannot return anything before skipping
     // such combination of comments and whitespaces.
     //
-    // We run this thing in a loop until such a condition is meet.
+    // We run this thing in a loop until such a condition is met.
     while(true)
     {
+        constexpr auto max_nesting
+                = (std::numeric_limits<decltype(num_block_comments)>::max());
+
         if(*cursor == '\0')
         {
+            if(!end_of_stream && num_block_comments > 0)
+                diagnostics().report(location(), Diag::unterminated_comment);
+
             this->end_of_stream = true;
             return '\0';
         }
@@ -66,13 +72,18 @@ char Preprocessor::next()
             {
                 if(*cursor == '/' && *std::next(cursor) == '*')
                 {
+                    if(num_block_comments == max_nesting)
+                        diagnostics().report(location(),
+                                             Diag::limit_block_comments);
+                    else
+                        ++num_block_comments;
+
                     std::advance(cursor, 2);
-                    ++num_block_comments;
                 }
                 else if(*cursor == '*' && *std::next(cursor) == '/')
                 {
-                    std::advance(cursor, 2);
                     --num_block_comments;
+                    std::advance(cursor, 2);
                 }
                 else
                 {

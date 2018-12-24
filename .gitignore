@@ -5,6 +5,7 @@
 /build-gcc/
 /build-gcov/
 /build-msvc/
+/gh-pages/
 /debug/
 /test/**/Output
 *.pyc

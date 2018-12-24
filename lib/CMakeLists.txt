@@ -1,4 +1,5 @@
 add_library(gta3sc 
+  diagnostics.cpp
   sourceman.cpp
   preprocessor.cpp
   scanner.cpp

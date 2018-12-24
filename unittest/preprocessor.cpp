@@ -1,39 +1,48 @@
 #include <doctest.h>
 #include <gta3sc/preprocessor.hpp>
 #include <cstring>
+#include "compiler-fixture.hpp"
 
 namespace
 {
-template<std::size_t N>
-auto make_source(const char (&data)[N]) -> gta3sc::SourceFile
+class PreprocessorFixture : public CompilerFixture
 {
-    auto ptr = std::make_unique<char[]>(N);
-    std::memcpy(ptr.get(), data, N);
-    return gta3sc::SourceFile(std::move(ptr), N-1);
+public:
+    PreprocessorFixture() :
+        pp(source_file, diagman)
+    {}
+
+protected:
+    void build_pp(std::string_view src)
+    {
+        this->build_source(src);
+        this->pp = gta3sc::Preprocessor(source_file, diagman);
+    }
+
+    auto drain() -> std::string
+    {
+        std::string res;
+        while(!pp.eof())
+            res.push_back(pp.next());
+        CHECK(res.back() == '\0');
+        res.pop_back();
+        return res;
+    }
+
+protected:
+    gta3sc::Preprocessor pp;
+};
 }
 
-auto drain(gta3sc::Preprocessor& pp) -> std::string
+TEST_CASE_FIXTURE(PreprocessorFixture, "simple character stream")
 {
-    std::string res;
-    while(!pp.eof())
-        res.push_back(pp.next());
-    CHECK(res.back() == '\0');
-    res.pop_back();
-    return res;
-}
+    build_pp("foo");
+    REQUIRE(drain() == "foo");
 }
 
-TEST_CASE("simple character stream")
+TEST_CASE_FIXTURE(PreprocessorFixture, "character stream EOF")
 {
-    auto source = make_source("foo");
-    auto pp = gta3sc::Preprocessor(source);
-    REQUIRE(drain(pp) == "foo");
-}
-
-TEST_CASE("character stream EOF")
-{
-    auto source = make_source("foo");
-    auto pp = gta3sc::Preprocessor(source);
+    build_pp("foo");
     while(!pp.eof()) pp.next();
     CHECK(pp.eof() == true);
     REQUIRE(pp.next() == '\0');
@@ -42,81 +51,70 @@ TEST_CASE("character stream EOF")
     REQUIRE(pp.eof() == true);
 }
 
-TEST_CASE("character stream with CR")
+TEST_CASE_FIXTURE(PreprocessorFixture, "character stream with CR")
 {
-    auto source = make_source("foo\r\nbar\rbaz");
-    auto pp = gta3sc::Preprocessor(source);
-    REQUIRE(drain(pp) == "foo\nbar\nbaz");
+    build_pp("foo\r\nbar\rbaz");
+    REQUIRE(drain() == "foo\nbar\nbaz");
 }
 
-TEST_CASE("character stream with whitespaces")
+TEST_CASE_FIXTURE(PreprocessorFixture, "character stream with whitespaces")
 {
-    auto source = make_source("foo   (bar) ,\t\t baz");
-    auto pp = gta3sc::Preprocessor(source);
-    REQUIRE(drain(pp) == "foo   (bar) ,\t\t baz");
+    build_pp("foo   (bar) ,\t\t baz");
+    REQUIRE(drain() == "foo   (bar) ,\t\t baz");
 }
 
-TEST_CASE("character stream with leading whitespaces")
+TEST_CASE_FIXTURE(PreprocessorFixture, "character stream with leading whitespaces")
 {
-    auto source = make_source("   (,)    \t\tfoo\n  ,\t)  bar\n\t\tbaz");
-    auto pp = gta3sc::Preprocessor(source);
-    REQUIRE(drain(pp) == "foo\nbar\nbaz");
+    build_pp("   (,)    \t\tfoo\n  ,\t)  bar\n\t\tbaz");
+    REQUIRE(drain() == "foo\nbar\nbaz");
 }
 
-TEST_CASE("character stream with trailing whitespaces")
+TEST_CASE_FIXTURE(PreprocessorFixture, "character stream with trailing whitespaces")
 {
-    auto source = make_source("foo,\nbar  \t, \nbaz  ()");
-    auto pp = gta3sc::Preprocessor(source);
-    REQUIRE(drain(pp) == "foo,\nbar  \t, \nbaz  ()");
+    build_pp("foo,\nbar  \t, \nbaz  ()");
+    REQUIRE(drain() == "foo,\nbar  \t, \nbaz  ()");
 }
 
-TEST_CASE("character stream with line comment")
+TEST_CASE_FIXTURE(PreprocessorFixture, "character stream with line comment")
 {
-    auto source = make_source("foo // line comment\nbar\n  // more comment\nbaz");
-    auto pp = gta3sc::Preprocessor(source);
-    REQUIRE(drain(pp) == "foo \nbar\n\nbaz");
+    build_pp("foo // line comment\nbar\n  // more comment\nbaz");
+    REQUIRE(drain() == "foo \nbar\n\nbaz");
 }
 
-TEST_CASE("character stream with leading block comment")
+TEST_CASE_FIXTURE(PreprocessorFixture, "character stream with leading block comment")
 {
-    auto source = make_source("  /* block */ () /* more */ foo\nbar\n /**/, baz");
-    auto pp = gta3sc::Preprocessor(source);
-    REQUIRE(drain(pp) == "foo\nbar\nbaz");
+    build_pp("  /* block */ () /* more */ foo\nbar\n /**/, baz");
+    REQUIRE(drain() == "foo\nbar\nbaz");
 }
 
-TEST_CASE("character stream with trailing block comment")
+TEST_CASE_FIXTURE(PreprocessorFixture, "character stream with trailing block comment")
 {
-    auto source = make_source("foo /* block */\nbar\nbaz/* block */");
-    auto pp = gta3sc::Preprocessor(source);
-    REQUIRE(drain(pp) == "foo  \nbar\nbaz ");
+    build_pp("foo /* block */\nbar\nbaz/* block */");
+    REQUIRE(drain() == "foo  \nbar\nbaz ");
 }
 
-TEST_CASE("character stream with block comment crossing lines")
+TEST_CASE_FIXTURE(PreprocessorFixture, "character stream with block comment crossing lines")
 {
-    auto source = make_source("foo /* block \n   comment \n */ \nbar\nbaz");
-    auto pp = gta3sc::Preprocessor(source);
-    REQUIRE(drain(pp) == "foo \n\n\nbar\nbaz");
+    build_pp("foo /* block \n   comment \n */ \nbar\nbaz");
+    REQUIRE(drain() == "foo \n\n\nbar\nbaz");
 }
 
-TEST_CASE("character stream with nested block comment")
+TEST_CASE_FIXTURE(PreprocessorFixture, "character stream with nested block comment")
 {
-    auto source = make_source("foo/* this /* is a block \n /* nesting */\n */ */bar");
-    auto pp = gta3sc::Preprocessor(source);
-    REQUIRE(drain(pp) == "foo\n\nbar");
-    REQUIRE(pp.inside_block_comment() == false);
+    build_pp("foo/* this /* is a block \n /* nesting */\n */ */bar");
+    REQUIRE(drain() == "foo\n\nbar");
 }
 
-TEST_CASE("character stream with unclosed block comment")
+TEST_CASE_FIXTURE(PreprocessorFixture, "character stream with unclosed block comment")
 {
-    auto source = make_source("foo/*/ this is a block \n comment \n ");
-    auto pp = gta3sc::Preprocessor(source);
-    REQUIRE(drain(pp) == "foo\n\n");
-    REQUIRE(pp.inside_block_comment() == true);
+    build_pp("foo/*/ this is a block \n comment \n ");
+    REQUIRE(drain() == "foo\n\n");
+    REQUIRE(consume_diag().message == gta3sc::Diag::unterminated_comment);
 }
 
-TEST_CASE("complicated character stream")
+TEST_CASE_FIXTURE(PreprocessorFixture, "complicated character stream")
 {
-    auto source = make_source(R"__(   ,/**/ /**/) first line
+    build_pp(R"__(   ,/**/ /**/) first line
 /* second line has */ letter (/* and */) 74
 third line    /* has
 fourth line /* being
@@ -134,6 +132,5 @@ sixth line  ()
 final   (line   )
 
 )__");
-    auto pp = gta3sc::Preprocessor(source);
-    REQUIRE(drain(pp) == expected);
+    REQUIRE(drain() == expected);
 }

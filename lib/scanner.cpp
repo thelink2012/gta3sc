@@ -8,6 +8,11 @@ auto Scanner::source_file() const -> const SourceFile&
     return pp.source_file();
 }
 
+auto Scanner::diagnostics() const -> DiagnosticHandler&
+{
+    return pp.diagnostics();
+}
+
 auto Scanner::location() const -> SourceLocation
 {
     auto loc = pp.location();
@@ -80,6 +85,11 @@ auto Scanner::next_filename() -> std::optional<Token>
             return token;
         }
     }
+
+    diagnostics()
+            .report(token.source.begin(), Diag::invalid_filename)
+            .range(token.source);
+
     return std::nullopt;
 }
 
@@ -92,7 +102,7 @@ auto Scanner::next() -> std::optional<Token>
 
     switch(peek_char)
     {
-    // clang-format off
+        // clang-format off
         newline: case '\r': case '\n': case '\0':
             if(peek_char == '\r') getc();
             if(peek_char == '\n') getc();
@@ -241,7 +251,11 @@ auto Scanner::next() -> std::optional<Token>
             for(getc(); peek_char != '"'; getc())
             {
                 if(is_newline(peek_char))
+                {
+                    diagnostics().report(location(), 
+                            Diag::unterminated_string_literal);
                     return std::nullopt;
+                }
             }
 
             assert(peek_char == '"');
@@ -252,6 +266,7 @@ auto Scanner::next() -> std::optional<Token>
         word_token: default:
             if(!is_word_char(peek_char))
             {
+                diagnostics().report(location(), Diag::invalid_char);
                 this->getc();
                 return std::nullopt;
             }

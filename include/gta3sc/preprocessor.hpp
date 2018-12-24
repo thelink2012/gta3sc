@@ -1,4 +1,5 @@
 #pragma once
+#include <gta3sc/diagnostics.hpp>
 #include <gta3sc/sourceman.hpp>
 
 namespace gta3sc
@@ -10,7 +11,9 @@ namespace gta3sc
 class Preprocessor
 {
 public:
-    explicit Preprocessor(const SourceFile& source) : source(&source)
+    explicit Preprocessor(const SourceFile& source, DiagnosticHandler& diag) :
+        source(&source),
+        diag(&diag)
     {
         this->cursor = source.view_with_terminator().begin();
         this->start_of_line = true;
@@ -31,14 +34,14 @@ public:
     /// Checks whether the stream reached the end of file.
     bool eof() const;
 
-    /// Checks whether the stream has an unclosed block comment at eof.
-    bool inside_block_comment() const;
-
     /// Gets the current source location.
     auto location() const -> SourceLocation;
 
     /// Gets the source file associated with this preprocessor.
     auto source_file() const -> const SourceFile&;
+
+    /// Gets the diagnostic handler associated with this preprocessor.
+    auto diagnostics() const -> DiagnosticHandler&;
 
 private:
     bool is_whitespace(SourceLocation) const;
@@ -46,6 +49,7 @@ private:
 
 private:
     const SourceFile* source;
+    DiagnosticHandler* diag;
 
     SourceLocation cursor;
     bool start_of_line;

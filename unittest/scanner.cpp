@@ -1,24 +1,29 @@
 #include <doctest.h>
 #include <gta3sc/scanner.hpp>
-#include <cstring>
+#include "compiler-fixture.hpp"
 #include <ostream>
 using gta3sc::Category;
 
 namespace
 {
-template<std::size_t N>
-auto make_source(const char (&data)[N]) -> gta3sc::SourceFile
+class ScannerFixture : public CompilerFixture
 {
-    auto ptr = std::make_unique<char[]>(N);
-    std::memcpy(ptr.get(), data, N);
-    return gta3sc::SourceFile(std::move(ptr), N-1);
-}
+public:
+    ScannerFixture() :
+        scanner(gta3sc::Preprocessor(source_file, diagman))
+    {}
 
-auto make_scanner(const gta3sc::SourceFile& source) -> gta3sc::Scanner
-{
-    auto pp = gta3sc::Preprocessor(source);
-    return gta3sc::Scanner(std::move(pp));
-}
+protected:
+    void build_scanner(std::string_view src)
+    {
+        this->build_source(src);
+        auto pp = gta3sc::Preprocessor(source_file, diagman);
+        this->scanner = gta3sc::Scanner(std::move(pp));
+    }
+
+protected:
+    gta3sc::Scanner scanner;
+};
 }
 
 namespace gta3sc
@@ -30,10 +35,9 @@ std::ostream& operator<<(std::ostream& os, const Category& category)
 }
 }
 
-TEST_CASE("scanner with empty stream")
+TEST_CASE_FIXTURE(ScannerFixture, "scanner with empty stream")
 {
-    auto source = make_source("");
-    auto scanner = make_scanner(source);
+    build_scanner("");
 
     REQUIRE(!scanner.eof());
     REQUIRE(scanner.next()->category == Category::EndOfLine);
@@ -43,18 +47,16 @@ TEST_CASE("scanner with empty stream")
     REQUIRE(scanner.eof());
 }
 
-TEST_CASE("scanner with leading and trailing whitespaces")
+TEST_CASE_FIXTURE(ScannerFixture, "scanner with leading and trailing whitespaces")
 {
-    auto source = make_source("  , COMMAND  (\t)  \n");
-    auto scanner = make_scanner(source);
+    build_scanner("  , COMMAND  (\t)  \n");
     REQUIRE(scanner.next()->category == Category::Word);
     REQUIRE(scanner.next()->category == Category::EndOfLine);
 }
 
-TEST_CASE("scanner with whitespaces in the middle")
+TEST_CASE_FIXTURE(ScannerFixture, "scanner with whitespaces in the middle")
 {
-    auto source = make_source("  , COMMAND  1,\t,2  (\t)  ");
-    auto scanner = make_scanner(source);
+    build_scanner("  , COMMAND  1,\t,2  (\t)  ");
     REQUIRE(scanner.next()->category == Category::Word);
     REQUIRE(scanner.next()->category == Category::Whitespace);
     REQUIRE(scanner.next()->category == Category::Word);
@@ -63,13 +65,12 @@ TEST_CASE("scanner with whitespaces in the middle")
     REQUIRE(scanner.next()->category == Category::EndOfLine);
 }
 
-TEST_CASE("scanner with word")
+TEST_CASE_FIXTURE(ScannerFixture, "scanner with word")
 {
-    auto source = make_source("1234 123a -123a -.abc         \n"
+    build_scanner("1234 123a -123a -.abc         \n"
                               "4x4.sc .sc                    \n"
                               "word: word: word              \n"
                               "%$&~ AbC {}                   \n");
-    auto scanner = make_scanner(source);
 
     gta3sc::Token token;
 
@@ -136,14 +137,13 @@ TEST_CASE("scanner with word")
     REQUIRE(scanner.eof());
 }
 
-TEST_CASE("scanner with string literal")
+TEST_CASE_FIXTURE(ScannerFixture, "scanner with string literal")
 {
-    auto source = make_source(" \"this\tI$ /* a // \\n (%1teral),\" \n"
+    build_scanner(" \"this\tI$ /* a // \\n (%1teral),\" \n"
                               " \"                                  \n"
                               " \"\"                                \n"
                               " \"string\"abc                       \n"
                               " not_string                          \n");
-    auto scanner = make_scanner(source);
 
     gta3sc::Token token;
 
@@ -153,6 +153,7 @@ TEST_CASE("scanner with string literal")
     REQUIRE(scanner.next()->category == Category::EndOfLine);
 
     REQUIRE(scanner.next() == std::nullopt);
+    REQUIRE(consume_diag().message == gta3sc::Diag::unterminated_string_literal);
     REQUIRE(scanner.next()->category == Category::EndOfLine);
 
     token = scanner.next().value();
@@ -165,7 +166,7 @@ TEST_CASE("scanner with string literal")
     REQUIRE(token.spelling() == "\"string\"");
     token = scanner.next().value();
     REQUIRE(token.category == Category::Word);
-    REQUIRE(token.spelling() == "abc");
+    REQUIRE(token.spelling() == "abc"); // fine at scanning time
     REQUIRE(scanner.next()->category == Category::EndOfLine);
 
     token = scanner.next().value();
@@ -176,13 +177,12 @@ TEST_CASE("scanner with string literal")
     REQUIRE(scanner.eof());
 }
 
-TEST_CASE("scanner with filename")
+TEST_CASE_FIXTURE(ScannerFixture, "scanner with filename")
 {
-    auto source = make_source(" .sc a.SC @.sc 1.sc 1.0sc SC   \n"
+    build_scanner(" .sc a.SC @.sc 1.sc 1.0sc SC   \n"
                               " b\"a\".sc                     \n"
                               " file-nam+@e.sc                \n"
                               " file-nam+@e.sc                \n");
-    auto scanner = make_scanner(source);
 
 
     gta3sc::Token token;
@@ -208,12 +208,15 @@ TEST_CASE("scanner with filename")
     REQUIRE(scanner.next()->category == Category::Whitespace);
 
     REQUIRE(scanner.next_filename() == std::nullopt); // 1.0sc
+    REQUIRE(consume_diag().message == gta3sc::Diag::invalid_filename);
     REQUIRE(scanner.next()->category == Category::Whitespace);
 
     REQUIRE(scanner.next_filename() == std::nullopt); // SC
+    REQUIRE(consume_diag().message == gta3sc::Diag::invalid_filename);
     REQUIRE(scanner.next()->category == Category::EndOfLine);
 
     REQUIRE(scanner.next_filename() == std::nullopt); // b
+    REQUIRE(consume_diag().message == gta3sc::Diag::invalid_filename);
     token = scanner.next().value();
     REQUIRE(token.category == Category::String);
     REQUIRE(token.spelling() == "\"a\"");
@@ -247,9 +250,9 @@ TEST_CASE("scanner with filename")
     REQUIRE(scanner.eof());
 }
 
-TEST_CASE("scanner with operators")
+TEST_CASE_FIXTURE(ScannerFixture, "scanner with operators")
 {
-    auto source = make_source("+ - * / +@ -@        \n"
+    build_scanner("+ - * / +@ -@        \n"
                               "+= -= *= /= +=@ -=@  \n"
                               "<= < = =# > >=       \n"
                               "--++ - -             \n"
@@ -257,7 +260,6 @@ TEST_CASE("scanner with operators")
                               "1--1 1- -1 +1        \n"
                               "-. -.1 -1.0          \n"
                               "+ @   - @   = #  + = \n");
-    auto scanner = make_scanner(source);
 
     gta3sc::Token token;
 
@@ -490,6 +492,26 @@ TEST_CASE("scanner with operators")
     token = scanner.next().value();
     REQUIRE(token.category == Category::Equal);
     REQUIRE(token.spelling() == "=");
+    REQUIRE(scanner.next()->category == Category::EndOfLine);
+
+    REQUIRE(scanner.eof());
+}
+
+TEST_CASE_FIXTURE(ScannerFixture, "scanner with invalid ASCII")
+{
+    build_scanner("HI \x01 BYE\n"
+                  "\"HI \x02 BYE\"\n");
+
+    REQUIRE(scanner.next()->category == Category::Word);
+    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next() == std::nullopt);
+    REQUIRE(consume_diag().message == gta3sc::Diag::invalid_char);
+    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::Word);
+    REQUIRE(scanner.next()->category == Category::EndOfLine);
+
+    // TODO maybe we should emit an warning for this case
+    REQUIRE(scanner.next()->category == Category::String);
     REQUIRE(scanner.next()->category == Category::EndOfLine);
 
     REQUIRE(scanner.eof());

@@ -41,16 +41,22 @@ public:
     /// Gets the source file associated with this parser.
     auto source_file() const -> const SourceFile&;
 
+    /// Gets the diagnostic handler associated with this parser.
+    auto diagnostics() const -> DiagnosticHandler&;
+
     /// Checks whether the end of stream has been reached.
     bool eof() const;
 
     /// Skips to the next line in the token stream.
     void skip_current_line();
 
+    /// Parses a main script file.
+    auto parse_main_script_file() -> std::optional<LinkedIR<ParserIR>>;
+
     /// Parses the next statement in the token stream.
     ///
-    /// Any parsing error causes the parser to report the error
-    /// to the `DiagnosticManager and return `std::nullopt`.
+    /// Any parsing error causes the parser to produce a diagnostic
+    /// and return `std::nullopt`.
     auto parse_statement(bool allow_special_name = false)
             -> std::optional<LinkedIR<ParserIR>>;
 
@@ -66,8 +72,8 @@ public:
     ///
     /// The names in the initializer list may be special command names.
     ///
-    /// Any parsing error causes the parser to report the error
-    /// to the `DiagnosticManager and return `std::nullopt`.
+    /// Any parsing error causes the parser to produce a diagnostic
+    /// and return `std::nullopt`.
     auto parse_statement_list(std::initializer_list<std::string_view>)
             -> std::optional<LinkedIR<ParserIR>>;
 
@@ -93,7 +99,7 @@ private:
     /// The 0th peek token is the current token in the stream.
     ///
     /// In case `N` is peeked for the first time and it is a lexically invalid
-    /// token, an error is reported to the `DiagnosticManager`.
+    /// token, a diagnostic is emitted.
     ///
     /// Returns the token at N or `std::nullopt` if such token is
     /// lexically invalid.
@@ -119,9 +125,8 @@ private:
 
     /// Consumes the current token in the stream.
     ///
-    /// In case the token is lexically invalid, an error is reported to
-    /// the `DiagnosticManager` (unless a peek call already did so) and
-    /// `std::nullopt` is returned.
+    /// In case the token is lexically invalid, a diagnostic is produced
+    /// (unless a peek call already did so) and `std::nullopt` is returned.
     auto consume() -> std::optional<Token>;
 
     /// Consumes the current token in the stream assuming its category
@@ -132,26 +137,28 @@ private:
     /// Filenames need special handling because they may contain characters
     /// that could otherwise be considered multiple tokens (e.g. `1-2.sc`).
     ///
-    /// In case the token is not a filename, an error is reported to the
-    /// `DiagnosticManager` and `std::nullopt` is returned.
+    /// In case the token is not a filename, a diagnostic is produced
+    /// and `std::nullopt` is returned.
     auto consume_filename() -> std::optional<Token>;
 
     /// Consumes and returns the current token in the stream assuming
-    /// its category is any of the categories in the initializer list.
+    /// its category is the same as the specified one.
     ///
-    /// The initializer list must not contain a element which value is
-    /// equal `Category::Filename`. Please see `consume_filename`.
-    ///
-    /// If the token category is none of the expected ones, a diagnostic
-    /// is produced to the `DiagnosticManager` and `std::nullopt` returned.
-    auto consume(std::initializer_list<Category>) -> std::optional<Token>;
-
-    /// Produces the same effect as `consume({category})`.
+    /// If the token category is not the expected ones, a diagnostic is
+    /// produced and `std::nullopt` returned.
     auto consume(Category) -> std::optional<Token>;
 
     /// Produces the same effect as `consume(Category::Word)`, but additionally
-    /// checks whether the lexeme of the word is equal `lexeme`.
+    /// checks (also producing a diagnostic) whether the lexeme of the word is
+    /// equal `lexeme`.
     auto consume_word(std::string_view lexeme) -> std::optional<Token>;
+
+    /// Behaves like `consume(Category::Word)` except with a custom diagnostic.
+    auto consume_command() -> std::optional<Token>;
+
+    /// Behaves like `consume(Category::Whitespace)` except when right behind
+    /// an end of line in which case it peeks the end of line.
+    auto consume_whitespace() -> std::optional<Token>;
 
     /// Compares two strings for equality in a case-insensitive manner.
     bool iequal(std::string_view lhs, std::string_view rhs) const;
@@ -164,12 +171,21 @@ private:
     /// comparision operator (i.e. `<=`, `<`, `>`, `>=`).
     bool is_relational_operator(Category) const;
 
+    /// Produces a diagnostic report associated with a given token.
+    auto report(const Token& token, Diag message) -> DiagnosticBuilder;
+
+    /// Produces a diagnostic report associated with a given range.
+    auto report(SourceRange range, Diag message) -> DiagnosticBuilder;
+
+    /// Produces a diagnostic regarding a unexpected grammar name.
+    auto report_special_name(SourceRange range) -> DiagnosticBuilder;
+
 private:
     // The following should behave according to the language grammar.
     // Please see https://git.io/fNxZP for details.
     //
-    // A lexical or syntactical error causes a error report in the
-    // `DiagnosticManager` and `std::nullopt` to be returned.
+    // A lexical or syntactical error causes a diagnostic report and and
+    // `std::nullopt` to be returned.
     //
     // The parameters named `is_if_line` indicate productions on which
     // the behaviour changes depending on whether the current line began
@@ -235,7 +251,7 @@ private:
     bool is_float(std::string_view) const;
     bool is_identifier(std::string_view) const;
 
-public:
+private:
     Scanner scanner;
     ArenaMemoryResource* arena;
 

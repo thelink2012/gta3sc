@@ -54,7 +54,7 @@ struct Token
 class Scanner
 {
 public:
-    explicit Scanner(Preprocessor pp_) : pp(std::move(pp_)), peek_char(0) {}
+    explicit Scanner(Preprocessor pp) : pp(std::move(pp)), peek_char(0) {}
 
     Scanner(const Scanner&) = delete;
     Scanner& operator=(const Scanner&) = delete;
@@ -94,15 +94,18 @@ public:
     /// Checks whether the end of stream has been reached.
     bool eof() const;
 
+    /// Gets the current location in the character stream.
+    auto location() const -> SourceLocation;
+
     /// Gets the source file associated with this scanner.
     auto source_file() const -> const SourceFile&;
+
+    /// Gets the diagnostic handler associated with this scanner.
+    auto diagnostics() const -> DiagnosticHandler&;
 
 private:
     /// Consumes the next character in the character stream.
     char getc();
-
-    /// Gets the current location in the character stream.
-    auto location() const -> SourceLocation;
 
     bool is_whitespace(char) const;
     bool is_newline(char) const;

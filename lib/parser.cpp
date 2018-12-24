@@ -57,16 +57,27 @@ auto Parser::source_file() const -> const SourceFile&
     return scanner.source_file();
 }
 
-bool Parser::iequal(std::string_view a, std::string_view b) const
+auto Parser::diagnostics() const -> DiagnosticHandler&
 {
-    return std::equal(a.begin(), a.end(), b.begin(), b.end(),
-                      [](unsigned char ac, unsigned char bc) {
-                          if(ac >= 'a' && ac <= 'z')
-                              ac -= 32; // transform into upper
-                          if(bc >= 'a' && bc <= 'z')
-                              bc -= 32;
-                          return ac == bc;
-                      });
+    return scanner.diagnostics();
+}
+
+auto Parser::report(const Token& token, Diag message) -> DiagnosticBuilder
+{
+    return report(token.source, message);
+}
+
+auto Parser::report(SourceRange source, Diag message) -> DiagnosticBuilder
+{
+    return diagnostics().report(source.begin(), message).range(source);
+}
+
+auto Parser::report_special_name(SourceRange source) -> DiagnosticBuilder
+{
+    // This method can be specialized to produce a different diagnostic
+    // for each special name. Currently we produce a generic message.
+    const auto name = source;
+    return report(source, Diag::unexpected_special_name).args(name);
 }
 
 bool Parser::is_special_name(std::string_view name, bool check_var_decl) const
@@ -86,6 +97,18 @@ bool Parser::is_special_name(std::string_view name, bool check_var_decl) const
             || name == COMMAND_LAUNCH_MISSION
             || name == COMMAND_LOAD_AND_LAUNCH_MISSION
             || name == COMMAND_MISSION_START || name == COMMAND_MISSION_END);
+}
+
+bool Parser::iequal(std::string_view a, std::string_view b) const
+{
+    return std::equal(a.begin(), a.end(), b.begin(), b.end(),
+                      [](unsigned char ac, unsigned char bc) {
+                          if(ac >= 'a' && ac <= 'z')
+                              ac -= 32; // transform into upper
+                          if(bc >= 'a' && bc <= 'z')
+                              bc -= 32;
+                          return ac == bc;
+                      });
 }
 
 bool Parser::is_relational_operator(Category category) const
@@ -190,28 +213,19 @@ auto Parser::consume_filename() -> std::optional<Token>
     return scanner.next_filename();
 }
 
-auto Parser::consume(std::initializer_list<Category> ilist)
-        -> std::optional<Token>
+auto Parser::consume(Category category) -> std::optional<Token>
 {
-    if(ilist.begin() == ilist.end())
-        return consume();
-
     auto token = consume();
     if(!token)
         return std::nullopt;
 
-    for(auto cat : ilist)
+    if(token->category != category)
     {
-        if(token->category == cat)
-            return token;
+        report(*token, Diag::expected_token).args(category);
+        return std::nullopt;
     }
 
-    return std::nullopt;
-}
-
-auto Parser::consume(Category category) -> std::optional<Token>
-{
-    return consume({category});
+    return token;
 }
 
 auto Parser::consume_word(std::string_view lexeme) -> std::optional<Token>
@@ -219,16 +233,47 @@ auto Parser::consume_word(std::string_view lexeme) -> std::optional<Token>
     auto token = consume(Category::Word);
     if(!token)
         return std::nullopt;
+
     if(!iequal(token->spelling(), lexeme))
+    {
+        report(*token, Diag::expected_word).args(lexeme);
         return std::nullopt;
+    }
+
+    return token;
+}
+
+auto Parser::consume_whitespace() -> std::optional<Token>
+{
+    // This is necessary to make diagnostics more helpful.
+    // Consider "IF \n". A diagnostic without the following check
+    // would ask for a missing whitespace, when in fact it should
+    // be asking for a missing command.
+    if(is_peek(Category::EndOfLine))
+        return *peek();
+    return consume(Category::Whitespace);
+}
+
+auto Parser::consume_command() -> std::optional<Token>
+{
+    auto token = consume();
+    if(!token)
+        return std::nullopt;
+
+    if(token->category != Category::Word)
+    {
+        report(*token, Diag::expected_command);
+        return std::nullopt;
+    }
+
     return token;
 }
 
 void Parser::skip_current_line()
 {
-    // The scanner is guaranted to return a new line at some point.
     while(true)
     {
+        // The scanner is guaranted to return a new line at some point.
         auto token = this->consume();
         if(token && token->category == Category::EndOfLine)
             break;
@@ -331,11 +376,11 @@ auto Parser::parse_command(bool is_if_line)
     // command := command_name { sep argument } ;
     // FOLLOW(command) = {eol, sep 'GOTO'}
 
-    auto command = consume(Category::Word);
-    if(!command)
+    auto token = consume_command();
+    if(!token)
         return std::nullopt;
 
-    auto result = ParserIR::create_command(command->spelling(), command->source,
+    auto result = ParserIR::create_command(token->spelling(), token->source,
                                            arena);
 
     while(!is_peek(Category::EndOfLine))
@@ -346,7 +391,7 @@ auto Parser::parse_command(bool is_if_line)
            && is_peek(Category::EndOfLine, 4))
             break;
 
-        if(!consume(Category::Whitespace))
+        if(!consume_whitespace())
             return std::nullopt;
 
         auto arg = parse_argument();
@@ -368,7 +413,7 @@ auto Parser::parse_argument() -> std::optional<arena_ptr<ParserIR::Argument>>
     //             | identifier
     //             | string_literal ;
 
-    auto token = consume({Category::Word, Category::String});
+    auto token = consume();
     if(!token)
         return std::nullopt;
 
@@ -399,7 +444,10 @@ auto Parser::parse_argument() -> std::optional<arena_ptr<ParserIR::Argument>>
         auto value = std::strtol(buffer, nullptr, 10);
 
         if(errno == ERANGE || value < min_value || value > max_value)
+        {
+            report(*token, Diag::integer_literal_too_big);
             return std::nullopt;
+        }
 
         return ParserIR::create_integer(value, token->source, arena);
     }
@@ -414,7 +462,10 @@ auto Parser::parse_argument() -> std::optional<arena_ptr<ParserIR::Argument>>
         auto value = std::strtof(buffer, nullptr);
 
         if(errno == ERANGE)
+        {
+            report(*token, Diag::float_literal_too_big);
             return std::nullopt;
+        }
 
         return ParserIR::create_float(value, token->source, arena);
     }
@@ -424,8 +475,15 @@ auto Parser::parse_argument() -> std::optional<arena_ptr<ParserIR::Argument>>
     }
     else
     {
+        report(*token, Diag::expected_argument);
         return std::nullopt;
     }
+}
+
+auto Parser::parse_main_script_file() -> std::optional<LinkedIR<ParserIR>>
+{
+    // main_script_file := {statement} ;
+    return parse_statement_list({});
 }
 
 auto Parser::parse_statement(bool allow_special_name)
@@ -452,11 +510,14 @@ auto Parser::parse_statement(bool allow_special_name)
         label_name.remove_suffix(1);
 
         if(!is_identifier(label_name))
+        {
+            report(label_def, Diag::expected_identifier);
             return std::nullopt;
+        }
 
         if(!is_peek(Category::EndOfLine))
         {
-            if(!consume(Category::Whitespace))
+            if(!consume_whitespace())
                 return std::nullopt;
         }
 
@@ -513,17 +574,34 @@ auto Parser::parse_statement_list(
                 // have to make sure we do not allow any other special name
                 // other than the ones in `stop_when`.
                 if(is_special_name(command->name, false))
+                {
+                    report_special_name(command->source);
                     return std::nullopt;
+                }
             }
         }
 
         linked_stms.splice_back(*std::move(stmt_list));
     }
 
-    if(stop_when.begin() == stop_when.end())
+    if(stop_when.size() == 0)
+    {
         return linked_stms;
-
-    return std::nullopt;
+    }
+    else if(stop_when.size() == 1)
+    {
+        diagnostics()
+                .report(scanner.location(), Diag::expected_word)
+                .args(*stop_when.begin());
+        return std::nullopt;
+    }
+    else
+    {
+        diagnostics()
+                .report(scanner.location(), Diag::expected_words)
+                .args(std::vector(stop_when));
+        return std::nullopt;
+    }
 }
 
 auto Parser::parse_statement_list(std::string_view name)
@@ -629,7 +707,10 @@ auto Parser::parse_embedded_statement(bool allow_special_name)
         {
             if(!allow_special_name
                && is_special_name((*ir)->command->name, false))
+            {
+                report_special_name((*ir)->command->source);
                 return std::nullopt;
+            }
 
             if(consume(Category::EndOfLine))
             {
@@ -651,17 +732,23 @@ auto Parser::parse_scope_statement() -> std::optional<LinkedIR<ParserIR>>
     // Constraints:
     // Lexical scopes cannot be nested.
 
-    if(this->in_lexical_scope)
-        return std::nullopt;
-
     if(!is_peek(Category::Word, "{"))
+    {
+        consume_word("{"); // produces a diagnostic
         return std::nullopt;
+    }
 
     auto open_command = parse_command();
     if(!open_command)
         return std::nullopt;
     if(!consume(Category::EndOfLine))
         return std::nullopt;
+
+    if(this->in_lexical_scope)
+    {
+        report((*open_command)->command->source, Diag::cannot_nest_scopes);
+        return std::nullopt;
+    }
 
     this->in_lexical_scope = true;
 
@@ -684,7 +771,7 @@ auto Parser::parse_conditional_element(bool is_if_line)
 
     if(is_peek(Category::Word, "NOT"))
     {
-        if(!consume() || !consume(Category::Whitespace))
+        if(!consume() || !consume_whitespace())
             return std::nullopt;
         not_flag = true;
     }
@@ -702,7 +789,10 @@ auto Parser::parse_conditional_element(bool is_if_line)
         if(ir = parse_command(is_if_line); !ir)
             return std::nullopt;
         if(is_special_name((*ir)->command->name, true))
+        {
+            report_special_name((*ir)->command->source);
             return std::nullopt;
+        }
     }
 
     (*ir)->command->not_flag = not_flag;
@@ -750,7 +840,7 @@ auto Parser::parse_conditional_list(arena_ptr<ParserIR> op_cond0)
 
         while(is_peek(Category::Word, andor_prefix))
         {
-            if(!consume() || !consume(Category::Whitespace))
+            if(!consume() || !consume_whitespace())
                 return {std::nullopt, 0};
 
             auto op_elem = parse_conditional_element();
@@ -765,7 +855,10 @@ auto Parser::parse_conditional_list(arena_ptr<ParserIR> op_cond0)
         }
 
         if(is_peek(Category::Word, anti_prefix))
+        {
+            report(peek()->source, Diag::cannot_mix_andor);
             return {std::nullopt, 0};
+        }
 
         andor_count = is_and ? num_conds - 1 : 20 + num_conds - 1;
     }
@@ -775,7 +868,10 @@ auto Parser::parse_conditional_list(arena_ptr<ParserIR> op_cond0)
     // parsing phrase because the generated IL for ANDOR has
     // this limitation embedded in its first parameter.
     if(num_conds > 6)
+    {
+        report(andor_list.back().command->source, Diag::too_many_conditions);
         return {std::nullopt, 0};
+    }
 
     return {std::move(andor_list), andor_count};
 }
@@ -820,7 +916,7 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
     if(!if_token)
         return std::nullopt;
 
-    if(!consume(Category::Whitespace))
+    if(!consume_whitespace())
         return std::nullopt;
 
     auto op_cond0 = parse_conditional_element(true);
@@ -831,8 +927,7 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
 
     if(is_peek(Category::Whitespace))
     {
-        if(!consume() || !consume_word("GOTO")
-           || !consume(Category::Whitespace))
+        if(!consume() || !consume_word("GOTO") || !consume_whitespace())
             return std::nullopt;
 
         auto arg_label = parse_argument();
@@ -918,7 +1013,7 @@ auto Parser::parse_while_statement_detail(bool is_whilenot)
     if(!while_token)
         return std::nullopt;
 
-    if(!consume(Category::Whitespace))
+    if(!consume_whitespace())
         return std::nullopt;
 
     auto [andor_list, andor_count] = parse_conditional_list();
@@ -948,7 +1043,10 @@ auto Parser::parse_repeat_statement() -> std::optional<LinkedIR<ParserIR>>
     //                     [label_prefix] 'ENDREPEAT' eol ;
 
     if(!is_peek(Category::Word, "REPEAT"))
+    {
+        consume_word("REPEAT"); // produces a diagnostic
         return std::nullopt;
+    }
 
     auto repeat_command = parse_command();
     if(!repeat_command)
@@ -974,7 +1072,7 @@ auto Parser::parse_require_statement() -> std::optional<arena_ptr<ParserIR>>
     // command_launch_mission := 'LAUNCH_MISSION' sep filename eol ;
     // command_load_and_launch_mission := 'LOAD_AND_LAUNCH_MISSION' sep filename eol ;
 
-    auto command = consume(Category::Word);
+    auto command = consume_command();
     if(!command)
         return std::nullopt;
 
@@ -983,7 +1081,7 @@ auto Parser::parse_require_statement() -> std::optional<arena_ptr<ParserIR>>
 
     if(iequal(command->spelling(), COMMAND_GOSUB_FILE))
     {
-        if(!consume(Category::Whitespace))
+        if(!consume_whitespace())
             return std::nullopt;
 
         auto arg_label = parse_argument();
@@ -995,10 +1093,11 @@ auto Parser::parse_require_statement() -> std::optional<arena_ptr<ParserIR>>
     else if(!iequal(command->spelling(), COMMAND_LAUNCH_MISSION)
             && !iequal(command->spelling(), COMMAND_LOAD_AND_LAUNCH_MISSION))
     {
+        report(command->source, Diag::expected_require_command);
         return std::nullopt;
     }
 
-    if(!consume(Category::Whitespace))
+    if(!consume_whitespace())
         return std::nullopt;
 
     auto tok_filename = this->consume_filename();
@@ -1086,10 +1185,16 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line)
         // Getting over this number of tokens implies we'll not match
         // any of the productions in the specification.
         if(num_toks == std::size(cats))
+        {
+            diagnostics().report(spans[0].begin(), Diag::invalid_expression);
             return std::nullopt;
+        }
 
         if(peek() == std::nullopt)
+        {
+            consume(); // skip and produce diagnostic
             return std::nullopt;
+        }
 
         switch(peek()->category)
         {
@@ -1141,7 +1246,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line)
             case Category::String:
             {
                 // needs special care when comparing for name equality.
-                // not implemented yet.
+                // not implemented yet. TODO
                 assert(false);
                 return std::nullopt;
             }
@@ -1155,21 +1260,37 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line)
 
     // Cannot produce any match for zero tokens.
     if(num_toks == 0)
+    {
+        assert(peek() != std::nullopt);
+        report(peek()->source, Diag::invalid_expression);
         return std::nullopt;
+    }
 
     // Only binary expressions can be matched in conditional contexts.
     if(is_conditional && num_toks != 3)
-        return std::nullopt;
+    {
+        if(num_toks >= 2 && is_relational_operator(cats[1]))
+        {
+            report(spans[0].begin(), Diag::invalid_expression);
+            return std::nullopt;
+        }
+        else
+        {
+            report(spans[0].begin(), Diag::expected_conditional_expression);
+            return std::nullopt;
+        }
+    }
 
     // Make sure the left-hand side of a expression is not require commands
     // nor mission directives. This is a constraint of the grammar.
-    if(num_args > 0 && args[0]->as_identifier())
+    if(num_args > 0 && cats[0] == Category::Word && args[0]->as_identifier())
     {
         auto lhs = args[0]->as_identifier();
         if(*lhs == COMMAND_GOSUB_FILE || *lhs == COMMAND_LAUNCH_MISSION
            || *lhs == COMMAND_LOAD_AND_LAUNCH_MISSION
            || *lhs == COMMAND_MISSION_START || *lhs == COMMAND_MISSION_END)
         {
+            report_special_name(args[0]->source);
             return std::nullopt;
         }
     }
@@ -1255,18 +1376,33 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line)
                            COMMAND_IS_THING_GREATER_OR_EQUAL_TO_THING},
         };
 
+        const auto it_cond = std::find_if(
+                std::begin(lookup_conditional), std::end(lookup_conditional),
+                [&](const auto& pair) { return pair.first == cats[1]; });
+
+        const auto it_assign = std::find_if(
+                std::begin(lookup_assignment), std::end(lookup_assignment),
+                [&](const auto& pair) { return pair.first == cats[1]; });
+
+        if(it_cond == std::end(lookup_conditional)
+           && it_assign == std::end(lookup_assignment))
+        {
+            diagnostics().report(spans[0].begin(), Diag::invalid_expression);
+            return std::nullopt;
+        }
+
         std::string_view command_name;
         auto a = args[0], b = args[1];
 
         if(is_conditional)
         {
-            auto it = std::find_if(
-                    std::begin(lookup_conditional),
-                    std::end(lookup_conditional),
-                    [&](const auto& pair) { return pair.first == cats[1]; });
+            const auto it = it_cond;
 
             if(it == std::end(lookup_conditional))
+            {
+                report(spans[1], Diag::expected_conditional_operator);
                 return std::nullopt;
+            }
 
             command_name = it->second;
 
@@ -1278,12 +1414,13 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line)
         }
         else
         {
-            auto it = std::find_if(
-                    std::begin(lookup_assignment), std::end(lookup_assignment),
-                    [&](const auto& pair) { return pair.first == cats[1]; });
+            const auto it = it_assign;
 
             if(it == std::end(lookup_assignment))
+            {
+                report(spans[1], Diag::expected_assignment_operator);
                 return std::nullopt;
+            }
 
             command_name = it->second;
         }
@@ -1314,7 +1451,10 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line)
                 [&](const auto& pair) { return pair.first == cats[3]; });
 
         if(it == std::end(lookup_ternary))
+        {
+            report(spans[3], Diag::expected_ternary_operator);
             return std::nullopt;
+        }
 
         const auto a = args[0], b = args[1], c = args[2];
 
@@ -1331,7 +1471,13 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line)
         else if(a->is_same_value(*c))
         {
             if(!is_associative)
+            {
+                diagnostics()
+                        .report(spans[0].begin(),
+                                Diag::invalid_expression_unassociative)
+                        .args(cats[3]);
                 return std::nullopt;
+            }
 
             auto ir = ParserIR::create_command(it->second, src_info, arena);
             ir->command->push_arg(a, arena);
@@ -1353,6 +1499,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line)
     }
     else
     {
+        diagnostics().report(spans[0].begin(), Diag::invalid_expression);
         return std::nullopt;
     }
 
@@ -1362,5 +1509,4 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line)
 }
 }
 
-// TODO produce diagnostics
 // TODO perform parsing recovery
