@@ -17,7 +17,7 @@ public:
 protected:
     void build_parser(std::string_view src)
     {
-        this->source_file = make_source(src);
+        this->build_source(src);
         this->parser = make_parser(source_file, diagman, arena);
     }
 

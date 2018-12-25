@@ -1,3 +1,4 @@
+#include "charconv.hpp"
 #include <gta3sc/parser.hpp>
 using namespace std::literals::string_view_literals;
 
@@ -428,23 +429,13 @@ auto Parser::parse_argument() -> std::optional<arena_ptr<ParserIR::Argument>>
     }
     else if(token->category == Category::Word && is_integer(lexeme))
     {
-        constexpr long min_value = (-2147483647 - 1), max_value = 2147483647;
+        using namespace gta3sc::utils;
+        int32_t value;
 
-        static_assert(std::numeric_limits<long>::min() <= min_value
-                      && std::numeric_limits<long>::max() >= max_value);
-
-        // Avoid using std::string for this. Use the C library std::strtol
-        // function. We may also use std::from_chars when widely available.
-        char buffer[64];
-        auto length = std::min(lexeme.size(), std::size(buffer) - 1);
-        std::memcpy(buffer, lexeme.data(), length);
-        buffer[length] = '\0';
-
-        errno = 0;
-        auto value = std::strtol(buffer, nullptr, 10);
-
-        if(errno == ERANGE || value < min_value || value > max_value)
+        if(auto [_, ec] = from_chars(&*lexeme.begin(), &*lexeme.end(), value);
+           ec != std::errc())
         {
+            assert(ec == std::errc::result_out_of_range);
             report(*token, Diag::integer_literal_too_big);
             return std::nullopt;
         }
@@ -453,16 +444,14 @@ auto Parser::parse_argument() -> std::optional<arena_ptr<ParserIR::Argument>>
     }
     else if(token->category == Category::Word && is_float(lexeme))
     {
-        char buffer[64];
-        auto length = std::min(lexeme.size(), std::size(buffer) - 1);
-        std::memcpy(buffer, lexeme.data(), length);
-        buffer[length] = '\0';
+        using namespace gta3sc::utils;
+        float value;
 
-        errno = 0;
-        auto value = std::strtof(buffer, nullptr);
-
-        if(errno == ERANGE)
+        if(auto [_, ec] = from_chars(&*lexeme.begin(), &*lexeme.end(), value,
+                                     chars_format::fixed);
+           ec != std::errc())
         {
+            assert(ec == std::errc::result_out_of_range);
             report(*token, Diag::float_literal_too_big);
             return std::nullopt;
         }
@@ -1271,12 +1260,13 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line)
     {
         if(num_toks >= 2 && is_relational_operator(cats[1]))
         {
-            report(spans[0].begin(), Diag::invalid_expression);
+            diagnostics().report(spans[0].begin(), Diag::invalid_expression);
             return std::nullopt;
         }
         else
         {
-            report(spans[0].begin(), Diag::expected_conditional_expression);
+            diagnostics().report(spans[0].begin(),
+                                 Diag::expected_conditional_expression);
             return std::nullopt;
         }
     }

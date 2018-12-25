@@ -16,14 +16,16 @@ enum class Diag
     cannot_nest_scopes,
     cannot_mix_andor,
     too_many_conditions,
+    subscript_must_be_positive,
     expected_token,  // %0 => Category
-    expected_tokens, // %0 => vector<Category>
     expected_word,   // %0 => string
     expected_words,  // %0 => vector<string>
     expected_command,
     expected_require_command,
     expected_argument,
     expected_identifier,
+    expected_integer,
+    expected_subscript,
     expected_conditional_expression,
     expected_conditional_operator,
     expected_assignment_operator,
@@ -38,6 +40,13 @@ enum class Diag
     integer_literal_too_big,
     float_literal_too_big,
     limit_block_comments,
+    duplicate_var_global,
+    duplicate_var_in_scope,
+    duplicate_var_lvar,
+    duplicate_label,
+    var_decl_outside_of_scope,
+    var_decl_subscript_must_be_literal,
+    var_decl_subscript_must_be_nonzero,
 };
 
 /// Information about a diagnostic.
@@ -79,7 +88,6 @@ public:
     auto range(SourceRange range) && -> DiagnosticBuilder&&
     {
         diag->ranges.push_back(range);
-        ;
         return std::move(*this);
     }
 

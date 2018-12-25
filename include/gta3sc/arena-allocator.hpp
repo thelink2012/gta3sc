@@ -2,6 +2,8 @@
 #include <cassert>
 #include <cstddef>
 #include <memory>
+#include <cstring>
+#include <string_view>
 
 namespace gta3sc
 {
@@ -292,3 +294,16 @@ inline void operator delete(void*, gta3sc::ArenaMemoryResource&)
 
 inline void operator delete[](void*, gta3sc::ArenaMemoryResource&)
 {}
+
+namespace gta3sc
+{
+    /// Allocates a string in the arena and returns a view to it.
+    inline auto allocate_string(std::string_view from,
+                                ArenaMemoryResource& arena)
+        -> std::string_view
+    {
+        auto ptr = new(arena, alignof(char)) char[from.size()];
+        std::memcpy(ptr, from.data(), from.size());
+        return {ptr, from.size()};
+    }
+}
