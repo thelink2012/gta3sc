@@ -3,6 +3,10 @@
 
 // gta3script-specs 7fe565c767ee85fb8c99b594b3b3d280aa1b1c80
 
+// TODO alternators
+// TODO string constants
+// TODO entity checking
+
 namespace gta3sc
 {
 using ParamType = CommandManager::ParamType;
@@ -255,26 +259,49 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
         }
         case ParamType::INPUT_INT:
         {
-            // TODO this is a placeholder.
-            return validate_integer_literal(param, arg);
+            // TODO check for string constants and global constants
+
+            if(arg.as_integer())
+                return validate_integer_literal(param, arg);
+            else if(arg.as_identifier())
+                return validate_var_ref(param, arg);
+
+            report(arg.source, Diag::expected_input_int);
+            return nullptr;
         }
         case ParamType::INPUT_FLOAT:
-            // TODO
-            break;
-        case ParamType::OUTPUT_INT:
-            // TODO
-            break;
-        case ParamType::OUTPUT_FLOAT:
-            // TODO
-            break;
+        {
+            if(arg.as_float())
+                return validate_float_literal(param, arg);
+            else if(arg.as_identifier())
+                return validate_var_ref(param, arg);
+
+            report(arg.source, Diag::expected_input_float);
+            return nullptr;
+        }
         case ParamType::INPUT_OPT:
         {
-            // TODO this is a placeholder.
+            if(arg.as_integer())
+                return validate_integer_literal(param, arg);
+            else if(arg.as_float())
+                return validate_float_literal(param, arg);
+            else if(arg.as_identifier())
+                return validate_var_ref(param, arg);
+
+            report(arg.source, Diag::expected_input_opt);
+            return nullptr;
+        }
+        case ParamType::OUTPUT_INT:
+        case ParamType::OUTPUT_FLOAT:
+        {
             return validate_var_ref(param, arg);
         }
+        default:
+        {
+            assert(false);
+            return nullptr;
+        }
     }
-    assert(false);
-    return nullptr;
 }
 
 auto Sema::validate_integer_literal(const CommandManager::ParamDef& param,

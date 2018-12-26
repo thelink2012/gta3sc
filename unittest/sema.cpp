@@ -782,7 +782,277 @@ TEST_CASE_FIXTURE(SemaFixture, "sema LVAR_TEXT_LABEL parameter")
     }
 }
 
-// TODO more param tests
+TEST_CASE_FIXTURE(SemaFixture, "sema OUTPUT_INT parameter")
+{
+    SUBCASE("valid OUTPUT_INT parameter")
+    {
+        build_sema("{\nVAR_INT x\nLVAR_INT y\n"
+                   "GENERATE_RANDOM_INT_IN_RANGE 0 10 x\n"
+                   "GENERATE_RANDOM_INT_IN_RANGE 0 10 y\n}");
+        auto ir = sema.validate();
+        REQUIRE(ir != std::nullopt);
+
+        REQUIRE(ir->size() == 6);
+
+        auto arg1 = std::prev(ir->end(), 3)->command->args[2];
+        auto arg2 = std::prev(ir->end(), 2)->command->args[2];
+
+        REQUIRE(arg1->as_var_ref()->def == symrepo.lookup_var("X", 0));
+        REQUIRE(arg2->as_var_ref()->def == symrepo.lookup_var("Y", 1));
+    }
+
+    SUBCASE("invalid OUTPUT_INT param - not identifier")
+    {
+        build_sema("GENERATE_RANDOM_INT_IN_RANGE 0 10 1234");
+        REQUIRE(sema.validate() == std::nullopt);
+        CHECK(consume_diag().message == gta3sc::Diag::expected_variable);
+    }
+
+    SUBCASE("invalid OUTPUT_INT param - undeclared variable")
+    {
+        build_sema("GENERATE_RANDOM_INT_IN_RANGE 0 10 x");
+        REQUIRE(sema.validate() == std::nullopt);
+        CHECK(consume_diag().message == gta3sc::Diag::undefined_variable);
+    }
+
+    SUBCASE("invalid OUTPUT_INT param - type mismatch")
+    {
+        build_sema("VAR_FLOAT x\nGENERATE_RANDOM_INT_IN_RANGE 0 10 x");
+        REQUIRE(sema.validate() == std::nullopt);
+        CHECK(consume_diag().message == gta3sc::Diag::var_type_mismatch);
+    }
+}
+
+TEST_CASE_FIXTURE(SemaFixture, "sema OUTPUT_FLOAT parameter")
+{
+    SUBCASE("valid OUTPUT_FLOAT parameter")
+    {
+        build_sema("{\nVAR_FLOAT x\nLVAR_FLOAT y\n"
+                   "GENERATE_RANDOM_FLOAT_IN_RANGE 0.0 1.0 x\n"
+                   "GENERATE_RANDOM_FLOAT_IN_RANGE 0.0 1.0 y\n}");
+        auto ir = sema.validate();
+        REQUIRE(ir != std::nullopt);
+
+        REQUIRE(ir->size() == 6);
+
+        auto arg1 = std::prev(ir->end(), 3)->command->args[2];
+        auto arg2 = std::prev(ir->end(), 2)->command->args[2];
+
+        REQUIRE(arg1->as_var_ref()->def == symrepo.lookup_var("X", 0));
+        REQUIRE(arg2->as_var_ref()->def == symrepo.lookup_var("Y", 1));
+    }
+
+    SUBCASE("invalid OUTPUT_FLOAT param - not identifier")
+    {
+        build_sema("GENERATE_RANDOM_FLOAT_IN_RANGE 0.0 1.0 1234");
+        REQUIRE(sema.validate() == std::nullopt);
+        CHECK(consume_diag().message == gta3sc::Diag::expected_variable);
+    }
+
+    SUBCASE("invalid OUTPUT_FLOAT param - undeclared variable")
+    {
+        build_sema("GENERATE_RANDOM_FLOAT_IN_RANGE 0.0 1.0 x");
+        REQUIRE(sema.validate() == std::nullopt);
+        CHECK(consume_diag().message == gta3sc::Diag::undefined_variable);
+    }
+
+    SUBCASE("invalid OUTPUT_FLOAT param - type mismatch")
+    {
+        build_sema("VAR_INT x\nGENERATE_RANDOM_FLOAT_IN_RANGE 0.0 1.0 x");
+        REQUIRE(sema.validate() == std::nullopt);
+        CHECK(consume_diag().message == gta3sc::Diag::var_type_mismatch);
+    }
+}
+
+TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_INT parameter")
+{
+    // TODO test global string constants and string constants
+
+    SUBCASE("valid INPUT_INT param")
+    {
+        build_sema("{\nVAR_INT x\nLVAR_INT y\nWAIT x\nWAIT y\nWAIT 8\n}");
+        auto ir = sema.validate();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(ir->size() == 7);
+
+        auto arg_1 = std::next(ir->begin(), 3)->command->args[0];
+        auto arg_2 = std::next(ir->begin(), 4)->command->args[0];
+        auto arg_3 = std::next(ir->begin(), 5)->command->args[0];
+
+        REQUIRE(arg_1->as_integer() == nullptr);
+        REQUIRE(arg_1->as_float() == nullptr);
+        REQUIRE(arg_1->as_var_ref()->def == symrepo.lookup_var("X", 0));
+
+        REQUIRE(arg_2->as_integer() == nullptr);
+        REQUIRE(arg_2->as_float() == nullptr);
+        REQUIRE(arg_2->as_var_ref()->def == symrepo.lookup_var("Y", 1));
+
+        REQUIRE(arg_3->as_integer() != nullptr);
+        REQUIRE(*arg_3->as_integer() == 8);
+        REQUIRE(arg_3->as_float() == nullptr);
+        REQUIRE(arg_3->as_var_ref() == nullptr);
+    }
+
+    SUBCASE("invalid INPUT_INT param - float literal")
+    {
+        build_sema("WAIT 1.0");
+        REQUIRE(sema.validate() == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::expected_input_int);
+    }
+
+    SUBCASE("invalid INPUT_INT param - string literal")
+    {
+        build_sema("WAIT \"Hello\"");
+        REQUIRE(sema.validate() == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::expected_input_int);
+    }
+
+    SUBCASE("invalid INPUT_INT param - undeclared variable")
+    {
+        build_sema("WAIT x");
+        REQUIRE(sema.validate() == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::undefined_variable);
+    }
+
+    SUBCASE("invalid INPUT_INT param - mistyped variable")
+    {
+        build_sema("VAR_FLOAT x\nWAIT x");
+        REQUIRE(sema.validate() == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::var_type_mismatch);
+    }
+}
+
+TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_FLOAT parameter")
+{
+    SUBCASE("valid INPUT_FLOAT param")
+    {
+        build_sema("{\nVAR_FLOAT x\nLVAR_FLOAT y\n"
+                   "GENERATE_RANDOM_FLOAT_IN_RANGE x y x\n"
+                   "GENERATE_RANDOM_FLOAT_IN_RANGE 0.0 2.0 y\n}");
+        auto ir = sema.validate();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(ir->size() == 6);
+
+        auto arg_1 = std::next(ir->begin(), 3)->command->args[0];
+        auto arg_2 = std::next(ir->begin(), 3)->command->args[1];
+        auto arg_3 = std::next(ir->begin(), 4)->command->args[1];
+
+        REQUIRE(arg_1->as_integer() == nullptr);
+        REQUIRE(arg_1->as_float() == nullptr);
+        REQUIRE(arg_1->as_var_ref()->def == symrepo.lookup_var("X", 0));
+
+        REQUIRE(arg_2->as_integer() == nullptr);
+        REQUIRE(arg_2->as_float() == nullptr);
+        REQUIRE(arg_2->as_var_ref()->def == symrepo.lookup_var("Y", 1));
+
+        REQUIRE(arg_3->as_integer() == nullptr);
+        REQUIRE(arg_3->as_float() != nullptr);
+        REQUIRE(*arg_3->as_float() == 2.0f);
+        REQUIRE(arg_3->as_var_ref() == nullptr);
+    }
+
+    SUBCASE("invalid INPUT_FLOAT param - integer literal")
+    {
+        build_sema("VAR_FLOAT x\nGENERATE_RANDOM_FLOAT_IN_RANGE 0 2.0 x");
+        REQUIRE(sema.validate() == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::expected_input_float);
+    }
+
+    SUBCASE("invalid INPUT_FLOAT param - string literal")
+    {
+        build_sema("VAR_FLOAT x\nGENERATE_RANDOM_FLOAT_IN_RANGE 0.0 \"Hello\" x");
+        REQUIRE(sema.validate() == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::expected_input_float);
+    }
+
+    SUBCASE("invalid INPUT_FLOAT param - undeclared variable")
+    {
+        build_sema("VAR_FLOAT x\nGENERATE_RANDOM_FLOAT_IN_RANGE x y x");
+        REQUIRE(sema.validate() == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::undefined_variable);
+    }
+
+    SUBCASE("invalid INPUT_FLOAT param - mistyped variable")
+    {
+        build_sema("VAR_FLOAT x\nVAR_INT y\nGENERATE_RANDOM_FLOAT_IN_RANGE x y x");
+        REQUIRE(sema.validate() == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::var_type_mismatch);
+    }
+}
+
+TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_OPT parameter")
+{
+    // TODO test that string constants are not accepted
+
+    SUBCASE("valid INPUT_OPT param")
+    {
+        build_sema("{\nVAR_INT gi\nLVAR_INT li\n"
+                   "VAR_FLOAT gf\nLVAR_FLOAT lf\n"
+                   "VAR_INT in_i\nVAR_FLOAT in_f\n"
+                   "label1: START_NEW_SCRIPT label1 gi li gf lf 123 1.0\n}");
+        auto ir = sema.validate();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(ir->size() == 9);
+
+        auto cmd = std::prev(ir->end(), 2)->command;
+        REQUIRE(cmd->args.size() == 7);
+
+        auto arg_1 = cmd->args[1];
+        auto arg_2 = cmd->args[2];
+        auto arg_3 = cmd->args[3];
+        auto arg_4 = cmd->args[4];
+        auto arg_5 = cmd->args[5];
+        auto arg_6 = cmd->args[6];
+
+        REQUIRE(arg_1->as_integer() == nullptr);
+        REQUIRE(arg_1->as_float() == nullptr);
+        REQUIRE(arg_1->as_var_ref()->def == symrepo.lookup_var("GI", 0));
+
+        REQUIRE(arg_2->as_integer() == nullptr);
+        REQUIRE(arg_2->as_float() == nullptr);
+        REQUIRE(arg_2->as_var_ref()->def == symrepo.lookup_var("LI", 1));
+
+        REQUIRE(arg_3->as_integer() == nullptr);
+        REQUIRE(arg_3->as_float() == nullptr);
+        REQUIRE(arg_3->as_var_ref()->def == symrepo.lookup_var("GF", 0));
+
+        REQUIRE(arg_4->as_integer() == nullptr);
+        REQUIRE(arg_4->as_float() == nullptr);
+        REQUIRE(arg_4->as_var_ref()->def == symrepo.lookup_var("LF", 1));
+
+        REQUIRE(arg_5->as_integer() != nullptr);
+        REQUIRE(*arg_5->as_integer() == 123);
+        REQUIRE(arg_5->as_float() == nullptr);
+        REQUIRE(arg_5->as_var_ref() == nullptr);
+
+        REQUIRE(arg_6->as_integer() == nullptr);
+        REQUIRE(arg_6->as_float() != nullptr);
+        REQUIRE(*arg_6->as_float() == 1.0f);
+        REQUIRE(arg_6->as_var_ref() == nullptr);
+    }
+
+    SUBCASE("invalid INPUT_OPT param - string literal")
+    {
+        build_sema("label1: START_NEW_SCRIPT label1 \"Hello\"");
+        REQUIRE(sema.validate() == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::expected_input_opt);
+    }
+
+    SUBCASE("invalid INPUT_OPT param - undeclared variable")
+    {
+        build_sema("label1: START_NEW_SCRIPT label1 x");
+        REQUIRE(sema.validate() == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::undefined_variable);
+    }
+
+    SUBCASE("invalid INPUT_OPT param - mistyped variable")
+    {
+        build_sema("VAR_TEXT_LABEL var\nlabel1: START_NEW_SCRIPT label1 var");
+        REQUIRE(sema.validate() == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::var_type_mismatch);
+    }
+}
+
 
 TEST_CASE_FIXTURE(SemaFixture, "sema validate subscript")
 {
