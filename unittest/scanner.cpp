@@ -1,10 +1,10 @@
 #include <doctest.h>
 #include <gta3sc/scanner.hpp>
 #include "compiler-fixture.hpp"
-#include <ostream>
 using gta3sc::Category;
+using namespace gta3sc::test;
 
-namespace
+namespace gta3sc::test
 {
 class ScannerFixture : public CompilerFixture
 {

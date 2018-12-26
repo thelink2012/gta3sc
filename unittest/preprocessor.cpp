@@ -1,9 +1,9 @@
 #include <doctest.h>
-#include <gta3sc/preprocessor.hpp>
-#include <cstring>
 #include "compiler-fixture.hpp"
+#include <gta3sc/preprocessor.hpp>
+using namespace gta3sc::test;
 
-namespace
+namespace gta3sc::test
 {
 class PreprocessorFixture : public CompilerFixture
 {

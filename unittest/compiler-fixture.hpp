@@ -4,18 +4,20 @@
 #include <gta3sc/diagnostics.hpp>
 #include <cstring>
 #include <memory>
-#include <deque>
+#include <queue>
 #include <ostream>
 
+namespace gta3sc::test
+{
 class CompilerFixture
 {
 public:
     CompilerFixture() :
         source_file(make_source("")),
-        diagman([this](const auto& diag) { diags.push_back(diag); })
+        diagman([this](const auto& diag) { diags.push(diag); })
     {}
 
-    ~CompilerFixture()
+    virtual ~CompilerFixture()
     {
         CHECK(diags.empty());
     }
@@ -38,7 +40,7 @@ protected:
     auto consume_diag() -> gta3sc::Diagnostic
     {
         auto front = std::move(this->diags.front());
-        this->diags.pop_front();
+        this->diags.pop();
         return front;
     }
 
@@ -50,8 +52,9 @@ protected:
 protected:
     gta3sc::SourceFile source_file;
     gta3sc::DiagnosticHandler diagman;
-    std::deque<gta3sc::Diagnostic> diags;
+    std::queue<gta3sc::Diagnostic> diags;
 };
+}
 
 namespace gta3sc
 {

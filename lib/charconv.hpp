@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <system_error>
+#include <algorithm>
 
 namespace gta3sc::utils
 {

@@ -16,16 +16,25 @@ enum class Diag
     cannot_nest_scopes,
     cannot_mix_andor,
     too_many_conditions,
-    subscript_must_be_positive,
-    expected_token,  // %0 => Category
-    expected_word,   // %0 => string
-    expected_words,  // %0 => vector<string>
+    too_few_arguments,  // %0 => int (expected), %1 => int (got)
+    too_many_arguments, // %0 => int (expected), %1 => int (got)
+    expected_token,     // %0 => Category
+    expected_word,      // %0 => string
+    expected_words,     // %0 => vector<string>
     expected_command,
     expected_require_command,
     expected_argument,
     expected_identifier,
     expected_integer,
+    expected_float,
+    expected_text_label,
+    expected_label,
+    expected_string,
+    expected_variable,
     expected_subscript,
+    expected_varname_after_dollar,
+    expected_gvar_got_lvar,
+    expected_lvar_got_gvar,
     expected_conditional_expression,
     expected_conditional_operator,
     expected_assignment_operator,
@@ -47,20 +56,31 @@ enum class Diag
     var_decl_outside_of_scope,
     var_decl_subscript_must_be_literal,
     var_decl_subscript_must_be_nonzero,
+    var_type_mismatch,
+    subscript_must_be_positive,
+    subscript_out_of_range,
+    subscript_but_var_is_not_array,
+    subscript_var_must_be_int,
+    subscript_var_must_not_be_array,
+    undefined_label,
+    undefined_command,
+    undefined_variable,
 };
 
 /// Information about a diagnostic.
 struct Diagnostic
 {
-    using Arg = std::variant<Category, std::string, std::vector<std::string>>;
+    using Arg = std::variant<Category, std::string, std::vector<std::string>,
+                             int64_t>;
 
-    Diag message;       ///< The diagnostic message.
-    SourceLocation loc; ///< Location from where the diagnostic was reported.
+    Diag message; ///< The diagnostic message.
+    SourceLocation
+            location; ///< Location from where the diagnostic was reported.
     std::vector<SourceRange> ranges; ///< Locations related to the diagnostic.
     std::vector<Arg> args;           ///< Arguments for formatting the message.
 
-    explicit Diagnostic(SourceLocation loc, Diag message) :
-        loc(loc),
+    explicit Diagnostic(SourceLocation location, Diag message) :
+        location(location),
         message(message)
     {}
 };

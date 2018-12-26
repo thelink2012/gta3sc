@@ -16,18 +16,15 @@ namespace gta3sc
 /// phrase requires the content of all the script files spliced together
 /// and needs so in a very specific order.
 ///
-/// Given the lifetime of the each IR node is the same, resources for them
-/// are allocated in a memory arena where everything is freed all at once.
-/// Thus memory management of the IR data structure is very cheap and
-/// produces little to no fragmentation.
-///
 /// Please refer to https://git.io/fNxZP for details of the language grammar.
 class Parser
 {
 public:
-    explicit Parser(Scanner scanner_, ArenaMemoryResource& arena_) :
-        scanner(std::move(scanner_)),
-        arena(&arena_)
+    /// \param scanner the scanner to consume tokens from.
+    /// \param arena the arena that should be used to allocate IR in.
+    explicit Parser(Scanner scanner, ArenaMemoryResource& arena) :
+        scanner(std::move(scanner)),
+        arena(&arena)
     {
         assert(std::size(has_peek_token) == std::size(peek_tokens));
     }

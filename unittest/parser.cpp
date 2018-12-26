@@ -1,11 +1,11 @@
 #include <doctest.h>
-#include "compiler-fixture.hpp"
 #include <gta3sc/parser.hpp>
-#include <iterator>
+#include "compiler-fixture.hpp"
+using namespace gta3sc::test;
 using namespace std::literals::string_view_literals;
 using namespace std::literals::string_literals;
 
-namespace
+namespace gta3sc::test
 {
 class ParserFixture : public CompilerFixture
 {

@@ -16,7 +16,7 @@ using ScopeId = uint32_t;
 /// Represents a defined label.
 struct SymLabel
 {
-    const SourceRange source; ///< The location the label was declared.
+    SourceRange source; ///< The location the label was declared.
 };
 
 /// Represents a declared variable.
@@ -29,9 +29,12 @@ struct SymVariable
         TEXT_LABEL,
     };
 
-    const SourceRange source;    //< The location the variable was declared.
+    SourceRange source;          ///< The location the variable was declared.
+    ScopeId scope;               ///< The scope on which the variable is in.
     Type type;                   ///< The type of the variable.
     std::optional<uint16_t> dim; ///< Array dimensions if any.
+
+    bool is_array() const { return !!dim; }
 };
 
 /// An unordered associative container mapping names to symbols of type `T`.
@@ -104,6 +107,9 @@ public:
     /// Allocates a scope and returns its identifier.
     ///
     /// This effectively creates a symbol table for the scope.
+    ///
+    /// It is guaranted that successive calls to this function provides
+    /// an integer value that is the successor of the previous returned value.
     auto allocate_scope() -> ScopeId;
 
     /// Lookups a variable in a certain scope.
