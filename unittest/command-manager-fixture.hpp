@@ -46,6 +46,7 @@ public:
         cmdman.add_command("SAVE_STRING_TO_DEBUG_FILE", {ParamDef{ParamType::STRING}});
         cmdman.add_command("SAVE_STRING_TO_DEBUG_FILE", {ParamDef{ParamType::STRING}});
 
+
         cmdman.add_command("SET_VAR_INT", {ParamDef{ParamType::VAR_INT},
                                            ParamDef{ParamType::INT}});
         cmdman.add_command("SET_VAR_FLOAT", {ParamDef{ParamType::VAR_FLOAT},
@@ -91,6 +92,47 @@ public:
                            {ParamDef{ParamType::LVAR_TEXT_LABEL},
                             ParamDef{ParamType::TEXT_LABEL}});
 
+        cmdman.add_command("ABS_VAR_INT", {ParamDef{ParamType::VAR_INT}});
+        cmdman.add_command("ABS_LVAR_INT", {ParamDef{ParamType::LVAR_INT}});
+        cmdman.add_command("ABS_VAR_FLOAT", {ParamDef{ParamType::VAR_FLOAT}});
+        cmdman.add_command("ABS_LVAR_FLOAT", {ParamDef{ParamType::LVAR_FLOAT}});
+
+        cmdman.add_command("ACCEPTS_ONLY_VAR_INT", {ParamDef{ParamType::VAR_INT}});
+        cmdman.add_command("ACCEPTS_ONLY_LVAR_INT", {ParamDef{ParamType::LVAR_INT}});
+        cmdman.add_command("ACCEPTS_ONLY_VAR_FLOAT", {ParamDef{ParamType::VAR_FLOAT}});
+        cmdman.add_command("ACCEPTS_ONLY_LVAR_FLOAT", {ParamDef{ParamType::LVAR_FLOAT}});
+
+        cmdman.add_alternator("SET", 
+                              {cmdman.find_command("SET_VAR_INT"),
+                               cmdman.find_command("SET_VAR_FLOAT"),
+                               cmdman.find_command("SET_LVAR_INT"),
+                               cmdman.find_command("SET_LVAR_FLOAT"),
+                               cmdman.find_command("SET_VAR_INT_TO_VAR_INT"),
+                               cmdman.find_command("SET_LVAR_INT_TO_LVAR_INT"),
+                               cmdman.find_command("SET_VAR_FLOAT_TO_VAR_FLOAT"),
+                               cmdman.find_command("SET_LVAR_FLOAT_TO_LVAR_FLOAT"),
+                               cmdman.find_command("SET_VAR_FLOAT_TO_LVAR_FLOAT"),
+                               cmdman.find_command("SET_LVAR_FLOAT_TO_VAR_FLOAT"),
+                               cmdman.find_command("SET_VAR_INT_TO_LVAR_INT"),
+                               cmdman.find_command("SET_LVAR_INT_TO_VAR_INT"),
+                               cmdman.find_command("SET_VAR_INT_TO_CONSTANT"),
+                               cmdman.find_command("SET_LVAR_INT_TO_CONSTANT"),
+                               cmdman.find_command("SET_VAR_TEXT_LABEL"),
+                               cmdman.find_command("SET_LVAR_TEXT_LABEL")});
+
+        cmdman.add_alternator("ABS",
+                              {cmdman.find_command("ABS_VAR_INT"),
+                               cmdman.find_command("ABS_LVAR_INT"),
+                               cmdman.find_command("ABS_VAR_FLOAT"),
+                               cmdman.find_command("ABS_LVAR_FLOAT")});
+
+        cmdman.add_alternator("ACCEPTS_ONLY_GLOBAL_VAR",
+                              {cmdman.find_command("ACCEPTS_ONLY_VAR_INT"),
+                               cmdman.find_command("ACCEPTS_ONLY_VAR_FLOAT")});
+
+        cmdman.add_alternator("ACCEPTS_ONLY_LOCAL_VAR",
+                              {cmdman.find_command("ACCEPTS_ONLY_LVAR_INT"),
+                               cmdman.find_command("ACCEPTS_ONLY_LVAR_FLOAT")});
     }
 
 protected:

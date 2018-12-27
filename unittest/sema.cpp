@@ -1202,7 +1202,109 @@ TEST_CASE_FIXTURE(SemaFixture, "sema too many arguments")
     }
 }
 
+TEST_CASE_FIXTURE(SemaFixture, "alternators")
+{
+    // TODO test with constants and such
 
-// TODO what should happen when we do
-// VAR_TEXT_LABEL $valid_var
-// PRINT_HELP $$valid_var
+    SUBCASE("alternative match - valid matches")
+    {
+        build_sema("{\nVAR_INT gi\nVAR_FLOAT gf\nLVAR_INT li\nLVAR_FLOAT lf\n"
+                   "ABS gi\n"
+                   "ABS li\n"
+                   "ABS gf\n"
+                   "ABS lf\n"
+                   "SET gi 10\n"
+                   "SET gf 1.0\n"
+                   "SET gi li\n"
+                   "SET lf gf\n}");
+        auto ir = sema.validate();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(&std::next(ir->begin(), 5)->command->def 
+                == cmdman.find_command("ABS_VAR_INT"));
+        REQUIRE(&std::next(ir->begin(), 6)->command->def 
+                == cmdman.find_command("ABS_LVAR_INT"));
+        REQUIRE(&std::next(ir->begin(), 7)->command->def 
+                == cmdman.find_command("ABS_VAR_FLOAT"));
+        REQUIRE(&std::next(ir->begin(), 8)->command->def 
+                == cmdman.find_command("ABS_LVAR_FLOAT"));
+        REQUIRE(&std::next(ir->begin(), 9)->command->def 
+                == cmdman.find_command("SET_VAR_INT"));
+        REQUIRE(&std::next(ir->begin(), 10)->command->def 
+                == cmdman.find_command("SET_VAR_FLOAT"));
+        REQUIRE(&std::next(ir->begin(), 11)->command->def 
+                == cmdman.find_command("SET_VAR_INT_TO_LVAR_INT"));
+        REQUIRE(&std::next(ir->begin(), 12)->command->def 
+                == cmdman.find_command("SET_LVAR_FLOAT_TO_VAR_FLOAT"));
+    }
+
+    SUBCASE("alternative match - otherwise case, text label")
+    {
+        build_sema("VAR_TEXT_LABEL x\nSET x y\nSET x $x\n");
+        auto ir = sema.validate();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(ir->size() == 3);
+        
+        const auto& command_1 = *std::next(ir->begin(), 1)->command;
+        const auto& command_2 = *std::next(ir->begin(), 2)->command;
+
+        REQUIRE(&command_1.def == cmdman.find_command("SET_VAR_TEXT_LABEL"));
+        REQUIRE(command_1.args[0]->as_var_ref()->def == symrepo.lookup_var("X"));
+        REQUIRE(*command_1.args[1]->as_text_label() == "Y"sv);
+
+        REQUIRE(&command_2.def == cmdman.find_command("SET_VAR_TEXT_LABEL"));
+        REQUIRE(command_2.args[0]->as_var_ref()->def == symrepo.lookup_var("X"));
+        REQUIRE(command_2.args[1]->as_var_ref()->def == symrepo.lookup_var("X"));
+    }
+
+    SUBCASE("no alternative match - wrong number of arguments")
+    {
+        build_sema("VAR_INT x\nABS x x\nABS");
+        REQUIRE(sema.validate() == std::nullopt);
+        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
+        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
+    }
+
+    SUBCASE("no alternative match - literal in variable only")
+    {
+        build_sema("ABS 10\nABS 1.0\nABS x\nABS \"Hello\"");
+        REQUIRE(sema.validate() == std::nullopt);
+        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
+        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
+        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
+        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
+    }
+
+    SUBCASE("no alternative match - local in global only")
+    {
+        build_sema("{\nVAR_INT x\nLVAR_INT y\nLVAR_FLOAT z\n"
+                   "ACCEPTS_ONLY_GLOBAL_VAR x\n"
+                   "ACCEPTS_ONLY_GLOBAL_VAR x\n"
+                   "ACCEPTS_ONLY_GLOBAL_VAR y\n"
+                   "ACCEPTS_ONLY_GLOBAL_VAR z\n}");
+        REQUIRE(sema.validate() == std::nullopt);
+        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
+        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
+    }
+
+    SUBCASE("no alternative match - global in local only")
+    {
+        build_sema("{\nLVAR_INT x\nVAR_INT y\nVAR_FLOAT z\n"
+                   "ACCEPTS_ONLY_LOCAL_VAR x\n"
+                   "ACCEPTS_ONLY_LOCAL_VAR x\n"
+                   "ACCEPTS_ONLY_LOCAL_VAR y\n"
+                   "ACCEPTS_ONLY_LOCAL_VAR z\n}");
+        REQUIRE(sema.validate() == std::nullopt);
+        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
+        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
+    }
+
+    SUBCASE("no alternative match - text label variable in int/float only")
+    {
+        build_sema("{\nVAR_TEXT_LABEL x\nLVAR_TEXT_LABEL y\n"
+                   "ABS x\nABS y\n}");
+        REQUIRE(sema.validate() == std::nullopt);
+        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
+        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
+    }
+}
+

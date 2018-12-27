@@ -68,6 +68,7 @@ enum class Diag
     undefined_label,
     undefined_command,
     undefined_variable,
+    alternator_mismatch,
 };
 
 /// Information about a diagnostic.

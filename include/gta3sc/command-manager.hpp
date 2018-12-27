@@ -3,6 +3,7 @@
 #include <gta3sc/adt/span.hpp>
 #include <string_view>
 #include <unordered_map>
+#include <algorithm>
 
 namespace gta3sc
 {
@@ -67,6 +68,11 @@ public:
         std::string_view name;
         adt::span<ParamDef> params;
     };
+    
+    struct AlternatorDef
+    {
+        adt::span<const CommandDef*> alternatives;
+    };
 
 public:
 
@@ -100,6 +106,40 @@ public:
         return it == command_by_name.end()? nullptr : it->second;
     }
 
+    bool add_alternator(std::string_view name,
+                        std::initializer_list<const CommandDef*> alternatives)
+    {
+        assert(std::none_of(alternatives.begin(), alternatives.end(),
+                            [](const auto* a) { return a == nullptr; }));
+
+        if(alternator_by_name.count(name))
+            return false;
+
+        const auto num_alters = alternatives.size();
+
+        auto a_name = allocate_string_upper(name);
+        auto a_alters = static_cast<const CommandDef**>(
+                arena.allocate(num_alters * sizeof(const CommandDef*),
+                               alignof(const CommandDef*)));
+
+        std::uninitialized_copy(alternatives.begin(), alternatives.end(), a_alters);
+
+        auto a_alternator = new (arena, alignof(AlternatorDef)) AlternatorDef {
+            adt::span(a_alters, num_alters)
+        };
+
+        alternator_by_name.emplace(a_name, a_alternator);
+        return true;
+    }
+
+    auto find_alternator(std::string_view name) const -> const AlternatorDef*
+    {
+        auto it = alternator_by_name.find(name);
+        return it == alternator_by_name.end()? nullptr : it->second;
+    }
+
+
+
 
 private:
 
@@ -119,6 +159,9 @@ private:
 private:
     std::unordered_map<std::string_view, arena_ptr<const CommandDef>> 
         command_by_name;
+
+    std::unordered_map<std::string_view, arena_ptr<const AlternatorDef>>
+        alternator_by_name;
 
     ArenaMemoryResource arena;
 

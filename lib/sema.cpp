@@ -159,12 +159,33 @@ auto Sema::validate_command(const ParserIR::Command& command)
         -> arena_ptr<SemaIR::Command>
 {
     bool failed = false;
+    const CommandManager::CommandDef* command_def{};
 
-    const auto command_def = cmdman->find_command(command.name);
-    if(!command_def)
+    if(const auto alternator = cmdman->find_alternator(command.name))
     {
-        report(command.source, Diag::undefined_command);
-        return nullptr;
+        const auto& alternatives = alternator->alternatives;
+        auto it = std::find_if(alternatives.begin(), alternatives.end(),
+                               [&](const auto* alternative) {
+                                   return is_matching_alternative(command,
+                                                                  *alternative);
+                               });
+        if(it == alternatives.end())
+        {
+            report(command.source, Diag::alternator_mismatch);
+            return nullptr;
+        }
+
+        command_def = *it;
+        assert(command_def);
+    }
+    else
+    {
+        command_def = cmdman->find_command(command.name);
+        if(!command_def)
+        {
+            report(command.source, Diag::undefined_command);
+            return nullptr;
+        }
     }
 
     auto result = SemaIR::Command::create(*command_def, command.source, arena);
@@ -390,6 +411,71 @@ auto Sema::validate_string_literal(const CommandManager::ParamDef& param,
     }
 
     return SemaIR::create_string(*arg.as_string(), arg.source, arena);
+}
+
+bool Sema::is_matching_alternative(
+        const ParserIR::Command& command,
+        const CommandManager::CommandDef& alternative)
+{
+    // Alternators do not admit optional arguments, so it's
+    // all good to perform this check beforehand.
+    if(command.args.size() != alternative.params.size())
+        return false;
+
+    for(size_t i = 0, acount = command.args.size(); i < acount; ++i)
+    {
+        const auto& arg = *command.args[i];
+        const auto& param = alternative.params[i];
+
+        if(arg.as_integer())
+        {
+            if(param.type != ParamType::INT)
+                return false;
+        }
+        else if(arg.as_float())
+        {
+            if(param.type != ParamType::FLOAT)
+                return false;
+        }
+        else if(arg.as_identifier())
+        {
+            const SymVariable* sym_var{};
+
+            // TODO check for global string constants and string constants
+            auto [var_name, var_source, _] = parse_var_ref(*arg.as_identifier(),
+                                                           arg.source);
+            if((sym_var = symrepo->lookup_var(var_name)))
+            {
+                if(param.type != ParamType::VAR_INT
+                   && param.type != ParamType::VAR_FLOAT
+                   && param.type != ParamType::VAR_TEXT_LABEL)
+                    return false;
+                if(!matches_var_type(param.type, sym_var->type))
+                    return false;
+            }
+            else if(current_scope != -1
+                    && (sym_var = symrepo->lookup_var(var_name, current_scope)))
+            {
+                if(param.type != ParamType::LVAR_INT
+                   && param.type != ParamType::LVAR_FLOAT
+                   && param.type != ParamType::LVAR_TEXT_LABEL)
+                    return false;
+                if(!matches_var_type(param.type, sym_var->type))
+                    return false;
+            }
+            else
+            {
+                if(param.type != ParamType::TEXT_LABEL)
+                    return false;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 auto Sema::validate_var_ref(const CommandManager::ParamDef& param,
@@ -677,10 +763,10 @@ auto Sema::parse_var_ref(std::string_view identifier, SourceRange source)
     // subscript := '[' (variable_name | integer) ']' ;
     // variable := variable_name [ subscript ] ;
 
-    // We need this parsing function in the semantic phase because, until this
-    // point, we could not classify an identifier into either a variable or
-    // something else (that something else e.g. labels could contain
-    // brackets in its name).
+    // We need this parsing function in the semantic phase because, until
+    // this point, we could not classify an identifier into either a
+    // variable or something else (that something else e.g. labels could
+    // contain brackets in its name).
 
     std::string_view var_name;
     SourceRange var_source;
