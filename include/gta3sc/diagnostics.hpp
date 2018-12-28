@@ -15,6 +15,7 @@ enum class Diag
 {
     cannot_nest_scopes,
     cannot_mix_andor,
+    cannot_use_string_constant_here,
     too_many_conditions,
     too_few_arguments,  // %0 => int (expected), %1 => int (got)
     too_many_arguments, // %0 => int (expected), %1 => int (got)
@@ -55,6 +56,7 @@ enum class Diag
     duplicate_var_global,
     duplicate_var_in_scope,
     duplicate_var_lvar,
+    duplicate_var_string_constant,
     duplicate_label,
     var_decl_outside_of_scope,
     var_decl_subscript_must_be_literal,

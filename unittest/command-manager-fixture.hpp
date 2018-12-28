@@ -11,6 +11,33 @@ public:
     {
         using ParamDef = gta3sc::CommandManager::ParamDef;
         using ParamType = gta3sc::CommandManager::ParamType;
+        using EntityId = gta3sc::CommandManager::EntityId;
+        using EnumId = gta3sc::CommandManager::EnumId;
+
+        CHECK(cmdman.find_enumeration("GLOBAL"));
+        cmdman.add_enumeration("PEDTYPE");
+        cmdman.add_enumeration("DEFAULTMODEL");
+        cmdman.add_enumeration("FADE");
+
+        cmdman.add_constant(*cmdman.find_enumeration("GLOBAL"), "FALSE", 0);
+        cmdman.add_constant(*cmdman.find_enumeration("GLOBAL"), "TRUE", 1);
+        cmdman.add_constant(*cmdman.find_enumeration("GLOBAL"), "OFF", 0);
+        cmdman.add_constant(*cmdman.find_enumeration("GLOBAL"), "ON", 1);
+
+        cmdman.add_constant(*cmdman.find_enumeration("PEDTYPE"), "PEDTYPE_CIVMALE", 4);
+        cmdman.add_constant(*cmdman.find_enumeration("PEDTYPE"), "PEDTYPE_CIVFEMALE", 5);
+        cmdman.add_constant(*cmdman.find_enumeration("PEDTYPE"), "PEDTYPE_MEDIC", 16);
+
+        cmdman.add_constant(*cmdman.find_enumeration("FADE"), "FADE_OUT", 0);
+        cmdman.add_constant(*cmdman.find_enumeration("FADE"), "FADE_IN", 1);
+
+        cmdman.add_constant(*cmdman.find_enumeration("DEFAULTMODEL"), "MEDIC", 5);
+        cmdman.add_constant(*cmdman.find_enumeration("DEFAULTMODEL"), "HFYST", 9);
+        cmdman.add_constant(*cmdman.find_enumeration("DEFAULTMODEL"), "HMYST", 11);
+        cmdman.add_constant(*cmdman.find_enumeration("DEFAULTMODEL"), "CHEETAH", 145);
+        cmdman.add_constant(*cmdman.find_enumeration("DEFAULTMODEL"), "WASHING", 151);
+        cmdman.add_constant(*cmdman.find_enumeration("DEFAULTMODEL"), "LOVEFIST", 201);
+
         cmdman.add_command("{", {});
         cmdman.add_command("}", {});
         cmdman.add_command("IF", {ParamDef{ParamType::INT}});
@@ -46,6 +73,24 @@ public:
         cmdman.add_command("SAVE_STRING_TO_DEBUG_FILE", {ParamDef{ParamType::STRING}});
         cmdman.add_command("SAVE_STRING_TO_DEBUG_FILE", {ParamDef{ParamType::STRING}});
 
+        cmdman.add_command("CREATE_CHAR", {
+                ParamDef{ParamType::INPUT_INT, EntityId{}, *cmdman.find_enumeration("PEDTYPE")}, 
+                ParamDef{ParamType::INPUT_INT, EntityId{}, *cmdman.find_enumeration("DEFAULTMODEL")},
+                ParamDef{ParamType::INPUT_FLOAT},
+                ParamDef{ParamType::INPUT_FLOAT},
+                ParamDef{ParamType::INPUT_FLOAT},
+                ParamDef{ParamType::OUTPUT_INT}});
+
+        cmdman.add_command("CREATE_CAR", {
+                ParamDef{ParamType::INPUT_INT, EntityId{}, *cmdman.find_enumeration("DEFAULTMODEL")},
+                ParamDef{ParamType::INPUT_FLOAT},
+                ParamDef{ParamType::INPUT_FLOAT},
+                ParamDef{ParamType::INPUT_FLOAT},
+                ParamDef{ParamType::OUTPUT_INT}});
+
+        cmdman.add_command("DO_FADE", {
+                ParamDef{ParamType::INPUT_INT},
+                ParamDef{ParamType::INPUT_INT, EntityId{}, *cmdman.find_enumeration("FADE")}});
 
         cmdman.add_command("SET_VAR_INT", {ParamDef{ParamType::VAR_INT},
                                            ParamDef{ParamType::INT}});

@@ -3,8 +3,6 @@
 
 // gta3script-specs 7fe565c767ee85fb8c99b594b3b3d280aa1b1c80
 
-// TODO alternators
-// TODO string constants
 // TODO entity checking
 
 namespace gta3sc
@@ -77,15 +75,16 @@ bool Sema::discover_declarations_pass()
         }
     }
 
-    // Ensure local variables do not collide with global variables.
-    for(ScopeId i = 1; i < symrepo->var_tables.size(); ++i)
+    // Ensure variables do not collide with other names in the same namespace.
+    for(ScopeId i = 0; i < symrepo->var_tables.size(); ++i)
     {
-        for(const auto& [name, lvar] : symrepo->var_tables[i])
+        for(const auto& [name, var] : symrepo->var_tables[i])
         {
-            if(symrepo->lookup_var(name, 0))
-            {
-                report(lvar->source, Diag::duplicate_var_lvar);
-            }
+            if(i != 0 && symrepo->lookup_var(name, 0))
+                report(var->source, Diag::duplicate_var_lvar);
+
+            if(cmdman->find_constant_any_means(name))
+                report(var->source, Diag::duplicate_var_string_constant);
         }
     }
 
@@ -104,6 +103,7 @@ auto Sema::check_semantics_pass() -> std::optional<LinkedIR<SemaIR>>
     for(auto& line : parser_ir)
     {
         this->analyzing_var_decl = false;
+        this->analyzing_alternative_command = false;
 
         linked.push_back(SemaIR::create(arena));
 
@@ -177,6 +177,7 @@ auto Sema::validate_command(const ParserIR::Command& command)
 
         command_def = *it;
         assert(command_def);
+        this->analyzing_alternative_command = true;
     }
     else
     {
@@ -235,7 +236,14 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
     {
         case ParamType::INT:
         {
-            // TODO check for global string constant first
+            if(analyzing_alternative_command && arg.as_identifier())
+            {
+                auto cdef = cmdman->find_constant(cmdman->global_enum,
+                                                  *arg.as_identifier());
+                assert(cdef != nullptr);
+
+                return SemaIR::create_string_constant(*cdef, arg.source, arena);
+            }
             return validate_integer_literal(param, arg);
         }
         case ParamType::FLOAT:
@@ -247,6 +255,12 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
             if(!arg.as_identifier())
             {
                 report(arg.source, Diag::expected_text_label);
+                return nullptr;
+            }
+
+            if(cmdman->find_constant(cmdman->global_enum, *arg.as_identifier()))
+            {
+                report(arg.source, Diag::cannot_use_string_constant_here);
                 return nullptr;
             }
 
@@ -280,12 +294,34 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
         }
         case ParamType::INPUT_INT:
         {
-            // TODO check for string constants and global constants
+            if(analyzing_alternative_command)
+            {
+                // This command has been matched during alternation in a
+                // command selector. Thus, according to the command selectors
+                // matching rules, an INPUT_INT parameter has an argument
+                // that corresponds to a string constant from any enumeration.
 
-            if(arg.as_integer())
+                assert(arg.as_identifier());
+                auto cdef = cmdman->find_constant_any_means(
+                        *arg.as_identifier());
+                assert(cdef != nullptr);
+
+                return SemaIR::create_string_constant(*cdef, arg.source, arena);
+            }
+            else if(arg.as_integer())
+            {
                 return validate_integer_literal(param, arg);
+            }
             else if(arg.as_identifier())
+            {
+                if(auto cdef = cmdman->find_constant(param.enum_type,
+                                                     *arg.as_identifier()))
+                {
+                    return SemaIR::create_string_constant(*cdef, arg.source,
+                                                          arena);
+                }
                 return validate_var_ref(param, arg);
+            }
 
             report(arg.source, Diag::expected_input_int);
             return nullptr;
@@ -295,7 +331,15 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
             if(arg.as_float())
                 return validate_float_literal(param, arg);
             else if(arg.as_identifier())
+            {
+                if(cmdman->find_constant(cmdman->global_enum,
+                                         *arg.as_identifier()))
+                {
+                    report(arg.source, Diag::cannot_use_string_constant_here);
+                    return nullptr;
+                }
                 return validate_var_ref(param, arg);
+            }
 
             report(arg.source, Diag::expected_input_float);
             return nullptr;
@@ -303,11 +347,23 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
         case ParamType::INPUT_OPT:
         {
             if(arg.as_integer())
+            {
                 return validate_integer_literal(param, arg);
+            }
             else if(arg.as_float())
+            {
                 return validate_float_literal(param, arg);
+            }
             else if(arg.as_identifier())
+            {
+                if(auto cdef = cmdman->find_constant(cmdman->global_enum,
+                                                     *arg.as_identifier()))
+                {
+                    return SemaIR::create_string_constant(*cdef, arg.source,
+                                                          arena);
+                }
                 return validate_var_ref(param, arg);
+            }
 
             report(arg.source, Diag::expected_input_opt);
             return nullptr;
@@ -315,6 +371,13 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
         case ParamType::OUTPUT_INT:
         case ParamType::OUTPUT_FLOAT:
         {
+            if(arg.as_identifier()
+               && cmdman->find_constant(cmdman->global_enum,
+                                        *arg.as_identifier()))
+            {
+                report(arg.source, Diag::cannot_use_string_constant_here);
+                return nullptr;
+            }
             return validate_var_ref(param, arg);
         }
         default:
@@ -427,51 +490,84 @@ bool Sema::is_matching_alternative(
         const auto& arg = *command.args[i];
         const auto& param = alternative.params[i];
 
-        if(arg.as_integer())
+        switch(param.type)
         {
-            if(param.type != ParamType::INT)
-                return false;
-        }
-        else if(arg.as_float())
-        {
-            if(param.type != ParamType::FLOAT)
-                return false;
-        }
-        else if(arg.as_identifier())
-        {
-            const SymVariable* sym_var{};
+            case ParamType::INT:
+            {
+                if(arg.as_identifier())
+                {
+                    if(!cmdman->find_constant(cmdman->global_enum,
+                                              *arg.as_identifier()))
+                        return false;
+                }
+                else if(!arg.as_integer())
+                {
+                    return false;
+                }
+                break;
+            }
+            case ParamType::FLOAT:
+            {
+                if(!arg.as_float())
+                    return false;
+                break;
+            }
+            case ParamType::VAR_INT:
+            case ParamType::VAR_FLOAT:
+            case ParamType::VAR_TEXT_LABEL:
+            {
+                if(!arg.as_identifier())
+                    return false;
 
-            // TODO check for global string constants and string constants
-            auto [var_name, var_source, _] = parse_var_ref(*arg.as_identifier(),
-                                                           arg.source);
-            if((sym_var = symrepo->lookup_var(var_name)))
-            {
-                if(param.type != ParamType::VAR_INT
-                   && param.type != ParamType::VAR_FLOAT
-                   && param.type != ParamType::VAR_TEXT_LABEL)
+                const auto arg_ident = *arg.as_identifier();
+                auto [var_name, var_source, _] = parse_var_ref(arg_ident,
+                                                               arg.source);
+                auto sym_var = symrepo->lookup_var(var_name);
+                if(!sym_var || !matches_var_type(param.type, sym_var->type))
                     return false;
-                if(!matches_var_type(param.type, sym_var->type))
-                    return false;
+
+                break;
             }
-            else if(current_scope != -1
-                    && (sym_var = symrepo->lookup_var(var_name, current_scope)))
+            case ParamType::LVAR_INT:
+            case ParamType::LVAR_FLOAT:
+            case ParamType::LVAR_TEXT_LABEL:
             {
-                if(param.type != ParamType::LVAR_INT
-                   && param.type != ParamType::LVAR_FLOAT
-                   && param.type != ParamType::LVAR_TEXT_LABEL)
+                if(current_scope == -1)
                     return false;
-                if(!matches_var_type(param.type, sym_var->type))
+
+                if(!arg.as_identifier())
                     return false;
+
+                const auto arg_ident = *arg.as_identifier();
+                auto [var_name, var_source, _] = parse_var_ref(arg_ident,
+                                                               arg.source);
+                auto sym_var = symrepo->lookup_var(var_name, current_scope);
+                if(!sym_var || !matches_var_type(param.type, sym_var->type))
+                    return false;
+
+                break;
             }
-            else
+            case ParamType::INPUT_INT:
             {
-                if(param.type != ParamType::TEXT_LABEL)
+                if(!arg.as_identifier())
                     return false;
+
+                const auto arg_ident = *arg.as_identifier();
+                if(!cmdman->find_constant_any_means(arg_ident))
+                    return false;
+
+                break;
             }
-        }
-        else
-        {
-            return false;
+            case ParamType::TEXT_LABEL:
+            {
+                if(!arg.as_identifier())
+                    return false;
+                break;
+            }
+            default:
+            {
+                return false;
+            }
         }
     }
 

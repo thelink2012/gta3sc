@@ -1,5 +1,6 @@
 #pragma once
 #include <gta3sc/ir/symbol-table.hpp>
+#include <gta3sc/command-manager.hpp>
 
 // TODO this is in progress
 
@@ -102,6 +103,12 @@ public:
         {
         };
 
+        struct StringConstant
+        {
+            CommandManager::EnumId enum_id;
+            int32_t value;
+        };
+
         using TextLabel = std::pair<TextLabelTag, std::string_view>;
         using String = std::pair<StringTag, std::string_view>;
         const SourceRange source;
@@ -109,13 +116,12 @@ public:
         const std::variant<
                 int32_t, float, TextLabel, String, VariableRef,
                 // TODO observer_ptr<SymFilename>,
-                observer_ptr<SymLabel> //,
+                observer_ptr<SymLabel>,
                 // TODO observer_ptr<SymConstantInt>,
                 // TODO observer_ptr<SymConstantFloat>,
                 // TODO observer_ptr<__HeaderModel>,
                 // TODO observer_ptr<__StreamedScriptConstant>,
-                // TODO observer_ptr<__CommandManager__GlobalStringConstant>
-                // TODO observer_ptr<__CommandManager__StringConstant>
+                StringConstant
                 >
                 value;
 
@@ -155,6 +161,11 @@ public:
             if(auto label = std::get_if<observer_ptr<SymLabel>>(&this->value))
                 return *label;
             return nullptr;
+        }
+
+        auto as_string_constant() const -> const StringConstant*
+        {
+            return std::get_if<StringConstant>(&this->value);
         }
 
     protected:
@@ -240,6 +251,23 @@ public:
         assert(var != nullptr && index != nullptr);
         return new(*arena, alignof(Argument))
                 Argument(Argument::VariableRef{var, index}, source);
+    }
+
+    static auto create_string_constant(CommandManager::EnumId enum_id, 
+                                       int32_t value, SourceRange source,
+                                       ArenaMemoryResource* arena)
+            -> arena_ptr<Argument>
+    {
+        return new(*arena, alignof(Argument))
+                Argument(Argument::StringConstant{enum_id, value}, source);
+    }
+
+    static auto create_string_constant(const CommandManager::ConstantDef& cdef, 
+                                       SourceRange source,
+                                       ArenaMemoryResource* arena)
+            -> arena_ptr<Argument>
+    {
+        return create_string_constant(cdef.enum_id, cdef.value, source, arena);
     }
 };
 }

@@ -10,6 +10,14 @@ namespace gta3sc
 class CommandManager
 {
 public:
+    enum class EnumId : uint16_t
+    {
+    };
+
+    enum class EntityId : uint16_t
+    {
+    };
+
     enum class ParamType : uint8_t
     {
         INT,
@@ -42,8 +50,8 @@ public:
     struct ParamDef
     {
         ParamType type;
-        uint16_t entity_type = 0;
-        uint16_t enum_type = 0;
+        EntityId entity_type {0};
+        EnumId enum_type {0};
 
         bool is_optional() const
         {
@@ -74,7 +82,22 @@ public:
         adt::span<const CommandDef*> alternatives;
     };
 
+    struct ConstantDef
+    {
+        EnumId enum_id;
+        int32_t value;
+        arena_ptr<ConstantDef> next;
+    };
+
 public:
+    static constexpr EnumId global_enum = EnumId{0};
+    static constexpr EntityId no_entity = EntityId{0};
+
+    CommandManager()
+    {
+        const auto global_enum = add_enumeration("GLOBAL");
+        assert(global_enum == this->global_enum);
+    }
 
     bool add_command(std::string_view name,
                      std::initializer_list<ParamDef> params)
@@ -138,6 +161,75 @@ public:
         return it == alternator_by_name.end()? nullptr : it->second;
     }
 
+    auto add_enumeration(std::string_view name) -> EnumId
+    {
+        const std::underlying_type_t<EnumId> next_id = enum_by_name.size();
+        assert(next_id < std::numeric_limits<decltype(next_id)>::max());
+        auto [iter, inserted] = enum_by_name.try_emplace(name, EnumId{next_id});
+        return iter->second;
+    }
+
+    auto find_enumeration(std::string_view name) const -> std::optional<EnumId>
+    {
+        auto it = enum_by_name.find(name);
+        if(it == enum_by_name.end())
+            return std::nullopt;
+        return it->second;
+    }
+
+    bool add_constant(EnumId enum_id, std::string_view name, int32_t value)
+    {
+        auto [it, _] = constant_by_name.try_emplace(name, nullptr);
+        
+        ConstantDef** ptr_next = std::addressof(it->second);
+        while(*ptr_next != nullptr)
+        {
+            if((*ptr_next)->enum_id == enum_id)
+                return false;
+
+            ptr_next = std::addressof((*ptr_next)->next);
+        }
+
+        *ptr_next = new (arena, alignof(ConstantDef)) ConstantDef { 
+            enum_id, value, nullptr 
+        };
+
+        return true;
+    }
+
+    auto find_constant(EnumId enum_id, std::string_view name) const -> const ConstantDef*
+    {
+        auto it = constant_by_name.find(name);
+        if(it == constant_by_name.end())
+            return nullptr;
+
+        for(ConstantDef* cdef = it->second; cdef != nullptr; cdef = cdef->next)
+        {
+            if(cdef->enum_id == enum_id)
+                return cdef;
+        }
+
+        return nullptr;
+    }
+
+    auto find_constant_any_means(std::string_view name) const -> const ConstantDef*
+    {
+        auto it = constant_by_name.find(name);
+        if(it == constant_by_name.end())
+            return nullptr;
+        assert(it->second != nullptr);
+
+        for(ConstantDef* cdef = it->second; cdef != nullptr; cdef = cdef->next)
+        {
+            if(cdef->enum_id != global_enum)
+                return cdef;
+        }
+
+        return nullptr;
+    }
+
+
+
 
 
 
@@ -162,6 +254,12 @@ private:
 
     std::unordered_map<std::string_view, arena_ptr<const AlternatorDef>>
         alternator_by_name;
+
+    std::unordered_map<std::string_view, EnumId>
+        enum_by_name;
+
+    std::unordered_map<std::string_view, arena_ptr<ConstantDef>>
+        constant_by_name;
 
     ArenaMemoryResource arena;
 
