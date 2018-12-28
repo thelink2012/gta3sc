@@ -1485,12 +1485,14 @@ TEST_CASE_FIXTURE(SemaFixture, "alternators")
 
     SUBCASE("no alternative match - types mismatch")
     {
-        build_sema("{\nVAR_INT i\nLVAR_FLOAT f\n"
+        build_sema("{\nVAR_INT i\nLVAR_FLOAT f\nVAR_INT ON\n"
                    "SET i 2.0\n"
                    "SET f 2\n"
                    "SET 2 i\n"
-                   "SET 2.0 f\n}");
+                   "SET 2.0 f\n"
+                   "SET ON 1\n}");
         REQUIRE(sema.validate() == std::nullopt);
+        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
         CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
         CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
         CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);

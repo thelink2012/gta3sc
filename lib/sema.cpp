@@ -490,6 +490,14 @@ bool Sema::is_matching_alternative(
         const auto& arg = *command.args[i];
         const auto& param = alternative.params[i];
 
+        // The global string constants have higher precedence when checking for
+        // anything that is an identifier, and that shall only match with INTs.
+        if(param.type != ParamType::INT && arg.as_identifier()
+           && cmdman->find_constant(cmdman->global_enum, *arg.as_identifier()))
+        {
+            return false;
+        }
+
         switch(param.type)
         {
             case ParamType::INT:
