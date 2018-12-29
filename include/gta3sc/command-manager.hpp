@@ -4,6 +4,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <algorithm>
+#include <optional>
 
 namespace gta3sc
 {

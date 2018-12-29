@@ -130,6 +130,9 @@ private:
             -> VarRef;
 
     /// Reports an invalid situation and increments `report_count`.
+    auto report(SourceLocation source, Diag message) -> DiagnosticBuilder;
+
+    /// Reports an invalid situation and increments `report_count`.
     auto report(SourceRange source, Diag message) -> DiagnosticBuilder;
 
     /// Lookups a variable in the global scope as well as in
@@ -147,16 +150,16 @@ private:
     bool matches_var_type(CommandManager::ParamType param_type,
                           SymVariable::Type var_type) const;
 
-    //// Checks whether the specified actual command/args matches the
-    //// specification of a certain alternative command.
-    bool is_matching_alternative(const ParserIR::Command& command,
-                                 const CommandManager::CommandDef& alternative);
-
     /// Checks whether the specified command is an alternative of an certain
     /// alternator.
     bool
     is_alternative_command(const CommandManager::CommandDef& command_def,
                            const CommandManager::AlternatorDef& from) const;
+
+    //// Checks whether the specified actual command/args matches the
+    //// specification of a certain alternative command.
+    bool is_matching_alternative(const ParserIR::Command& command,
+                                 const CommandManager::CommandDef& alternative);
 
 private:
     struct VarSubscript

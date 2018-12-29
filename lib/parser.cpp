@@ -77,7 +77,7 @@ auto Parser::report_special_name(SourceRange source) -> DiagnosticBuilder
 {
     // This method can be specialized to produce a different diagnostic
     // for each special name. Currently we produce a generic message.
-    const auto name = source;
+    const std::string_view name = source;
     return report(source, Diag::unexpected_special_name).args(name);
 }
 

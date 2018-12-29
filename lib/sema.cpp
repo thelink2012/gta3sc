@@ -483,112 +483,6 @@ auto Sema::validate_string_literal(const CommandManager::ParamDef& param,
     return SemaIR::create_string(*arg.as_string(), arg.source, arena);
 }
 
-bool Sema::is_matching_alternative(
-        const ParserIR::Command& command,
-        const CommandManager::CommandDef& alternative)
-{
-    // Alternators do not admit optional arguments, so it's
-    // all good to perform this check beforehand.
-    if(command.args.size() != alternative.params.size())
-        return false;
-
-    for(size_t i = 0, acount = command.args.size(); i < acount; ++i)
-    {
-        const auto& arg = *command.args[i];
-        const auto& param = alternative.params[i];
-
-        // The global string constants have higher precedence when checking for
-        // anything that is an identifier, and that shall only match with INTs.
-        if(param.type != ParamType::INT && arg.as_identifier()
-           && cmdman->find_constant(cmdman->global_enum, *arg.as_identifier()))
-        {
-            return false;
-        }
-
-        switch(param.type)
-        {
-            case ParamType::INT:
-            {
-                if(arg.as_identifier())
-                {
-                    if(!cmdman->find_constant(cmdman->global_enum,
-                                              *arg.as_identifier()))
-                        return false;
-                }
-                else if(!arg.as_integer())
-                {
-                    return false;
-                }
-                break;
-            }
-            case ParamType::FLOAT:
-            {
-                if(!arg.as_float())
-                    return false;
-                break;
-            }
-            case ParamType::VAR_INT:
-            case ParamType::VAR_FLOAT:
-            case ParamType::VAR_TEXT_LABEL:
-            {
-                if(!arg.as_identifier())
-                    return false;
-
-                const auto arg_ident = *arg.as_identifier();
-                auto [var_name, var_source, _] = parse_var_ref(arg_ident,
-                                                               arg.source);
-                auto sym_var = symrepo->lookup_var(var_name);
-                if(!sym_var || !matches_var_type(param.type, sym_var->type))
-                    return false;
-
-                break;
-            }
-            case ParamType::LVAR_INT:
-            case ParamType::LVAR_FLOAT:
-            case ParamType::LVAR_TEXT_LABEL:
-            {
-                if(current_scope == -1)
-                    return false;
-
-                if(!arg.as_identifier())
-                    return false;
-
-                const auto arg_ident = *arg.as_identifier();
-                auto [var_name, var_source, _] = parse_var_ref(arg_ident,
-                                                               arg.source);
-                auto sym_var = symrepo->lookup_var(var_name, current_scope);
-                if(!sym_var || !matches_var_type(param.type, sym_var->type))
-                    return false;
-
-                break;
-            }
-            case ParamType::INPUT_INT:
-            {
-                if(!arg.as_identifier())
-                    return false;
-
-                const auto arg_ident = *arg.as_identifier();
-                if(!cmdman->find_constant_any_means(arg_ident))
-                    return false;
-
-                break;
-            }
-            case ParamType::TEXT_LABEL:
-            {
-                if(!arg.as_identifier())
-                    return false;
-                break;
-            }
-            default:
-            {
-                return false;
-            }
-        }
-    }
-
-    return true;
-}
-
 auto Sema::validate_var_ref(const CommandManager::ParamDef& param,
                             const ParserIR::Argument& arg)
         -> arena_ptr<SemaIR::Argument>
@@ -834,10 +728,15 @@ void Sema::declare_variable(const ParserIR::Command& command, ScopeId scope_id_,
     }
 }
 
-auto Sema::report(SourceRange source, Diag message) -> DiagnosticBuilder
+auto Sema::report(SourceLocation loc, Diag message) -> DiagnosticBuilder
 {
     this->report_count++;
-    return diag_->report(source.begin(), message).range(source);
+    return diag_->report(loc, message);
+}
+
+auto Sema::report(SourceRange source, Diag message) -> DiagnosticBuilder
+{
+    return report(source.begin(), message).range(source);
 }
 
 auto Sema::lookup_var_lvar(std::string_view name) const -> SymVariable*
@@ -929,6 +828,113 @@ bool Sema::is_alternative_command(
                            });
     return (it != from.alternatives.end());
 }
+
+bool Sema::is_matching_alternative(
+        const ParserIR::Command& command,
+        const CommandManager::CommandDef& alternative)
+{
+    // Alternators do not admit optional arguments, so it's
+    // all good to perform this check beforehand.
+    if(command.args.size() != alternative.params.size())
+        return false;
+
+    for(size_t i = 0, acount = command.args.size(); i < acount; ++i)
+    {
+        const auto& arg = *command.args[i];
+        const auto& param = alternative.params[i];
+
+        // The global string constants have higher precedence when checking for
+        // anything that is an identifier, and that shall only match with INTs.
+        if(param.type != ParamType::INT && arg.as_identifier()
+           && cmdman->find_constant(cmdman->global_enum, *arg.as_identifier()))
+        {
+            return false;
+        }
+
+        switch(param.type)
+        {
+            case ParamType::INT:
+            {
+                if(arg.as_identifier())
+                {
+                    if(!cmdman->find_constant(cmdman->global_enum,
+                                              *arg.as_identifier()))
+                        return false;
+                }
+                else if(!arg.as_integer())
+                {
+                    return false;
+                }
+                break;
+            }
+            case ParamType::FLOAT:
+            {
+                if(!arg.as_float())
+                    return false;
+                break;
+            }
+            case ParamType::VAR_INT:
+            case ParamType::VAR_FLOAT:
+            case ParamType::VAR_TEXT_LABEL:
+            {
+                if(!arg.as_identifier())
+                    return false;
+
+                const auto arg_ident = *arg.as_identifier();
+                auto [var_name, var_source, _] = parse_var_ref(arg_ident,
+                                                               arg.source);
+                auto sym_var = symrepo->lookup_var(var_name);
+                if(!sym_var || !matches_var_type(param.type, sym_var->type))
+                    return false;
+
+                break;
+            }
+            case ParamType::LVAR_INT:
+            case ParamType::LVAR_FLOAT:
+            case ParamType::LVAR_TEXT_LABEL:
+            {
+                if(current_scope == -1)
+                    return false;
+
+                if(!arg.as_identifier())
+                    return false;
+
+                const auto arg_ident = *arg.as_identifier();
+                auto [var_name, var_source, _] = parse_var_ref(arg_ident,
+                                                               arg.source);
+                auto sym_var = symrepo->lookup_var(var_name, current_scope);
+                if(!sym_var || !matches_var_type(param.type, sym_var->type))
+                    return false;
+
+                break;
+            }
+            case ParamType::INPUT_INT:
+            {
+                if(!arg.as_identifier())
+                    return false;
+
+                const auto arg_ident = *arg.as_identifier();
+                if(!cmdman->find_constant_any_means(arg_ident))
+                    return false;
+
+                break;
+            }
+            case ParamType::TEXT_LABEL:
+            {
+                if(!arg.as_identifier())
+                    return false;
+                break;
+            }
+            default:
+            {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 
 auto Sema::parse_var_ref(std::string_view identifier, SourceRange source)
         -> VarRef
