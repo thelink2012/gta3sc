@@ -41,7 +41,7 @@ auto SymbolRepository::insert_var(std::string_view name_, ScopeId scope_id,
 
     const auto name = allocate_string(name_, arena);
     const auto symbol = new(arena, alignof(SymVariable))
-            SymVariable{source, scope_id, type, dim};
+            SymVariable{source, scope_id, type, SymVariable::EntityId{}, dim};
     const auto [iter, _] = var_tables[scope_id].emplace(name, symbol);
     return {iter->second, true};
 }

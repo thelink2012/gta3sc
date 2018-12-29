@@ -14,6 +14,11 @@ public:
         using EntityId = gta3sc::CommandManager::EntityId;
         using EnumId = gta3sc::CommandManager::EnumId;
 
+        cmdman.add_entity_type("CAR");
+        cmdman.add_entity_type("CHAR");
+        CHECK(cmdman.find_entity_type("CAR").value_or(EntityId{0}) != EntityId{0});
+        CHECK(cmdman.find_entity_type("CHAR").value_or(EntityId{0}) != EntityId{0});
+
         CHECK(cmdman.find_enumeration("GLOBAL"));
         cmdman.add_enumeration("PEDTYPE");
         cmdman.add_enumeration("DEFAULTMODEL");
@@ -79,18 +84,28 @@ public:
                 ParamDef{ParamType::INPUT_FLOAT},
                 ParamDef{ParamType::INPUT_FLOAT},
                 ParamDef{ParamType::INPUT_FLOAT},
-                ParamDef{ParamType::OUTPUT_INT}});
+                ParamDef{ParamType::OUTPUT_INT, *cmdman.find_entity_type("CHAR"), EnumId{}}});
 
         cmdman.add_command("CREATE_CAR", {
                 ParamDef{ParamType::INPUT_INT, EntityId{}, *cmdman.find_enumeration("DEFAULTMODEL")},
                 ParamDef{ParamType::INPUT_FLOAT},
                 ParamDef{ParamType::INPUT_FLOAT},
                 ParamDef{ParamType::INPUT_FLOAT},
-                ParamDef{ParamType::OUTPUT_INT}});
+                ParamDef{ParamType::OUTPUT_INT, *cmdman.find_entity_type("CAR"), EnumId{}}});
 
         cmdman.add_command("DO_FADE", {
                 ParamDef{ParamType::INPUT_INT},
                 ParamDef{ParamType::INPUT_INT, EntityId{}, *cmdman.find_enumeration("FADE")}});
+
+        cmdman.add_command("SET_CAR_HEADING", {
+                ParamDef{ParamType::INPUT_INT, *cmdman.find_entity_type("CAR"), EnumId{}},
+                ParamDef{ParamType::INPUT_FLOAT},
+                });
+
+        cmdman.add_command("SET_CHAR_HEADING", {
+                ParamDef{ParamType::INPUT_INT, *cmdman.find_entity_type("CHAR"), EnumId{}},
+                ParamDef{ParamType::INPUT_FLOAT},
+                });
 
         cmdman.add_command("SET_VAR_INT", {ParamDef{ParamType::VAR_INT},
                                            ParamDef{ParamType::INT}});

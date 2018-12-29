@@ -90,13 +90,19 @@ public:
     };
 
 public:
-    static constexpr EnumId global_enum = EnumId{0};
-    static constexpr EntityId no_entity = EntityId{0};
+    static constexpr EnumId global_enum = EnumId{0}; // guaranted to be 0
+    static constexpr EntityId no_entity_type = EntityId{0}; // guaranted to be 0
 
     CommandManager()
     {
-        const auto global_enum = add_enumeration("GLOBAL");
-        assert(global_enum == this->global_enum);
+        add_enumeration("GLOBAL");
+        add_entity_type("NONE");
+
+        const auto global_enum = find_enumeration("GLOBAL");
+        const auto no_entity_type = find_entity_type("NONE");
+
+        assert(global_enum && *global_enum == this->global_enum);
+        assert(no_entity_type && *no_entity_type == this->no_entity_type);
     }
 
     bool add_command(std::string_view name,
@@ -161,12 +167,18 @@ public:
         return it == alternator_by_name.end()? nullptr : it->second;
     }
 
-    auto add_enumeration(std::string_view name) -> EnumId
+    bool add_enumeration(std::string_view name)
     {
+        if(enum_by_name.count(name))
+            return false;
+
+        auto a_name = allocate_string_upper(name);
+
         const std::underlying_type_t<EnumId> next_id = enum_by_name.size();
         assert(next_id < std::numeric_limits<decltype(next_id)>::max());
-        auto [iter, inserted] = enum_by_name.try_emplace(name, EnumId{next_id});
-        return iter->second;
+
+        auto [iter, inserted] = enum_by_name.emplace(a_name, EnumId{next_id});
+        return true;
     }
 
     auto find_enumeration(std::string_view name) const -> std::optional<EnumId>
@@ -179,8 +191,13 @@ public:
 
     bool add_constant(EnumId enum_id, std::string_view name, int32_t value)
     {
-        auto [it, _] = constant_by_name.try_emplace(name, nullptr);
-        
+        auto it = constant_by_name.find(name);
+        if(it == constant_by_name.end())
+        {
+            auto a_name = allocate_string_upper(name);
+            it = constant_by_name.emplace(a_name, nullptr).first;
+        }
+
         ConstantDef** ptr_next = std::addressof(it->second);
         while(*ptr_next != nullptr)
         {
@@ -228,6 +245,28 @@ public:
         return nullptr;
     }
 
+    bool add_entity_type(std::string_view name) 
+    {
+        if(entity_by_name.count(name))
+            return false;
+        
+        auto a_name = allocate_string_upper(name);
+
+        const std::underlying_type_t<EntityId> next_id = entity_by_name.size();
+        assert(next_id < std::numeric_limits<decltype(next_id)>::max());
+
+        auto [iter, inserted] = entity_by_name.emplace(a_name, EntityId{next_id});
+        return true;
+    }
+
+    auto find_entity_type(std::string_view name) const -> std::optional<EntityId>
+    {
+        auto it = entity_by_name.find(name);
+        if(it == entity_by_name.end())
+            return std::nullopt;
+        return it->second;
+    }
+
 
 
 
@@ -249,6 +288,8 @@ private:
     }
 
 private:
+    ArenaMemoryResource arena;
+
     std::unordered_map<std::string_view, arena_ptr<const CommandDef>> 
         command_by_name;
 
@@ -261,7 +302,7 @@ private:
     std::unordered_map<std::string_view, arena_ptr<ConstantDef>>
         constant_by_name;
 
-    ArenaMemoryResource arena;
-
+    std::unordered_map<std::string_view, EntityId>
+        entity_by_name;
 };
 }

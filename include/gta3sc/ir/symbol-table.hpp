@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <gta3sc/arena-allocator.hpp>
+#include <gta3sc/command-manager.hpp>
 #include <gta3sc/sourceman.hpp>
 #include <optional>
 #include <unordered_map>
@@ -29,9 +30,12 @@ struct SymVariable
         TEXT_LABEL,
     };
 
+    using EntityId = CommandManager::EntityId;
+
     SourceRange source;          ///< The location the variable was declared.
     ScopeId scope;               ///< The scope on which the variable is in.
     Type type;                   ///< The type of the variable.
+    EntityId entity_type;        ///< The type of entity this variable holds.
     std::optional<uint16_t> dim; ///< Array dimensions if any.
 
     bool is_array() const { return !!dim; }

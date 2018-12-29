@@ -97,6 +97,14 @@ private:
                           const ParserIR::Argument& arg)
             -> arena_ptr<SemaIR::Argument>;
 
+    // The following functions validates the semantics of commands that
+    // require further compiler intervention. They produce diagnostics
+    // and return false in case of ill-formed programs.
+
+    bool validate_special_command(const SemaIR::Command&);
+
+    bool validate_set(const SemaIR::Command&);
+
     // The following functions validates declarations and inserts their
     // names and metadata into the symbol repository.
     //
@@ -144,6 +152,12 @@ private:
     bool is_matching_alternative(const ParserIR::Command& command,
                                  const CommandManager::CommandDef& alternative);
 
+    /// Checks whether the specified command is an alternative of an certain
+    /// alternator.
+    bool
+    is_alternative_command(const CommandManager::CommandDef& command_def,
+                           const CommandManager::AlternatorDef& from) const;
+
 private:
     struct VarSubscript
     {
@@ -177,5 +191,7 @@ private:
     bool analyzing_alternative_command = false; ///< Whether we are checking a
                                                 ///< command that was found by
                                                 ///< matching an alternator.
+
+    const CommandManager::AlternatorDef* alternator_set{};
 };
 }

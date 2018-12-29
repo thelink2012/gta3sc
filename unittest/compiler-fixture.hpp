@@ -39,6 +39,7 @@ protected:
 
     auto consume_diag() -> gta3sc::Diagnostic
     {
+        REQUIRE(!this->diags.empty());
         auto front = std::move(this->diags.front());
         this->diags.pop();
         return front;
@@ -46,6 +47,7 @@ protected:
 
     auto peek_diag() -> const gta3sc::Diagnostic&
     {
+        REQUIRE(!this->diags.empty());
         return this->diags.front();
     }
 

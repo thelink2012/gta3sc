@@ -76,7 +76,7 @@ public:
     public:
         struct VariableRef
         {
-            observer_ptr<SymVariable> def;
+            observer_ptr<SymVariable> def; // TODO maybe SymVariable&
             std::variant<std::monostate, int32_t, observer_ptr<SymVariable>>
                     index;
 

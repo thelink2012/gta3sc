@@ -62,6 +62,7 @@ enum class Diag
     var_decl_subscript_must_be_literal,
     var_decl_subscript_must_be_nonzero,
     var_type_mismatch,
+    var_entity_type_mismatch,
     subscript_must_be_positive,
     subscript_out_of_range,
     subscript_but_var_is_not_array,

@@ -3,11 +3,10 @@
 
 // gta3script-specs 7fe565c767ee85fb8c99b594b3b3d280aa1b1c80
 
-// TODO entity checking
-
 namespace gta3sc
 {
 using ParamType = CommandManager::ParamType;
+using EntityId = CommandManager::EntityId;
 
 auto Sema::validate() -> std::optional<LinkedIR<SemaIR>>
 {
@@ -99,6 +98,8 @@ auto Sema::check_semantics_pass() -> std::optional<LinkedIR<SemaIR>>
 
     this->current_scope = -1;
     ScopeId scope_accum = 0;
+
+    this->alternator_set = cmdman->find_alternator("SET");
 
     for(auto& line : parser_ir)
     {
@@ -223,6 +224,12 @@ auto Sema::validate_command(const ParserIR::Command& command)
         failed = true;
         report(command.source, Diag::too_few_arguments)
                 .args(expected_args, got_args);
+    }
+
+    if(!failed)
+    {
+        if(!validate_special_command(*result))
+            failed = true;
     }
 
     return failed ? nullptr : result;
@@ -704,16 +711,67 @@ auto Sema::validate_var_ref(const CommandManager::ParamDef& param,
         }
     }
 
+    if(param.entity_type != EntityId{0})
+    {
+        if(param.type == ParamType::OUTPUT_INT
+           && sym_var->entity_type == EntityId{0})
+        {
+            sym_var->entity_type = param.entity_type;
+        }
+
+        if(sym_var->entity_type != param.entity_type)
+        {
+            failed = true;
+            report(var_source, Diag::var_entity_type_mismatch);
+        }
+    }
+
     if(failed)
         return nullptr;
-    else if(sym_var && sym_subscript)
+    else if(sym_subscript)
         return SemaIR::create_variable(sym_var, sym_subscript, arg_source,
                                        arena);
-    else if(sym_var && subscript && subscript->literal)
+    else if(subscript && subscript->literal)
         return SemaIR::create_variable(sym_var, *subscript->literal, arg_source,
                                        arena);
     else
         return SemaIR::create_variable(sym_var, arg_source, arena);
+}
+
+bool Sema::validate_special_command(const SemaIR::Command& command)
+{
+    if(alternator_set && is_alternative_command(command.def, *alternator_set))
+        return validate_set(command);
+    else
+        return true;
+}
+
+bool Sema::validate_set(const SemaIR::Command& command)
+{
+    assert(is_alternative_command(command.def, *alternator_set));
+
+    if(command.args.size() == 2)
+    {
+        auto lhs = command.args[0]->as_var_ref();
+        auto rhs = command.args[1]->as_var_ref();
+        if(lhs && rhs)
+        {
+            if(lhs->def->entity_type == EntityId{0}
+               && rhs->def->entity_type != EntityId{0})
+            {
+                lhs->def->entity_type = rhs->def->entity_type;
+            }
+            else if(lhs->def->entity_type != rhs->def->entity_type)
+            {
+                report(command.source, Diag::var_entity_type_mismatch)
+                        .range(command.args[0]->source)
+                        .range(command.args[1]->source);
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
 
 void Sema::declare_label(const ParserIR::LabelDef& label_def)
@@ -859,6 +917,17 @@ bool Sema::matches_var_type(ParamType param_type,
         default:
             return false;
     }
+}
+
+bool Sema::is_alternative_command(
+        const CommandManager::CommandDef& command_def,
+        const CommandManager::AlternatorDef& from) const
+{
+    auto it = std::find_if(from.alternatives.begin(), from.alternatives.end(),
+                           [&](const auto* alternative) {
+                               return &command_def == alternative;
+                           });
+    return (it != from.alternatives.end());
 }
 
 auto Sema::parse_var_ref(std::string_view identifier, SourceRange source)

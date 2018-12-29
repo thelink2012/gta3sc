@@ -1352,7 +1352,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema too many arguments")
     }
 }
 
-TEST_CASE_FIXTURE(SemaFixture, "alternators")
+TEST_CASE_FIXTURE(SemaFixture, "sema alternators")
 {
     SUBCASE("alternative match - valid matches")
     {
@@ -1500,3 +1500,136 @@ TEST_CASE_FIXTURE(SemaFixture, "alternators")
     }
 }
 
+TEST_CASE_FIXTURE(SemaFixture, "sema entities")
+{
+    const auto no_entity = cmdman.no_entity_type;
+    const auto entity_car = cmdman.find_entity_type("CAR").value();
+    const auto entity_char = cmdman.find_entity_type("CHAR").value();
+
+    SUBCASE("valid entity usage")
+    {
+        build_sema("VAR_INT car ped x\n"
+                   "CREATE_CAR CHEETAH 0.0 0.0 0.0 car\n"
+                   "CREATE_CHAR PEDTYPE_MEDIC MEDIC 0.0 0.0 0.0 ped\n"
+                   "SET_CAR_HEADING car 0.0\n"
+                   "SET_CHAR_HEADING ped 0.0\n");
+        REQUIRE(sema.validate() != std::nullopt);
+        REQUIRE(symrepo.lookup_var("CAR")->entity_type == entity_car);
+        REQUIRE(symrepo.lookup_var("PED")->entity_type == entity_char);
+        REQUIRE(symrepo.lookup_var("X")->entity_type == no_entity);
+    }
+
+    SUBCASE("valid entity usage - passing entity to/from integer")
+    {
+        build_sema("VAR_INT car\n"
+                   "CREATE_CAR CHEETAH 0.0 0.0 0.0 car\n"
+                   "SET_CAR_HEADING 1234 0.0\n" // INT instead of CAR
+                   "WAIT car\n");               // CAR instead of INT
+        REQUIRE(sema.validate() != std::nullopt);
+        REQUIRE(symrepo.lookup_var("CAR")->entity_type == entity_car);
+    }
+
+    SUBCASE("invalid entity usage")
+    {
+        build_sema("VAR_INT car ped x y\n"
+                   "SET x 10\n"
+                   "CREATE_CAR CHEETAH 0.0 0.0 0.0 car\n"
+                   "CREATE_CHAR PEDTYPE_MEDIC MEDIC 0.0 0.0 0.0 ped\n"
+                   "SET_CAR_HEADING ped 0.0\n"    // PED instead of CAR
+                   "SET_CHAR_HEADING car 0.0\n"   // CAR instead of PED
+                   "SET_CAR_HEADING x 0.0\n"      // NONE instead of CAR
+                   "SET_CHAR_HEADING y 0.0\n");   // NONE instead of CHAR
+        REQUIRE(sema.validate() == std::nullopt);
+        CHECK(consume_diag().message == gta3sc::Diag::var_entity_type_mismatch);
+        CHECK(consume_diag().message == gta3sc::Diag::var_entity_type_mismatch);
+        CHECK(consume_diag().message == gta3sc::Diag::var_entity_type_mismatch);
+        CHECK(consume_diag().message == gta3sc::Diag::var_entity_type_mismatch);
+    }
+
+    SUBCASE("invalid entity usage - reinitialization")
+    {
+        build_sema("VAR_INT car ped\n"
+                   "CREATE_CAR CHEETAH 0.0 0.0 0.0 car\n"
+                   "CREATE_CHAR PEDTYPE_MEDIC MEDIC 0.0 0.0 0.0 ped\n"
+                   "CREATE_CHAR PEDTYPE_MEDIC MEDIC 0.0 0.0 0.0 car\n"); // BAD
+        REQUIRE(sema.validate() == std::nullopt);
+        CHECK(consume_diag().message == gta3sc::Diag::var_entity_type_mismatch);
+    }
+    
+    SUBCASE("valid entity assignment")
+    {
+        build_sema("VAR_INT car1 car2 ped1 ped2 x y z w\n"
+                   "SET x 10\n"
+                   "SET z 11\n"
+                   "SET ped2 12\n"
+                   "CREATE_CAR CHEETAH 0.0 0.0 0.0 car1\n"
+                   "CREATE_CAR WASHING 0.0 0.0 0.0 car2\n"
+                   "CREATE_CHAR PEDTYPE_MEDIC MEDIC 0.0 0.0 0.0 ped1\n"
+                   "CREATE_CHAR PEDTYPE_CIVFEMALE HFYST 0.0 0.0 0.0 ped2\n"
+                   "SET car1 car2\n" // CAR = CAR
+                   "SET car2 car1\n" // CAR = CAR
+                   "SET car2 car2\n" // CAR = CAR
+                   "SET ped1 ped2\n" // PED = PED
+                   "SET y ped2\n"    // NONE = PED
+                   "SET x y\n"       // NONE = PED
+                   "SET x -1\n"      // PED = INT (unchecked)
+                   "SET ped2 x\n");  // PED = PED (even after INT assignment)
+        REQUIRE(sema.validate() != std::nullopt);
+        REQUIRE(symrepo.lookup_var("CAR1")->entity_type == entity_car);
+        REQUIRE(symrepo.lookup_var("CAR2")->entity_type == entity_car);
+        REQUIRE(symrepo.lookup_var("PED1")->entity_type == entity_char);
+        REQUIRE(symrepo.lookup_var("PED2")->entity_type == entity_char);
+        REQUIRE(symrepo.lookup_var("X")->entity_type == entity_char);
+        REQUIRE(symrepo.lookup_var("Y")->entity_type == entity_char);
+        REQUIRE(symrepo.lookup_var("Z")->entity_type == no_entity);
+        REQUIRE(symrepo.lookup_var("W")->entity_type == no_entity);
+    }
+
+    SUBCASE("invalid entity assignment - from one type to another")
+    {
+        build_sema("VAR_INT car1 car2 ped1 ped2 x\n"
+                   "CREATE_CAR CHEETAH 0.0 0.0 0.0 car1\n"
+                   "CREATE_CHAR PEDTYPE_MEDIC MEDIC 0.0 0.0 0.0 ped1\n"
+                   "SET car2 car1\n" // NONE = CAR, OK
+                   "SET ped2 ped1\n" // NONE = PED, OK
+                   "SET ped1 car1\n" // PED = CAR, BAD
+                   "SET car1 ped2\n" // CAR = PED, BAD
+                   "SET ped2 x\n"    // PED = NONE, BAD
+                   "SET ped2 x\n");  // CAR = NONE, BAD
+        REQUIRE(sema.validate() == std::nullopt);
+        CHECK(consume_diag().message == gta3sc::Diag::var_entity_type_mismatch);
+        CHECK(consume_diag().message == gta3sc::Diag::var_entity_type_mismatch);
+        CHECK(consume_diag().message == gta3sc::Diag::var_entity_type_mismatch);
+        CHECK(consume_diag().message == gta3sc::Diag::var_entity_type_mismatch);
+    }
+
+    SUBCASE("entities propagates through arrays")
+    {
+        build_sema("VAR_INT car[10] ped[10] x y z w\n"
+                   "CREATE_CAR CHEETAH 0.0 0.0 0.0 car[3]\n"
+                   "CREATE_CHAR PEDTYPE_MEDIC MEDIC 0.0 0.0 0.0 ped[0]\n"
+                   "SET x ped[9]\n"
+                   "SET_CAR_HEADING car[5] 0.0\n");
+        REQUIRE(sema.validate() != std::nullopt);
+        REQUIRE(symrepo.lookup_var("CAR")->entity_type == entity_car);
+        REQUIRE(symrepo.lookup_var("PED")->entity_type == entity_char);
+        REQUIRE(symrepo.lookup_var("X")->entity_type == entity_char);
+        REQUIRE(symrepo.lookup_var("Y")->entity_type == no_entity);
+        REQUIRE(symrepo.lookup_var("Z")->entity_type == no_entity);
+        REQUIRE(symrepo.lookup_var("W")->entity_type == no_entity);
+    }
+
+    SUBCASE("entity initialization does not affect previous lines")
+    {
+        build_sema("VAR_INT car x y\n"
+                   "SET car x\n"  // NONE = NONE (not CAR = NONE -- invalid)
+                   "SET x car\n"  // NONE = NONE (not NONE = CAR)
+                   "SET y car\n"  // NONE = NONE (not NONE = CAR)
+                   "CREATE_CAR CHEETAH 0.0 0.0 0.0 car\n"
+                   "SET y car\n"); // NONE = CAR
+        REQUIRE(sema.validate() != std::nullopt);
+        REQUIRE(symrepo.lookup_var("CAR")->entity_type == entity_car);
+        REQUIRE(symrepo.lookup_var("X")->entity_type == no_entity);
+        REQUIRE(symrepo.lookup_var("Y")->entity_type == entity_car);
+    }
+}
