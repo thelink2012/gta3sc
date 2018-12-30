@@ -39,21 +39,24 @@ auto SymbolRepository::insert_var(std::string_view name_, ScopeId scope_id,
     if(auto v = lookup_var(name_, scope_id))
         return {v, false};
 
+    const auto id = static_cast<uint32_t>(var_tables[scope_id].size());
     const auto name = allocate_string(name_, arena);
-    const auto symbol = new(arena, alignof(SymVariable))
-            SymVariable{source, scope_id, type, SymVariable::EntityId{}, dim};
+    const auto symbol = new(arena, alignof(SymVariable)) SymVariable{
+            source, id, scope_id, type, SymVariable::EntityId{}, dim};
     const auto [iter, _] = var_tables[scope_id].emplace(name, symbol);
     return {iter->second, true};
 }
 
-auto SymbolRepository::insert_label(std::string_view name_, SourceRange source)
+auto SymbolRepository::insert_label(std::string_view name_, ScopeId scope_id,
+                                    SourceRange source)
         -> std::pair<SymLabel*, bool>
 {
     if(auto l = lookup_label(name_))
         return {l, false};
 
     const auto name = allocate_string(name_, arena);
-    const auto symbol = new(arena, alignof(SymLabel)) SymLabel{source};
+    const auto symbol = new(arena, alignof(SymLabel))
+            SymLabel{source, scope_id};
     const auto [iter, _] = label_table.emplace(name, symbol);
     return {iter->second, true};
 }

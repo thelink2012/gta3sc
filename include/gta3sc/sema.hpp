@@ -101,9 +101,17 @@ private:
     // require further compiler intervention. They produce diagnostics
     // and return false in case of ill-formed programs.
 
-    bool validate_special_command(const SemaIR::Command&);
+    bool validate_hardcoded_command(const SemaIR::Command&);
 
     bool validate_set(const SemaIR::Command&);
+
+    bool validate_script_name(const SemaIR::Command&);
+
+    bool validate_start_new_script(const SemaIR::Command&);
+
+    bool validate_target_scope_vars(SemaIR::Argument** begin,
+                                    SemaIR::Argument** end,
+                                    ScopeId target_scope_id);
 
     // The following functions validates declarations and inserts their
     // names and metadata into the symbol repository.
@@ -190,11 +198,17 @@ private:
     uint32_t report_count = 0;  ///< The number of errors encountered so far.
     ScopeId current_scope = -1; ///< The id of the current scope.
     bool ran_analysis = false;  ///< Whether we already ran analysis.
-    bool analyzing_var_decl = false; ///< Whether we are checking a var decl.
-    bool analyzing_alternative_command = false; ///< Whether we are checking a
-                                                ///< command that was found by
-                                                ///< matching an alternator.
+    bool analyzing_var_decl{};  ///< Whether we are checking a var decl.
+    bool analyzing_alternative_command{}; ///< Whether we are checking a
+                                          ///< command that was found by
+                                          ///< matching an alternator.
+    bool analyzing_repeat_command{};      ///< Whether we are checking REPEAT.
 
     const CommandManager::AlternatorDef* alternator_set{};
+    const CommandManager::CommandDef* command_script_name{};
+    const CommandManager::CommandDef* command_start_new_script{};
+
+    /// Set of script names already seen.
+    std::vector<std::string_view> seen_script_names;
 };
 }

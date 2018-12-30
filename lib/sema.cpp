@@ -100,11 +100,14 @@ auto Sema::check_semantics_pass() -> std::optional<LinkedIR<SemaIR>>
     ScopeId scope_accum = 0;
 
     this->alternator_set = cmdman->find_alternator("SET");
+    this->command_script_name = cmdman->find_command("SCRIPT_NAME");
+    this->command_start_new_script = cmdman->find_command("START_NEW_SCRIPT");
 
     for(auto& line : parser_ir)
     {
         this->analyzing_var_decl = false;
         this->analyzing_alternative_command = false;
+        this->analyzing_repeat_command = false;
 
         linked.push_back(SemaIR::create(arena));
 
@@ -128,6 +131,10 @@ auto Sema::check_semantics_pass() -> std::optional<LinkedIR<SemaIR>>
                     || line.command->name == "LVAR_TEXT_LABEL")
             {
                 this->analyzing_var_decl = true;
+            }
+            else if(line.command->name == "REPEAT")
+            {
+                this->analyzing_repeat_command = true;
             }
         }
 
@@ -228,7 +235,7 @@ auto Sema::validate_command(const ParserIR::Command& command)
 
     if(!failed)
     {
-        if(!validate_special_command(*result))
+        if(!validate_hardcoded_command(*result))
             failed = true;
     }
 
@@ -529,8 +536,11 @@ auto Sema::validate_var_ref(const CommandManager::ParamDef& param,
     // Check whether the storage of the variable matches the parameter.
     if(is_gvar_param(param.type) && sym_var->scope != 0)
     {
-        failed = true;
-        report(var_source, Diag::expected_gvar_got_lvar);
+        if(!analyzing_repeat_command) // REPEAT hardcodes the acceptance
+        {                             // the acceptance of LVAR_INTs
+            failed = true;
+            report(var_source, Diag::expected_gvar_got_lvar);
+        }
     }
     else if(is_lvar_param(param.type) && sym_var->scope == 0)
     {
@@ -632,9 +642,14 @@ auto Sema::validate_var_ref(const CommandManager::ParamDef& param,
         return SemaIR::create_variable(sym_var, arg_source, arena);
 }
 
-bool Sema::validate_special_command(const SemaIR::Command& command)
+bool Sema::validate_hardcoded_command(const SemaIR::Command& command)
 {
-    if(alternator_set && is_alternative_command(command.def, *alternator_set))
+    if(&command.def == command_script_name)
+        return validate_script_name(command);
+    if(&command.def == command_start_new_script)
+        return validate_start_new_script(command);
+    else if(alternator_set
+            && is_alternative_command(command.def, *alternator_set))
         return validate_set(command);
     else
         return true;
@@ -668,9 +683,161 @@ bool Sema::validate_set(const SemaIR::Command& command)
     return true;
 }
 
+bool Sema::validate_script_name(const SemaIR::Command& command)
+{
+    assert(&command.def == command_script_name);
+
+    if(command.args.size() == 1)
+    {
+        if(const auto name = command.args[0]->as_text_label())
+        {
+            auto it = std::find(seen_script_names.begin(),
+                                seen_script_names.end(), *name);
+            if(it != seen_script_names.end())
+            {
+                report(command.args[0]->source, Diag::duplicate_script_name);
+                return false;
+            }
+            else
+            {
+                seen_script_names.push_back(*name);
+                return true;
+            }
+        }
+    }
+
+    return true;
+}
+
+bool Sema::validate_start_new_script(const SemaIR::Command& command)
+{
+    assert(&command.def == command_start_new_script);
+
+    if(command.args.size() >= 1)
+    {
+        if(auto target_label = command.args[0]->as_label())
+        {
+            if(target_label->scope == 0)
+            {
+                report(command.args[0]->source,
+                       Diag::target_label_not_within_scope);
+                return false;
+            }
+
+            if(!validate_target_scope_vars(command.args.data() + 1,
+                                           command.args.data()
+                                                   + command.args.size(),
+                                           target_label->scope))
+            {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+bool Sema::validate_target_scope_vars(SemaIR::Argument** begin,
+                                      SemaIR::Argument** end,
+                                      ScopeId target_scope_id)
+{
+    assert(target_scope_id != 0);
+
+    const size_t num_target_vars = end - begin;
+    bool failed = false;
+
+    if(num_target_vars == 0)
+        return true;
+
+    // Use a temporary buffer in the arena. This will be unused memory after
+    // this function returns, but it's no big deal. It only happens for
+    // START_NEW_SCRIPT alike commands and the allocation size is proportional
+    // to the number of arguments passed.
+    SymVariable** target_vars = new(*arena) SymVariable*[num_target_vars];
+    std::fill(target_vars, target_vars + num_target_vars, nullptr);
+
+    for(auto& [name, lvar] : symrepo->var_tables[target_scope_id])
+    {
+        if(lvar->id < num_target_vars)
+            target_vars[lvar->id] = lvar;
+    }
+
+    for(size_t i = 0; i < num_target_vars; ++i)
+    {
+        const auto& arg = **(begin + i);
+        SymVariable* target_var = target_vars[i];
+        if(target_var == nullptr)
+        {
+            failed = true;
+            report(arg.source, Diag::target_scope_not_enough_vars);
+        }
+        else
+        {
+            // The parameter type used for passing arguments into target
+            // scope variables is INPUT_OPT, which only accepts integers,
+            // floating points, global string constants and variable
+            // references as argument. The semantic checker already took
+            // care of validating that for us, so for sure the argument
+            // is one of these. We'll support additionally text labels,
+            // but anything else is a logic error in the compiler.
+            if(arg.as_punned_integer())
+            {
+                if(target_vars[i]->type != SymVariable::Type::INT)
+                {
+                    failed = true;
+                    report(arg.source, Diag::target_var_type_mismatch);
+                }
+            }
+            else if(arg.as_punned_float())
+            {
+                if(target_vars[i]->type != SymVariable::Type::FLOAT)
+                {
+                    failed = true;
+                    report(arg.source, Diag::target_var_type_mismatch);
+                }
+            }
+            else if(arg.as_text_label())
+            {
+                if(target_vars[i]->type != SymVariable::Type::TEXT_LABEL)
+                {
+                    failed = true;
+                    report(arg.source, Diag::target_var_type_mismatch);
+                }
+            }
+            else if(auto var_ref = arg.as_var_ref())
+            {
+                const auto* source_var = var_ref->def;
+                if(target_vars[i]->type != source_var->type)
+                {
+                    failed = true;
+                    report(arg.source, Diag::target_var_type_mismatch);
+                }
+                else if(target_vars[i]->entity_type == EntityId{0}
+                        && source_var->entity_type != EntityId{0})
+                {
+                    target_var->entity_type = source_var->entity_type;
+                }
+                else if(target_var->entity_type != source_var->entity_type)
+                {
+                    failed = true;
+                    report(arg.source, Diag::target_var_entity_type_mismatch);
+                }
+            }
+            else
+            {
+                failed = true;
+                report(arg.source, Diag::internal_compiler_error);
+            }
+        }
+    }
+
+    return !failed;
+}
+
 void Sema::declare_label(const ParserIR::LabelDef& label_def)
 {
-    if(auto [_, inserted] = symrepo->insert_label(label_def.name,
+    const auto scope_id = current_scope == -1 ? 0 : current_scope;
+    if(auto [_, inserted] = symrepo->insert_label(label_def.name, scope_id,
                                                   label_def.source);
        !inserted)
     {
@@ -934,7 +1101,6 @@ bool Sema::is_matching_alternative(
 
     return true;
 }
-
 
 auto Sema::parse_var_ref(std::string_view identifier, SourceRange source)
         -> VarRef

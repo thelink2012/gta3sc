@@ -13,6 +13,7 @@ class DiagnosticBuilder;
 
 enum class Diag
 {
+    internal_compiler_error,
     cannot_nest_scopes,
     cannot_mix_andor,
     cannot_use_string_constant_here,
@@ -58,6 +59,7 @@ enum class Diag
     duplicate_var_lvar,
     duplicate_var_string_constant,
     duplicate_label,
+    duplicate_script_name,
     var_decl_outside_of_scope,
     var_decl_subscript_must_be_literal,
     var_decl_subscript_must_be_nonzero,
@@ -72,6 +74,10 @@ enum class Diag
     undefined_command,
     undefined_variable,
     alternator_mismatch,
+    target_label_not_within_scope,
+    target_scope_not_enough_vars,
+    target_var_type_mismatch,
+    target_var_entity_type_mismatch,
 };
 
 /// Information about a diagnostic.

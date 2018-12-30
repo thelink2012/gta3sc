@@ -18,6 +18,7 @@ using ScopeId = uint32_t;
 struct SymLabel
 {
     SourceRange source; ///< The location the label was declared.
+    ScopeId scope;      ///< The scope on which the label is in.
 };
 
 /// Represents a declared variable.
@@ -32,10 +33,11 @@ struct SymVariable
 
     using EntityId = CommandManager::EntityId;
 
-    SourceRange source;          ///< The location the variable was declared.
-    ScopeId scope;               ///< The scope on which the variable is in.
-    Type type;                   ///< The type of the variable.
-    EntityId entity_type;        ///< The type of entity this variable holds.
+    SourceRange source;   ///< The location the variable was declared.
+    uint32_t id;          ///< The ordering of this variable in its scope.
+    ScopeId scope;        ///< The scope on which the variable is in.
+    Type type;            ///< The type of the variable.
+    EntityId entity_type; ///< The type of entity this variable holds.
     std::optional<uint16_t> dim; ///< Array dimensions if any.
 
     bool is_array() const { return !!dim; }
@@ -153,10 +155,11 @@ public:
     ///
     /// \param name the name of the label.
     /// \param source the location of its declaration.
+    /// \param scope_id the scope on which the label is in.
     ///
     /// \return a pair with the label and a boolean indicating whether
     ///         any insertion took place.
-    auto insert_label(std::string_view name, SourceRange source)
-            -> std::pair<SymLabel*, bool>;
+    auto insert_label(std::string_view name, ScopeId scope_id,
+                      SourceRange source) -> std::pair<SymLabel*, bool>;
 };
 }

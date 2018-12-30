@@ -113,6 +113,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema valid variables declarations")
     REQUIRE(gvar[9] == nullptr);
     for(int i = 1; i <= 8; ++i)
         REQUIRE(gvar[i] != nullptr);
+    for(int i = 1; i <= 8; ++i)
+        REQUIRE(gvar[i]->id == i-1);
     for(int i = 1; i <= 7; ++i)
         REQUIRE(gvar[i]->dim == std::nullopt);
     REQUIRE(gvar[8]->dim == 25);
@@ -129,6 +131,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema valid variables declarations")
     for(int i = 1; i <= 8; ++i)
         REQUIRE(lvar1[i] != nullptr);
     for(int i = 1; i <= 8; ++i)
+        REQUIRE(lvar1[i]->id == i-1);
+    for(int i = 1; i <= 8; ++i)
         REQUIRE(lvar1[i]->dim == std::nullopt);
     REQUIRE(lvar1[1]->type == gta3sc::SymVariable::Type::INT);
     REQUIRE(lvar1[2]->type == gta3sc::SymVariable::Type::INT);
@@ -142,6 +146,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema valid variables declarations")
     REQUIRE(lvar2[6] == nullptr);
     for(int i = 1; i <= 5; ++i)
         REQUIRE(lvar2[i] != nullptr);
+    for(int i = 1; i <= 5; ++i)
+        REQUIRE(lvar2[i]->id == i-1);
     for(int i = 1; i <= 5; ++i)
         REQUIRE(lvar2[i]->type == gta3sc::SymVariable::Type::FLOAT);
     REQUIRE(lvar2[1]->dim == 30);
@@ -254,6 +260,14 @@ TEST_CASE_FIXTURE(SemaFixture, "sema variable names collides with string constan
     CHECK(consume_diag().message == gta3sc::Diag::duplicate_var_string_constant);
     CHECK(consume_diag().message == gta3sc::Diag::duplicate_var_string_constant);
     CHECK(diags.empty()); // does not collide with ON/FALSE
+}
+
+TEST_CASE_FIXTURE(SemaFixture, "sema using local variable from another scope")
+{
+    build_sema("{\nLVAR_INT x\n}\n{\nSET_VAR_INT x 1\n}\nSET_VAR_INT x 1");
+    REQUIRE(sema.validate() == std::nullopt);
+    CHECK(consume_diag().message == gta3sc::Diag::undefined_variable);
+    CHECK(consume_diag().message == gta3sc::Diag::undefined_variable);
 }
 
 TEST_CASE_FIXTURE(SemaFixture, "sema parsing variable reference")
@@ -1310,7 +1324,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema too few arguments")
 
     SUBCASE("START_NEW_SCRIPT with single arg")
     {
-        build_sema("label1: START_NEW_SCRIPT label1");
+        build_sema("{\nlabel1: START_NEW_SCRIPT label1\n}");
         REQUIRE(sema.validate() != std::nullopt);
     }
 
@@ -1326,7 +1340,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema too many arguments")
 {
     SUBCASE("99 optional args")
     {
-        build_sema("VAR_INT a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14"
+        build_sema("{\n"
+                   "LVAR_INT a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14"
                    " a15 a16 a17 a18 a19 a20 a21 a22 a23 a24 a25 a26 a27 a28"
                    " a29 a30 a31 a32 a33 a34 a35 a36 a37 a38 a39 a40 a41 a42"
                    " a43 a44 a45 a46 a47 a48 a49 a50 a51 a52 a53 a54 a55 a56"
@@ -1339,7 +1354,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema too many arguments")
                    " a39 a40 a41 a42 a43 a44 a45 a46 a47 a48 a49 a50 a51 a52 a53"
                    " a54 a55 a56 a57 a58 a59 a60 a61 a62 a63 a64 a65 a66 a67 a68"
                    " a69 a70 a71 a72 a73 a74 a75 a76 a77 a78 a79 a80 a81 a82 a83"
-                   " a84 a85 a86 a87 a88 a89 a90 a91 a92 a93 a94 a95 a96 a97 a98");
+                   " a84 a85 a86 a87 a88 a89 a90 a91 a92 a93 a94 a95 a96 a97 a98\n"
+                   "}\n");
         REQUIRE(sema.validate() != std::nullopt);
     }
 
@@ -1631,5 +1647,167 @@ TEST_CASE_FIXTURE(SemaFixture, "sema entities")
         REQUIRE(symrepo.lookup_var("CAR")->entity_type == entity_car);
         REQUIRE(symrepo.lookup_var("X")->entity_type == no_entity);
         REQUIRE(symrepo.lookup_var("Y")->entity_type == entity_car);
+    }
+}
+
+TEST_CASE_FIXTURE(SemaFixture, "sema hardcoded REPEAT with local variable")
+{
+    build_sema("{\nVAR_INT x\nLVAR_INT y\n"
+               "REPEAT 10 x\n"
+               "    REPEAT 20 y\n"
+               "    ENDREPEAT\n"
+               "ENDREPEAT\n}");
+    REQUIRE(sema.validate() != std::nullopt);
+}
+
+TEST_CASE_FIXTURE(SemaFixture, "sema hardcoded SCRIPT_NAME")
+{
+    SUBCASE("many SCRIPT_NAMEs with no duplicate")
+    {
+        build_sema("SCRIPT_NAME HELLO\nSCRIPT_NAME world\n"
+                   "SCRIPT_NAME three\nSCRIPT_NAME FOURTH\n");
+        REQUIRE(sema.validate() != std::nullopt);
+    }
+
+    SUBCASE("duplicate SCRIPT_NAME is invalid")
+    {
+        build_sema("SCRIPT_NAME HELLO\nSCRIPT_NAME wOrLD\n"
+                   "SCRIPT_NAME hello\nSCRIPT_NAME FOURTH\n"
+                   "SCRIPT_NAME FIFTH\nSCRIPT_NAME SIXTH\n"
+                   "SCRIPT_NAME SEVENTH\nSCRIPT_NAME WORLD\n");
+        REQUIRE(sema.validate() == std::nullopt);
+        CHECK(consume_diag().message == gta3sc::Diag::duplicate_script_name);
+        CHECK(consume_diag().message == gta3sc::Diag::duplicate_script_name);
+    }
+
+    SUBCASE("SCRIPT_NAME with text label variable") // unspecified in the spec
+    {
+        build_sema("VAR_TEXT_LABEL var\n"
+                   "SCRIPT_NAME $var\nSCRIPT_NAME $var\nSCRIPT_NAME var");
+        REQUIRE(sema.validate() != std::nullopt);
+    }
+}
+
+TEST_CASE_FIXTURE(SemaFixture, "sema hardcoded START_NEW_SCRIPT")
+{
+    SUBCASE("valid - no argument passing")
+    {
+        build_sema("\n{\nlabel1: START_NEW_SCRIPT label1\n}");
+        REQUIRE(sema.validate() != std::nullopt);
+    }
+
+    SUBCASE("invalid - label outside of scope")
+    {
+        build_sema("label1: START_NEW_SCRIPT label1 10 20 30");
+        REQUIRE(sema.validate() == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::target_label_not_within_scope);
+    }
+
+    SUBCASE("valid - more target vars than arguments")
+    {
+        build_sema("{\nLVAR_INT a b c d e f g h\nlabel1: START_NEW_SCRIPT label1 10 20\n}");
+        REQUIRE(sema.validate() != std::nullopt);
+    }
+
+    SUBCASE("invalid - more arguments than target vars")
+    {
+        build_sema("{\nLVAR_INT x y\nlabel1: START_NEW_SCRIPT label1 10 20 30 40 50\n}");
+        REQUIRE(sema.validate() == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::target_scope_not_enough_vars);
+        REQUIRE(consume_diag().message == gta3sc::Diag::target_scope_not_enough_vars);
+        REQUIRE(consume_diag().message == gta3sc::Diag::target_scope_not_enough_vars);
+    }
+
+    SUBCASE("valid - passing integers")
+    {
+        build_sema("{\nLVAR_INT a1 a2 a3\nlabel1: START_NEW_SCRIPT label1 10 ON a3\n}");
+        REQUIRE(sema.validate() != std::nullopt);
+    }
+
+    SUBCASE("valid - passing floats")
+    {
+        build_sema("{\nLVAR_FLOAT a1 a2 a3\nlabel1: START_NEW_SCRIPT label1 1.0 a2 a3\n}");
+        REQUIRE(sema.validate() != std::nullopt);
+    }
+
+    SUBCASE("invalid - passing text labels")
+    {
+        build_sema("{\nLVAR_TEXT_LABEL a1 a2\nlabel1: START_NEW_SCRIPT label1 TEXT a2\n}");
+        REQUIRE(sema.validate() == std::nullopt);
+        CHECK(consume_diag().message == gta3sc::Diag::undefined_variable);
+        CHECK(consume_diag().message == gta3sc::Diag::var_type_mismatch);
+    }
+
+    SUBCASE("valid - passing variables")
+    {
+        build_sema("{\nLVAR_INT x\nLVAR_FLOAT y\nlabel1: START_NEW_SCRIPT label1 x y\n}");
+        REQUIRE(sema.validate() != std::nullopt);
+    }
+
+    SUBCASE("invalid - target variable type mismatch")
+    {
+        build_sema("{\n"
+                   "LVAR_INT i1 i2 i3\n"
+                   "LVAR_FLOAT f1 f2 f3 f4\n"
+                   "label1: START_NEW_SCRIPT label1 i1 f1 1.0 f1 i1 ON 10\n"
+                   "}\n");
+        REQUIRE(sema.validate() == std::nullopt);
+        CHECK(consume_diag().message == gta3sc::Diag::target_var_type_mismatch); // f1
+        CHECK(consume_diag().message == gta3sc::Diag::target_var_type_mismatch); // 1.0
+        CHECK(consume_diag().message == gta3sc::Diag::target_var_type_mismatch); // i1
+        CHECK(consume_diag().message == gta3sc::Diag::target_var_type_mismatch); // ON
+        CHECK(consume_diag().message == gta3sc::Diag::target_var_type_mismatch); // 10
+    }
+
+    SUBCASE("valid - passing entity type forward")
+    {
+        build_sema("VAR_INT car\n"
+                   "CREATE_CAR CHEETAH 0.0 0.0 0.0 car\n"
+                   "START_NEW_SCRIPT label1 car\n"
+                   "{\n"
+                   "label1: LVAR_INT local_car\n"
+                   "SET_CAR_HEADING local_car 0.0\n"
+                   "}\n");
+        REQUIRE(sema.validate() != std::nullopt);
+    }
+
+    SUBCASE("invalid - passing entity type backwards")
+    {
+        build_sema("{\n"
+                   "label1: LVAR_INT local_car\n"
+                   "SET_CAR_HEADING local_car 0.0\n"
+                   "}\n"
+                   "VAR_INT car\n"
+                   "CREATE_CAR CHEETAH 0.0 0.0 0.0 car\n"
+                   "START_NEW_SCRIPT label1 car\n");
+        REQUIRE(sema.validate() == std::nullopt);
+        CHECK(consume_diag().message == gta3sc::Diag::var_entity_type_mismatch);
+    }
+
+    SUBCASE("invalid - passing wrong entity type backwards")
+    {
+        build_sema("{\n"
+                   "label1: LVAR_INT local_car\n"
+                   "CREATE_CAR WASHING 0.0 0.0 0.0 local_car\n"
+                   "SET_CAR_HEADING local_car 0.0\n"
+                   "}\n"
+                   "VAR_INT ped\n"
+                   "CREATE_CHAR PEDTYPE_MEDIC MEDIC 0.0 0.0 0.0 ped\n"
+                   "START_NEW_SCRIPT label1 ped\n");
+        REQUIRE(sema.validate() == std::nullopt);
+        CHECK(consume_diag().message == gta3sc::Diag::target_var_entity_type_mismatch);
+    }
+
+    SUBCASE("invalid - passing wrong entity type forward")
+    {
+        build_sema("VAR_INT ped\n"
+                   "CREATE_CHAR PEDTYPE_MEDIC MEDIC 0.0 0.0 0.0 ped\n"
+                   "START_NEW_SCRIPT label1 ped\n"
+                   "{\n"
+                   "label1: LVAR_INT local_car\n"
+                   "SET_CAR_HEADING local_car 0.0\n"
+                   "}\n");
+        REQUIRE(sema.validate() == std::nullopt);
+        CHECK(consume_diag().message == gta3sc::Diag::var_entity_type_mismatch);
     }
 }

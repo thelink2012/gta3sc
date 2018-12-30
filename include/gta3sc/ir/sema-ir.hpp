@@ -74,7 +74,7 @@ public:
     struct Argument
     {
     public:
-        struct VariableRef
+        struct VarRef
         {
             observer_ptr<SymVariable> def; // TODO maybe SymVariable&
             std::variant<std::monostate, int32_t, observer_ptr<SymVariable>>
@@ -114,7 +114,7 @@ public:
         const SourceRange source;
 
         const std::variant<
-                int32_t, float, TextLabel, String, VariableRef,
+                int32_t, float, TextLabel, String, VarRef,
                 // TODO observer_ptr<SymFilename>,
                 observer_ptr<SymLabel>,
                 // TODO observer_ptr<SymConstantInt>,
@@ -126,6 +126,21 @@ public:
                 value;
 
         Argument() = delete;
+
+        auto as_punned_integer() const -> const int32_t*
+        {
+            if(auto value = as_integer())
+                return value;
+            else if(auto sconst = as_string_constant())
+                return &sconst->value;
+            else
+                return nullptr;
+        }
+
+        auto as_punned_float() const -> const float*
+        {
+            return as_float();
+        }
 
         auto as_integer() const -> const int32_t*
         {
@@ -151,9 +166,9 @@ public:
             return nullptr;
         }
 
-        auto as_var_ref() const -> const VariableRef*
+        auto as_var_ref() const -> const VarRef*
         {
-            return std::get_if<VariableRef>(&this->value);
+            return std::get_if<VarRef>(&this->value);
         }
 
         auto as_label() const -> SymLabel*
@@ -167,6 +182,7 @@ public:
         {
             return std::get_if<StringConstant>(&this->value);
         }
+
 
     protected:
         friend class SemaIR;
@@ -232,7 +248,7 @@ public:
     {
         assert(var != nullptr);
         return new(*arena, alignof(Argument))
-                Argument(Argument::VariableRef{var}, source);
+                Argument(Argument::VarRef{var}, source);
     }
 
     static auto create_variable(SymVariable* var, int32_t index,
@@ -241,7 +257,7 @@ public:
     {
         assert(var != nullptr);
         return new(*arena, alignof(Argument))
-                Argument(Argument::VariableRef{var, index}, source);
+                Argument(Argument::VarRef{var, index}, source);
     }
 
     static auto create_variable(SymVariable* var, SymVariable* index,
@@ -250,7 +266,7 @@ public:
     {
         assert(var != nullptr && index != nullptr);
         return new(*arena, alignof(Argument))
-                Argument(Argument::VariableRef{var, index}, source);
+                Argument(Argument::VarRef{var, index}, source);
     }
 
     static auto create_string_constant(CommandManager::EnumId enum_id, 

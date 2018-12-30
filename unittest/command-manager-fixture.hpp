@@ -47,6 +47,8 @@ public:
         cmdman.add_command("}", {});
         cmdman.add_command("IF", {ParamDef{ParamType::INT}});
         cmdman.add_command("ENDIF", {});
+        cmdman.add_command("REPEAT", {ParamDef{ParamType::INT}, ParamDef{ParamType::VAR_INT}});
+        cmdman.add_command("ENDREPEAT", {});
         cmdman.add_command("WAIT", {ParamDef{ParamType::INPUT_INT}});
         cmdman.add_command("GOTO", {ParamDef{ParamType::LABEL}});
         cmdman.add_command("GOSUB", {ParamDef{ParamType::LABEL}});
