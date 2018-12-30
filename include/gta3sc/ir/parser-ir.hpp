@@ -329,7 +329,7 @@ inline void ParserIR::Command::push_arg(arena_ptr<Argument> arg,
 {
     assert(arg != nullptr);
 
-    if(this->args.size() >= args_capacity)
+    if(this->args.size() >= static_cast<std::ptrdiff_t>(args_capacity))
     {
         auto new_caps = !args_capacity ? 6 : args_capacity * 2;
         auto new_args = new(*arena) arena_ptr<Argument>[new_caps];

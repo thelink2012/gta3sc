@@ -1,6 +1,7 @@
+#include "compiler-fixture.hpp"
 #include <doctest.h>
 #include <gta3sc/parser.hpp>
-#include "compiler-fixture.hpp"
+#include <string>
 using namespace gta3sc::test;
 using namespace std::literals::string_view_literals;
 using namespace std::literals::string_literals;
@@ -10,9 +11,7 @@ namespace gta3sc::test
 class ParserFixture : public CompilerFixture
 {
 public:
-    ParserFixture() :
-        parser(make_parser(source_file, diagman, arena))
-    {}
+    ParserFixture() : parser(make_parser(source_file, diagman, arena)) {}
 
 protected:
     void build_parser(std::string_view src)
@@ -33,6 +32,7 @@ private:
     }
 
     gta3sc::ArenaMemoryResource arena;
+
 protected:
     gta3sc::Parser parser;
 };
@@ -813,7 +813,8 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing permutations of ternary expressions")
             ir = parser.parse_statement();
             parser.skip_current_line();
             REQUIRE(ir == std::nullopt);
-            CHECK(peek_diag().message == gta3sc::Diag::invalid_expression_unassociative);
+            CHECK(peek_diag().message
+                  == gta3sc::Diag::invalid_expression_unassociative);
             if(command_name == "SUB_THING_FROM_THING")
                 CHECK(consume_diag().args.at(0) == gta3sc::Category::Minus);
             else if(command_name == "DIV_THING_BY_THING")
@@ -916,7 +917,8 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing invalid expressions")
         if(count == 11)
             CHECK(consume_diag().message == gta3sc::Diag::expected_argument);
         else if(count == 12)
-            CHECK(consume_diag().message == gta3sc::Diag::expected_ternary_operator);
+            CHECK(consume_diag().message
+                  == gta3sc::Diag::expected_ternary_operator);
         else
             CHECK(consume_diag().message == gta3sc::Diag::invalid_expression);
     }
@@ -993,13 +995,15 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing special words in expressions")
                 CHECK(consume_diag().message == gta3sc::Diag::expected_token);
                 break;
             case 8: // GOSUB_FILE ++
-                CHECK(consume_diag().message == gta3sc::Diag::expected_argument);
+                CHECK(consume_diag().message
+                      == gta3sc::Diag::expected_argument);
                 break;
             case 7: // LAUNCH_MISSION ++
                 CHECK(consume_diag().message == gta3sc::Diag::invalid_filename);
                 break;
             case 6: // GOSUB_FILE = OTHER
-                CHECK(consume_diag().message == gta3sc::Diag::expected_argument);
+                CHECK(consume_diag().message
+                      == gta3sc::Diag::expected_argument);
                 break;
             case 5: // LOAD_AND_LAUNCH_MISSION = OTHER
                 CHECK(consume_diag().message == gta3sc::Diag::invalid_filename);
@@ -1008,7 +1012,8 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing special words in expressions")
             case 3: // MISSION_END = OTHER
             case 2: // MISSION_START ++
             case 1: // MISSION_END ++
-                CHECK(consume_diag().message == gta3sc::Diag::unexpected_special_name);
+                CHECK(consume_diag().message
+                      == gta3sc::Diag::unexpected_special_name);
                 break;
         }
     }
@@ -1086,7 +1091,8 @@ TEST_CASE_FIXTURE(ParserFixture,
 
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
-    CHECK(consume_diag().message == gta3sc::Diag::expected_conditional_expression);
+    CHECK(consume_diag().message
+          == gta3sc::Diag::expected_conditional_expression);
 }
 
 TEST_CASE_FIXTURE(ParserFixture,
@@ -1096,7 +1102,8 @@ TEST_CASE_FIXTURE(ParserFixture,
 
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
-    CHECK(consume_diag().message == gta3sc::Diag::expected_conditional_operator);
+    CHECK(consume_diag().message
+          == gta3sc::Diag::expected_conditional_operator);
 }
 
 TEST_CASE_FIXTURE(ParserFixture, "parsing a valid IF...ENDIF block")

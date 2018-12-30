@@ -125,12 +125,20 @@ public:
     }
 
     /// Adds an argument to the diagnostic.
-    template<typename... Args>
-    auto args(Args&&... args) && -> DiagnosticBuilder&&
+    template<typename Arg, typename... Args>
+    auto args(Arg&& arg, Args&&... args) && -> DiagnosticBuilder&&
     {
-        ((void)diag->args.push_back(convert(std::forward<Args>(args))), ...);
-        return std::move(*this);
+        // auto args(Args&&... args) =>
+        //  ((void)diag->args.push_back(convert(std::forward<Args>(args))), ...)
+        //
+        // The line you see above using fold expressions crashes MSVC, thus we
+        // use recursion instead to append the arguments to the diagnostic.
+        diag->args.push_back(convert(std::forward<Arg>(arg)));
+        return std::move(*this).args(std::forward<Args>(args)...);
     }
+
+    /// Adds an argument to the diagnostic.
+    auto args() && -> DiagnosticBuilder&& { return std::move(*this); }
 
 private:
     template<typename T>

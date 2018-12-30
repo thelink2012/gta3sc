@@ -50,7 +50,7 @@ public:
         {
             assert(arg != nullptr);
 
-            if(this->args.size() >= args_capacity)
+            if(this->args.size() >= static_cast<std::ptrdiff_t>(args_capacity))
             {
                 const auto new_caps = !args_capacity ? 6 : args_capacity * 2;
                 reserve_args(new_caps, arena);

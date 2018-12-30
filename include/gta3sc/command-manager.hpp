@@ -1,10 +1,10 @@
 #pragma once
-#include <gta3sc/arena-allocator.hpp>
+#include <algorithm>
 #include <gta3sc/adt/span.hpp>
+#include <gta3sc/arena-allocator.hpp>
+#include <optional>
 #include <string_view>
 #include <unordered_map>
-#include <algorithm>
-#include <optional>
 
 namespace gta3sc
 {
@@ -38,7 +38,7 @@ public:
         LABEL,
         TEXT_LABEL,
         STRING,
-        
+
         VAR_INT_OPT,
         LVAR_INT_OPT,
         VAR_FLOAT_OPT,
@@ -51,8 +51,17 @@ public:
     struct ParamDef
     {
         ParamType type;
-        EntityId entity_type {0};
-        EnumId enum_type {0};
+        EntityId entity_type{0};
+        EnumId enum_type{0};
+
+        explicit ParamDef(ParamType type) : type(type) {}
+
+        explicit ParamDef(ParamType type, EntityId entity_type,
+                          EnumId enum_type) :
+            type(type),
+            entity_type(entity_type),
+            enum_type(enum_type)
+        {}
 
         bool is_optional() const
         {
@@ -77,7 +86,7 @@ public:
         std::string_view name;
         adt::span<ParamDef> params;
     };
-    
+
     struct AlternatorDef
     {
         adt::span<const CommandDef*> alternatives;
@@ -91,7 +100,7 @@ public:
     };
 
 public:
-    static constexpr EnumId global_enum = EnumId{0}; // guaranted to be 0
+    static constexpr EnumId global_enum = EnumId{0};        // guaranted to be 0
     static constexpr EntityId no_entity_type = EntityId{0}; // guaranted to be 0
 
     CommandManager()
@@ -116,14 +125,13 @@ public:
 
         auto a_name = allocate_string_upper(name);
 
-        auto a_params = static_cast<ParamDef*>(
-                arena.allocate(num_params * sizeof(ParamDef), 
-                               alignof(ParamDef)));
+        auto a_params = static_cast<ParamDef*>(arena.allocate(
+                num_params * sizeof(ParamDef), alignof(ParamDef)));
         std::uninitialized_copy(params.begin(), params.end(), a_params);
 
-        auto a_cmd = new (arena, alignof(CommandDef)) CommandDef { 
-            a_name, 
-            adt::span(a_params, num_params),
+        auto a_cmd = new(arena, alignof(CommandDef)) CommandDef{
+                a_name,
+                adt::span(a_params, num_params),
         };
 
         command_by_name.emplace(a_name, a_cmd);
@@ -133,7 +141,7 @@ public:
     auto find_command(std::string_view name) const -> const CommandDef*
     {
         auto it = command_by_name.find(name);
-        return it == command_by_name.end()? nullptr : it->second;
+        return it == command_by_name.end() ? nullptr : it->second;
     }
 
     bool add_alternator(std::string_view name,
@@ -152,11 +160,11 @@ public:
                 arena.allocate(num_alters * sizeof(const CommandDef*),
                                alignof(const CommandDef*)));
 
-        std::uninitialized_copy(alternatives.begin(), alternatives.end(), a_alters);
+        std::uninitialized_copy(alternatives.begin(), alternatives.end(),
+                                a_alters);
 
-        auto a_alternator = new (arena, alignof(AlternatorDef)) AlternatorDef {
-            adt::span(a_alters, num_alters)
-        };
+        auto a_alternator = new(arena, alignof(AlternatorDef))
+                AlternatorDef{adt::span(a_alters, num_alters)};
 
         alternator_by_name.emplace(a_name, a_alternator);
         return true;
@@ -165,7 +173,7 @@ public:
     auto find_alternator(std::string_view name) const -> const AlternatorDef*
     {
         auto it = alternator_by_name.find(name);
-        return it == alternator_by_name.end()? nullptr : it->second;
+        return it == alternator_by_name.end() ? nullptr : it->second;
     }
 
     bool add_enumeration(std::string_view name)
@@ -175,7 +183,8 @@ public:
 
         auto a_name = allocate_string_upper(name);
 
-        const std::underlying_type_t<EnumId> next_id = enum_by_name.size();
+        const auto next_id = static_cast<std::underlying_type_t<EnumId>>(
+                enum_by_name.size());
         assert(next_id < std::numeric_limits<decltype(next_id)>::max());
 
         auto [iter, inserted] = enum_by_name.emplace(a_name, EnumId{next_id});
@@ -208,14 +217,14 @@ public:
             ptr_next = std::addressof((*ptr_next)->next);
         }
 
-        *ptr_next = new (arena, alignof(ConstantDef)) ConstantDef { 
-            enum_id, value, nullptr 
-        };
+        *ptr_next = new(arena, alignof(ConstantDef))
+                ConstantDef{enum_id, value, nullptr};
 
         return true;
     }
 
-    auto find_constant(EnumId enum_id, std::string_view name) const -> const ConstantDef*
+    auto find_constant(EnumId enum_id, std::string_view name) const
+            -> const ConstantDef*
     {
         auto it = constant_by_name.find(name);
         if(it == constant_by_name.end())
@@ -230,7 +239,8 @@ public:
         return nullptr;
     }
 
-    auto find_constant_any_means(std::string_view name) const -> const ConstantDef*
+    auto find_constant_any_means(std::string_view name) const
+            -> const ConstantDef*
     {
         auto it = constant_by_name.find(name);
         if(it == constant_by_name.end())
@@ -246,21 +256,24 @@ public:
         return nullptr;
     }
 
-    bool add_entity_type(std::string_view name) 
+    bool add_entity_type(std::string_view name)
     {
         if(entity_by_name.count(name))
             return false;
-        
+
         auto a_name = allocate_string_upper(name);
 
-        const std::underlying_type_t<EntityId> next_id = entity_by_name.size();
+        const auto next_id = static_cast<std::underlying_type_t<EntityId>>(
+                entity_by_name.size());
         assert(next_id < std::numeric_limits<decltype(next_id)>::max());
 
-        auto [iter, inserted] = entity_by_name.emplace(a_name, EntityId{next_id});
+        auto [iter, inserted] = entity_by_name.emplace(a_name,
+                                                       EntityId{next_id});
         return true;
     }
 
-    auto find_entity_type(std::string_view name) const -> std::optional<EntityId>
+    auto find_entity_type(std::string_view name) const
+            -> std::optional<EntityId>
     {
         auto it = entity_by_name.find(name);
         if(it == entity_by_name.end())
@@ -268,16 +281,9 @@ public:
         return it->second;
     }
 
-
-
-
-
-
 private:
-
 private:
-    auto allocate_string_upper(std::string_view from)
-        -> std::string_view
+    auto allocate_string_upper(std::string_view from) -> std::string_view
     {
         auto chars = allocate_string(from, arena);
         for(auto& c : chars)
@@ -291,19 +297,17 @@ private:
 private:
     ArenaMemoryResource arena;
 
-    std::unordered_map<std::string_view, arena_ptr<const CommandDef>> 
-        command_by_name;
+    std::unordered_map<std::string_view, arena_ptr<const CommandDef>>
+            command_by_name;
 
     std::unordered_map<std::string_view, arena_ptr<const AlternatorDef>>
-        alternator_by_name;
+            alternator_by_name;
 
-    std::unordered_map<std::string_view, EnumId>
-        enum_by_name;
+    std::unordered_map<std::string_view, EnumId> enum_by_name;
 
     std::unordered_map<std::string_view, arena_ptr<ConstantDef>>
-        constant_by_name;
+            constant_by_name;
 
-    std::unordered_map<std::string_view, EntityId>
-        entity_by_name;
+    std::unordered_map<std::string_view, EntityId> entity_by_name;
 };
 }

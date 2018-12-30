@@ -7,6 +7,8 @@
 
 namespace gta3sc
 {
+// TODO make this more generic. It does not build on MSVC debug builds.
+
 /// Handle to a range of characters in the source file.
 using SourceRange = std::string_view;
 
