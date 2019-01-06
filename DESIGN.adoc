@@ -8,17 +8,17 @@ toc::[]
 
 == Introduction
 
-This document describes the internals of the gta3sc project. It is meant to capture a high-level overview of the infrastructure and reason about some of the design choices behind it.
+This document describes the design of the gta3sc project. It captures a high-level overview of the infrastructure and reasons about some of the design choices behind it.
 
 == Design Goals
 
-The current codebase is a complete rewrite of a previous one. Clear goals were made in order to avoid the same mistakes as before.
+The current codebase is a complete rewrite of a previous one. Clear goals are made in order to avoid the same mistakes as before.
 
 The project has four design goals and many decisions are based upon them:
 
  * The code base should be **simple**: There should be no magic tricks. Triviality should be chosen whenever possible. Understanding the code base quickly is a must.
  * The code base should be **modular**: Each module should work as a simple "program" in charge of a very specific task. Modules should be easily replaceable. Understanding a single module should be enough for hacking on it.
- * The code base should be **efficient**: Asymptotic complexity matters. Sources of unpredictable performance (such as memory allocations) should be avoided.
+ * The code base should be **efficient**: Asymptotic complexity matters. Cache hits too. Sources of unpredictable performance (such as memory allocations) should be avoided. Data structures should be designed in a way that keeps the cache hot.
  * The translator should be **conformant**: Whereas the authoritative source is https://github.com/GTAmodding/gta3script-specs[gta3script-specs].
 
 == Language Conformance
@@ -29,9 +29,24 @@ It was clear a formal specification had to be written before touching code. The 
 
 As this is a compiler infrastructure, not a language-wide repository, a separate project for reversing the language and formalizing it has been created. It can be found at https://github.com/GTAmodding/gta3script-specs[GTAModding/gta3script-specs].
 
-== Language Configuration
+== Basic Library
+
+=== Source Mapping
 
 TODO
+
+=== Diagnostic Handling
+
+TODO
+
+=== Command Information
+
+TODO
+
+=== Object Information
+
+TODO
+
 
 == Compiler
 
@@ -60,20 +75,17 @@ The scanner transforms the stream of characters given by the preprocessor into a
 
 The parser takes the stream of tokens and verifies whether it forms a syntactically valid script. In the process, it builds an intermediate representation for further processing by other passes.
 
-The scanner and the preprocessor are streams. Therefore, the three phases are run concurrently. The parser asks the scanner for the next token. The scanner asks the preprocessor for the next character. This is very beneficial. The preprocessor and scanner, despite introducing two phases, do not bring in any additional overhead.
+The scanner and the preprocessor are streams. Therefore, the three phases are run concurrently. The parser asks the scanner for the next token. The scanner asks the preprocessor for the next characters. This is very beneficial. The preprocessor and scanner, despite introducing two phases, do not bring in any additional overhead.
 
-The IR produced by the parser do not carry any semantic information. Semantic checking and annotation of the IR with this information is a task for the next phase.
+The IR produced by the parser does not carry any semantic information. Semantic checking and annotation of the IR with this information is a task for the next phase.
 
 The semantic analyzer requires to see the full content of all scripts in a very specific order. Thus, the IR produced by the parsing of each script is merged into a single big IR which can be used for semantic checking.
 
-An observation regarding the previous pass is that the parser may be run in parallel for different scripts and then the result joint together. This was not a design decision, but rather a mere consequence of the modularity of the phases.
+The semantic phase takes the IR produced by the parsers, validates its semantics, and produces another IR with semantic information embedded in.
 
-TODO overview of sema
+Afterwards, the IR goes into a transformation pass called lowering. This pass rewrites complex constructs (such as IF and REPEAT) in terms of simpler ones (labels and jumps). This way, further passes only need to deal with simple commands.
 
-TODO overview of lowering
-
-TODO overview of codegen
-
+The final phase is code generation. It takes the IR and produces bytecode for the execution environment.
 
 === Preprocessor
 
@@ -89,13 +101,11 @@ Another scenario that would work against the scanner is, for instance, when ther
 
 This phase is analogous to the line reconstruction phase of miss2, except it is capable of doing so character by character.
 
-Instead of reconstructor, it is called a preprocessor because it's the future home of a preprocessor similar to that of GTA2script.
-
 === Scanner
 
 The scanner takes the normalized stream of characters produced by the preprocessor and classifies them into tokens.
 
-The GTA3script language is itself context sensitive. In order for the scanner to be simple and regular, it must perform a conservative form of classification. Unlike in other languages, integers, floats and identifiers are not classified individually, instead they are classified into a generic category named _word_.
+The GTA3script language is itself context sensitive. In order for the scanner to be simple and regular, it must perform a conservative form of classification. Unlike in other languages, integers, floats and identifiers are not classified individually, instead they are classified into a generic category called _word_.
 
 Later on the parser has enough contextual information to disambiguate whether this _word_ is a command, label, integer, float or identifier.
 
@@ -113,31 +123,52 @@ The grammar and more details about the language itself can be found at the https
 
 The intermediate representation is not an abstract syntax tree, but a linear code. The properties of the language do not call for an AST. There is no nested expressions, for instance, and control-flow structures can be easily represented as code.
 
-The IR is guaranted to be syntactically valid, but semantic validation is left to its own phase. The parser does not know anything about commands, selectors and types. Please see the section on <<ParserIR, Parser IR>> for the properties of this representation.
+The IR is guaranted to be syntactically valid, but semantic validation is left to its own phase. The parser does not know anything about commands, alternators and types. Please see the section on <<ParserIR, Parser IR>> for the properties of this representation.
 
-The entire IR shares the same lifetime. Consequently it benefits from the use of a <<ArenaMemoryResource,region-based memory manager>>. This mechanism guarantees us lightning fast allocation/deallocation and little to no memory fragmentation.
+The entire IR shares the same lifetime. Consequently it benefits from the use of a <<ArenaMemoryResource,region-based memory manager>>. This mechanism guarantees us lightning fast allocation/deallocation and very good cache locality.
 
-The parser does not perform syntax-directed translation, which would make parsing and semantic checking a single pass. This is not possible because the semantic phase requires global information about the program. For example, variable declarations of a script must be seen by every other script, and the order of declarations is relevant (each variable has an id that cannot change between compilers). More details about this can be seen on the language specification.
+The parser does not perform syntax-directed translation, which would make parsing and semantic checking a single pass. This is not possible because the semantic phase requires global information about the program. First, it needs to know the name of every symbol in the entire program before checking semantics. And second, the entity a variable holds depends on previous assignments, and the definition of _previous_ require a total ordering of the lines of code. More details about this can be seen on the language specification.
+
+This pass also populates the <<SymbolRepository,symbol repository>> with the filename of scripts required by this stream of tokens.
 
 Addition of new features to the language only touches this phase onwards, specially because the scanner is conservative and produces no keywords.
 
-=== Sema
+=== Semantics
+
+The semantic phase checks the semantic validity of the IR produced by the parser and, in the process, produces another IR guaranted to be semantically valid.
+
+This phase is divided into two passes. The first pass discovers declarations in the IR (e.g. variables and labels). The second pass performs semantic validation on each and every command.
+
+There is not much else to say. This phase is quite obvious and follows the language specification. Please see the section on <<SemaIR, Semantic IR>> for the properties of the output of the phase. Much like the parser, the resulting IR is constructed in an <<ArenaMemoryResource,arena>> (which does not need to be the same as the parser's arena).
+
+This phase also populates the <<SymbolRepository,symbol repository>> with variables, labels, user-defined string constants, used objects, and more.
+
+
+=== Lowering Pass
+
+The lowering pass takes an IR and transforms its complex commands into simpler commands, in such a way that further passes over the IR are simplified.
+
+The first class of complex commands that are simplified is the class of selection and iteration statements (`IF`, `WHILE`, `REPEAT` and similar). These are rewritten in terms of branch commands (`ANDOR`, `GOTO_IF_FALSE`, `GOTO_IF_TRUE`).
+
+The second class of simplifications are on require statements. Filenames are converted into labels (for `GOSUB_FILE`, `LAUNCH_MISSION`, `LOAD_AND_LAUNCH_MISSION`).
+
+=== Code Generation
+
+The code generator takes IR and emits equivalent bytecode into a byte stream.
+
+The generation occurs in a single pass over the IR and a second fixup pass over certain locations in the byte stream.
+
+The first pass reserves space for the header in the stream and proceeds to emit the bytecode for each command in the IR. In the process, it takes note of some key information to be stored in the header, such as used objects and script sizes.
+
+Forward references to labels and variables do not emit bytecode. Instead, it reserves space for the label (or variable) offset and stores the location of the reserved space in a fixup table. Backward references (those happening after declaration) do not need fixup entries.
+
+The second pass fills the header and patches all the references in the fixup table.
+
+During emission, the generator discards a few commands (e.g. `NOP`, `VAR_INT`, `{`, `}`) and translates others into their internal equivalents (e.g. `LOAD_AND_LAUNCH_MISSION` into `LOAD_AND_LAUNCH_MISSION_INTERNAL`).
+
+== Compiler Driver
 
 TODO
-
-// The previous codebase has shown that trying to make this an out-of-order process produces complicated algorithms that do not bring enough benefit for the code complexity.
-
-=== Lowering
-
-TODO
-
-=== Codegen
-
-TODO
-
-== Decompiler
-
-The decompiler is still a dream. Hopefully it is written before the end of this century. Meanwhile take a look at https://github.com/x87/scout.js[scout.js].
 
 == Support Library
 
@@ -177,7 +208,12 @@ Information about the location in the source code that originated each element i
 ++++
 
 [#SemaIR]
-=== Sema IR
+=== Semantic IR
+
+TODO
+
+[#SymbolRepository]
+=== Symbol Repository
 
 TODO
 
