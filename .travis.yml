@@ -1,24 +1,25 @@
 language: cpp
-dist: trusty
+dist: bionic
 matrix:
   include:
     - os: linux
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
-          packages: ['g++-8']
+          packages: ['g++-9']
       env:
-        - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+        - MATRIX_EVAL="CC=gcc-9 && CXX=g++-9"
+        - GCOV_BINARY=/usr/bin/gcov-9
         - CMAKE_BUILD_TYPE=Debug
         - COVERAGE=1
-        - CMAKE_PREFIX_PATH="$HOME/.local/usr/local"
+        - CMAKE_PREFIX_PATH="$HOME/.local/usr/local" # gcov location
     - os: linux
       addons:
         apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-6.0']
-          packages: ['libstdc++-8-dev', 'clang-6.0']
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-bionic-9']
+          packages: ['libstdc++-9-dev', 'clang-9']
       env:
-        - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
+        - MATRIX_EVAL="CC=clang-9 && CXX=clang++-9"
         - CMAKE_BUILD_TYPE=RelWithDebInfo
         - COVERAGE=0
 before_install:
@@ -26,10 +27,11 @@ before_install:
 install:
   - |
     test $COVERAGE = 1 && {
+      sudo apt-get -y install libperlio-gzip-perl libconfig-json-perl &&
       wget https://github.com/linux-test-project/lcov/archive/master.zip -O lcov.zip &&
       unzip lcov.zip &&
       make -C lcov-master install DESTDIR=$HOME/.local &&
-      cp /usr/bin/gcov-8 $HOME/.local/usr/local/bin/gcov
+      cp $GCOV_BINARY $HOME/.local/usr/local/bin/gcov
     } || echo "Coverage disabled, skipping gcov/lcov installation..."
 script:
   - mkdir build
@@ -37,4 +39,4 @@ script:
   - cmake .. -DBUILD_TESTING=1 -DGTA3SC_COVERAGE=$COVERAGE -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE
   - cmake --build . --target coverage
 after_success:
-  - bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
+  - test $COVERAGE = 1 && bash <(curl -s https://codecov.io/bash)
