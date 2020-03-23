@@ -12,7 +12,7 @@ class SemaFixture : public CompilerFixture, public CommandManagerFixture
 {
 public:
     SemaFixture() :
-        sema(default_sema())
+        sema(default_sema()), symrepo(arena)
     {}
 
     void build_sema(std::string_view src, bool parser_error = false)

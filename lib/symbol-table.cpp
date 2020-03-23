@@ -2,7 +2,7 @@
 
 namespace gta3sc
 {
-SymbolRepository::SymbolRepository()
+SymbolRepository::SymbolRepository(ArenaMemoryResource& arena) : arena(&arena)
 {
     const auto global_scope = allocate_scope();
     assert(global_scope == 0);
@@ -40,8 +40,8 @@ auto SymbolRepository::insert_var(std::string_view name_, ScopeId scope_id,
         return {v, false};
 
     const auto id = static_cast<uint32_t>(var_tables[scope_id].size());
-    const auto name = allocate_string(name_, arena);
-    const auto symbol = new(arena, alignof(SymVariable)) SymVariable{
+    const auto name = allocate_string(name_, *arena);
+    const auto symbol = new(*arena, alignof(SymVariable)) SymVariable{
             source, id, scope_id, type, SymVariable::EntityId{}, dim};
     const auto [iter, _] = var_tables[scope_id].emplace(name, symbol);
     return {iter->second, true};
@@ -54,8 +54,8 @@ auto SymbolRepository::insert_label(std::string_view name_, ScopeId scope_id,
     if(auto l = lookup_label(name_))
         return {l, false};
 
-    const auto name = allocate_string(name_, arena);
-    const auto symbol = new(arena, alignof(SymLabel))
+    const auto name = allocate_string(name_, *arena);
+    const auto symbol = new(*arena, alignof(SymLabel))
             SymLabel{source, scope_id};
     const auto [iter, _] = label_table.emplace(name, symbol);
     return {iter->second, true};
