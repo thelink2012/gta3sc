@@ -1,5 +1,5 @@
-#include <doctest.h>
 #include "compiler-fixture.hpp"
+#include <doctest.h>
 #include <gta3sc/preprocessor.hpp>
 using namespace gta3sc::test;
 
@@ -8,9 +8,7 @@ namespace gta3sc::test
 class PreprocessorFixture : public CompilerFixture
 {
 public:
-    PreprocessorFixture() :
-        pp(make_source(""), diagman)
-    {}
+    PreprocessorFixture() : pp(make_source(""), diagman) {}
 
 protected:
     void build_pp(std::string_view src)
@@ -42,7 +40,8 @@ TEST_CASE_FIXTURE(PreprocessorFixture, "simple character stream")
 TEST_CASE_FIXTURE(PreprocessorFixture, "character stream EOF")
 {
     build_pp("foo");
-    while(!pp.eof()) pp.next();
+    while(!pp.eof())
+        pp.next();
     CHECK(pp.eof() == true);
     REQUIRE(pp.next() == '\0');
     REQUIRE(pp.next() == '\0');
@@ -62,13 +61,15 @@ TEST_CASE_FIXTURE(PreprocessorFixture, "character stream with whitespaces")
     REQUIRE(drain() == "foo   (bar) ,\t\t baz");
 }
 
-TEST_CASE_FIXTURE(PreprocessorFixture, "character stream with leading whitespaces")
+TEST_CASE_FIXTURE(PreprocessorFixture,
+                  "character stream with leading whitespaces")
 {
     build_pp("   (,)    \t\tfoo\n  ,\t)  bar\n\t\tbaz");
     REQUIRE(drain() == "foo\nbar\nbaz");
 }
 
-TEST_CASE_FIXTURE(PreprocessorFixture, "character stream with trailing whitespaces")
+TEST_CASE_FIXTURE(PreprocessorFixture,
+                  "character stream with trailing whitespaces")
 {
     build_pp("foo,\nbar  \t, \nbaz  ()");
     REQUIRE(drain() == "foo,\nbar  \t, \nbaz  ()");
@@ -80,31 +81,36 @@ TEST_CASE_FIXTURE(PreprocessorFixture, "character stream with line comment")
     REQUIRE(drain() == "foo \nbar\n\nbaz");
 }
 
-TEST_CASE_FIXTURE(PreprocessorFixture, "character stream with leading block comment")
+TEST_CASE_FIXTURE(PreprocessorFixture,
+                  "character stream with leading block comment")
 {
     build_pp("  /* block */ () /* more */ foo\nbar\n /**/, baz");
     REQUIRE(drain() == "foo\nbar\nbaz");
 }
 
-TEST_CASE_FIXTURE(PreprocessorFixture, "character stream with trailing block comment")
+TEST_CASE_FIXTURE(PreprocessorFixture,
+                  "character stream with trailing block comment")
 {
     build_pp("foo /* block */\nbar\nbaz/* block */");
     REQUIRE(drain() == "foo  \nbar\nbaz ");
 }
 
-TEST_CASE_FIXTURE(PreprocessorFixture, "character stream with block comment crossing lines")
+TEST_CASE_FIXTURE(PreprocessorFixture,
+                  "character stream with block comment crossing lines")
 {
     build_pp("foo /* block \n   comment \n */ \nbar\nbaz");
     REQUIRE(drain() == "foo \n\n\nbar\nbaz");
 }
 
-TEST_CASE_FIXTURE(PreprocessorFixture, "character stream with nested block comment")
+TEST_CASE_FIXTURE(PreprocessorFixture,
+                  "character stream with nested block comment")
 {
     build_pp("foo/* this /* is a block \n /* nesting */\n */ */bar");
     REQUIRE(drain() == "foo\n\nbar");
 }
 
-TEST_CASE_FIXTURE(PreprocessorFixture, "character stream with unclosed block comment")
+TEST_CASE_FIXTURE(PreprocessorFixture,
+                  "character stream with unclosed block comment")
 {
     build_pp("foo/*/ this is a block \n comment \n ");
     REQUIRE(drain() == "foo\n\n");

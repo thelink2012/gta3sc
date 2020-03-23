@@ -1,8 +1,8 @@
 #pragma once
 #include <cassert>
 #include <cstddef>
-#include <memory>
 #include <cstring>
+#include <memory>
 #include <string_view>
 
 namespace gta3sc
@@ -13,8 +13,8 @@ namespace gta3sc
 /// and may be disposed of by simply deallocating their storage.
 template<typename T>
 using arena_ptr = T*;
-//using arena_ptr = std::enable_if_t<std::is_trivially_destructible_v<T>, T*>;
-//The above causes problems when the full class definition is still not known.
+// using arena_ptr = std::enable_if_t<std::is_trivially_destructible_v<T>, T*>;
+// The above causes problems when the full class definition is still not known.
 
 /// This is a memory resource that releases the allocated memory only when
 /// the resource is destroyed. It is intended for very fast memory allocations
@@ -297,13 +297,12 @@ inline void operator delete[](void*, gta3sc::ArenaMemoryResource&)
 
 namespace gta3sc
 {
-    /// Allocates a string in the arena and returns a view to it.
-    inline auto allocate_string(std::string_view from,
-                                ArenaMemoryResource& arena)
+/// Allocates a string in the arena and returns a view to it.
+inline auto allocate_string(std::string_view from, ArenaMemoryResource& arena)
         -> std::string_view
-    {
-        auto ptr = new(arena, alignof(char)) char[from.size()];
-        std::memcpy(ptr, from.data(), from.size());
-        return {ptr, from.size()};
-    }
+{
+    auto ptr = new(arena, alignof(char)) char[from.size()];
+    std::memcpy(ptr, from.data(), from.size());
+    return {ptr, from.size()};
+}
 }

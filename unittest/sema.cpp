@@ -1,19 +1,19 @@
+#include "command-manager-fixture.hpp"
+#include "compiler-fixture.hpp"
 #include <doctest.h>
 #include <gta3sc/parser.hpp>
 #include <gta3sc/sema.hpp>
-#include "compiler-fixture.hpp"
-#include "command-manager-fixture.hpp"
 using namespace gta3sc::test;
 using namespace std::literals::string_view_literals;
 
 namespace gta3sc::test
 {
-class SemaFixture : public CompilerFixture, public CommandManagerFixture
+class SemaFixture
+    : public CompilerFixture
+    , public CommandManagerFixture
 {
 public:
-    SemaFixture() :
-        sema(default_sema()), symrepo(arena)
-    {}
+    SemaFixture() : sema(default_sema()), symrepo(arena) {}
 
     void build_sema(std::string_view src, bool parser_error = false)
     {
@@ -21,7 +21,8 @@ public:
         if(!parser_error)
         {
             REQUIRE(ir != std::nullopt);
-            this->sema = gta3sc::Sema(std::move(*ir), symrepo, cmdman, diagman, arena);
+            this->sema = gta3sc::Sema(std::move(*ir), symrepo, cmdman, diagman,
+                                      arena);
         }
         else
         {
@@ -32,8 +33,7 @@ public:
 
 private:
     auto make_parser(gta3sc::SourceFile source,
-                     gta3sc::ArenaMemoryResource& arena)
-            -> gta3sc::Parser
+                     gta3sc::ArenaMemoryResource& arena) -> gta3sc::Parser
     {
         auto pp = gta3sc::Preprocessor(std::move(source), diagman);
         auto scanner = gta3sc::Scanner(std::move(pp));
@@ -42,12 +42,12 @@ private:
 
     auto default_sema() -> gta3sc::Sema
     {
-        return gta3sc::Sema(gta3sc::LinkedIR<gta3sc::ParserIR>(arena),
-                            symrepo, cmdman, diagman, arena);
+        return gta3sc::Sema(gta3sc::LinkedIR<gta3sc::ParserIR>(arena), symrepo,
+                            cmdman, diagman, arena);
     }
 
-
     gta3sc::ArenaMemoryResource arena;
+
 protected:
     gta3sc::SymbolRepository symrepo;
     gta3sc::Sema sema;
@@ -71,7 +71,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema valid variables declarations")
                "}\n");
 
     REQUIRE(sema.validate() != std::nullopt);
-    
+
     gta3sc::SymVariable* gvar[10] = {};
     gta3sc::SymVariable* lvar1[10] = {};
     gta3sc::SymVariable* lvar2[10] = {};
@@ -113,7 +113,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema valid variables declarations")
     for(int i = 1; i <= 8; ++i)
         REQUIRE(gvar[i] != nullptr);
     for(int i = 1; i <= 8; ++i)
-        REQUIRE(gvar[i]->id == i-1);
+        REQUIRE(gvar[i]->id == i - 1);
     for(int i = 1; i <= 7; ++i)
         REQUIRE(gvar[i]->dim == std::nullopt);
     REQUIRE(gvar[8]->dim == 25);
@@ -130,7 +130,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema valid variables declarations")
     for(int i = 1; i <= 8; ++i)
         REQUIRE(lvar1[i] != nullptr);
     for(int i = 1; i <= 8; ++i)
-        REQUIRE(lvar1[i]->id == i-1);
+        REQUIRE(lvar1[i]->id == i - 1);
     for(int i = 1; i <= 8; ++i)
         REQUIRE(lvar1[i]->dim == std::nullopt);
     REQUIRE(lvar1[1]->type == gta3sc::SymVariable::Type::INT);
@@ -146,7 +146,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema valid variables declarations")
     for(int i = 1; i <= 5; ++i)
         REQUIRE(lvar2[i] != nullptr);
     for(int i = 1; i <= 5; ++i)
-        REQUIRE(lvar2[i]->id == i-1);
+        REQUIRE(lvar2[i]->id == i - 1);
     for(int i = 1; i <= 5; ++i)
         REQUIRE(lvar2[i]->type == gta3sc::SymVariable::Type::FLOAT);
     REQUIRE(lvar2[1]->dim == 30);
@@ -160,23 +160,28 @@ TEST_CASE_FIXTURE(SemaFixture, "sema invalid variables declarations")
     {
         build_sema("VAR_INT x[y] z[10]");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::var_decl_subscript_must_be_literal);
+        CHECK(consume_diag().message
+              == gta3sc::Diag::var_decl_subscript_must_be_literal);
     }
 
     SUBCASE("zero integer literal subscript")
     {
         build_sema("VAR_INT x[0] z[10]");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::var_decl_subscript_must_be_nonzero);
+        CHECK(consume_diag().message
+              == gta3sc::Diag::var_decl_subscript_must_be_nonzero);
     }
 
     SUBCASE("local variable declaration outside of scope")
     {
         build_sema("LVAR_INT x y z");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::var_decl_outside_of_scope);
-        CHECK(consume_diag().message == gta3sc::Diag::var_decl_outside_of_scope);
-        CHECK(consume_diag().message == gta3sc::Diag::var_decl_outside_of_scope);
+        CHECK(consume_diag().message
+              == gta3sc::Diag::var_decl_outside_of_scope);
+        CHECK(consume_diag().message
+              == gta3sc::Diag::var_decl_outside_of_scope);
+        CHECK(consume_diag().message
+              == gta3sc::Diag::var_decl_outside_of_scope);
     }
 
     SUBCASE("variable decl name is not identifier")
@@ -251,13 +256,16 @@ TEST_CASE_FIXTURE(SemaFixture, "sema different symbol tables do not collide")
     REQUIRE(sema.validate() != std::nullopt);
 }
 
-TEST_CASE_FIXTURE(SemaFixture, "sema variable names collides with string constants")
+TEST_CASE_FIXTURE(SemaFixture,
+                  "sema variable names collides with string constants")
 {
     build_sema("VAR_INT ON PEDTYPE_CIVMALE\n"
                "{\nLVAR_INT FALSE PEDTYPE_CIVFEMALE\n}");
     REQUIRE(sema.validate() == std::nullopt);
-    CHECK(consume_diag().message == gta3sc::Diag::duplicate_var_string_constant);
-    CHECK(consume_diag().message == gta3sc::Diag::duplicate_var_string_constant);
+    CHECK(consume_diag().message
+          == gta3sc::Diag::duplicate_var_string_constant);
+    CHECK(consume_diag().message
+          == gta3sc::Diag::duplicate_var_string_constant);
     CHECK(diags.empty()); // does not collide with ON/FALSE
 }
 
@@ -355,7 +363,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema valid command")
     REQUIRE(ir->front().command->args.size() == 1);
     REQUIRE(*ir->front().command->args[0]->as_integer() == 98);
 
-    REQUIRE(ir->back().label == symrepo.lookup_label("SOME_LABEL")); 
+    REQUIRE(ir->back().label == symrepo.lookup_label("SOME_LABEL"));
     REQUIRE(ir->back().command != nullptr);
     REQUIRE(ir->front().command->not_flag == false);
     REQUIRE(&ir->back().command->def == cmdman.find_command("PRINT_HELP"));
@@ -479,9 +487,12 @@ TEST_CASE_FIXTURE(SemaFixture, "sema TEXT_LABEL parameter")
                    "PRINT_HELP $]\n"
                    "PRINT_HELP $a\n");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_varname_after_dollar);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_varname_after_dollar);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_varname_after_dollar);
+        CHECK(consume_diag().message
+              == gta3sc::Diag::expected_varname_after_dollar);
+        CHECK(consume_diag().message
+              == gta3sc::Diag::expected_varname_after_dollar);
+        CHECK(consume_diag().message
+              == gta3sc::Diag::expected_varname_after_dollar);
         CHECK(consume_diag().message == gta3sc::Diag::undefined_variable);
     }
 
@@ -489,7 +500,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema TEXT_LABEL parameter")
     {
         build_sema("PRINT_HELP ON");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::cannot_use_string_constant_here);
+        CHECK(consume_diag().message
+              == gta3sc::Diag::cannot_use_string_constant_here);
     }
 
     SUBCASE("valid TEXT_LABEL param - non-global string constant")
@@ -574,10 +586,10 @@ TEST_CASE_FIXTURE(SemaFixture, "sema VAR_INT parameter")
         const auto& set_var_int_1 = *std::prev(ir->end(), 3);
         const auto& set_var_int_2 = *std::prev(ir->end(), 2);
         REQUIRE(set_var_int_1.command->args.size() == 2);
-        REQUIRE(set_var_int_1.command->args[0]->as_var_ref()->def 
+        REQUIRE(set_var_int_1.command->args[0]->as_var_ref()->def
                 == symrepo.lookup_var("$G2"));
         REQUIRE(set_var_int_2.command->args.size() == 2);
-        REQUIRE(set_var_int_2.command->args[0]->as_var_ref()->def 
+        REQUIRE(set_var_int_2.command->args[0]->as_var_ref()->def
                 == symrepo.lookup_var("G1"));
     }
 
@@ -614,17 +626,18 @@ TEST_CASE_FIXTURE(SemaFixture, "sema LVAR_INT parameter")
 {
     SUBCASE("valid LVAR_INT param")
     {
-        build_sema("{\nLVAR_INT l1 $l2\nSET_LVAR_INT $l2 1\nSET_LVAR_INT l1 1\n}");
+        build_sema(
+                "{\nLVAR_INT l1 $l2\nSET_LVAR_INT $l2 1\nSET_LVAR_INT l1 1\n}");
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
         REQUIRE(ir->size() == 5);
         const auto& set_lvar_int_1 = *std::prev(ir->end(), 3);
         const auto& set_lvar_int_2 = *std::prev(ir->end(), 2);
         REQUIRE(set_lvar_int_1.command->args.size() == 2);
-        REQUIRE(set_lvar_int_1.command->args[0]->as_var_ref()->def 
+        REQUIRE(set_lvar_int_1.command->args[0]->as_var_ref()->def
                 == symrepo.lookup_var("$L2", 1));
         REQUIRE(set_lvar_int_2.command->args.size() == 2);
-        REQUIRE(set_lvar_int_2.command->args[0]->as_var_ref()->def 
+        REQUIRE(set_lvar_int_2.command->args[0]->as_var_ref()->def
                 == symrepo.lookup_var("L1", 1));
     }
 
@@ -661,17 +674,18 @@ TEST_CASE_FIXTURE(SemaFixture, "sema VAR_FLOAT parameter")
 {
     SUBCASE("valid VAR_FLOAT param")
     {
-        build_sema("{\nVAR_FLOAT g1 $g2\nSET_VAR_FLOAT $g2 1.0\nSET_VAR_FLOAT g1 1.0\n}");
+        build_sema("{\nVAR_FLOAT g1 $g2\nSET_VAR_FLOAT $g2 1.0\nSET_VAR_FLOAT "
+                   "g1 1.0\n}");
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
         REQUIRE(ir->size() == 5);
         const auto& set_var_flt_1 = *std::prev(ir->end(), 3);
         const auto& set_var_flt_2 = *std::prev(ir->end(), 2);
         REQUIRE(set_var_flt_1.command->args.size() == 2);
-        REQUIRE(set_var_flt_1.command->args[0]->as_var_ref()->def 
+        REQUIRE(set_var_flt_1.command->args[0]->as_var_ref()->def
                 == symrepo.lookup_var("$G2"));
         REQUIRE(set_var_flt_2.command->args.size() == 2);
-        REQUIRE(set_var_flt_2.command->args[0]->as_var_ref()->def 
+        REQUIRE(set_var_flt_2.command->args[0]->as_var_ref()->def
                 == symrepo.lookup_var("G1"));
     }
 
@@ -708,17 +722,18 @@ TEST_CASE_FIXTURE(SemaFixture, "sema LVAR_FLOAT parameter")
 {
     SUBCASE("valid LVAR_FLOAT param")
     {
-        build_sema("{\nLVAR_FLOAT l1 $l2\nSET_LVAR_FLOAT $l2 1.0\nSET_LVAR_FLOAT l1 1.0\n}");
+        build_sema("{\nLVAR_FLOAT l1 $l2\nSET_LVAR_FLOAT $l2 "
+                   "1.0\nSET_LVAR_FLOAT l1 1.0\n}");
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
         REQUIRE(ir->size() == 5);
         const auto& set_lvar_flt_1 = *std::prev(ir->end(), 3);
         const auto& set_lvar_flt_2 = *std::prev(ir->end(), 2);
         REQUIRE(set_lvar_flt_1.command->args.size() == 2);
-        REQUIRE(set_lvar_flt_1.command->args[0]->as_var_ref()->def 
+        REQUIRE(set_lvar_flt_1.command->args[0]->as_var_ref()->def
                 == symrepo.lookup_var("$L2", 1));
         REQUIRE(set_lvar_flt_2.command->args.size() == 2);
-        REQUIRE(set_lvar_flt_2.command->args[0]->as_var_ref()->def 
+        REQUIRE(set_lvar_flt_2.command->args[0]->as_var_ref()->def
                 == symrepo.lookup_var("L1", 1));
     }
 
@@ -756,17 +771,17 @@ TEST_CASE_FIXTURE(SemaFixture, "sema VAR_TEXT_LABEL parameter")
     SUBCASE("valid VAR_TEXT_LABEL param")
     {
         build_sema("{\nVAR_TEXT_LABEL g1 $g2\nSET_VAR_TEXT_LABEL $g2 TEXT"
-                                           "\nSET_VAR_TEXT_LABEL g1 TEXT\n}");
+                   "\nSET_VAR_TEXT_LABEL g1 TEXT\n}");
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
         REQUIRE(ir->size() == 5);
         const auto& set_var_1 = *std::prev(ir->end(), 3);
         const auto& set_var_2 = *std::prev(ir->end(), 2);
         REQUIRE(set_var_1.command->args.size() == 2);
-        REQUIRE(set_var_1.command->args[0]->as_var_ref()->def 
+        REQUIRE(set_var_1.command->args[0]->as_var_ref()->def
                 == symrepo.lookup_var("$G2"));
         REQUIRE(set_var_2.command->args.size() == 2);
-        REQUIRE(set_var_2.command->args[0]->as_var_ref()->def 
+        REQUIRE(set_var_2.command->args[0]->as_var_ref()->def
                 == symrepo.lookup_var("G1"));
     }
 
@@ -804,17 +819,17 @@ TEST_CASE_FIXTURE(SemaFixture, "sema LVAR_TEXT_LABEL parameter")
     SUBCASE("valid LVAR_TEXT_LABEL param")
     {
         build_sema("{\nLVAR_TEXT_LABEL l1 $l2\nSET_LVAR_TEXT_LABEL $l2 TEXT"
-                                            "\nSET_LVAR_TEXT_LABEL l1 TEXT\n}");
+                   "\nSET_LVAR_TEXT_LABEL l1 TEXT\n}");
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
         REQUIRE(ir->size() == 5);
         const auto& set_lvar_1 = *std::prev(ir->end(), 3);
         const auto& set_lvar_2 = *std::prev(ir->end(), 2);
         REQUIRE(set_lvar_1.command->args.size() == 2);
-        REQUIRE(set_lvar_1.command->args[0]->as_var_ref()->def 
+        REQUIRE(set_lvar_1.command->args[0]->as_var_ref()->def
                 == symrepo.lookup_var("$L2", 1));
         REQUIRE(set_lvar_2.command->args.size() == 2);
-        REQUIRE(set_lvar_2.command->args[0]->as_var_ref()->def 
+        REQUIRE(set_lvar_2.command->args[0]->as_var_ref()->def
                 == symrepo.lookup_var("L1", 1));
     }
 
@@ -891,7 +906,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema OUTPUT_INT parameter")
     {
         build_sema("VAR_INT ON\nGENERATE_RANDOM_INT_IN_RANGE 0 10 ON");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::cannot_use_string_constant_here);
+        CHECK(consume_diag().message
+              == gta3sc::Diag::cannot_use_string_constant_here);
     }
 }
 
@@ -939,7 +955,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema OUTPUT_FLOAT parameter")
     {
         build_sema("VAR_FLOAT ON\nGENERATE_RANDOM_FLOAT_IN_RANGE 0.0 1.0 ON");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::cannot_use_string_constant_here);
+        CHECK(consume_diag().message
+              == gta3sc::Diag::cannot_use_string_constant_here);
     }
 }
 
@@ -981,7 +998,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_INT parameter")
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
         REQUIRE(ir->size() == 8);
-        
+
         const auto& wait_off = *std::next(ir->begin(), 2)->command;
         const auto& wait_on = *std::next(ir->begin(), 3)->command;
         const auto& create_char_male = *std::next(ir->begin(), 4)->command;
@@ -991,23 +1008,24 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_INT parameter")
         REQUIRE(wait_off.args[0]->as_string_constant()->value == 0);
         REQUIRE(wait_on.args[0]->as_string_constant()->value == 1);
 
-        REQUIRE(create_char_male.args[0]->as_string_constant()->enum_id == 
-                *cmdman.find_enumeration("PEDTYPE"));
+        REQUIRE(create_char_male.args[0]->as_string_constant()->enum_id
+                == *cmdman.find_enumeration("PEDTYPE"));
         REQUIRE(create_char_male.args[0]->as_string_constant()->value == 4);
-        REQUIRE(create_char_male.args[1]->as_string_constant()->enum_id == 
-                *cmdman.find_enumeration("DEFAULTMODEL"));
+        REQUIRE(create_char_male.args[1]->as_string_constant()->enum_id
+                == *cmdman.find_enumeration("DEFAULTMODEL"));
         REQUIRE(create_char_male.args[1]->as_string_constant()->value == 5);
 
-        REQUIRE(create_char_medic.args[0]->as_string_constant()->enum_id == 
-                *cmdman.find_enumeration("PEDTYPE"));
+        REQUIRE(create_char_medic.args[0]->as_string_constant()->enum_id
+                == *cmdman.find_enumeration("PEDTYPE"));
         REQUIRE(create_char_medic.args[0]->as_string_constant()->value == 16);
-        REQUIRE(create_char_medic.args[1]->as_string_constant()->enum_id == 
-                *cmdman.find_enumeration("DEFAULTMODEL"));
+        REQUIRE(create_char_medic.args[1]->as_string_constant()->enum_id
+                == *cmdman.find_enumeration("DEFAULTMODEL"));
         REQUIRE(create_char_medic.args[1]->as_string_constant()->value == 5);
 
-        REQUIRE(create_char_on.args[0]->as_var_ref()->def == symrepo.lookup_var("ON"));
-        REQUIRE(create_char_on.args[1]->as_string_constant()->enum_id == 
-                *cmdman.find_enumeration("DEFAULTMODEL"));
+        REQUIRE(create_char_on.args[0]->as_var_ref()->def
+                == symrepo.lookup_var("ON"));
+        REQUIRE(create_char_on.args[1]->as_string_constant()->enum_id
+                == *cmdman.find_enumeration("DEFAULTMODEL"));
         REQUIRE(create_char_on.args[1]->as_string_constant()->value == 5);
     }
 
@@ -1095,7 +1113,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_FLOAT parameter")
 
     SUBCASE("invalid INPUT_FLOAT param - string literal")
     {
-        build_sema("VAR_FLOAT x\nGENERATE_RANDOM_FLOAT_IN_RANGE 0.0 \"Hello\" x");
+        build_sema(
+                "VAR_FLOAT x\nGENERATE_RANDOM_FLOAT_IN_RANGE 0.0 \"Hello\" x");
         REQUIRE(sema.validate() == std::nullopt);
         REQUIRE(consume_diag().message == gta3sc::Diag::expected_input_float);
     }
@@ -1109,7 +1128,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_FLOAT parameter")
 
     SUBCASE("invalid INPUT_FLOAT param - mistyped variable")
     {
-        build_sema("VAR_FLOAT x\nVAR_INT y\nGENERATE_RANDOM_FLOAT_IN_RANGE x y x");
+        build_sema(
+                "VAR_FLOAT x\nVAR_INT y\nGENERATE_RANDOM_FLOAT_IN_RANGE x y x");
         REQUIRE(sema.validate() == std::nullopt);
         REQUIRE(consume_diag().message == gta3sc::Diag::var_type_mismatch);
     }
@@ -1118,7 +1138,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_FLOAT parameter")
     {
         build_sema("VAR_FLOAT ON x\nGENERATE_RANDOM_FLOAT_IN_RANGE 0.0 ON x");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::cannot_use_string_constant_here);
+        CHECK(consume_diag().message
+              == gta3sc::Diag::cannot_use_string_constant_here);
     }
 }
 
@@ -1216,7 +1237,6 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_OPT parameter")
     }
 }
 
-
 TEST_CASE_FIXTURE(SemaFixture, "sema validate subscript")
 {
     SUBCASE("valid variable subscript")
@@ -1230,11 +1250,16 @@ TEST_CASE_FIXTURE(SemaFixture, "sema validate subscript")
         REQUIRE(ir != std::nullopt);
         REQUIRE(ir->size() == 5);
 
-        auto var_ref_1 = std::prev(ir->end(), 4)->command->args[0]->as_var_ref();
-        auto var_ref_2 = std::prev(ir->end(), 3)->command->args[0]->as_var_ref();
-        auto var_ref_3 = std::prev(ir->end(), 2)->command->args[0]->as_var_ref();
-        auto var_ref_4 = std::prev(ir->end(), 1)->command->args[0]->as_var_ref();
-        auto var_ref_5 = std::prev(ir->end(), 1)->command->args[0]->as_var_ref();
+        auto var_ref_1
+                = std::prev(ir->end(), 4)->command->args[0]->as_var_ref();
+        auto var_ref_2
+                = std::prev(ir->end(), 3)->command->args[0]->as_var_ref();
+        auto var_ref_3
+                = std::prev(ir->end(), 2)->command->args[0]->as_var_ref();
+        auto var_ref_4
+                = std::prev(ir->end(), 1)->command->args[0]->as_var_ref();
+        auto var_ref_5
+                = std::prev(ir->end(), 1)->command->args[0]->as_var_ref();
 
         REQUIRE(var_ref_1 != nullptr);
         REQUIRE(var_ref_1->def == symrepo.lookup_var("X"));
@@ -1265,14 +1290,16 @@ TEST_CASE_FIXTURE(SemaFixture, "sema validate subscript")
     {
         build_sema("VAR_INT x\nSET_VAR_INT x[0] 0\n");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::subscript_but_var_is_not_array);
+        CHECK(consume_diag().message
+              == gta3sc::Diag::subscript_but_var_is_not_array);
     }
 
     SUBCASE("invalid variable subscript - not array")
     {
         build_sema("VAR_INT x\nSET_VAR_INT x[0] 0\n");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::subscript_but_var_is_not_array);
+        CHECK(consume_diag().message
+              == gta3sc::Diag::subscript_but_var_is_not_array);
     }
 
     SUBCASE("invalid variable subscript - out of bounds")
@@ -1294,14 +1321,16 @@ TEST_CASE_FIXTURE(SemaFixture, "sema validate subscript")
     {
         build_sema("VAR_INT x[10]\nVAR_FLOAT y\nSET_VAR_INT x[y] 0\n");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::subscript_var_must_be_int);
+        CHECK(consume_diag().message
+              == gta3sc::Diag::subscript_var_must_be_int);
     }
 
     SUBCASE("invalid variable subscript - subscript var is array")
     {
         build_sema("VAR_INT x[10]\nVAR_INT y[10]\nSET_VAR_INT x[y] 0\n");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::subscript_var_must_not_be_array);
+        CHECK(consume_diag().message
+              == gta3sc::Diag::subscript_var_must_not_be_array);
     }
 }
 
@@ -1339,22 +1368,23 @@ TEST_CASE_FIXTURE(SemaFixture, "sema too many arguments")
 {
     SUBCASE("99 optional args")
     {
-        build_sema("{\n"
-                   "LVAR_INT a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14"
-                   " a15 a16 a17 a18 a19 a20 a21 a22 a23 a24 a25 a26 a27 a28"
-                   " a29 a30 a31 a32 a33 a34 a35 a36 a37 a38 a39 a40 a41 a42"
-                   " a43 a44 a45 a46 a47 a48 a49 a50 a51 a52 a53 a54 a55 a56"
-                   " a57 a58 a59 a60 a61 a62 a63 a64 a65 a66 a67 a68 a69 a70"
-                   " a71 a72 a73 a74 a75 a76 a77 a78 a79 a80 a81 a82 a83 a84"
-                   " a85 a86 a87 a88 a89 a90 a91 a92 a93 a94 a95 a96 a97 a98\n"
-                   "label1: START_NEW_SCRIPT label1 a0 a1 a2 a3 a4 a5 a6 a7 a8"
-                   " a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19 a20 a21 a22 a23"
-                   " a24 a25 a26 a27 a28 a29 a30 a31 a32 a33 a34 a35 a36 a37 a38"
-                   " a39 a40 a41 a42 a43 a44 a45 a46 a47 a48 a49 a50 a51 a52 a53"
-                   " a54 a55 a56 a57 a58 a59 a60 a61 a62 a63 a64 a65 a66 a67 a68"
-                   " a69 a70 a71 a72 a73 a74 a75 a76 a77 a78 a79 a80 a81 a82 a83"
-                   " a84 a85 a86 a87 a88 a89 a90 a91 a92 a93 a94 a95 a96 a97 a98\n"
-                   "}\n");
+        build_sema(
+                "{\n"
+                "LVAR_INT a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a11 a12 a13 a14"
+                " a15 a16 a17 a18 a19 a20 a21 a22 a23 a24 a25 a26 a27 a28"
+                " a29 a30 a31 a32 a33 a34 a35 a36 a37 a38 a39 a40 a41 a42"
+                " a43 a44 a45 a46 a47 a48 a49 a50 a51 a52 a53 a54 a55 a56"
+                " a57 a58 a59 a60 a61 a62 a63 a64 a65 a66 a67 a68 a69 a70"
+                " a71 a72 a73 a74 a75 a76 a77 a78 a79 a80 a81 a82 a83 a84"
+                " a85 a86 a87 a88 a89 a90 a91 a92 a93 a94 a95 a96 a97 a98\n"
+                "label1: START_NEW_SCRIPT label1 a0 a1 a2 a3 a4 a5 a6 a7 a8"
+                " a9 a10 a11 a12 a13 a14 a15 a16 a17 a18 a19 a20 a21 a22 a23"
+                " a24 a25 a26 a27 a28 a29 a30 a31 a32 a33 a34 a35 a36 a37 a38"
+                " a39 a40 a41 a42 a43 a44 a45 a46 a47 a48 a49 a50 a51 a52 a53"
+                " a54 a55 a56 a57 a58 a59 a60 a61 a62 a63 a64 a65 a66 a67 a68"
+                " a69 a70 a71 a72 a73 a74 a75 a76 a77 a78 a79 a80 a81 a82 a83"
+                " a84 a85 a86 a87 a88 a89 a90 a91 a92 a93 a94 a95 a96 a97 a98\n"
+                "}\n");
         REQUIRE(sema.validate() != std::nullopt);
     }
 
@@ -1382,21 +1412,21 @@ TEST_CASE_FIXTURE(SemaFixture, "sema alternators")
                    "SET lf gf\n}");
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(&std::next(ir->begin(), 5)->command->def 
+        REQUIRE(&std::next(ir->begin(), 5)->command->def
                 == cmdman.find_command("ABS_VAR_INT"));
-        REQUIRE(&std::next(ir->begin(), 6)->command->def 
+        REQUIRE(&std::next(ir->begin(), 6)->command->def
                 == cmdman.find_command("ABS_LVAR_INT"));
-        REQUIRE(&std::next(ir->begin(), 7)->command->def 
+        REQUIRE(&std::next(ir->begin(), 7)->command->def
                 == cmdman.find_command("ABS_VAR_FLOAT"));
-        REQUIRE(&std::next(ir->begin(), 8)->command->def 
+        REQUIRE(&std::next(ir->begin(), 8)->command->def
                 == cmdman.find_command("ABS_LVAR_FLOAT"));
-        REQUIRE(&std::next(ir->begin(), 9)->command->def 
+        REQUIRE(&std::next(ir->begin(), 9)->command->def
                 == cmdman.find_command("SET_VAR_INT"));
-        REQUIRE(&std::next(ir->begin(), 10)->command->def 
+        REQUIRE(&std::next(ir->begin(), 10)->command->def
                 == cmdman.find_command("SET_VAR_FLOAT"));
-        REQUIRE(&std::next(ir->begin(), 11)->command->def 
+        REQUIRE(&std::next(ir->begin(), 11)->command->def
                 == cmdman.find_command("SET_VAR_INT_TO_LVAR_INT"));
-        REQUIRE(&std::next(ir->begin(), 12)->command->def 
+        REQUIRE(&std::next(ir->begin(), 12)->command->def
                 == cmdman.find_command("SET_LVAR_FLOAT_TO_VAR_FLOAT"));
     }
 
@@ -1406,17 +1436,20 @@ TEST_CASE_FIXTURE(SemaFixture, "sema alternators")
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
         REQUIRE(ir->size() == 3);
-        
+
         const auto& command_1 = *std::next(ir->begin(), 1)->command;
         const auto& command_2 = *std::next(ir->begin(), 2)->command;
 
         REQUIRE(&command_1.def == cmdman.find_command("SET_VAR_TEXT_LABEL"));
-        REQUIRE(command_1.args[0]->as_var_ref()->def == symrepo.lookup_var("X"));
+        REQUIRE(command_1.args[0]->as_var_ref()->def
+                == symrepo.lookup_var("X"));
         REQUIRE(*command_1.args[1]->as_text_label() == "Y"sv);
 
         REQUIRE(&command_2.def == cmdman.find_command("SET_VAR_TEXT_LABEL"));
-        REQUIRE(command_2.args[0]->as_var_ref()->def == symrepo.lookup_var("X"));
-        REQUIRE(command_2.args[1]->as_var_ref()->def == symrepo.lookup_var("X"));
+        REQUIRE(command_2.args[0]->as_var_ref()->def
+                == symrepo.lookup_var("X"));
+        REQUIRE(command_2.args[1]->as_var_ref()->def
+                == symrepo.lookup_var("X"));
     }
 
     SUBCASE("alternative match - string constants")
@@ -1430,11 +1463,14 @@ TEST_CASE_FIXTURE(SemaFixture, "sema alternators")
         const auto& command_2 = *std::next(ir->begin(), 2)->command;
 
         REQUIRE(&command_1.def == cmdman.find_command("SET_VAR_INT"));
-        REQUIRE(command_1.args[0]->as_var_ref()->def == symrepo.lookup_var("X"));
+        REQUIRE(command_1.args[0]->as_var_ref()->def
+                == symrepo.lookup_var("X"));
         REQUIRE(command_1.args[1]->as_string_constant()->value == 1);
 
-        REQUIRE(&command_2.def == cmdman.find_command("SET_VAR_INT_TO_CONSTANT"));
-        REQUIRE(command_2.args[0]->as_var_ref()->def == symrepo.lookup_var("X"));
+        REQUIRE(&command_2.def
+                == cmdman.find_command("SET_VAR_INT_TO_CONSTANT"));
+        REQUIRE(command_2.args[0]->as_var_ref()->def
+                == symrepo.lookup_var("X"));
         REQUIRE(command_2.args[1]->as_string_constant()->value == 145);
     }
 
@@ -1550,10 +1586,10 @@ TEST_CASE_FIXTURE(SemaFixture, "sema entities")
                    "SET x 10\n"
                    "CREATE_CAR CHEETAH 0.0 0.0 0.0 car\n"
                    "CREATE_CHAR PEDTYPE_MEDIC MEDIC 0.0 0.0 0.0 ped\n"
-                   "SET_CAR_HEADING ped 0.0\n"    // PED instead of CAR
-                   "SET_CHAR_HEADING car 0.0\n"   // CAR instead of PED
-                   "SET_CAR_HEADING x 0.0\n"      // NONE instead of CAR
-                   "SET_CHAR_HEADING y 0.0\n");   // NONE instead of CHAR
+                   "SET_CAR_HEADING ped 0.0\n"  // PED instead of CAR
+                   "SET_CHAR_HEADING car 0.0\n" // CAR instead of PED
+                   "SET_CAR_HEADING x 0.0\n"    // NONE instead of CAR
+                   "SET_CHAR_HEADING y 0.0\n"); // NONE instead of CHAR
         REQUIRE(sema.validate() == std::nullopt);
         CHECK(consume_diag().message == gta3sc::Diag::var_entity_type_mismatch);
         CHECK(consume_diag().message == gta3sc::Diag::var_entity_type_mismatch);
@@ -1570,7 +1606,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema entities")
         REQUIRE(sema.validate() == std::nullopt);
         CHECK(consume_diag().message == gta3sc::Diag::var_entity_type_mismatch);
     }
-    
+
     SUBCASE("valid entity assignment")
     {
         build_sema("VAR_INT car1 car2 ped1 ped2 x y z w\n"
@@ -1637,9 +1673,9 @@ TEST_CASE_FIXTURE(SemaFixture, "sema entities")
     SUBCASE("entity initialization does not affect previous lines")
     {
         build_sema("VAR_INT car x y\n"
-                   "SET car x\n"  // NONE = NONE (not CAR = NONE -- invalid)
-                   "SET x car\n"  // NONE = NONE (not NONE = CAR)
-                   "SET y car\n"  // NONE = NONE (not NONE = CAR)
+                   "SET car x\n" // NONE = NONE (not CAR = NONE -- invalid)
+                   "SET x car\n" // NONE = NONE (not NONE = CAR)
+                   "SET y car\n" // NONE = NONE (not NONE = CAR)
                    "CREATE_CAR CHEETAH 0.0 0.0 0.0 car\n"
                    "SET y car\n"); // NONE = CAR
         REQUIRE(sema.validate() != std::nullopt);
@@ -1699,39 +1735,48 @@ TEST_CASE_FIXTURE(SemaFixture, "sema hardcoded START_NEW_SCRIPT")
     {
         build_sema("label1: START_NEW_SCRIPT label1 10 20 30");
         REQUIRE(sema.validate() == std::nullopt);
-        REQUIRE(consume_diag().message == gta3sc::Diag::target_label_not_within_scope);
+        REQUIRE(consume_diag().message
+                == gta3sc::Diag::target_label_not_within_scope);
     }
 
     SUBCASE("valid - more target vars than arguments")
     {
-        build_sema("{\nLVAR_INT a b c d e f g h\nlabel1: START_NEW_SCRIPT label1 10 20\n}");
+        build_sema("{\nLVAR_INT a b c d e f g h\nlabel1: START_NEW_SCRIPT "
+                   "label1 10 20\n}");
         REQUIRE(sema.validate() != std::nullopt);
     }
 
     SUBCASE("invalid - more arguments than target vars")
     {
-        build_sema("{\nLVAR_INT x y\nlabel1: START_NEW_SCRIPT label1 10 20 30 40 50\n}");
+        build_sema("{\nLVAR_INT x y\nlabel1: START_NEW_SCRIPT label1 10 20 30 "
+                   "40 50\n}");
         REQUIRE(sema.validate() == std::nullopt);
-        REQUIRE(consume_diag().message == gta3sc::Diag::target_scope_not_enough_vars);
-        REQUIRE(consume_diag().message == gta3sc::Diag::target_scope_not_enough_vars);
-        REQUIRE(consume_diag().message == gta3sc::Diag::target_scope_not_enough_vars);
+        REQUIRE(consume_diag().message
+                == gta3sc::Diag::target_scope_not_enough_vars);
+        REQUIRE(consume_diag().message
+                == gta3sc::Diag::target_scope_not_enough_vars);
+        REQUIRE(consume_diag().message
+                == gta3sc::Diag::target_scope_not_enough_vars);
     }
 
     SUBCASE("valid - passing integers")
     {
-        build_sema("{\nLVAR_INT a1 a2 a3\nlabel1: START_NEW_SCRIPT label1 10 ON a3\n}");
+        build_sema("{\nLVAR_INT a1 a2 a3\nlabel1: START_NEW_SCRIPT label1 10 "
+                   "ON a3\n}");
         REQUIRE(sema.validate() != std::nullopt);
     }
 
     SUBCASE("valid - passing floats")
     {
-        build_sema("{\nLVAR_FLOAT a1 a2 a3\nlabel1: START_NEW_SCRIPT label1 1.0 a2 a3\n}");
+        build_sema("{\nLVAR_FLOAT a1 a2 a3\nlabel1: START_NEW_SCRIPT label1 "
+                   "1.0 a2 a3\n}");
         REQUIRE(sema.validate() != std::nullopt);
     }
 
     SUBCASE("invalid - passing text labels")
     {
-        build_sema("{\nLVAR_TEXT_LABEL a1 a2\nlabel1: START_NEW_SCRIPT label1 TEXT a2\n}");
+        build_sema("{\nLVAR_TEXT_LABEL a1 a2\nlabel1: START_NEW_SCRIPT label1 "
+                   "TEXT a2\n}");
         REQUIRE(sema.validate() == std::nullopt);
         CHECK(consume_diag().message == gta3sc::Diag::undefined_variable);
         CHECK(consume_diag().message == gta3sc::Diag::var_type_mismatch);
@@ -1739,7 +1784,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema hardcoded START_NEW_SCRIPT")
 
     SUBCASE("valid - passing variables")
     {
-        build_sema("{\nLVAR_INT x\nLVAR_FLOAT y\nlabel1: START_NEW_SCRIPT label1 x y\n}");
+        build_sema("{\nLVAR_INT x\nLVAR_FLOAT y\nlabel1: START_NEW_SCRIPT "
+                   "label1 x y\n}");
         REQUIRE(sema.validate() != std::nullopt);
     }
 
@@ -1751,11 +1797,16 @@ TEST_CASE_FIXTURE(SemaFixture, "sema hardcoded START_NEW_SCRIPT")
                    "label1: START_NEW_SCRIPT label1 i1 f1 1.0 f1 i1 ON 10\n"
                    "}\n");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::target_var_type_mismatch); // f1
-        CHECK(consume_diag().message == gta3sc::Diag::target_var_type_mismatch); // 1.0
-        CHECK(consume_diag().message == gta3sc::Diag::target_var_type_mismatch); // i1
-        CHECK(consume_diag().message == gta3sc::Diag::target_var_type_mismatch); // ON
-        CHECK(consume_diag().message == gta3sc::Diag::target_var_type_mismatch); // 10
+        CHECK(consume_diag().message
+              == gta3sc::Diag::target_var_type_mismatch); // f1
+        CHECK(consume_diag().message
+              == gta3sc::Diag::target_var_type_mismatch); // 1.0
+        CHECK(consume_diag().message
+              == gta3sc::Diag::target_var_type_mismatch); // i1
+        CHECK(consume_diag().message
+              == gta3sc::Diag::target_var_type_mismatch); // ON
+        CHECK(consume_diag().message
+              == gta3sc::Diag::target_var_type_mismatch); // 10
     }
 
     SUBCASE("valid - passing entity type forward")
@@ -1794,7 +1845,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema hardcoded START_NEW_SCRIPT")
                    "CREATE_CHAR PEDTYPE_MEDIC MEDIC 0.0 0.0 0.0 ped\n"
                    "START_NEW_SCRIPT label1 ped\n");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::target_var_entity_type_mismatch);
+        CHECK(consume_diag().message
+              == gta3sc::Diag::target_var_entity_type_mismatch);
     }
 
     SUBCASE("invalid - passing wrong entity type forward")

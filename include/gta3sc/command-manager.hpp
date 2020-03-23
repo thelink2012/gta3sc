@@ -58,9 +58,7 @@ public:
 
         explicit ParamDef(ParamType type, EntityId entity_type,
                           EnumId enum_type) :
-            type(type),
-            entity_type(entity_type),
-            enum_type(enum_type)
+            type(type), entity_type(entity_type), enum_type(enum_type)
         {}
 
         bool is_optional() const

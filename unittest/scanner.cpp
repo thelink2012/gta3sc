@@ -1,6 +1,6 @@
+#include "compiler-fixture.hpp"
 #include <doctest.h>
 #include <gta3sc/scanner.hpp>
-#include "compiler-fixture.hpp"
 using gta3sc::Category;
 using namespace gta3sc::test;
 
@@ -9,8 +9,7 @@ namespace gta3sc::test
 class ScannerFixture : public CompilerFixture
 {
 public:
-    ScannerFixture() :
-        scanner(gta3sc::Preprocessor(make_source(""), diagman))
+    ScannerFixture() : scanner(gta3sc::Preprocessor(make_source(""), diagman))
     {}
 
 protected:
@@ -51,7 +50,8 @@ TEST_CASE_FIXTURE(ScannerFixture, "scanner with empty stream")
     REQUIRE(scanner.eof());
 }
 
-TEST_CASE_FIXTURE(ScannerFixture, "scanner with leading and trailing whitespaces")
+TEST_CASE_FIXTURE(ScannerFixture,
+                  "scanner with leading and trailing whitespaces")
 {
     build_scanner("  , COMMAND  (\t)  \n");
     REQUIRE(scanner.next()->category == Category::Word);
@@ -72,9 +72,9 @@ TEST_CASE_FIXTURE(ScannerFixture, "scanner with whitespaces in the middle")
 TEST_CASE_FIXTURE(ScannerFixture, "scanner with word")
 {
     build_scanner("1234 123a -123a -.abc         \n"
-                              "4x4.sc .sc                    \n"
-                              "word: word: word              \n"
-                              "%$&~ AbC {}                   \n");
+                  "4x4.sc .sc                    \n"
+                  "word: word: word              \n"
+                  "%$&~ AbC {}                   \n");
 
     gta3sc::Token token;
 
@@ -144,10 +144,10 @@ TEST_CASE_FIXTURE(ScannerFixture, "scanner with word")
 TEST_CASE_FIXTURE(ScannerFixture, "scanner with string literal")
 {
     build_scanner(" \"this\tI$ /* a // \\n (%1teral),\" \n"
-                              " \"                                  \n"
-                              " \"\"                                \n"
-                              " \"string\"abc                       \n"
-                              " not_string                          \n");
+                  " \"                                  \n"
+                  " \"\"                                \n"
+                  " \"string\"abc                       \n"
+                  " not_string                          \n");
 
     gta3sc::Token token;
 
@@ -157,7 +157,8 @@ TEST_CASE_FIXTURE(ScannerFixture, "scanner with string literal")
     REQUIRE(scanner.next()->category == Category::EndOfLine);
 
     REQUIRE(scanner.next() == std::nullopt);
-    REQUIRE(consume_diag().message == gta3sc::Diag::unterminated_string_literal);
+    REQUIRE(consume_diag().message
+            == gta3sc::Diag::unterminated_string_literal);
     REQUIRE(scanner.next()->category == Category::EndOfLine);
 
     token = scanner.next().value();
@@ -184,10 +185,9 @@ TEST_CASE_FIXTURE(ScannerFixture, "scanner with string literal")
 TEST_CASE_FIXTURE(ScannerFixture, "scanner with filename")
 {
     build_scanner(" .sc a.SC @.sc 1.sc 1.0sc SC   \n"
-                              " b\"a\".sc                     \n"
-                              " file-nam+@e.sc                \n"
-                              " file-nam+@e.sc                \n");
-
+                  " b\"a\".sc                     \n"
+                  " file-nam+@e.sc                \n"
+                  " file-nam+@e.sc                \n");
 
     gta3sc::Token token;
 
@@ -257,13 +257,13 @@ TEST_CASE_FIXTURE(ScannerFixture, "scanner with filename")
 TEST_CASE_FIXTURE(ScannerFixture, "scanner with operators")
 {
     build_scanner("+ - * / +@ -@        \n"
-                              "+= -= *= /= +=@ -=@  \n"
-                              "<= < = =# > >=       \n"
-                              "--++ - -             \n"
-                              "<< <=> +-*/+@-@      \n"
-                              "1--1 1- -1 +1        \n"
-                              "-. -.1 -1.0          \n"
-                              "+ @   - @   = #  + = \n");
+                  "+= -= *= /= +=@ -=@  \n"
+                  "<= < = =# > >=       \n"
+                  "--++ - -             \n"
+                  "<< <=> +-*/+@-@      \n"
+                  "1--1 1- -1 +1        \n"
+                  "-. -.1 -1.0          \n"
+                  "+ @   - @   = #  + = \n");
 
     gta3sc::Token token;
 

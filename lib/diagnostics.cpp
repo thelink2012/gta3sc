@@ -1,5 +1,5 @@
-#include <gta3sc/diagnostics.hpp>
 #include <cassert>
+#include <gta3sc/diagnostics.hpp>
 
 namespace gta3sc
 {

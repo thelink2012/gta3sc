@@ -93,8 +93,7 @@ struct Diagnostic
     std::vector<Arg> args;           ///< Arguments for formatting the message.
 
     explicit Diagnostic(SourceLocation location, Diag message) :
-        location(location),
-        message(message)
+        location(location), message(message)
     {}
 };
 
@@ -104,8 +103,7 @@ class DiagnosticBuilder
 public:
     explicit DiagnosticBuilder(SourceLocation loc, Diag message,
                                DiagnosticHandler& handler) :
-        handler(&handler),
-        diag(std::make_unique<Diagnostic>(loc, message))
+        handler(&handler), diag(std::make_unique<Diagnostic>(loc, message))
     {}
 
     /// Hands the diagnostic to the handler.
