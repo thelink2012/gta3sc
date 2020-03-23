@@ -9,14 +9,13 @@ class PreprocessorFixture : public CompilerFixture
 {
 public:
     PreprocessorFixture() :
-        pp(source_file, diagman)
+        pp(make_source(""), diagman)
     {}
 
 protected:
     void build_pp(std::string_view src)
     {
-        this->build_source(src);
-        this->pp = gta3sc::Preprocessor(source_file, diagman);
+        this->pp = gta3sc::Preprocessor(make_source(src), diagman);
     }
 
     auto drain() -> std::string

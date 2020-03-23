@@ -2,19 +2,19 @@
 
 namespace gta3sc
 {
-bool Preprocessor::is_whitespace(SourceLocation p) const
+bool Preprocessor::is_whitespace(const char* p) const
 {
     return *p == ' ' || *p == '\t' || *p == '(' || *p == ')' || *p == ',';
 }
 
-bool Preprocessor::is_newline(SourceLocation p) const
+bool Preprocessor::is_newline(const char* p) const
 {
     return *p == '\r' || *p == '\n' || *p == '\0';
 }
 
 auto Preprocessor::source_file() const -> const SourceFile&
 {
-    return *this->source;
+    return this->source;
 }
 
 auto Preprocessor::diagnostics() const -> DiagnosticHandler&
@@ -29,7 +29,7 @@ bool Preprocessor::eof() const
 
 auto Preprocessor::location() const -> SourceLocation
 {
-    return this->cursor;
+    return this->source.location_of(this->cursor);
 }
 
 char Preprocessor::next()

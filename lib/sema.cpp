@@ -520,7 +520,7 @@ auto Sema::validate_var_ref(const CommandManager::ParamDef& param,
         }
 
         arg_ident = arg_ident.substr(1);
-        arg_source = arg_source.substr(1);
+        arg_source = arg_source.subrange(1);
     }
 
     auto [var_name, var_source, subscript] = parse_var_ref(arg_ident,
@@ -903,7 +903,7 @@ auto Sema::report(SourceLocation loc, Diag message) -> DiagnosticBuilder
 
 auto Sema::report(SourceRange source, Diag message) -> DiagnosticBuilder
 {
-    return report(source.begin(), message).range(source);
+    return report(source.begin, message).range(source);
 }
 
 auto Sema::lookup_var_lvar(std::string_view name) const -> SymVariable*
@@ -1130,7 +1130,7 @@ auto Sema::parse_var_ref(std::string_view identifier, SourceRange source)
         const auto it_open_pos = std::distance(identifier.begin(), it_open);
         if(*it_open == ']')
         {
-            report(source.begin() + it_open_pos, Diag::expected_word).args("[");
+            report(source.begin + it_open_pos, Diag::expected_word).args("[");
             // Recovery strategy: Assume *it == ']'
         }
 
@@ -1140,18 +1140,17 @@ auto Sema::parse_var_ref(std::string_view identifier, SourceRange source)
 
         if(it_close == identifier.end() || *it_close == '[')
         {
-            report(source.begin() + it_close_pos, Diag::expected_word)
-                    .args("]");
+            report(source.begin + it_close_pos, Diag::expected_word).args("]");
             // Recovery strategy: Assume *it_close == ']'
         }
 
         assert(it_open != identifier.begin());
         var_name = identifier.substr(0, it_open_pos);
-        var_source = source.substr(0, it_open_pos);
+        var_source = source.subrange(0, it_open_pos);
 
         if(std::distance(it_open, it_close) <= 1)
         {
-            report(source.begin() + it_open_pos + 1, Diag::expected_subscript);
+            report(source.begin + it_open_pos + 1, Diag::expected_subscript);
             // Recovery strategy: Assume there is no subscript.
             subscript = std::nullopt;
         }
@@ -1160,7 +1159,7 @@ auto Sema::parse_var_ref(std::string_view identifier, SourceRange source)
             const auto subscript_len = it_close - it_open - 1;
             subscript = VarSubscript{
                     identifier.substr(it_open_pos + 1, subscript_len),
-                    source.substr(it_open_pos + 1, subscript_len),
+                    source.subrange(it_open_pos + 1, subscript_len),
             };
         }
     }

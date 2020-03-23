@@ -13,7 +13,7 @@ class CompilerFixture
 {
 public:
     CompilerFixture() :
-        source_file(make_source("")),
+        //source_file(make_source("")),
         diagman([this](const auto& diag) { diags.push(diag); })
     {}
 
@@ -23,18 +23,18 @@ public:
     }
 
 protected:
-    void build_source(std::string_view src)
+    /*void build_source(std::string_view src)
     {
         this->source_file = make_source(src);
-    }
+    }*/
 
-    static auto make_source(std::string_view src) -> gta3sc::SourceFile
+    auto make_source(std::string_view src) -> gta3sc::SourceFile
     {
         const auto n = src.size();
         auto ptr = std::make_unique<char[]>(n+1);
         std::memcpy(ptr.get(), src.data(), n);
         ptr[n] = '\0';
-        return gta3sc::SourceFile(std::move(ptr), n);
+        return sourceman.load_file(std::move(ptr), n).value();
     }
 
     auto consume_diag() -> gta3sc::Diagnostic
@@ -52,7 +52,8 @@ protected:
     }
 
 protected:
-    gta3sc::SourceFile source_file;
+    gta3sc::SourceManager sourceman;
+    //gta3sc::SourceFile source_file;
     gta3sc::DiagnosticHandler diagman;
     std::queue<gta3sc::Diagnostic> diags;
 };

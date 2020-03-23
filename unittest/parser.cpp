@@ -11,22 +11,21 @@ namespace gta3sc::test
 class ParserFixture : public CompilerFixture
 {
 public:
-    ParserFixture() : parser(make_parser(source_file, diagman, arena)) {}
+    ParserFixture() : parser(make_parser(make_source(""), diagman, arena)) {}
 
 protected:
     void build_parser(std::string_view src)
     {
-        this->build_source(src);
-        this->parser = make_parser(source_file, diagman, arena);
+        this->parser = make_parser(make_source(src), diagman, arena);
     }
 
 private:
-    static auto make_parser(const gta3sc::SourceFile& source,
+    static auto make_parser(gta3sc::SourceFile source,
                             gta3sc::DiagnosticHandler& diagman,
                             gta3sc::ArenaMemoryResource& arena)
             -> gta3sc::Parser
     {
-        auto pp = gta3sc::Preprocessor(source, diagman);
+        auto pp = gta3sc::Preprocessor(std::move(source), diagman);
         auto scanner = gta3sc::Scanner(std::move(pp));
         return gta3sc::Parser(std::move(scanner), arena);
     }

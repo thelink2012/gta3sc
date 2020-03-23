@@ -23,6 +23,7 @@ BraceWrapping:
   AfterClass: true
   AfterControlStatement: true
   AfterEnum: true
+  AfterCaseLabel: true
   AfterFunction: true
   AfterNamespace: true
   AfterObjCDeclaration: true

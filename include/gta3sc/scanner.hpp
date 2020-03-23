@@ -42,12 +42,8 @@ struct Token
 
     explicit Token(Category category, SourceLocation begin,
                    SourceLocation end) :
-        category(category),
-        source(std::addressof(*begin), end - begin)
+        category(category), source(begin, end)
     {}
-
-    /// Returns the textual representation of this token.
-    std::string_view spelling() { return source; }
 };
 
 /// The scanner transforms a stream of characters into a stream of tokens.
@@ -102,6 +98,9 @@ public:
 
     /// Gets the diagnostic handler associated with this scanner.
     auto diagnostics() const -> DiagnosticHandler&;
+
+    /// Returns a view to the characters of a token in the source code.
+    auto spelling(const Token&) const -> std::string_view;
 
 private:
     /// Consumes the next character in the character stream.

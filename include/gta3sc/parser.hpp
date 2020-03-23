@@ -23,8 +23,7 @@ public:
     /// \param scanner the scanner to consume tokens from.
     /// \param arena the arena that should be used to allocate IR in.
     explicit Parser(Scanner scanner, ArenaMemoryResource& arena) :
-        scanner(std::move(scanner)),
-        arena(&arena)
+        scanner(std::move(scanner)), arena(&arena)
     {
         assert(std::size(has_peek_token) == std::size(peek_tokens));
     }

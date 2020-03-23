@@ -1,5 +1,7 @@
 #pragma once
 #include <cstdio>
+#include <filesystem>
+#include <map>
 #include <memory>
 #include <optional>
 #include <string_view>
@@ -7,54 +9,258 @@
 
 namespace gta3sc
 {
-// TODO make this more generic. It does not build on MSVC debug builds.
+/// Handle to a location in the source file.
+enum class SourceLocation : uint32_t
+{ // strong typedef
+};
+
+inline SourceLocation operator+(SourceLocation lhs, std::ptrdiff_t rhs)
+{
+    return SourceLocation{
+            static_cast<uint32_t>(static_cast<uint32_t>(lhs) + rhs)};
+}
+
+inline SourceLocation& operator+=(SourceLocation& lhs, std::ptrdiff_t rhs)
+{
+    lhs = lhs + rhs;
+    return lhs;
+}
+
+inline SourceLocation operator-(SourceLocation lhs, std::ptrdiff_t rhs)
+{
+    return SourceLocation{
+            static_cast<uint32_t>(static_cast<uint32_t>(lhs) - rhs)};
+}
+
+inline SourceLocation& operator-=(SourceLocation& lhs, std::ptrdiff_t rhs)
+{
+    lhs = lhs - rhs;
+    return lhs;
+}
+
+inline std::ptrdiff_t operator-(SourceLocation lhs, SourceLocation rhs)
+{
+    return static_cast<std::ptrdiff_t>(lhs) - static_cast<std::ptrdiff_t>(rhs);
+}
+
+inline SourceLocation& operator++(SourceLocation& lhs)
+{
+    lhs += 1;
+    return lhs;
+}
+
+inline SourceLocation& operator--(SourceLocation& lhs)
+{
+    lhs -= 1;
+    return lhs;
+}
+
+inline SourceLocation operator++(const SourceLocation& lhs, int)
+{
+    return lhs + 1;
+}
+
+inline SourceLocation operator--(const SourceLocation& lhs, int)
+{
+    return lhs - 1;
+}
 
 /// Handle to a range of characters in the source file.
-using SourceRange = std::string_view;
+struct SourceRange
+{
+    SourceLocation begin{};
+    SourceLocation end{};
 
-/// Handle to a location in the source file.
-using SourceLocation = std::string_view::const_iterator;
+    SourceRange() = default;
 
-/// Information about a source file.
+    SourceRange(SourceLocation begin, SourceLocation end) :
+        begin(begin), end(end)
+    {}
+
+    SourceRange(SourceLocation begin, std::ptrdiff_t len) :
+        SourceRange(begin, begin + len)
+    {}
+
+    /// Returns the number of characters in this range.
+    auto size() const -> size_t { return end - begin; }
+
+    /// Returns a subrange of this range.
+    ///
+    /// \param offset the position to start the new range from this range.
+    /// \param count the length of the new range.
+    auto subrange(size_t offset, size_t count = -1) const -> SourceRange
+    {
+        offset = std::min(offset, this->size());
+        count = std::min(count, this->size() - offset);
+        return SourceRange(this->begin + offset, count);
+    }
+};
+
+class SourceFile;
+
+static_assert(std::is_trivially_copyable_v<SourceLocation>);
+static_assert(std::is_trivially_copyable_v<SourceRange>);
+
+/// Manages source files, locations and ranges.
+///
+/// This object manages the paging of source files in and out of memory.
+///
+/// Use this manager to load source files and query characters or strings
+/// based (purely) on SourceLocation or SourceRange of the characters.
+class SourceManager
+{
+public:
+    SourceManager() {}
+
+    SourceManager(SourceManager&&) = default;
+    SourceManager& operator=(SourceManager&&) = default;
+
+    SourceManager(const SourceManager&) = delete;
+    SourceManager& operator=(const SourceManager&) = delete;
+
+    /// Keeps track of all filenames in the given directory (recursively).
+    ///
+    /// Files found in this search can be loaded by filename in the `load_file`
+    /// method.
+    ///
+    /// If multiple files are found with the same name, it's unspecified which
+    /// file takes precedence to the other.
+    ///
+    /// If multiple calls to this method are made, it behaves as if the search
+    /// continues from the previous method call.
+    ///
+    /// Returns whether it was possible to scan the given directory.
+    bool scan_directory(const std::filesystem::path&);
+
+    /// Loads a source file given its filename.
+    ///
+    /// For this method to work, `scan_directory` must have found the given
+    /// file during its search.
+    auto load_file(std::string_view filename) -> std::optional<SourceFile>;
+
+    /// Loads a source file given its path.
+    auto load_file(const std::filesystem::path&) -> std::optional<SourceFile>;
+
+    /// Loads a source file given a null-terminated sequence of characters.
+    /// \param data the sequence of null-terminated characters.
+    /// \param size the size of the sequence not including the null-terminator.
+    auto load_file(std::unique_ptr<char[]> data, size_t size)
+            -> std::optional<SourceFile>;
+
+protected:
+    friend class SourceFile;
+
+    /// Internal information about a source file.
+    struct SourceInfo
+    {
+        /// Path to the source file.
+        std::filesystem::path path;
+        /// Start of the location range used by this source file.
+        SourceLocation start_loc;
+        /// The length of the source file in bytes.
+        uint32_t file_length;
+
+        /// Number of SourceFile handles pointing to this structure.
+        size_t refcount = 0;
+        /// Characters of the source file. May be null if paged out.
+        std::unique_ptr<char[]> data;
+    };
+
+private:
+    /// Checks whether two strings are equal (ignoring casing).
+    bool iequal(std::string_view, std::string_view) const;
+
+    auto load_file(const std::filesystem::path&, std::FILE*,
+                   size_t hint_size = -1) -> std::optional<SourceFile>;
+
+    auto load_file(const std::filesystem::path&, std::unique_ptr<char[]> data,
+                   size_t size) -> std::optional<SourceFile>;
+
+    auto load_file(std::FILE*, size_t hint_size = -1)
+            -> std::optional<SourceFile>;
+
+private:
+    struct FilenamePathPair
+    {
+        std::string filename;
+        std::filesystem::path path;
+    };
+
+    /// Maps filenames and paths.
+    ///
+    /// This can benefit from the cache locality of a linear search in a
+    /// flat array since the number of files to be compiled is usually small.
+    std::vector<FilenamePathPair> filename_to_path;
+
+    /// Search tree for a source information given its start location range.
+    std::map<SourceLocation, SourceInfo> source_infos;
+
+    /// The starting source location of the next `load_file` method call.
+    SourceLocation next_source_loc{};
+};
+
+/// Handle to a source file.
 class SourceFile
 {
 public:
-    /// Constructs a source file from a source text pointer and its size.
-    //
-    /// The source text must include a null terminator, but such terminator
-    /// does not count to the size parameter.
-    explicit SourceFile(std::unique_ptr<char[]>, size_t);
+    ~SourceFile()
+    {
+        if(this->info)
+            --this->info->refcount;
+    }
 
     SourceFile(const SourceFile&) = delete;
     SourceFile& operator=(const SourceFile&) = delete;
 
-    SourceFile(SourceFile&&) = default;
-    SourceFile& operator=(SourceFile&&) = default;
+    SourceFile(SourceFile&& rhs)
+    {
+        this->info = std::exchange(rhs.info, nullptr);
+    }
 
-    /// Constructs a source file from a file stream.
-    ///
-    /// \returns The newly created source file or `std::nullopt` when a
-    ///          stream failure occurs. Call `std::ferror` for error details.
-    static auto from_stream(std::FILE* stream, size_t hint_size = -1)
-            -> std::optional<SourceFile>;
+    SourceFile& operator=(SourceFile&& rhs)
+    {
+        this->info = std::exchange(rhs.info, nullptr);
+        return *this;
+    }
 
-    /// Gets a view into the source text, including a null terminator.
-    auto view_with_terminator() const -> SourceRange;
+    /// Gets the null-terminated sequence of characters of the source file.
+    auto code_data() const -> const char* { return info->data.get(); }
 
-    /// Finds the line and column associated with a location.
-    auto find_line_and_column(SourceLocation loc) const
-            -> std::pair<unsigned, unsigned>;
+    /// Returns the size (in bytes) of the source code.
+    auto code_size() const -> size_t { return info->file_length; }
+
+    /// Returns a string view to the source code.
+    auto code_view() const -> std::string_view
+    {
+        return std::string_view(code_data(), code_size());
+    }
+
+    /// Gets the source location of a given character.
+    auto location_of(const char* cp) const -> SourceLocation
+    {
+        return info->start_loc + (cp - code_data());
+    }
+
+    /// Gets a string view to a source range.
+    auto view_of(SourceRange range) const -> std::string_view
+    {
+        const auto begin = code_data() + (range.begin - info->start_loc);
+        return std::string_view(begin, range.end - range.begin);
+    }
+
+protected:
+    friend class SourceManager;
+
+    explicit SourceFile(SourceManager::SourceInfo& info) : info(&info)
+    {
+        ++this->info->refcount;
+    }
 
 private:
-    std::unique_ptr<char[]> source_data;
-    size_t source_size;
-    std::vector<const char*> lines;
+    SourceManager::SourceInfo* info;
 };
 
-// Assume SourceLocation and SourceRange are simple types,
-// thus it is cheap to copy them around.
-static_assert(sizeof(SourceLocation) <= sizeof(size_t)
-              && std::is_trivially_copyable_v<SourceLocation>);
-static_assert(sizeof(SourceRange) <= 2 * sizeof(size_t)
-              && std::is_trivially_copyable_v<SourceRange>);
+// TODO this manager does not perform any paging at the present moment.
+//      first we have to analyze the access patterns of the source data
+//      to define a proper paging scheme.
 }

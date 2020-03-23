@@ -13,6 +13,11 @@ auto Scanner::diagnostics() const -> DiagnosticHandler&
     return pp.diagnostics();
 }
 
+auto Scanner::spelling(const Token& token) const -> std::string_view
+{
+    return source_file().view_of(token.source);
+}
+
 auto Scanner::location() const -> SourceLocation
 {
     auto loc = pp.location();
@@ -74,9 +79,10 @@ auto Scanner::next_filename() -> std::optional<Token>
         this->getc();
 
     auto token = Token(Category::Word, start_pos, location());
-    if(token.spelling().size() >= 3)
+    auto spell = this->spelling(token);
+    if(spell.size() >= 3)
     {
-        auto it = token.spelling().rbegin();
+        auto it = spell.rbegin();
         auto c2 = *it++;
         auto c1 = *it++;
         auto c0 = *it++;
@@ -87,7 +93,7 @@ auto Scanner::next_filename() -> std::optional<Token>
     }
 
     diagnostics()
-            .report(token.source.begin(), Diag::invalid_filename)
+            .report(token.source.begin, Diag::invalid_filename)
             .range(token.source);
 
     return std::nullopt;

@@ -11,11 +11,10 @@ namespace gta3sc
 class Preprocessor
 {
 public:
-    explicit Preprocessor(const SourceFile& source, DiagnosticHandler& diag) :
-        source(&source),
-        diag(&diag)
+    explicit Preprocessor(SourceFile source, DiagnosticHandler& diag) :
+        source(std::move(source)), diag(&diag)
     {
-        this->cursor = source.view_with_terminator().begin();
+        this->cursor = this->source.code_data();
         this->start_of_line = true;
         this->end_of_stream = false;
         this->inside_quotes = false;
@@ -44,14 +43,14 @@ public:
     auto diagnostics() const -> DiagnosticHandler&;
 
 private:
-    bool is_whitespace(SourceLocation) const;
-    bool is_newline(SourceLocation) const;
+    bool is_whitespace(const char*) const;
+    bool is_newline(const char*) const;
 
 private:
-    const SourceFile* source;
+    SourceFile source;
     DiagnosticHandler* diag;
 
-    SourceLocation cursor;
+    const char* cursor;
     bool start_of_line;
     bool end_of_stream;
     bool inside_quotes;

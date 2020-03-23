@@ -17,8 +17,7 @@ public:
 
     void build_sema(std::string_view src, bool parser_error = false)
     {
-        this->build_source(src);
-        auto ir = make_parser(source_file, arena).parse_main_script_file();
+        auto ir = make_parser(make_source(src), arena).parse_main_script_file();
         if(!parser_error)
         {
             REQUIRE(ir != std::nullopt);
@@ -32,11 +31,11 @@ public:
     }
 
 private:
-    auto make_parser(const gta3sc::SourceFile& source,
+    auto make_parser(gta3sc::SourceFile source,
                      gta3sc::ArenaMemoryResource& arena)
             -> gta3sc::Parser
     {
-        auto pp = gta3sc::Preprocessor(source, diagman);
+        auto pp = gta3sc::Preprocessor(std::move(source), diagman);
         auto scanner = gta3sc::Scanner(std::move(pp));
         return gta3sc::Parser(std::move(scanner), arena);
     }

@@ -70,14 +70,14 @@ auto Parser::report(const Token& token, Diag message) -> DiagnosticBuilder
 
 auto Parser::report(SourceRange source, Diag message) -> DiagnosticBuilder
 {
-    return diagnostics().report(source.begin(), message).range(source);
+    return diagnostics().report(source.begin, message).range(source);
 }
 
 auto Parser::report_special_name(SourceRange source) -> DiagnosticBuilder
 {
     // This method can be specialized to produce a different diagnostic
     // for each special name. Currently we produce a generic message.
-    const std::string_view name = source;
+    const std::string_view name = source_file().view_of(source);
     return report(source, Diag::unexpected_special_name).args(name);
 }
 
@@ -157,7 +157,7 @@ bool Parser::is_peek(Category category, size_t n)
 
 bool Parser::is_peek(Category category, std::string_view lexeme, size_t n)
 {
-    return is_peek(category, n) && iequal(peek(n)->spelling(), lexeme);
+    return is_peek(category, n) && iequal(scanner.spelling(*peek(n)), lexeme);
 }
 
 auto Parser::peek_expression_type() -> std::optional<Category>
@@ -235,7 +235,7 @@ auto Parser::consume_word(std::string_view lexeme) -> std::optional<Token>
     if(!token)
         return std::nullopt;
 
-    if(!iequal(token->spelling(), lexeme))
+    if(!iequal(scanner.spelling(*token), lexeme))
     {
         report(*token, Diag::expected_word).args(lexeme);
         return std::nullopt;
@@ -381,8 +381,8 @@ auto Parser::parse_command(bool is_if_line)
     if(!token)
         return std::nullopt;
 
-    auto result = ParserIR::create_command(token->spelling(), token->source,
-                                           arena);
+    auto result = ParserIR::create_command(scanner.spelling(*token),
+                                           token->source, arena);
 
     while(!is_peek(Category::EndOfLine))
     {
@@ -418,7 +418,7 @@ auto Parser::parse_argument() -> std::optional<arena_ptr<ParserIR::Argument>>
     if(!token)
         return std::nullopt;
 
-    const auto lexeme = token->spelling();
+    const auto lexeme = scanner.spelling(*token);
 
     if(token->category == Category::String)
     {
@@ -492,10 +492,10 @@ auto Parser::parse_statement(bool allow_special_name)
 
     arena_ptr<ParserIR::LabelDef> label = nullptr;
 
-    if(is_peek(Category::Word) && peek()->spelling().back() == ':')
+    if(is_peek(Category::Word) && scanner.spelling(*peek()).back() == ':')
     {
         auto label_def = *consume();
-        auto label_name = label_def.spelling();
+        auto label_name = scanner.spelling(label_def);
         label_name.remove_suffix(1);
 
         if(!is_identifier(label_name))
@@ -1065,10 +1065,10 @@ auto Parser::parse_require_statement() -> std::optional<arena_ptr<ParserIR>>
     if(!command)
         return std::nullopt;
 
-    auto result = ParserIR::create_command(command->spelling(), command->source,
-                                           arena);
+    auto result = ParserIR::create_command(scanner.spelling(*command),
+                                           command->source, arena);
 
-    if(iequal(command->spelling(), COMMAND_GOSUB_FILE))
+    if(iequal(scanner.spelling(*command), COMMAND_GOSUB_FILE))
     {
         if(!consume_whitespace())
             return std::nullopt;
@@ -1079,8 +1079,9 @@ auto Parser::parse_require_statement() -> std::optional<arena_ptr<ParserIR>>
 
         result->command->push_arg(*arg_label, arena);
     }
-    else if(!iequal(command->spelling(), COMMAND_LAUNCH_MISSION)
-            && !iequal(command->spelling(), COMMAND_LOAD_AND_LAUNCH_MISSION))
+    else if(!iequal(scanner.spelling(*command), COMMAND_LAUNCH_MISSION)
+            && !iequal(scanner.spelling(*command),
+                       COMMAND_LOAD_AND_LAUNCH_MISSION))
     {
         report(command->source, Diag::expected_require_command);
         return std::nullopt;
@@ -1096,8 +1097,8 @@ auto Parser::parse_require_statement() -> std::optional<arena_ptr<ParserIR>>
     if(!consume(Category::EndOfLine))
         return std::nullopt;
 
-    auto arg_filename = ParserIR::create_filename(tok_filename->spelling(),
-                                                  tok_filename->source, arena);
+    auto arg_filename = ParserIR::create_filename(
+            scanner.spelling(*tok_filename), tok_filename->source, arena);
     result->command->push_arg(arg_filename, arena);
 
     return result;
@@ -1175,7 +1176,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line)
         // any of the productions in the specification.
         if(num_toks == std::size(cats))
         {
-            diagnostics().report(spans[0].begin(), Diag::invalid_expression);
+            diagnostics().report(spans[0].begin, Diag::invalid_expression);
             return std::nullopt;
         }
 
@@ -1260,12 +1261,12 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line)
     {
         if(num_toks >= 2 && is_relational_operator(cats[1]))
         {
-            diagnostics().report(spans[0].begin(), Diag::invalid_expression);
+            diagnostics().report(spans[0].begin, Diag::invalid_expression);
             return std::nullopt;
         }
         else
         {
-            diagnostics().report(spans[0].begin(),
+            diagnostics().report(spans[0].begin,
                                  Diag::expected_conditional_expression);
             return std::nullopt;
         }
@@ -1287,8 +1288,8 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line)
 
     auto linked = LinkedIR<ParserIR>(*arena);
 
-    const auto src_info = SourceRange(
-            spans[0].data(), spans[num_toks - 1].end() - spans[0].begin());
+    const auto src_info = SourceRange(spans[0].begin,
+                                      spans[num_toks - 1].end - spans[0].begin);
 
     if(num_toks == 2
        && ((cats[0] == Category::Word && cats[1] == Category::PlusPlus)
@@ -1377,7 +1378,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line)
         if(it_cond == std::end(lookup_conditional)
            && it_assign == std::end(lookup_assignment))
         {
-            diagnostics().report(spans[0].begin(), Diag::invalid_expression);
+            diagnostics().report(spans[0].begin, Diag::invalid_expression);
             return std::nullopt;
         }
 
@@ -1463,7 +1464,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line)
             if(!is_associative)
             {
                 diagnostics()
-                        .report(spans[0].begin(),
+                        .report(spans[0].begin,
                                 Diag::invalid_expression_unassociative)
                         .args(cats[3]);
                 return std::nullopt;
@@ -1489,7 +1490,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line)
     }
     else
     {
-        diagnostics().report(spans[0].begin(), Diag::invalid_expression);
+        diagnostics().report(spans[0].begin, Diag::invalid_expression);
         return std::nullopt;
     }
 
