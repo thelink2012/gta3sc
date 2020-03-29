@@ -98,6 +98,9 @@ struct Diagnostic
 };
 
 /// Helper class to construct a `Diagnostic`.
+///
+/// Upon destruction, this class hands the produced diagnostic to the
+/// diagnostic handler given in the constructor.
 class DiagnosticBuilder
 {
 public:

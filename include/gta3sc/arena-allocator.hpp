@@ -12,7 +12,8 @@ namespace gta3sc
 /// An object encapsulated in such a pointer does not need a destructor call
 /// and may be disposed of by simply deallocating their storage.
 template<typename T>
-using arena_ptr = T*;
+using arena_ptr = T*; // TODO rename to ArenaPtr
+
 // using arena_ptr = std::enable_if_t<std::is_trivially_destructible_v<T>, T*>;
 // The above causes problems when the full class definition is still not known.
 
@@ -304,5 +305,24 @@ inline auto allocate_string(std::string_view from, ArenaMemoryResource& arena)
     auto ptr = new(arena, alignof(char)) char[from.size()];
     std::memcpy(ptr, from.data(), from.size());
     return {ptr, from.size()};
+}
+
+/// Allocates a string, converts it to ASCII uppercase, and returns a view to
+/// it.
+inline auto allocate_string_upper(std::string_view from,
+                                  ArenaMemoryResource& arena)
+        -> std::string_view
+{
+    auto chars = allocate_string(from, arena);
+    for(auto& c : chars)
+    {
+        if(c >= 'a' && c <= 'z')
+        {
+            // The following const_cast is safe because allocate_string
+            // constructs a mutable character sequence.
+            const_cast<char&>(c) = c - 32;
+        }
+    }
+    return chars;
 }
 }

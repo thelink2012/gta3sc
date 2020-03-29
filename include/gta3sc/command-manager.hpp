@@ -2,23 +2,48 @@
 #include <algorithm>
 #include <gta3sc/adt/span.hpp>
 #include <gta3sc/arena-allocator.hpp>
+#include <gta3sc/util/intrusive-list.hpp>
 #include <optional>
 #include <string_view>
 #include <unordered_map>
 
 namespace gta3sc
 {
+/// A repository for commands.
+///
+/// This is a immutable data structure which holds information about commands,
+/// alternators, enumerations, constants and entity types.
 class CommandManager
 {
 public:
+    class Builder;
+
+    struct ParamDef;
+    struct CommandDef;
+    struct AlternatorDef;
+    struct AlternativeDef;
+    struct ConstantDef;
+
+    /// Uniquely identifies an enumeration.
+    ///
+    /// See the language specification for details on enumerations:
+    /// https://gtamodding.github.io/gta3script-specs/core.html#string-constants
     enum class EnumId : uint16_t
-    {
+    { // strong typedef
     };
 
+    /// Uniquely identifies an entity type.
+    ///
+    /// See the language specification for details on entities:
+    /// https://gtamodding.github.io/gta3script-specs/core.html#entities
     enum class EntityId : uint16_t
-    {
+    { // strong typedef
     };
 
+    /// Type of a command parameter.
+    ///
+    /// See the language specification for details on parameters:
+    /// https://gtamodding.github.io/gta3script-specs/core.html#parameters
     enum class ParamType : uint8_t
     {
         INT,
@@ -48,6 +73,10 @@ public:
         INPUT_OPT,
     };
 
+    /// Stores information about a parameter.
+    ///
+    /// See the language specification for details on parameters:
+    /// https://gtamodding.github.io/gta3script-specs/core.html#parameters
     struct ParamDef
     {
         ParamType type;
@@ -61,251 +90,389 @@ public:
             type(type), entity_type(entity_type), enum_type(enum_type)
         {}
 
-        bool is_optional() const
-        {
-            switch(type)
-            {
-                case ParamType::VAR_INT_OPT:
-                case ParamType::LVAR_INT_OPT:
-                case ParamType::VAR_FLOAT_OPT:
-                case ParamType::LVAR_FLOAT_OPT:
-                case ParamType::VAR_TEXT_LABEL_OPT:
-                case ParamType::LVAR_TEXT_LABEL_OPT:
-                case ParamType::INPUT_OPT:
-                    return true;
-                default:
-                    return false;
-            }
-        }
+        /// Checks whether this is an optional parameter.
+        bool is_optional() const;
     };
 
+    /// Stores information about a command.
     struct CommandDef
     {
+        /// The name of the command.
         std::string_view name;
+        /// The parameters of the command.
         adt::span<ParamDef> params;
+        /// The opcode associated with the command in the target script engine.
+        std::optional<uint16_t> target_id;
+        /// Whether this command is handled by the target script engine.
+        bool target_handled = false;
     };
 
+    /// Stores information about a alternator.
+    ///
+    /// See the language specification for details on alternators:
+    /// https://gtamodding.github.io/gta3script-specs/core.html#alternators
     struct AlternatorDef
     {
-        adt::span<const CommandDef*> alternatives;
+    public:
+        /// An iterator that iterates on alternative commands.
+        using const_iterator
+                = util::IntrusiveListForwardIterator<const AlternativeDef>;
+
+        /// Returns the front iterator for the alternatives in this alternator.
+        auto begin() const -> const_iterator;
+
+        /// Returns the past-the-end iterator for the alternatives in this
+        /// alternator.
+        auto end() const -> const_iterator;
+
+    protected:
+        friend class CommandManager;
+        arena_ptr<AlternativeDef> first{};
+        arena_ptr<AlternativeDef> last{};
     };
 
-    struct ConstantDef
+    /// Stores information about an alternative command.
+    ///
+    /// See `AlternatorDef` for details.
+    struct AlternativeDef : util::IntrusiveForwardListNode<AlternativeDef>
     {
-        EnumId enum_id;
-        int32_t value;
-        arena_ptr<ConstantDef> next;
+        const CommandDef* command;
+
+        explicit AlternativeDef(const CommandDef& command) : command(&command)
+        {}
+
+        // Provide the outer class access to the node pointers.
+        friend class CommandManager;
     };
+
+    /// Stores information about a string constant.
+    ///
+    /// See the language specification for details on string constants.
+    /// https://gtamodding.github.io/gta3script-specs/core.html#string-constants
+    struct ConstantDef : util::IntrusiveForwardListNode<ConstantDef>
+    {
+        /// The enumeration this string constant is part of.
+        EnumId enum_id;
+        /// The integer value of this string constant.
+        int32_t value;
+
+        explicit ConstantDef(EnumId enum_id, int32_t value) :
+            enum_id(enum_id), value(value)
+        {}
+
+        // Provide the outer class access to the node pointers.
+        friend class CommandManager;
+    };
+
+    // Those structures will be stored in an arena thus they need to be
+    // trivially destructible.
+    static_assert(std::is_trivially_destructible_v<ParamDef>);
+    static_assert(std::is_trivially_destructible_v<CommandDef>);
+    static_assert(std::is_trivially_destructible_v<AlternatorDef>);
+    static_assert(std::is_trivially_destructible_v<AlternativeDef>);
+    static_assert(std::is_trivially_destructible_v<ConstantDef>);
+
+    // Keep the size of these structures under control.
+    static_assert(sizeof(ParamDef) <= 8);
+    static_assert(sizeof(ConstantDef) <= 16);
+    static_assert(sizeof(AlternativeDef) <= 16);
+
+    /// Uniquely identifies the global string constant enumeration.
+    ///
+    /// The global enumeration is guarated to be the zero-initialized `EnumId`.
+    static constexpr EnumId global_enum = EnumId{0};
+
+    /// Uniquely identifies the none entity type.
+    ///
+    /// This entity type is used when a parameter (or variable) isn't
+    /// associated with any entity.
+    ///
+    /// The none entity type is guaranted to be the zero-initialized `EntityId`.
+    static constexpr EntityId no_entity_type = EntityId{0};
 
 public:
-    static constexpr EnumId global_enum = EnumId{0};        // guaranted to be 0
-    static constexpr EntityId no_entity_type = EntityId{0}; // guaranted to be 0
+    /// Constructs the repository of commands from its builder.
+    explicit CommandManager(Builder&& builder);
 
-    CommandManager()
-    {
-        add_enumeration("GLOBAL");
-        add_entity_type("NONE");
+    CommandManager(const CommandManager&) = delete;
+    CommandManager& operator=(const CommandManager&) = delete;
 
-        const auto global_enum = find_enumeration("GLOBAL");
-        const auto no_entity_type = find_entity_type("NONE");
+    CommandManager(CommandManager&&) = default;
+    CommandManager& operator=(CommandManager&&) = default;
 
-        assert(global_enum && *global_enum == this->global_enum);
-        assert(no_entity_type && *no_entity_type == this->no_entity_type);
-    }
+    /// Finds the command with the specified name in the repository.
+    ///
+    /// The given name must be in uppercase or no command will be found.
+    ///
+    /// Returns a pointer to the command information or `nullptr` if not found.
+    auto find_command(std::string_view name) const -> const CommandDef*;
 
-    bool add_command(std::string_view name,
-                     std::initializer_list<ParamDef> params)
-    {
-        if(command_by_name.count(name))
-            return false;
+    /// Finds the alternator with the specified name in the repository.
+    ///
+    /// The given name must be in uppercase or no alternator will be found.
+    ///
+    /// Returns a pointer to the alternator information or `nullptr` if not
+    /// found.
+    auto find_alternator(std::string_view name) const -> const AlternatorDef*;
 
-        const auto num_params = params.size();
+    /// Finds the enumeration with the specified name in the repository.
+    ///
+    /// The given name must be in uppercase or no enumeration will be found.
+    ///
+    /// Returns the enumeration identifier or `std::nullopt` if not found.
+    auto find_enumeration(std::string_view name) const -> std::optional<EnumId>;
 
-        auto a_name = allocate_string_upper(name);
-
-        auto a_params = static_cast<ParamDef*>(arena.allocate(
-                num_params * sizeof(ParamDef), alignof(ParamDef)));
-        std::uninitialized_copy(params.begin(), params.end(), a_params);
-
-        auto a_cmd = new(arena, alignof(CommandDef)) CommandDef{
-                a_name,
-                adt::span(a_params, num_params),
-        };
-
-        command_by_name.emplace(a_name, a_cmd);
-        return true;
-    }
-
-    auto find_command(std::string_view name) const -> const CommandDef*
-    {
-        auto it = command_by_name.find(name);
-        return it == command_by_name.end() ? nullptr : it->second;
-    }
-
-    bool add_alternator(std::string_view name,
-                        std::initializer_list<const CommandDef*> alternatives)
-    {
-        assert(std::none_of(alternatives.begin(), alternatives.end(),
-                            [](const auto* a) { return a == nullptr; }));
-
-        if(alternator_by_name.count(name))
-            return false;
-
-        const auto num_alters = alternatives.size();
-
-        auto a_name = allocate_string_upper(name);
-        auto a_alters = static_cast<const CommandDef**>(
-                arena.allocate(num_alters * sizeof(const CommandDef*),
-                               alignof(const CommandDef*)));
-
-        std::uninitialized_copy(alternatives.begin(), alternatives.end(),
-                                a_alters);
-
-        auto a_alternator = new(arena, alignof(AlternatorDef))
-                AlternatorDef{adt::span(a_alters, num_alters)};
-
-        alternator_by_name.emplace(a_name, a_alternator);
-        return true;
-    }
-
-    auto find_alternator(std::string_view name) const -> const AlternatorDef*
-    {
-        auto it = alternator_by_name.find(name);
-        return it == alternator_by_name.end() ? nullptr : it->second;
-    }
-
-    bool add_enumeration(std::string_view name)
-    {
-        if(enum_by_name.count(name))
-            return false;
-
-        auto a_name = allocate_string_upper(name);
-
-        const auto next_id = static_cast<std::underlying_type_t<EnumId>>(
-                enum_by_name.size());
-        assert(next_id < std::numeric_limits<decltype(next_id)>::max());
-
-        auto [iter, inserted] = enum_by_name.emplace(a_name, EnumId{next_id});
-        return true;
-    }
-
-    auto find_enumeration(std::string_view name) const -> std::optional<EnumId>
-    {
-        auto it = enum_by_name.find(name);
-        if(it == enum_by_name.end())
-            return std::nullopt;
-        return it->second;
-    }
-
-    bool add_constant(EnumId enum_id, std::string_view name, int32_t value)
-    {
-        auto it = constant_by_name.find(name);
-        if(it == constant_by_name.end())
-        {
-            auto a_name = allocate_string_upper(name);
-            it = constant_by_name.emplace(a_name, nullptr).first;
-        }
-
-        ConstantDef** ptr_next = std::addressof(it->second);
-        while(*ptr_next != nullptr)
-        {
-            if((*ptr_next)->enum_id == enum_id)
-                return false;
-
-            ptr_next = std::addressof((*ptr_next)->next);
-        }
-
-        *ptr_next = new(arena, alignof(ConstantDef))
-                ConstantDef{enum_id, value, nullptr};
-
-        return true;
-    }
-
+    /// Finds a string constant of certain name in a given enumeration.
+    ///
+    /// The given name must be in uppercase or no string constant will be found.
+    ///
+    /// Returns the string constant information or `nullptr` if not found.
     auto find_constant(EnumId enum_id, std::string_view name) const
-            -> const ConstantDef*
-    {
-        auto it = constant_by_name.find(name);
-        if(it == constant_by_name.end())
-            return nullptr;
+            -> const ConstantDef*;
 
-        for(ConstantDef* cdef = it->second; cdef != nullptr; cdef = cdef->next)
-        {
-            if(cdef->enum_id == enum_id)
-                return cdef;
-        }
-
-        return nullptr;
-    }
-
+    /// Finds a string constant of certain name in any enumeration (except the
+    /// global enumeration).
+    ///
+    /// The given name must be in uppercase or no string constant will be found.
+    ///
+    /// If multiple string constants exist with the given name, the first one
+    /// to be inserted into the repository (during the building process)
+    /// takes precedence over the latter ones.
+    ///
+    /// Returns the string constant information or `nullptr` if not found.
     auto find_constant_any_means(std::string_view name) const
-            -> const ConstantDef*
-    {
-        auto it = constant_by_name.find(name);
-        if(it == constant_by_name.end())
-            return nullptr;
-        assert(it->second != nullptr);
+            -> const ConstantDef*;
 
-        for(ConstantDef* cdef = it->second; cdef != nullptr; cdef = cdef->next)
-        {
-            if(cdef->enum_id != global_enum)
-                return cdef;
-        }
-
-        return nullptr;
-    }
-
-    bool add_entity_type(std::string_view name)
-    {
-        if(entity_by_name.count(name))
-            return false;
-
-        auto a_name = allocate_string_upper(name);
-
-        const auto next_id = static_cast<std::underlying_type_t<EntityId>>(
-                entity_by_name.size());
-        assert(next_id < std::numeric_limits<decltype(next_id)>::max());
-
-        auto [iter, inserted] = entity_by_name.emplace(a_name,
-                                                       EntityId{next_id});
-        return true;
-    }
-
+    /// Finds the entity type with the specified name in the repository.
+    ///
+    /// The given name must be in uppercase or no entity will be found.
+    ///
+    /// Returns the entity type identifier or `std::nullopt` if not found.
     auto find_entity_type(std::string_view name) const
-            -> std::optional<EntityId>
-    {
-        auto it = entity_by_name.find(name);
-        if(it == entity_by_name.end())
-            return std::nullopt;
-        return it->second;
-    }
+            -> std::optional<EntityId>;
 
 private:
-private:
-    auto allocate_string_upper(std::string_view from) -> std::string_view
-    {
-        auto chars = allocate_string(from, arena);
-        for(auto& c : chars)
-        {
-            if(c >= 'a' && c <= 'z')
-                const_cast<char&>(c) = c - 32;
-        }
-        return chars;
-    }
+    /// Provides a mapping from a name to a command definition.
+    using CommandsMap
+            = std::unordered_map<std::string_view, arena_ptr<CommandDef>>;
+
+    /// Provides a mapping from a name to a alternator definition.
+    using AlternatorsMap
+            = std::unordered_map<std::string_view, arena_ptr<AlternatorDef>>;
+
+    /// Provides a mapping from a name to an enumeration identifier.
+    using EnumsMap = std::unordered_map<std::string_view, EnumId>;
+
+    /// Provides a mapping from a name to a list of constant definitions.
+    using ConstantsMap
+            = std::unordered_map<std::string_view, arena_ptr<ConstantDef>>;
+
+    /// Provides a mapping from a name to an entity identifier.
+    using EntitiesMap = std::unordered_map<std::string_view, EntityId>;
+
+    /// Static version of `this->find_command(name)`.
+    static auto find_command(const CommandsMap& commands_map,
+                             std::string_view name) -> const CommandDef*;
+
+    /// Static version of `this->find_alternator(name)`.
+    static auto find_alternator(const AlternatorsMap& alternators_map,
+                                std::string_view name) -> const AlternatorDef*;
+
+    /// Static version of `this->find_enumeration(name)`.
+    static auto find_enumeration(const EnumsMap& enums_map,
+                                 std::string_view name)
+            -> std::optional<EnumId>;
+
+    /// Static version of `this->find_constant(enum_id, name)`.
+    static auto find_constant(const ConstantsMap& constants_map, EnumId enum_id,
+                              std::string_view name) -> const ConstantDef*;
+
+    /// Static version of `this->find_constant_any_means(name)`.
+    static auto find_constant_any_means(const ConstantsMap& constants_map,
+                                        std::string_view name)
+            -> const ConstantDef*;
+
+    /// Static version of `this->find_entity_type(name)`.
+    static auto find_entity_type(const EntitiesMap& entities_map,
+                                 std::string_view name)
+            -> std::optional<EntityId>;
 
 private:
-    ArenaMemoryResource arena;
+    /// Map of command names to their command definition.
+    CommandsMap commands_map;
 
-    std::unordered_map<std::string_view, arena_ptr<const CommandDef>>
-            command_by_name;
+    /// Map of alternative names to a list of alternatives.
+    AlternatorsMap alternators_map;
 
-    std::unordered_map<std::string_view, arena_ptr<const AlternatorDef>>
-            alternator_by_name;
+    /// Map of enumeration names to enumeration identifiers.
+    EnumsMap enums_map;
 
-    std::unordered_map<std::string_view, EnumId> enum_by_name;
+    /// Map of constant names to a list of possible definitions.
+    ConstantsMap constants_map;
 
-    std::unordered_map<std::string_view, arena_ptr<ConstantDef>>
-            constant_by_name;
-
-    std::unordered_map<std::string_view, EntityId> entity_by_name;
+    /// Map of entity names to entity identifiers.
+    EntitiesMap entities_map;
 };
+
+/// This is a builder capable of constructing a command repository.
+///
+/// Since `CommandManager` is immutable this builder should be used to
+/// prepare the command definitions before passing it onto the repository.
+class CommandManager::Builder
+{
+public:
+    /// Constructs a builder.
+    ///
+    /// Allocations of command definitions, alternators, constants, and whatnot
+    /// will be perfomed in the given arena. Therefore, the arena should be live
+    /// as long as the resulting `CommandManager` is alive.
+    explicit Builder(ArenaMemoryResource& arena);
+
+    Builder(const Builder&) = delete;
+    Builder& operator=(const Builder&) = delete;
+
+    Builder(Builder&&) = default;
+    Builder& operator=(Builder&&) = default;
+
+    /// Behaves the same as `CommandManager::find_command`.
+    auto find_command(std::string_view name) const -> const CommandDef*;
+
+    /// Behaves the same as `CommandManager::find_command`.
+    auto find_command(std::string_view name) -> CommandDef*;
+
+    /// Behaves the same as `CommandManager::find_alternator`.
+    auto find_alternator(std::string_view name) const -> const AlternatorDef*;
+
+    /// Behaves the same as `CommandManager::find_alternator`.
+    auto find_alternator(std::string_view name) -> AlternatorDef*;
+
+    /// Behaves the same as `CommandManager::find_enumeration`.
+    auto find_enumeration(std::string_view name) const -> std::optional<EnumId>;
+
+    /// Behaves the same as `CommandManager::find_constant`.
+    auto find_constant(EnumId enum_id, std::string_view name) const
+            -> const ConstantDef*;
+
+    /// Behaves the same as `CommandManager::find_entity_type`.
+    auto find_entity_type(std::string_view name) const
+            -> std::optional<EntityId>;
+
+    /// Inserts a command with the given name into the repository.
+    ///
+    /// The given name is internally converted to uppercase. If a command of
+    /// same name already exists, does nothing.
+    ///
+    /// Returns the command and whether insertion took place.
+    auto insert_command(std::string_view name) -> std::pair<CommandDef*, bool>;
+
+    /// Sets the parameters of a command to the given parameters.
+    ///
+    /// If parameters are already associated with the command, replaces them
+    /// with the given ones.
+    ///
+    /// \param command the command to set the parameters.
+    /// \param params_begin the beggining iterator for the parameters.
+    /// \params params_end the past-the-end iterator for the parameters.
+    /// \params params_size the size of the `[params_begin, params_end)`
+    /// sequence.
+    template<typename ForwardIterator>
+    void set_command_params(CommandDef& command, ForwardIterator params_begin,
+                            ForwardIterator params_end, size_t params_size);
+
+    /// Behaves the same as `set_command_params(command, params_begin,
+    /// params_end, params_end - params_begin)`.
+    template<typename RandomAccessIterator>
+    void set_command_params(CommandDef& command,
+                            RandomAccessIterator params_begin,
+                            RandomAccessIterator params_end);
+
+    /// Inserts an alternator with the given name into the repository.
+    ///
+    /// The given name is internally converted to uppercase. If an alternator
+    /// of same name already exists, does nothing.
+    ///
+    /// Returns the alternator and whether insertion took place.
+    auto insert_alternator(std::string_view name)
+            -> std::pair<AlternatorDef*, bool>;
+
+    /// Inserts a command alternative into a given alternator.
+    ///
+    /// The behaviour of the method is left unspecified if the given command
+    /// is already present in the alternator.
+    ///
+    /// Returns the produced alternative definition.
+    auto insert_alternative(AlternatorDef& alternator,
+                            const CommandDef& command) -> const AlternativeDef*;
+
+    /// Inserts an enumeration with the given name into the repository.
+    ///
+    /// The given name is internally converted to uppercase. If an enumeration
+    /// of same name already exists, does nothing.
+    ///
+    /// Returns the enumeration identifier and whether insertion took place.
+    auto insert_enumeration(std::string_view name) -> std::pair<EnumId, bool>;
+
+    /// Inserts a string constant into a given enumeration.
+    ///
+    /// The given constant name is internally converted to uppercase. If a
+    /// string constant of same name already exists in the enumeration,
+    /// replaces its value with the new `value` and behaves as if no insertion
+    /// took place.
+    ///
+    /// If a constant of same name already exists in another enumeration,
+    /// the previous constant value takes precedence during a call to
+    /// `CommandManager::find_constant_any_means`. See its documentation
+    /// for further details.
+    ///
+    /// Returns the string constant information and whether insertion took
+    /// place.
+    auto insert_or_assign_constant(EnumId enum_id, std::string_view name,
+                                   int32_t value)
+            -> std::pair<const ConstantDef*, bool>;
+
+    /// Inserts an entity type with the given name into the repository.
+    ///
+    /// The given name is internally converted to uppercase. If an entity type
+    /// of same name already exists, does nothing.
+    ///
+    /// Returns the entity identifier and whether insertion took place.
+    auto insert_entity_type(std::string_view name) -> std::pair<EntityId, bool>;
+
+protected:
+    friend class CommandManager;
+
+    /// The arena used to allocate definitions.
+    ArenaMemoryResource* arena;
+
+    // Maps that are going to be moved to `CommandManager`.
+    CommandsMap commands_map;
+    AlternatorsMap alternators_map;
+    EnumsMap enums_map;
+    ConstantsMap constants_map;
+    EntitiesMap entities_map;
+};
+}
+
+namespace gta3sc
+{
+template<typename ForwardIterator>
+void CommandManager::Builder::set_command_params(CommandDef& command,
+                                                 ForwardIterator params_begin,
+                                                 ForwardIterator params_end,
+                                                 size_t params_size)
+{
+    auto a_params = static_cast<ParamDef*>(
+            arena->allocate(params_size * sizeof(ParamDef), alignof(ParamDef)));
+    std::uninitialized_copy(params_begin, params_end, a_params);
+    command.params = adt::span(a_params, params_size);
+}
+
+template<typename RandomAccessIterator>
+void CommandManager::Builder::set_command_params(
+        CommandDef& command, RandomAccessIterator params_begin,
+        RandomAccessIterator params_end)
+{
+    const size_t params_size = params_end - params_begin;
+    return set_command_params(command, params_begin, params_end, params_size);
+}
 }

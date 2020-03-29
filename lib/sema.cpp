@@ -171,19 +171,18 @@ auto Sema::validate_command(const ParserIR::Command& command)
 
     if(const auto alternator = cmdman->find_alternator(command.name))
     {
-        const auto& alternatives = alternator->alternatives;
-        auto it = std::find_if(alternatives.begin(), alternatives.end(),
-                               [&](const auto* alternative) {
-                                   return is_matching_alternative(command,
-                                                                  *alternative);
+        auto it = std::find_if(alternator->begin(), alternator->end(),
+                               [&](const auto& alternative) {
+                                   return is_matching_alternative(
+                                           command, *alternative.command);
                                });
-        if(it == alternatives.end())
+        if(it == alternator->end())
         {
             report(command.source, Diag::alternator_mismatch);
             return nullptr;
         }
 
-        command_def = *it;
+        command_def = it->command;
         assert(command_def);
         this->analyzing_alternative_command = true;
     }
@@ -989,11 +988,11 @@ bool Sema::is_alternative_command(
         const CommandManager::CommandDef& command_def,
         const CommandManager::AlternatorDef& from) const
 {
-    auto it = std::find_if(from.alternatives.begin(), from.alternatives.end(),
-                           [&](const auto* alternative) {
-                               return &command_def == alternative;
+    auto it = std::find_if(from.begin(), from.end(),
+                           [&](const auto& alternative) {
+                               return &command_def == alternative.command;
                            });
-    return (it != from.alternatives.end());
+    return (it != from.end());
 }
 
 bool Sema::is_matching_alternative(

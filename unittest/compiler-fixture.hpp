@@ -1,37 +1,27 @@
 #pragma once
-#include <doctest.h>
-#include <gta3sc/sourceman.hpp>
-#include <gta3sc/diagnostics.hpp>
 #include <cstring>
+#include <doctest.h>
+#include <gta3sc/diagnostics.hpp>
+#include <gta3sc/sourceman.hpp>
 #include <memory>
-#include <queue>
 #include <ostream>
+#include <queue>
 
 namespace gta3sc::test
 {
 class CompilerFixture
 {
 public:
-    CompilerFixture() :
-        //source_file(make_source("")),
-        diagman([this](const auto& diag) { diags.push(diag); })
+    CompilerFixture() : diagman([this](const auto& diag) { diags.push(diag); })
     {}
 
-    virtual ~CompilerFixture()
-    {
-        CHECK(diags.empty());
-    }
+    virtual ~CompilerFixture() { CHECK(diags.empty()); }
 
 protected:
-    /*void build_source(std::string_view src)
-    {
-        this->source_file = make_source(src);
-    }*/
-
     auto make_source(std::string_view src) -> gta3sc::SourceFile
     {
         const auto n = src.size();
-        auto ptr = std::make_unique<char[]>(n+1);
+        auto ptr = std::make_unique<char[]>(n + 1);
         std::memcpy(ptr.get(), src.data(), n);
         ptr[n] = '\0';
         return sourceman.load_file(std::move(ptr), n).value();
@@ -53,7 +43,7 @@ protected:
 
 protected:
     gta3sc::SourceManager sourceman;
-    //gta3sc::SourceFile source_file;
+    // gta3sc::SourceFile source_file;
     gta3sc::DiagnosticHandler diagman;
     std::queue<gta3sc::Diagnostic> diags;
 };

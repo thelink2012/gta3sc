@@ -7,195 +7,271 @@ namespace gta3sc::test
 class CommandManagerFixture
 {
 public:
-    CommandManagerFixture()
+    CommandManagerFixture() : cmdman(build()) {}
+
+private:
+    auto build() -> CommandManager::Builder
     {
         using ParamDef = gta3sc::CommandManager::ParamDef;
         using ParamType = gta3sc::CommandManager::ParamType;
         using EntityId = gta3sc::CommandManager::EntityId;
         using EnumId = gta3sc::CommandManager::EnumId;
 
-        cmdman.add_entity_type("CAR");
-        cmdman.add_entity_type("CHAR");
-        CHECK(cmdman.find_entity_type("CAR").value_or(EntityId{0}) != EntityId{0});
-        CHECK(cmdman.find_entity_type("CHAR").value_or(EntityId{0}) != EntityId{0});
+        CommandManager::Builder builder(arena);
 
-        CHECK(cmdman.find_enumeration("GLOBAL"));
-        cmdman.add_enumeration("PEDTYPE");
-        cmdman.add_enumeration("DEFAULTMODEL");
-        cmdman.add_enumeration("FADE");
+        builder.insert_entity_type("CAR");
+        builder.insert_entity_type("CHAR");
+        CHECK(builder.find_entity_type("CAR").value_or(EntityId{0})
+              != EntityId{0});
+        CHECK(builder.find_entity_type("CHAR").value_or(EntityId{0})
+              != EntityId{0});
 
-        cmdman.add_constant(*cmdman.find_enumeration("GLOBAL"), "FALSE", 0);
-        cmdman.add_constant(*cmdman.find_enumeration("GLOBAL"), "TRUE", 1);
-        cmdman.add_constant(*cmdman.find_enumeration("GLOBAL"), "OFF", 0);
-        cmdman.add_constant(*cmdman.find_enumeration("GLOBAL"), "ON", 1);
+        CHECK(builder.find_enumeration("GLOBAL"));
+        builder.insert_enumeration("PEDTYPE");
+        builder.insert_enumeration("DEFAULTMODEL");
+        builder.insert_enumeration("FADE");
 
-        cmdman.add_constant(*cmdman.find_enumeration("PEDTYPE"), "PEDTYPE_CIVMALE", 4);
-        cmdman.add_constant(*cmdman.find_enumeration("PEDTYPE"), "PEDTYPE_CIVFEMALE", 5);
-        cmdman.add_constant(*cmdman.find_enumeration("PEDTYPE"), "PEDTYPE_MEDIC", 16);
+        builder.insert_or_assign_constant(*builder.find_enumeration("GLOBAL"),
+                                          "FALSE", 0);
+        builder.insert_or_assign_constant(*builder.find_enumeration("GLOBAL"),
+                                          "TRUE", 1);
+        builder.insert_or_assign_constant(*builder.find_enumeration("GLOBAL"),
+                                          "OFF", 0);
+        builder.insert_or_assign_constant(*builder.find_enumeration("GLOBAL"),
+                                          "ON", 1);
 
-        cmdman.add_constant(*cmdman.find_enumeration("FADE"), "FADE_OUT", 0);
-        cmdman.add_constant(*cmdman.find_enumeration("FADE"), "FADE_IN", 1);
+        builder.insert_or_assign_constant(*builder.find_enumeration("PEDTYPE"),
+                                          "PEDTYPE_CIVMALE", 4);
+        builder.insert_or_assign_constant(*builder.find_enumeration("PEDTYPE"),
+                                          "PEDTYPE_CIVFEMALE", 5);
+        builder.insert_or_assign_constant(*builder.find_enumeration("PEDTYPE"),
+                                          "PEDTYPE_MEDIC", 16);
 
-        cmdman.add_constant(*cmdman.find_enumeration("DEFAULTMODEL"), "MEDIC", 5);
-        cmdman.add_constant(*cmdman.find_enumeration("DEFAULTMODEL"), "HFYST", 9);
-        cmdman.add_constant(*cmdman.find_enumeration("DEFAULTMODEL"), "HMYST", 11);
-        cmdman.add_constant(*cmdman.find_enumeration("DEFAULTMODEL"), "CHEETAH", 145);
-        cmdman.add_constant(*cmdman.find_enumeration("DEFAULTMODEL"), "WASHING", 151);
-        cmdman.add_constant(*cmdman.find_enumeration("DEFAULTMODEL"), "LOVEFIST", 201);
+        builder.insert_or_assign_constant(*builder.find_enumeration("FADE"),
+                                          "FADE_OUT", 0);
+        builder.insert_or_assign_constant(*builder.find_enumeration("FADE"),
+                                          "FADE_IN", 1);
 
-        cmdman.add_command("{", {});
-        cmdman.add_command("}", {});
-        cmdman.add_command("IF", {ParamDef{ParamType::INT}});
-        cmdman.add_command("ENDIF", {});
-        cmdman.add_command("REPEAT", {ParamDef{ParamType::INT}, ParamDef{ParamType::VAR_INT}});
-        cmdman.add_command("ENDREPEAT", {});
-        cmdman.add_command("WAIT", {ParamDef{ParamType::INPUT_INT}});
-        cmdman.add_command("GOTO", {ParamDef{ParamType::LABEL}});
-        cmdman.add_command("GOSUB", {ParamDef{ParamType::LABEL}});
-        cmdman.add_command("RETURN", {});
-        cmdman.add_command("SCRIPT_NAME", {ParamDef{ParamType::TEXT_LABEL}});
-        cmdman.add_command("PRINT_HELP", {ParamDef{ParamType::TEXT_LABEL}});
-        cmdman.add_command("START_NEW_SCRIPT", {ParamDef{ParamType::LABEL},
-                                                ParamDef{ParamType::INPUT_OPT}});
-        cmdman.add_command("VAR_INT", {ParamDef{ParamType::VAR_INT},
-                                       ParamDef{ParamType::VAR_INT_OPT}});
-        cmdman.add_command("LVAR_INT", {ParamDef{ParamType::LVAR_INT},
-                                        ParamDef{ParamType::LVAR_INT_OPT}});
-        cmdman.add_command("VAR_FLOAT", {ParamDef{ParamType::VAR_FLOAT},
-                                         ParamDef{ParamType::VAR_FLOAT_OPT}});
-        cmdman.add_command("LVAR_FLOAT", {ParamDef{ParamType::LVAR_FLOAT},
-                                          ParamDef{ParamType::LVAR_FLOAT_OPT}});
-        cmdman.add_command("VAR_TEXT_LABEL", {ParamDef{ParamType::VAR_TEXT_LABEL},
-                                              ParamDef{ParamType::VAR_TEXT_LABEL_OPT}});
-        cmdman.add_command("LVAR_TEXT_LABEL", {ParamDef{ParamType::LVAR_TEXT_LABEL},
-                                               ParamDef{ParamType::LVAR_TEXT_LABEL_OPT}});
-        cmdman.add_command("GENERATE_RANDOM_FLOAT_IN_RANGE",
-            {ParamDef{ParamType::INPUT_FLOAT},
-             ParamDef{ParamType::INPUT_FLOAT},
-             ParamDef{ParamType::OUTPUT_FLOAT}});
-        cmdman.add_command("GENERATE_RANDOM_INT_IN_RANGE",
-            {ParamDef{ParamType::INPUT_INT},
-             ParamDef{ParamType::INPUT_INT},
-             ParamDef{ParamType::OUTPUT_INT}});
-        cmdman.add_command("SAVE_STRING_TO_DEBUG_FILE", {ParamDef{ParamType::STRING}});
-        cmdman.add_command("SAVE_STRING_TO_DEBUG_FILE", {ParamDef{ParamType::STRING}});
+        builder.insert_or_assign_constant(
+                *builder.find_enumeration("DEFAULTMODEL"), "MEDIC", 5);
+        builder.insert_or_assign_constant(
+                *builder.find_enumeration("DEFAULTMODEL"), "HFYST", 9);
+        builder.insert_or_assign_constant(
+                *builder.find_enumeration("DEFAULTMODEL"), "HMYST", 11);
+        builder.insert_or_assign_constant(
+                *builder.find_enumeration("DEFAULTMODEL"), "CHEETAH", 145);
+        builder.insert_or_assign_constant(
+                *builder.find_enumeration("DEFAULTMODEL"), "WASHING", 151);
+        builder.insert_or_assign_constant(
+                *builder.find_enumeration("DEFAULTMODEL"), "LOVEFIST", 201);
 
-        cmdman.add_command("CREATE_CHAR", {
-                ParamDef{ParamType::INPUT_INT, EntityId{}, *cmdman.find_enumeration("PEDTYPE")}, 
-                ParamDef{ParamType::INPUT_INT, EntityId{}, *cmdman.find_enumeration("DEFAULTMODEL")},
-                ParamDef{ParamType::INPUT_FLOAT},
-                ParamDef{ParamType::INPUT_FLOAT},
-                ParamDef{ParamType::INPUT_FLOAT},
-                ParamDef{ParamType::OUTPUT_INT, *cmdman.find_entity_type("CHAR"), EnumId{}}});
+        add_command(builder, "{", {});
+        add_command(builder, "}", {});
+        add_command(builder, "IF", {ParamDef{ParamType::INT}});
+        add_command(builder, "ENDIF", {});
+        add_command(builder, "REPEAT",
+                    {ParamDef{ParamType::INT}, ParamDef{ParamType::VAR_INT}});
+        add_command(builder, "ENDREPEAT", {});
+        add_command(builder, "WAIT", {ParamDef{ParamType::INPUT_INT}});
+        add_command(builder, "GOTO", {ParamDef{ParamType::LABEL}});
+        add_command(builder, "GOSUB", {ParamDef{ParamType::LABEL}});
+        add_command(builder, "RETURN", {});
+        add_command(builder, "SCRIPT_NAME", {ParamDef{ParamType::TEXT_LABEL}});
+        add_command(builder, "PRINT_HELP", {ParamDef{ParamType::TEXT_LABEL}});
+        add_command(
+                builder, "START_NEW_SCRIPT",
+                {ParamDef{ParamType::LABEL}, ParamDef{ParamType::INPUT_OPT}});
+        add_command(builder, "VAR_INT",
+                    {ParamDef{ParamType::VAR_INT},
+                     ParamDef{ParamType::VAR_INT_OPT}});
+        add_command(builder, "LVAR_INT",
+                    {ParamDef{ParamType::LVAR_INT},
+                     ParamDef{ParamType::LVAR_INT_OPT}});
+        add_command(builder, "VAR_FLOAT",
+                    {ParamDef{ParamType::VAR_FLOAT},
+                     ParamDef{ParamType::VAR_FLOAT_OPT}});
+        add_command(builder, "LVAR_FLOAT",
+                    {ParamDef{ParamType::LVAR_FLOAT},
+                     ParamDef{ParamType::LVAR_FLOAT_OPT}});
+        add_command(builder, "VAR_TEXT_LABEL",
+                    {ParamDef{ParamType::VAR_TEXT_LABEL},
+                     ParamDef{ParamType::VAR_TEXT_LABEL_OPT}});
+        add_command(builder, "LVAR_TEXT_LABEL",
+                    {ParamDef{ParamType::LVAR_TEXT_LABEL},
+                     ParamDef{ParamType::LVAR_TEXT_LABEL_OPT}});
+        add_command(builder, "GENERATE_RANDOM_FLOAT_IN_RANGE",
+                    {ParamDef{ParamType::INPUT_FLOAT},
+                     ParamDef{ParamType::INPUT_FLOAT},
+                     ParamDef{ParamType::OUTPUT_FLOAT}});
+        add_command(builder, "GENERATE_RANDOM_INT_IN_RANGE",
+                    {ParamDef{ParamType::INPUT_INT},
+                     ParamDef{ParamType::INPUT_INT},
+                     ParamDef{ParamType::OUTPUT_INT}});
+        add_command(builder, "SAVE_STRING_TO_DEBUG_FILE",
+                    {ParamDef{ParamType::STRING}});
+        add_command(builder, "SAVE_STRING_TO_DEBUG_FILE",
+                    {ParamDef{ParamType::STRING}});
 
-        cmdman.add_command("CREATE_CAR", {
-                ParamDef{ParamType::INPUT_INT, EntityId{}, *cmdman.find_enumeration("DEFAULTMODEL")},
-                ParamDef{ParamType::INPUT_FLOAT},
-                ParamDef{ParamType::INPUT_FLOAT},
-                ParamDef{ParamType::INPUT_FLOAT},
-                ParamDef{ParamType::OUTPUT_INT, *cmdman.find_entity_type("CAR"), EnumId{}}});
+        add_command(builder, "CREATE_CHAR",
+                    {ParamDef{ParamType::INPUT_INT, EntityId{},
+                              *builder.find_enumeration("PEDTYPE")},
+                     ParamDef{ParamType::INPUT_INT, EntityId{},
+                              *builder.find_enumeration("DEFAULTMODEL")},
+                     ParamDef{ParamType::INPUT_FLOAT},
+                     ParamDef{ParamType::INPUT_FLOAT},
+                     ParamDef{ParamType::INPUT_FLOAT},
+                     ParamDef{ParamType::OUTPUT_INT,
+                              *builder.find_entity_type("CHAR"), EnumId{}}});
 
-        cmdman.add_command("DO_FADE", {
-                ParamDef{ParamType::INPUT_INT},
-                ParamDef{ParamType::INPUT_INT, EntityId{}, *cmdman.find_enumeration("FADE")}});
+        add_command(builder, "CREATE_CAR",
+                    {ParamDef{ParamType::INPUT_INT, EntityId{},
+                              *builder.find_enumeration("DEFAULTMODEL")},
+                     ParamDef{ParamType::INPUT_FLOAT},
+                     ParamDef{ParamType::INPUT_FLOAT},
+                     ParamDef{ParamType::INPUT_FLOAT},
+                     ParamDef{ParamType::OUTPUT_INT,
+                              *builder.find_entity_type("CAR"), EnumId{}}});
 
-        cmdman.add_command("SET_CAR_HEADING", {
-                ParamDef{ParamType::INPUT_INT, *cmdman.find_entity_type("CAR"), EnumId{}},
-                ParamDef{ParamType::INPUT_FLOAT},
+        add_command(builder, "DO_FADE",
+                    {ParamDef{ParamType::INPUT_INT},
+                     ParamDef{ParamType::INPUT_INT, EntityId{},
+                              *builder.find_enumeration("FADE")}});
+
+        add_command(
+                builder, "SET_CAR_HEADING",
+                {
+                        ParamDef{ParamType::INPUT_INT,
+                                 *builder.find_entity_type("CAR"), EnumId{}},
+                        ParamDef{ParamType::INPUT_FLOAT},
                 });
 
-        cmdman.add_command("SET_CHAR_HEADING", {
-                ParamDef{ParamType::INPUT_INT, *cmdman.find_entity_type("CHAR"), EnumId{}},
-                ParamDef{ParamType::INPUT_FLOAT},
+        add_command(
+                builder, "SET_CHAR_HEADING",
+                {
+                        ParamDef{ParamType::INPUT_INT,
+                                 *builder.find_entity_type("CHAR"), EnumId{}},
+                        ParamDef{ParamType::INPUT_FLOAT},
                 });
 
-        cmdman.add_command("SET_VAR_INT", {ParamDef{ParamType::VAR_INT},
-                                           ParamDef{ParamType::INT}});
-        cmdman.add_command("SET_VAR_FLOAT", {ParamDef{ParamType::VAR_FLOAT},
-                                             ParamDef{ParamType::FLOAT}});
-        cmdman.add_command("SET_LVAR_INT", {ParamDef{ParamType::LVAR_INT},
-                                            ParamDef{ParamType::INT}});
-        cmdman.add_command("SET_LVAR_FLOAT", {ParamDef{ParamType::LVAR_FLOAT},
-                                              ParamDef{ParamType::FLOAT}});
-        cmdman.add_command(
-                "SET_VAR_INT_TO_VAR_INT",
+        add_command(builder, "SET_VAR_INT",
+                    {ParamDef{ParamType::VAR_INT}, ParamDef{ParamType::INT}});
+        add_command(
+                builder, "SET_VAR_FLOAT",
+                {ParamDef{ParamType::VAR_FLOAT}, ParamDef{ParamType::FLOAT}});
+        add_command(builder, "SET_LVAR_INT",
+                    {ParamDef{ParamType::LVAR_INT}, ParamDef{ParamType::INT}});
+        add_command(
+                builder, "SET_LVAR_FLOAT",
+                {ParamDef{ParamType::LVAR_FLOAT}, ParamDef{ParamType::FLOAT}});
+        add_command(
+                builder, "SET_VAR_INT_TO_VAR_INT",
                 {ParamDef{ParamType::VAR_INT}, ParamDef{ParamType::VAR_INT}});
-        cmdman.add_command(
-                "SET_LVAR_INT_TO_LVAR_INT",
+        add_command(
+                builder, "SET_LVAR_INT_TO_LVAR_INT",
                 {ParamDef{ParamType::LVAR_INT}, ParamDef{ParamType::LVAR_INT}});
-        cmdman.add_command("SET_VAR_FLOAT_TO_VAR_FLOAT",
-                           {ParamDef{ParamType::VAR_FLOAT},
-                            ParamDef{ParamType::VAR_FLOAT}});
-        cmdman.add_command("SET_LVAR_FLOAT_TO_LVAR_FLOAT",
-                           {ParamDef{ParamType::LVAR_FLOAT},
-                            ParamDef{ParamType::LVAR_FLOAT}});
-        cmdman.add_command("SET_VAR_FLOAT_TO_LVAR_FLOAT",
-                           {ParamDef{ParamType::VAR_FLOAT},
-                            ParamDef{ParamType::LVAR_FLOAT}});
-        cmdman.add_command("SET_LVAR_FLOAT_TO_VAR_FLOAT",
-                           {ParamDef{ParamType::LVAR_FLOAT},
-                            ParamDef{ParamType::VAR_FLOAT}});
-        cmdman.add_command(
-                "SET_VAR_INT_TO_LVAR_INT",
+        add_command(builder, "SET_VAR_FLOAT_TO_VAR_FLOAT",
+                    {ParamDef{ParamType::VAR_FLOAT},
+                     ParamDef{ParamType::VAR_FLOAT}});
+        add_command(builder, "SET_LVAR_FLOAT_TO_LVAR_FLOAT",
+                    {ParamDef{ParamType::LVAR_FLOAT},
+                     ParamDef{ParamType::LVAR_FLOAT}});
+        add_command(builder, "SET_VAR_FLOAT_TO_LVAR_FLOAT",
+                    {ParamDef{ParamType::VAR_FLOAT},
+                     ParamDef{ParamType::LVAR_FLOAT}});
+        add_command(builder, "SET_LVAR_FLOAT_TO_VAR_FLOAT",
+                    {ParamDef{ParamType::LVAR_FLOAT},
+                     ParamDef{ParamType::VAR_FLOAT}});
+        add_command(
+                builder, "SET_VAR_INT_TO_LVAR_INT",
                 {ParamDef{ParamType::VAR_INT}, ParamDef{ParamType::LVAR_INT}});
-        cmdman.add_command(
-                "SET_LVAR_INT_TO_VAR_INT",
+        add_command(
+                builder, "SET_LVAR_INT_TO_VAR_INT",
                 {ParamDef{ParamType::LVAR_INT}, ParamDef{ParamType::VAR_INT}});
-        cmdman.add_command(
-                "SET_VAR_INT_TO_CONSTANT",
+        add_command(
+                builder, "SET_VAR_INT_TO_CONSTANT",
                 {ParamDef{ParamType::VAR_INT}, ParamDef{ParamType::INPUT_INT}});
-        cmdman.add_command(
-                "SET_LVAR_INT_TO_CONSTANT",
+        add_command(
+                builder, "SET_LVAR_INT_TO_CONSTANT",
                 {ParamDef{ParamType::VAR_INT}, ParamDef{ParamType::INPUT_INT}});
-        cmdman.add_command("SET_VAR_TEXT_LABEL",
-                           {ParamDef{ParamType::VAR_TEXT_LABEL},
-                            ParamDef{ParamType::TEXT_LABEL}});
-        cmdman.add_command("SET_LVAR_TEXT_LABEL",
-                           {ParamDef{ParamType::LVAR_TEXT_LABEL},
-                            ParamDef{ParamType::TEXT_LABEL}});
+        add_command(builder, "SET_VAR_TEXT_LABEL",
+                    {ParamDef{ParamType::VAR_TEXT_LABEL},
+                     ParamDef{ParamType::TEXT_LABEL}});
+        add_command(builder, "SET_LVAR_TEXT_LABEL",
+                    {ParamDef{ParamType::LVAR_TEXT_LABEL},
+                     ParamDef{ParamType::TEXT_LABEL}});
 
-        cmdman.add_command("ABS_VAR_INT", {ParamDef{ParamType::VAR_INT}});
-        cmdman.add_command("ABS_LVAR_INT", {ParamDef{ParamType::LVAR_INT}});
-        cmdman.add_command("ABS_VAR_FLOAT", {ParamDef{ParamType::VAR_FLOAT}});
-        cmdman.add_command("ABS_LVAR_FLOAT", {ParamDef{ParamType::LVAR_FLOAT}});
+        add_command(builder, "ABS_VAR_INT", {ParamDef{ParamType::VAR_INT}});
+        add_command(builder, "ABS_LVAR_INT", {ParamDef{ParamType::LVAR_INT}});
+        add_command(builder, "ABS_VAR_FLOAT", {ParamDef{ParamType::VAR_FLOAT}});
+        add_command(builder, "ABS_LVAR_FLOAT",
+                    {ParamDef{ParamType::LVAR_FLOAT}});
 
-        cmdman.add_command("ACCEPTS_ONLY_VAR_INT", {ParamDef{ParamType::VAR_INT}});
-        cmdman.add_command("ACCEPTS_ONLY_LVAR_INT", {ParamDef{ParamType::LVAR_INT}});
-        cmdman.add_command("ACCEPTS_ONLY_VAR_FLOAT", {ParamDef{ParamType::VAR_FLOAT}});
-        cmdman.add_command("ACCEPTS_ONLY_LVAR_FLOAT", {ParamDef{ParamType::LVAR_FLOAT}});
+        add_command(builder, "ACCEPTS_ONLY_VAR_INT",
+                    {ParamDef{ParamType::VAR_INT}});
+        add_command(builder, "ACCEPTS_ONLY_LVAR_INT",
+                    {ParamDef{ParamType::LVAR_INT}});
+        add_command(builder, "ACCEPTS_ONLY_VAR_FLOAT",
+                    {ParamDef{ParamType::VAR_FLOAT}});
+        add_command(builder, "ACCEPTS_ONLY_LVAR_FLOAT",
+                    {ParamDef{ParamType::LVAR_FLOAT}});
 
-        cmdman.add_alternator("SET", 
-                              {cmdman.find_command("SET_VAR_INT"),
-                               cmdman.find_command("SET_VAR_FLOAT"),
-                               cmdman.find_command("SET_LVAR_INT"),
-                               cmdman.find_command("SET_LVAR_FLOAT"),
-                               cmdman.find_command("SET_VAR_INT_TO_VAR_INT"),
-                               cmdman.find_command("SET_LVAR_INT_TO_LVAR_INT"),
-                               cmdman.find_command("SET_VAR_FLOAT_TO_VAR_FLOAT"),
-                               cmdman.find_command("SET_LVAR_FLOAT_TO_LVAR_FLOAT"),
-                               cmdman.find_command("SET_VAR_FLOAT_TO_LVAR_FLOAT"),
-                               cmdman.find_command("SET_LVAR_FLOAT_TO_VAR_FLOAT"),
-                               cmdman.find_command("SET_VAR_INT_TO_LVAR_INT"),
-                               cmdman.find_command("SET_LVAR_INT_TO_VAR_INT"),
-                               cmdman.find_command("SET_VAR_INT_TO_CONSTANT"),
-                               cmdman.find_command("SET_LVAR_INT_TO_CONSTANT"),
-                               cmdman.find_command("SET_VAR_TEXT_LABEL"),
-                               cmdman.find_command("SET_LVAR_TEXT_LABEL")});
+        add_alternator(builder, "SET",
+                       {builder.find_command("SET_VAR_INT"),
+                        builder.find_command("SET_VAR_FLOAT"),
+                        builder.find_command("SET_LVAR_INT"),
+                        builder.find_command("SET_LVAR_FLOAT"),
+                        builder.find_command("SET_VAR_INT_TO_VAR_INT"),
+                        builder.find_command("SET_LVAR_INT_TO_LVAR_INT"),
+                        builder.find_command("SET_VAR_FLOAT_TO_VAR_FLOAT"),
+                        builder.find_command("SET_LVAR_FLOAT_TO_LVAR_FLOAT"),
+                        builder.find_command("SET_VAR_FLOAT_TO_LVAR_FLOAT"),
+                        builder.find_command("SET_LVAR_FLOAT_TO_VAR_FLOAT"),
+                        builder.find_command("SET_VAR_INT_TO_LVAR_INT"),
+                        builder.find_command("SET_LVAR_INT_TO_VAR_INT"),
+                        builder.find_command("SET_VAR_INT_TO_CONSTANT"),
+                        builder.find_command("SET_LVAR_INT_TO_CONSTANT"),
+                        builder.find_command("SET_VAR_TEXT_LABEL"),
+                        builder.find_command("SET_LVAR_TEXT_LABEL")});
 
-        cmdman.add_alternator("ABS",
-                              {cmdman.find_command("ABS_VAR_INT"),
-                               cmdman.find_command("ABS_LVAR_INT"),
-                               cmdman.find_command("ABS_VAR_FLOAT"),
-                               cmdman.find_command("ABS_LVAR_FLOAT")});
+        add_alternator(builder, "ABS",
+                       {builder.find_command("ABS_VAR_INT"),
+                        builder.find_command("ABS_LVAR_INT"),
+                        builder.find_command("ABS_VAR_FLOAT"),
+                        builder.find_command("ABS_LVAR_FLOAT")});
 
-        cmdman.add_alternator("ACCEPTS_ONLY_GLOBAL_VAR",
-                              {cmdman.find_command("ACCEPTS_ONLY_VAR_INT"),
-                               cmdman.find_command("ACCEPTS_ONLY_VAR_FLOAT")});
+        add_alternator(builder, "ACCEPTS_ONLY_GLOBAL_VAR",
+                       {builder.find_command("ACCEPTS_ONLY_VAR_INT"),
+                        builder.find_command("ACCEPTS_ONLY_VAR_FLOAT")});
 
-        cmdman.add_alternator("ACCEPTS_ONLY_LOCAL_VAR",
-                              {cmdman.find_command("ACCEPTS_ONLY_LVAR_INT"),
-                               cmdman.find_command("ACCEPTS_ONLY_LVAR_FLOAT")});
+        add_alternator(builder, "ACCEPTS_ONLY_LOCAL_VAR",
+                       {builder.find_command("ACCEPTS_ONLY_LVAR_INT"),
+                        builder.find_command("ACCEPTS_ONLY_LVAR_FLOAT")});
+
+        return builder;
     }
+
+    static void
+    add_command(CommandManager::Builder& builder, std::string_view name,
+
+                std::initializer_list<CommandManager::ParamDef> params)
+    {
+        auto [command, _] = builder.insert_command(name);
+        builder.set_command_params(*command, params.begin(), params.end(),
+                                   params.size());
+    }
+
+    static void
+    add_alternator(CommandManager::Builder& builder, std::string_view name,
+                   std::initializer_list<const CommandManager::CommandDef*>
+                           alternatives)
+    {
+        auto [alternator, _] = builder.insert_alternator(name);
+        for(const auto& alternative : alternatives)
+            builder.insert_alternative(*alternator, *alternative);
+    }
+
+private:
+    ArenaMemoryResource arena;
 
 protected:
     CommandManager cmdman;

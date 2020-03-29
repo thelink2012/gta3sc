@@ -91,6 +91,8 @@ auto SourceManager::load_file(const std::filesystem::path& path,
                               std::FILE* stream, size_t hint_size)
         -> std::optional<SourceFile>
 {
+    // TODO should this detect the encoding of the file and convert to utf8?
+
     std::unique_ptr<char[]> source_data;
     size_t source_size = 0; // not including null terminator
 

@@ -1,4 +1,5 @@
 add_library(gta3sc 
+  command-manager.cpp
   diagnostics.cpp
   sourceman.cpp
   symbol-table.cpp

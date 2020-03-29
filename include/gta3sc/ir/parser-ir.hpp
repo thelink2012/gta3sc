@@ -114,8 +114,7 @@ public:
         size_t args_capacity = 0;
 
         explicit Command(SourceRange source, std::string_view name) :
-            source(source),
-            name(name)
+            source(source), name(name)
         {}
     };
 
@@ -138,8 +137,7 @@ public:
 
     private:
         explicit LabelDef(SourceRange source, std::string_view name) :
-            source(source),
-            name(name)
+            source(source), name(name)
         {}
     };
 
@@ -194,14 +192,12 @@ public:
 
         template<typename T>
         explicit Argument(T&& value, SourceRange source) :
-            source(source),
-            value(std::forward<T>(value))
+            source(source), value(std::forward<T>(value))
         {}
 
         template<typename Tag>
         explicit Argument(Tag tag, std::string_view value, SourceRange source) :
-            source(source),
-            value(std::pair{tag, value})
+            source(source), value(std::pair{tag, value})
         {}
 
         const std::variant<int32_t, float, Identifier, Filename, String> value;
@@ -209,21 +205,13 @@ public:
         friend class ParserIR;
     };
 
-
 protected:
     friend struct Command;
     friend struct LabelDef;
     friend struct Argument;
 
-    static auto create_chars(std::string_view from, ArenaMemoryResource*)
-            -> std::string_view;
-
-    static auto create_chars_upper(std::string_view from, ArenaMemoryResource*)
-            -> std::string_view;
-
 private:
     explicit ParserIR(arena_ptr<Command> command) : command(command) {}
-
 };
 
 // These resources are stored in a memory arena. Disposing storage
@@ -265,16 +253,18 @@ inline auto ParserIR::create_identifier(std::string_view name,
                                         ArenaMemoryResource* arena)
         -> arena_ptr<Argument>
 {
-    return new(*arena, alignof(Argument)) Argument(
-            Argument::IdentifierTag{}, create_chars_upper(name, arena), source);
+    return new(*arena, alignof(Argument))
+            Argument(Argument::IdentifierTag{},
+                     allocate_string_upper(name, *arena), source);
 }
 
 inline auto ParserIR::create_filename(std::string_view name, SourceRange source,
                                       ArenaMemoryResource* arena)
         -> arena_ptr<Argument>
 {
-    return new(*arena, alignof(Argument)) Argument(
-            Argument::FilenameTag{}, create_chars_upper(name, arena), source);
+    return new(*arena, alignof(Argument))
+            Argument(Argument::FilenameTag{},
+                     allocate_string_upper(name, *arena), source);
 }
 
 inline auto ParserIR::create_string(std::string_view string, SourceRange source,
@@ -285,34 +275,12 @@ inline auto ParserIR::create_string(std::string_view string, SourceRange source,
             Argument(Argument::StringTag{}, string, source);
 }
 
-inline auto ParserIR::create_chars(std::string_view from,
-                                   ArenaMemoryResource* arena)
-        -> std::string_view
-{
-    auto ptr = new(*arena, alignof(char)) char[from.size()];
-    std::memcpy(ptr, from.data(), from.size());
-    return {ptr, from.size()};
-}
-
-inline auto ParserIR::create_chars_upper(std::string_view from,
-                                         ArenaMemoryResource* arena)
-        -> std::string_view
-{
-    auto chars = create_chars(from, arena);
-    for(auto& c : chars)
-    {
-        if(c >= 'a' && c <= 'z')
-            const_cast<char&>(c) = c - 32;
-    }
-    return chars;
-}
-
 inline auto ParserIR::Command::create(std::string_view name, SourceRange source,
                                       ArenaMemoryResource* arena)
         -> arena_ptr<Command>
 {
     return new(*arena, alignof(Command))
-            Command{source, create_chars_upper(name, arena)};
+            Command{source, allocate_string_upper(name, *arena)};
 }
 
 inline auto ParserIR::LabelDef::create(std::string_view name,
@@ -321,7 +289,7 @@ inline auto ParserIR::LabelDef::create(std::string_view name,
         -> arena_ptr<LabelDef>
 {
     return new(*arena, alignof(LabelDef))
-            LabelDef{source, create_chars_upper(name, arena)};
+            LabelDef{source, allocate_string_upper(name, *arena)};
 }
 
 inline void ParserIR::Command::push_arg(arena_ptr<Argument> arg,

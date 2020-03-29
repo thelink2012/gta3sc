@@ -263,4 +263,9 @@ private:
 // TODO this manager does not perform any paging at the present moment.
 //      first we have to analyze the access patterns of the source data
 //      to define a proper paging scheme.
+
+// TODO given the usage of this for things other than source code, it
+// should be renamed to something else like FileManager (maybe even
+// split into a SourceManager class that takes FileManager as input)
+// remember to rename methods such as code_data to e.g. data
 }
