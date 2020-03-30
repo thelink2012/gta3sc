@@ -211,7 +211,7 @@ auto CommandManager::Builder::insert_command(std::string_view name)
     if(auto it = commands_map.find(name); it != commands_map.end())
         return {it->second, false};
 
-    auto a_name = allocate_string_upper(name, *arena);
+    auto a_name = util::allocate_string_upper(name, *arena);
     auto a_cmd = new(*arena, alignof(CommandDef)) CommandDef{a_name};
 
     auto [it, inserted] = commands_map.emplace(a_name, a_cmd);
@@ -225,7 +225,7 @@ auto CommandManager::Builder::insert_alternator(std::string_view name)
     if(auto it = alternators_map.find(name); it != alternators_map.end())
         return {it->second, false};
 
-    auto a_name = allocate_string_upper(name, *arena);
+    auto a_name = util::allocate_string_upper(name, *arena);
     auto a_alternator = new(*arena, alignof(AlternatorDef)) AlternatorDef{};
 
     auto [it, inserted] = alternators_map.emplace(a_name, a_alternator);
@@ -260,7 +260,7 @@ auto CommandManager::Builder::insert_enumeration(std::string_view name)
     if(auto it = enums_map.find(name); it != enums_map.end())
         return {it->second, false};
 
-    auto a_name = allocate_string_upper(name, *arena);
+    auto a_name = util::allocate_string_upper(name, *arena);
 
     const auto next_id = static_cast<std::underlying_type_t<EnumId>>(
             enums_map.size());
@@ -279,7 +279,7 @@ auto CommandManager::Builder::insert_or_assign_constant(EnumId enum_id,
     auto it = constants_map.find(name);
     if(it == constants_map.end())
     {
-        auto a_name = allocate_string_upper(name, *arena);
+        auto a_name = util::allocate_string_upper(name, *arena);
         auto cdef = new(*arena, alignof(ConstantDef))
                 ConstantDef{enum_id, value};
         auto [_, inserted] = constants_map.emplace(a_name, cdef);
@@ -311,7 +311,7 @@ auto CommandManager::Builder::insert_entity_type(std::string_view name)
     if(auto it = entities_map.find(name); it != entities_map.end())
         return {it->second, false};
 
-    auto a_name = allocate_string_upper(name, *arena);
+    auto a_name = util::allocate_string_upper(name, *arena);
 
     const auto next_id = static_cast<std::underlying_type_t<EntityId>>(
             entities_map.size());

@@ -1,6 +1,6 @@
 #pragma once
-#include <gta3sc/ir/symbol-table.hpp>
 #include <gta3sc/command-manager.hpp>
+#include <gta3sc/ir/symbol-table.hpp>
 
 // TODO this is in progress
 
@@ -66,8 +66,7 @@ public:
         size_t args_capacity = 0;
 
         Command(const CommandManager::CommandDef& def, SourceRange source) :
-            source(source),
-            def(def)
+            source(source), def(def)
         {}
     };
 
@@ -80,8 +79,10 @@ public:
             std::variant<std::monostate, int32_t, observer_ptr<SymVariable>>
                     index;
 
-            bool has_index() const 
-            { return !std::holds_alternative<std::monostate>(index); }
+            bool has_index() const
+            {
+                return !std::holds_alternative<std::monostate>(index);
+            }
 
             auto index_as_integer() const -> const int32_t*
             {
@@ -90,7 +91,8 @@ public:
 
             auto index_as_variable() const -> const SymVariable*
             {
-                if(auto var = std::get_if<observer_ptr<SymVariable>>(&this->index))
+                if(auto var = std::get_if<observer_ptr<SymVariable>>(
+                           &this->index))
                     return *var;
                 return nullptr;
             }
@@ -113,16 +115,14 @@ public:
         using String = std::pair<StringTag, std::string_view>;
         const SourceRange source;
 
-        const std::variant<
-                int32_t, float, TextLabel, String, VarRef,
-                // TODO observer_ptr<SymFilename>,
-                observer_ptr<SymLabel>,
-                // TODO observer_ptr<SymConstantInt>,
-                // TODO observer_ptr<SymConstantFloat>,
-                // TODO observer_ptr<__HeaderModel>,
-                // TODO observer_ptr<__StreamedScriptConstant>,
-                StringConstant
-                >
+        const std::variant<int32_t, float, TextLabel, String, VarRef,
+                           // TODO observer_ptr<SymFilename>,
+                           observer_ptr<SymLabel>,
+                           // TODO observer_ptr<SymConstantInt>,
+                           // TODO observer_ptr<SymConstantFloat>,
+                           // TODO observer_ptr<__HeaderModel>,
+                           // TODO observer_ptr<__StreamedScriptConstant>,
+                           StringConstant>
                 value;
 
         Argument() = delete;
@@ -137,10 +137,7 @@ public:
                 return nullptr;
         }
 
-        auto as_punned_float() const -> const float*
-        {
-            return as_float();
-        }
+        auto as_punned_float() const -> const float* { return as_float(); }
 
         auto as_integer() const -> const int32_t*
         {
@@ -183,20 +180,17 @@ public:
             return std::get_if<StringConstant>(&this->value);
         }
 
-
     protected:
         friend class SemaIR;
 
         template<typename T>
         explicit Argument(T&& value, SourceRange source) :
-            source(source),
-            value(std::forward<T>(value))
+            source(source), value(std::forward<T>(value))
         {}
 
         template<typename Tag>
         explicit Argument(Tag tag, std::string_view value, SourceRange source) :
-            source(source),
-            value(std::pair{tag, value})
+            source(source), value(std::pair{tag, value})
         {}
     };
 
@@ -227,12 +221,10 @@ public:
     }
 
     static auto create_label(SymLabel* label, SourceRange source,
-                                ArenaMemoryResource* arena)
-            -> arena_ptr<Argument>
+                             ArenaMemoryResource* arena) -> arena_ptr<Argument>
     {
         assert(label != nullptr);
-        return new(*arena, alignof(Argument))
-                Argument(label, source);
+        return new(*arena, alignof(Argument)) Argument(label, source);
     }
 
     static auto create_string(std::string_view value, SourceRange source,
@@ -269,7 +261,7 @@ public:
                 Argument(Argument::VarRef{var, index}, source);
     }
 
-    static auto create_string_constant(CommandManager::EnumId enum_id, 
+    static auto create_string_constant(CommandManager::EnumId enum_id,
                                        int32_t value, SourceRange source,
                                        ArenaMemoryResource* arena)
             -> arena_ptr<Argument>
@@ -278,7 +270,7 @@ public:
                 Argument(Argument::StringConstant{enum_id, value}, source);
     }
 
-    static auto create_string_constant(const CommandManager::ConstantDef& cdef, 
+    static auto create_string_constant(const CommandManager::ConstantDef& cdef,
                                        SourceRange source,
                                        ArenaMemoryResource* arena)
             -> arena_ptr<Argument>

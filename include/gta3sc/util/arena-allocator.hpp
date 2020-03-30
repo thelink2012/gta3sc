@@ -296,7 +296,7 @@ inline void operator delete(void*, gta3sc::ArenaMemoryResource&)
 inline void operator delete[](void*, gta3sc::ArenaMemoryResource&)
 {}
 
-namespace gta3sc
+namespace gta3sc::util
 {
 /// Allocates a string in the arena and returns a view to it.
 inline auto allocate_string(std::string_view from, ArenaMemoryResource& arena)

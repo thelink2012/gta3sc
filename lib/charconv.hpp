@@ -1,9 +1,9 @@
 #pragma once
+#include <algorithm>
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
 #include <system_error>
-#include <algorithm>
 
 namespace gta3sc::utils
 {

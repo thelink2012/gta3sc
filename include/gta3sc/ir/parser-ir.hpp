@@ -3,8 +3,8 @@
 #include <cstdint>
 #include <cstring>
 #include <gta3sc/adt/span.hpp>
-#include <gta3sc/arena-allocator.hpp>
 #include <gta3sc/sourceman.hpp>
+#include <gta3sc/util/arena-allocator.hpp>
 #include <string_view>
 #include <variant>
 
@@ -255,7 +255,7 @@ inline auto ParserIR::create_identifier(std::string_view name,
 {
     return new(*arena, alignof(Argument))
             Argument(Argument::IdentifierTag{},
-                     allocate_string_upper(name, *arena), source);
+                     util::allocate_string_upper(name, *arena), source);
 }
 
 inline auto ParserIR::create_filename(std::string_view name, SourceRange source,
@@ -264,7 +264,7 @@ inline auto ParserIR::create_filename(std::string_view name, SourceRange source,
 {
     return new(*arena, alignof(Argument))
             Argument(Argument::FilenameTag{},
-                     allocate_string_upper(name, *arena), source);
+                     util::allocate_string_upper(name, *arena), source);
 }
 
 inline auto ParserIR::create_string(std::string_view string, SourceRange source,
@@ -280,7 +280,7 @@ inline auto ParserIR::Command::create(std::string_view name, SourceRange source,
         -> arena_ptr<Command>
 {
     return new(*arena, alignof(Command))
-            Command{source, allocate_string_upper(name, *arena)};
+            Command{source, util::allocate_string_upper(name, *arena)};
 }
 
 inline auto ParserIR::LabelDef::create(std::string_view name,
@@ -289,7 +289,7 @@ inline auto ParserIR::LabelDef::create(std::string_view name,
         -> arena_ptr<LabelDef>
 {
     return new(*arena, alignof(LabelDef))
-            LabelDef{source, allocate_string_upper(name, *arena)};
+            LabelDef{source, util::allocate_string_upper(name, *arena)};
 }
 
 inline void ParserIR::Command::push_arg(arena_ptr<Argument> arg,

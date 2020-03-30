@@ -1,8 +1,8 @@
 #pragma once
-#include <gta3sc/arena-allocator.hpp>
 #include <gta3sc/ir/linked-ir.hpp>
 #include <gta3sc/ir/parser-ir.hpp>
 #include <gta3sc/scanner.hpp>
+#include <gta3sc/util/arena-allocator.hpp>
 
 namespace gta3sc
 {

@@ -1,8 +1,8 @@
 #pragma once
 #include <cstdint>
-#include <gta3sc/arena-allocator.hpp>
 #include <gta3sc/command-manager.hpp>
 #include <gta3sc/sourceman.hpp>
+#include <gta3sc/util/arena-allocator.hpp>
 #include <optional>
 #include <unordered_map>
 #include <vector>

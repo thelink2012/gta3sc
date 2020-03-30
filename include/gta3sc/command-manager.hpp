@@ -1,7 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <gta3sc/adt/span.hpp>
-#include <gta3sc/arena-allocator.hpp>
+#include <gta3sc/util/arena-allocator.hpp>
 #include <gta3sc/util/intrusive-list.hpp>
 #include <optional>
 #include <string_view>
