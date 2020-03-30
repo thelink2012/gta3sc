@@ -430,7 +430,7 @@ auto Parser::parse_argument() -> std::optional<arena_ptr<ParserIR::Argument>>
     else if(token->category == Category::Word && is_integer(lexeme))
     {
         using namespace gta3sc::utils;
-        int32_t value;
+        int32_t value{};
 
         if(auto [_, ec] = from_chars(&*lexeme.begin(), &*lexeme.end(), value);
            ec != std::errc())
@@ -445,7 +445,7 @@ auto Parser::parse_argument() -> std::optional<arena_ptr<ParserIR::Argument>>
     else if(token->category == Category::Word && is_float(lexeme))
     {
         using namespace gta3sc::utils;
-        float value;
+        float value{};
 
         if(auto [_, ec] = from_chars(&*lexeme.begin(), &*lexeme.end(), value,
                                      chars_format::fixed);

@@ -5,6 +5,7 @@
 /build-gcc/
 /build-gcov/
 /build-msvc/
+/build-scan-build/
 /gh-pages/
 /debug/
 /test/**/Output
@@ -15,6 +16,8 @@ utils/**.sc
 utils/**.scm
 utils/test
 /*.html
+/compile_commands.json
+/.clangd
 
 #################
 ## C++

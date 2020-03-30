@@ -1258,8 +1258,6 @@ TEST_CASE_FIXTURE(SemaFixture, "sema validate subscript")
                 = std::prev(ir->end(), 2)->command->args[0]->as_var_ref();
         auto var_ref_4
                 = std::prev(ir->end(), 1)->command->args[0]->as_var_ref();
-        auto var_ref_5
-                = std::prev(ir->end(), 1)->command->args[0]->as_var_ref();
 
         REQUIRE(var_ref_1 != nullptr);
         REQUIRE(var_ref_1->def == symrepo.lookup_var("X"));

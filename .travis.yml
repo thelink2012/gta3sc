@@ -2,7 +2,8 @@ language: cpp
 dist: bionic
 matrix:
   include:
-    - os: linux
+    - name: x86_64-linux-gcc-coverage
+      os: linux
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
@@ -10,17 +11,32 @@ matrix:
       env:
         - MATRIX_EVAL="CC=gcc-9 && CXX=g++-9"
         - GCOV_BINARY=/usr/bin/gcov-9
+        - CMAKE="cmake"
         - CMAKE_BUILD_TYPE=Debug
-        - COVERAGE=1
         - CMAKE_PREFIX_PATH="$HOME/.local/usr/local" # gcov location
-    - os: linux
+        - COVERAGE=1
+    - name: x86_64-linux-clang-release
+      os: linux
       addons:
         apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-bionic-9']
+          sources: ['ubuntu-toolchain-r-test']
           packages: ['libstdc++-9-dev', 'clang-9']
       env:
         - MATRIX_EVAL="CC=clang-9 && CXX=clang++-9"
+        - CMAKE="cmake"
         - CMAKE_BUILD_TYPE=RelWithDebInfo
+        - COVERAGE=0
+    - name: x86_64-linux-clang-analysis
+      os: linux
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['libstdc++-9-dev', 'clang-9', 'clang-tools-9']
+      env:
+        - |
+          MATRIX_EVAL='CC=clang-9 && CXX=clang++-9 \
+            && CMAKE="scan-build-9 --status-bugs -v --use-cc=$CC --use-c++=$CXX cmake"'
+        - CMAKE_BUILD_TYPE=Debug
         - COVERAGE=0
 before_install:
   - eval "${MATRIX_EVAL}"
@@ -36,7 +52,12 @@ install:
 script:
   - mkdir build
   - cd build
-  - cmake .. -DBUILD_TESTING=1 -DGTA3SC_COVERAGE=$COVERAGE -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE
-  - cmake --build . --target coverage
+  - |
+    $CMAKE .. \
+        -DBUILD_TESTING=1 \
+        -DGTA3SC_COVERAGE=$COVERAGE \
+        -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE \
+        -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+  - $CMAKE --build . --target coverage
 after_success:
   - test $COVERAGE = 1 && bash <(curl -s https://codecov.io/bash)
