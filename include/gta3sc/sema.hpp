@@ -196,6 +196,7 @@ private:
     // The following variables are part of the "state machine" of
     // the semantic checker.
     uint32_t report_count = 0;  ///< The number of errors encountered so far.
+    ScopeId first_scope = -1;   ///< The id of the first allocated scope.
     ScopeId current_scope = -1; ///< The id of the current scope.
     bool ran_analysis = false;  ///< Whether we already ran analysis.
     bool analyzing_var_decl{};  ///< Whether we are checking a var decl.

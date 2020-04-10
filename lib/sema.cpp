@@ -1,5 +1,6 @@
 #include "charconv.hpp"
 #include <gta3sc/sema.hpp>
+using namespace std::literals::string_view_literals;
 
 // gta3script-specs 7fe565c767ee85fb8c99b594b3b3d280aa1b1c80
 
@@ -33,40 +34,47 @@ bool Sema::discover_declarations_pass()
 
         if(line.command)
         {
-            if(line.command->name == "{")
+            if(line.command->name == "{"sv)
             {
                 assert(current_scope == -1);
                 this->current_scope = symrepo->allocate_scope();
+
+                // We need the index of the first local scope in order to
+                // enumerate scopes during `check_semantics_pass`.
+                if(this->first_scope == -1)
+                {
+                    this->first_scope = current_scope;
+                }
             }
-            else if(line.command->name == "}")
+            else if(line.command->name == "}"sv)
             {
                 assert(current_scope != -1);
                 this->current_scope = -1;
             }
-            else if(line.command->name == "VAR_INT")
+            else if(line.command->name == "VAR_INT"sv)
             {
                 declare_variable(*line.command, 0, SymVariable::Type::INT);
             }
-            else if(line.command->name == "LVAR_INT")
+            else if(line.command->name == "LVAR_INT"sv)
             {
                 declare_variable(*line.command, current_scope,
                                  SymVariable::Type::INT);
             }
-            else if(line.command->name == "VAR_FLOAT")
+            else if(line.command->name == "VAR_FLOAT"sv)
             {
                 declare_variable(*line.command, 0, SymVariable::Type::FLOAT);
             }
-            else if(line.command->name == "LVAR_FLOAT")
+            else if(line.command->name == "LVAR_FLOAT"sv)
             {
                 declare_variable(*line.command, current_scope,
                                  SymVariable::Type::FLOAT);
             }
-            else if(line.command->name == "VAR_TEXT_LABEL")
+            else if(line.command->name == "VAR_TEXT_LABEL"sv)
             {
                 declare_variable(*line.command, 0,
                                  SymVariable::Type::TEXT_LABEL);
             }
-            else if(line.command->name == "LVAR_TEXT_LABEL")
+            else if(line.command->name == "LVAR_TEXT_LABEL"sv)
             {
                 declare_variable(*line.command, current_scope,
                                  SymVariable::Type::TEXT_LABEL);
@@ -77,13 +85,16 @@ bool Sema::discover_declarations_pass()
     // Ensure variables do not collide with other names in the same namespace.
     for(ScopeId i = 0; i < symrepo->var_tables.size(); ++i)
     {
-        for(const auto& [name, var] : symrepo->var_tables[i])
+        if(i == 0 || i >= first_scope)
         {
-            if(i != 0 && symrepo->lookup_var(name, 0))
-                report(var->source, Diag::duplicate_var_lvar);
+            for(const auto& [name, var] : symrepo->var_tables[i])
+            {
+                if(i != 0 && symrepo->lookup_var(name, 0))
+                    report(var->source, Diag::duplicate_var_lvar);
 
-            if(cmdman->find_constant_any_means(name))
-                report(var->source, Diag::duplicate_var_string_constant);
+                if(cmdman->find_constant_any_means(name))
+                    report(var->source, Diag::duplicate_var_string_constant);
+            }
         }
     }
 
@@ -97,11 +108,11 @@ auto Sema::check_semantics_pass() -> std::optional<LinkedIR<SemaIR>>
     LinkedIR<SemaIR> linked(*arena);
 
     this->current_scope = -1;
-    ScopeId scope_accum = 0;
+    ScopeId scope_accum = first_scope;
 
-    this->alternator_set = cmdman->find_alternator("SET");
-    this->command_script_name = cmdman->find_command("SCRIPT_NAME");
-    this->command_start_new_script = cmdman->find_command("START_NEW_SCRIPT");
+    this->alternator_set = cmdman->find_alternator("SET"sv);
+    this->command_script_name = cmdman->find_command("SCRIPT_NAME"sv);
+    this->command_start_new_script = cmdman->find_command("START_NEW_SCRIPT"sv);
 
     for(auto& line : parser_ir)
     {
@@ -113,26 +124,27 @@ auto Sema::check_semantics_pass() -> std::optional<LinkedIR<SemaIR>>
 
         if(line.command)
         {
-            if(line.command->name == "{")
+            if(line.command->name == "{"sv)
             {
                 assert(this->current_scope == -1);
-                this->current_scope = ++scope_accum;
+                assert(scope_accum > 0);
+                this->current_scope = scope_accum++;
             }
-            else if(line.command->name == "}")
+            else if(line.command->name == "}"sv)
             {
                 assert(this->current_scope != -1);
                 this->current_scope = -1;
             }
-            else if(line.command->name == "VAR_INT"
-                    || line.command->name == "LVAR_INT"
-                    || line.command->name == "VAR_FLOAT"
-                    || line.command->name == "LVAR_FLOAT"
-                    || line.command->name == "VAR_TEXT_LABEL"
-                    || line.command->name == "LVAR_TEXT_LABEL")
+            else if(line.command->name == "VAR_INT"sv
+                    || line.command->name == "LVAR_INT"sv
+                    || line.command->name == "VAR_FLOAT"sv
+                    || line.command->name == "LVAR_FLOAT"sv
+                    || line.command->name == "VAR_TEXT_LABEL"sv
+                    || line.command->name == "LVAR_TEXT_LABEL"sv)
             {
                 this->analyzing_var_decl = true;
             }
-            else if(line.command->name == "REPEAT")
+            else if(line.command->name == "REPEAT"sv)
             {
                 this->analyzing_repeat_command = true;
             }
@@ -157,6 +169,8 @@ auto Sema::validate_label_def(const ParserIR::LabelDef& label_def)
     auto sym_label = symrepo->lookup_label(label_def.name);
     if(!sym_label)
     {
+        // This is impossible! All the labels in the input IR were previously
+        // defined in `discover_declarations_pass`.
         report(label_def.source, Diag::undefined_label);
         return nullptr;
     }
@@ -251,6 +265,9 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
         {
             if(analyzing_alternative_command && arg.as_identifier())
             {
+                // This command has been matched during alternation in a
+                // command selector. Thus, if this is an identifier, it
+                // is a valid global string constant.
                 auto cdef = cmdman->find_constant(cmdman->global_enum,
                                                   *arg.as_identifier());
                 assert(cdef != nullptr);
@@ -442,7 +459,7 @@ auto Sema::validate_text_label(const CommandManager::ParamDef& param,
 {
     assert(param.type == ParamType::TEXT_LABEL);
 
-    std::string_view value = "DUMMY"; // always recovers to this value
+    std::string_view value{"DUMMY"sv}; // always recovers to this value
 
     if(const auto ident = arg.as_identifier())
         value = *ident;
@@ -536,7 +553,7 @@ auto Sema::validate_var_ref(const CommandManager::ParamDef& param,
     if(is_gvar_param(param.type) && sym_var->scope != 0)
     {
         if(!analyzing_repeat_command) // REPEAT hardcodes the acceptance
-        {                             // the acceptance of LVAR_INTs
+        {                             // of LVAR_INTs parameters
             failed = true;
             report(var_source, Diag::expected_gvar_got_lvar);
         }
