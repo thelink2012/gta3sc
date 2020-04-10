@@ -30,6 +30,10 @@ public:
     using difference_type = typename list_type::difference_type;
 
 public:
+    explicit LinkedIR(std::initializer_list<arena_pointer> init,
+                      ArenaMemoryResource& arena) :
+        list(init, &arena)
+    {}
     explicit LinkedIR(ArenaMemoryResource& arena) : list(&arena) {}
 
     LinkedIR(const LinkedIR&) = delete;
@@ -60,6 +64,11 @@ public:
         list.splice(pos.it, std::move(other.list));
     }
 
+    void insert(iterator pos, arena_pointer other)
+    {
+        list.insert(pos.it, other);
+    }
+
     void splice_front(LinkedIR&& other) { splice(begin(), std::move(other)); }
 
     void splice_back(LinkedIR&& other) { splice(end(), std::move(other)); }
@@ -76,6 +85,18 @@ public:
         erase(pos);
         return ptr;
     }
+
+    /*
+    arena_pointer replace(iterator pos, LinkedIR&& other)
+    {
+        splice(erase(pos), std::move(other));
+    }
+
+    arena_pointer replace(iterator pos, arena_pointer other)
+    {
+        insert(erase(pos), other);
+    }
+    */
 
 public:
     struct iterator

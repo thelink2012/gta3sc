@@ -146,6 +146,9 @@ auto SourceManager::load_file(const std::filesystem::path& path,
     info.file_length = size;
     info.data = std::move(data);
 
+    assert(no_source_loc < info.start_loc
+           || no_source_loc > info.start_loc + info.file_length);
+
     auto [it, _] = this->source_infos.emplace(next_source_loc, std::move(info));
     this->next_source_loc = next_source_loc + size + 1;
 

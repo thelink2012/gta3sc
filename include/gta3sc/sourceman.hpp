@@ -110,6 +110,17 @@ static_assert(std::is_trivially_copyable_v<SourceRange>);
 class SourceManager
 {
 public:
+    /// Represents no source location.
+    ///
+    /// Guaranteed to be the default construction of `SourceLocation`.
+    static constexpr SourceLocation no_source_loc{};
+
+    /// Represents no source range.
+    ///
+    /// Guaranteed to be the default construction of `SourceRange`.
+    static constexpr SourceRange no_source_range{};
+
+public:
     SourceManager() {}
 
     SourceManager(SourceManager&&) = default;
@@ -196,7 +207,7 @@ private:
     std::map<SourceLocation, SourceInfo> source_infos;
 
     /// The starting source location of the next `load_file` method call.
-    SourceLocation next_source_loc{};
+    SourceLocation next_source_loc{1};
 };
 
 /// Handle to a source file.

@@ -195,10 +195,10 @@ private:
     // The methods returns a ParserIR instance when only a single command is
     // returned. Otherwise, a LinkedIR is used.
 
-    auto parse_command(bool is_if_line = false)
+    auto parse_command(bool is_if_line = false, bool not_flag = false)
             -> std::optional<arena_ptr<ParserIR>>;
 
-    auto parse_argument() -> std::optional<arena_ptr<ParserIR::Argument>>;
+    auto parse_argument() -> std::optional<arena_ptr<const ParserIR::Argument>>;
 
     auto parse_embedded_statement(bool allow_special_name)
             -> std::optional<LinkedIR<ParserIR>>;
@@ -236,10 +236,12 @@ private:
 
     auto parse_assignment_expression() -> std::optional<LinkedIR<ParserIR>>;
 
-    auto parse_conditional_expression(bool is_if_line = false)
+    auto parse_conditional_expression(bool is_if_line = false,
+                                      bool not_flag = false)
             -> std::optional<LinkedIR<ParserIR>>;
 
-    auto parse_expression_detail(bool is_conditional, bool is_if_line)
+    auto parse_expression_detail(bool is_conditional, bool is_if_line,
+                                 bool not_flag)
             -> std::optional<LinkedIR<ParserIR>>;
 
     bool is_digit(char) const;
