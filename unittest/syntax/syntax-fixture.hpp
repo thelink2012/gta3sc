@@ -7,15 +7,14 @@
 #include <ostream>
 #include <queue>
 
-namespace gta3sc::test
+namespace gta3sc::test::syntax
 {
-class CompilerFixture
+class SyntaxFixture
 {
 public:
-    CompilerFixture() : diagman([this](const auto& diag) { diags.push(diag); })
-    {}
+    SyntaxFixture() : diagman([this](const auto& diag) { diags.push(diag); }) {}
 
-    virtual ~CompilerFixture() { CHECK(diags.empty()); }
+    virtual ~SyntaxFixture() { CHECK(diags.empty()); }
 
 protected:
     auto make_source(std::string_view src) -> gta3sc::SourceFile
@@ -43,7 +42,6 @@ protected:
 
 protected:
     gta3sc::SourceManager sourceman;
-    // gta3sc::SourceFile source_file;
     gta3sc::DiagnosticHandler diagman;
     std::queue<gta3sc::Diagnostic> diags;
 };
@@ -57,18 +55,28 @@ inline std::ostream& operator<<(std::ostream& os, const Diag& message)
     return os;
 }
 
-inline bool operator==(const Diagnostic::Arg& lhs, Category rhs)
+inline bool operator==(const Diagnostic::Arg& lhs, gta3sc::syntax::Category rhs)
 {
-    return lhs == Diagnostic::Arg(rhs);
+    return lhs == gta3sc::Diagnostic::Arg(rhs);
 }
 
 inline bool operator==(const Diagnostic::Arg& lhs, std::string rhs)
 {
-    return lhs == Diagnostic::Arg(std::move(rhs));
+    return lhs == gta3sc::Diagnostic::Arg(std::move(rhs));
 }
 
 inline bool operator==(const Diagnostic::Arg& lhs, std::vector<std::string> rhs)
 {
-    return lhs == Diagnostic::Arg(std::move(rhs));
+    return lhs == gta3sc::Diagnostic::Arg(std::move(rhs));
+}
+}
+
+namespace gta3sc::test::syntax
+{
+// FIXME this is a hack because the operator== operators above aren't found.
+template<typename T>
+auto d(T&& value)
+{
+    return Diagnostic::Arg(std::move(value));
 }
 }

@@ -1,11 +1,11 @@
-#include "compiler-fixture.hpp"
+#include "syntax-fixture.hpp"
 #include <doctest.h>
-#include <gta3sc/preprocessor.hpp>
-using namespace gta3sc::test;
+#include <gta3sc/syntax/preprocessor.hpp>
+using namespace gta3sc::test::syntax;
 
-namespace gta3sc::test
+namespace gta3sc::test::syntax
 {
-class PreprocessorFixture : public CompilerFixture
+class PreprocessorFixture : public SyntaxFixture
 {
 public:
     PreprocessorFixture() : pp(make_source(""), diagman) {}
@@ -13,7 +13,7 @@ public:
 protected:
     void build_pp(std::string_view src)
     {
-        this->pp = gta3sc::Preprocessor(make_source(src), diagman);
+        this->pp = gta3sc::syntax::Preprocessor(make_source(src), diagman);
     }
 
     auto drain() -> std::string
@@ -27,7 +27,7 @@ protected:
     }
 
 protected:
-    gta3sc::Preprocessor pp;
+    gta3sc::syntax::Preprocessor pp;
 };
 }
 

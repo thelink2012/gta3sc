@@ -1,18 +1,19 @@
-#include "compiler-fixture.hpp"
+#include "syntax-fixture.hpp"
 #include <doctest.h>
-#include <gta3sc/parser.hpp>
+#include <gta3sc/syntax/parser.hpp>
 #include <string>
-using namespace gta3sc::test;
+using namespace gta3sc::test::syntax;
 using namespace std::literals::string_view_literals;
 using namespace std::literals::string_literals;
+using gta3sc::test::syntax::d;
 
 // TODO test parse_main_extension_file
 // TODO test parse_subscript_file
 // TODO test parse_mission_script_file
 
-namespace gta3sc::test
+namespace gta3sc::test::syntax
 {
-class ParserFixture : public CompilerFixture
+class ParserFixture : public SyntaxFixture
 {
 public:
     ParserFixture() : parser(make_parser(make_source(""), diagman, arena)) {}
@@ -27,17 +28,17 @@ private:
     static auto make_parser(gta3sc::SourceFile source,
                             gta3sc::DiagnosticHandler& diagman,
                             gta3sc::ArenaMemoryResource& arena)
-            -> gta3sc::Parser
+            -> gta3sc::syntax::Parser
     {
-        auto pp = gta3sc::Preprocessor(std::move(source), diagman);
-        auto scanner = gta3sc::Scanner(std::move(pp));
-        return gta3sc::Parser(std::move(scanner), arena);
+        auto pp = gta3sc::syntax::Preprocessor(std::move(source), diagman);
+        auto scanner = gta3sc::syntax::Scanner(std::move(pp));
+        return gta3sc::syntax::Parser(std::move(scanner), arena);
     }
 
     gta3sc::ArenaMemoryResource arena;
 
 protected:
-    gta3sc::Parser parser;
+    gta3sc::syntax::Parser parser;
 };
 }
 
@@ -99,7 +100,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a label definition")
     parser.skip_current_line(); // lab"el":
     REQUIRE(ir == std::nullopt);
     CHECK(peek_diag().message == gta3sc::Diag::expected_token);
-    CHECK(consume_diag().args.at(0) == gta3sc::Category::Whitespace);
+    CHECK(consume_diag().args.at(0) == d(gta3sc::syntax::Category::Whitespace));
 
     ir = parser.parse_statement();
     parser.skip_current_line(); // "label":
@@ -221,7 +222,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a } outside a scope block")
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
     CHECK(peek_diag().message == gta3sc::Diag::unexpected_special_name);
-    CHECK(consume_diag().args.at(0) == "}");
+    CHECK(consume_diag().args.at(0) == d("}"));
 }
 
 TEST_CASE_FIXTURE(ParserFixture, "parsing a unclosed scope block")
@@ -232,7 +233,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a unclosed scope block")
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
     CHECK(peek_diag().message == gta3sc::Diag::expected_word);
-    CHECK(consume_diag().args.at(0) == "}");
+    CHECK(consume_diag().args.at(0) == d("}"));
 }
 
 TEST_CASE_FIXTURE(ParserFixture, "parsing a command")
@@ -341,7 +342,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing integer argument")
     parser.skip_current_line(); // -432-10
     REQUIRE(ir == std::nullopt);
     CHECK(peek_diag().message == gta3sc::Diag::expected_token);
-    CHECK(consume_diag().args.at(0) == gta3sc::Category::Whitespace);
+    CHECK(consume_diag().args.at(0) == d(gta3sc::syntax::Category::Whitespace));
 
     ir = parser.parse_statement();
     parser.skip_current_line(); // 123a
@@ -362,7 +363,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing integer argument")
     parser.skip_current_line(); // 432+10
     REQUIRE(ir == std::nullopt);
     CHECK(peek_diag().message == gta3sc::Diag::expected_token);
-    CHECK(consume_diag().args.at(0) == gta3sc::Category::Whitespace);
+    CHECK(consume_diag().args.at(0) == d(gta3sc::syntax::Category::Whitespace));
 
     ir = parser.parse_statement();
     parser.skip_current_line(); // -
@@ -437,7 +438,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing float argument")
     parser.skip_current_line(); // .1-.1
     REQUIRE(ir == std::nullopt);
     CHECK(peek_diag().message == gta3sc::Diag::expected_token);
-    CHECK(consume_diag().args.at(0) == gta3sc::Category::Whitespace);
+    CHECK(consume_diag().args.at(0) == d(gta3sc::syntax::Category::Whitespace));
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt); // 9
@@ -515,7 +516,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing string literal argument")
     parser.skip_current_line(); // "string"abc
     REQUIRE(ir == std::nullopt);
     CHECK(peek_diag().message == gta3sc::Diag::expected_token);
-    CHECK(consume_diag().args.at(0) == gta3sc::Category::Whitespace);
+    CHECK(consume_diag().args.at(0) == d(gta3sc::syntax::Category::Whitespace));
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt); // 9
@@ -819,13 +820,17 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing permutations of ternary expressions")
             CHECK(peek_diag().message
                   == gta3sc::Diag::invalid_expression_unassociative);
             if(command_name == "SUB_THING_FROM_THING")
-                CHECK(consume_diag().args.at(0) == gta3sc::Category::Minus);
+                CHECK(consume_diag().args.at(0)
+                      == d(gta3sc::syntax::Category::Minus));
             else if(command_name == "DIV_THING_BY_THING")
-                CHECK(consume_diag().args.at(0) == gta3sc::Category::Slash);
+                CHECK(consume_diag().args.at(0)
+                      == d(gta3sc::syntax::Category::Slash));
             else if(command_name == "ADD_THING_TO_THING_TIMED")
-                CHECK(consume_diag().args.at(0) == gta3sc::Category::PlusAt);
+                CHECK(consume_diag().args.at(0)
+                      == d(gta3sc::syntax::Category::PlusAt));
             else if(command_name == "SUB_THING_FROM_THING_TIMED")
-                CHECK(consume_diag().args.at(0) == gta3sc::Category::MinusAt);
+                CHECK(consume_diag().args.at(0)
+                      == d(gta3sc::syntax::Category::MinusAt));
             else
                 CHECK(false);
         }
@@ -1217,7 +1222,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a IF without ENDIF")
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
     CHECK(peek_diag().message == gta3sc::Diag::expected_words);
-    CHECK(consume_diag().args.at(0) == std::vector{"ELSE"s, "ENDIF"s});
+    CHECK(consume_diag().args.at(0) == d(std::vector{"ELSE"s, "ENDIF"s}));
 }
 
 TEST_CASE_FIXTURE(ParserFixture, "parsing a IF...ELSE without ENDIF")
@@ -1232,7 +1237,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a IF...ELSE without ENDIF")
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
     CHECK(peek_diag().message == gta3sc::Diag::expected_word);
-    CHECK(consume_diag().args.at(0) == "ENDIF");
+    CHECK(consume_diag().args.at(0) == d("ENDIF"));
 }
 
 TEST_CASE_FIXTURE(ParserFixture, "parsing a ELSE/ENDIF with no IF")
@@ -1244,13 +1249,13 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a ELSE/ENDIF with no IF")
     parser.skip_current_line();
     REQUIRE(ir == std::nullopt);
     CHECK(peek_diag().message == gta3sc::Diag::unexpected_special_name);
-    CHECK(consume_diag().args.at(0) == "ENDIF");
+    CHECK(consume_diag().args.at(0) == d("ENDIF"));
 
     ir = parser.parse_statement();
     parser.skip_current_line();
     REQUIRE(ir == std::nullopt);
     CHECK(peek_diag().message == gta3sc::Diag::unexpected_special_name);
-    CHECK(consume_diag().args.at(0) == "ELSE");
+    CHECK(consume_diag().args.at(0) == d("ELSE"));
 }
 
 TEST_CASE_FIXTURE(ParserFixture, "parsing a conditionless IF")
@@ -1337,18 +1342,18 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing AND/OR/NOT outside of condition")
     parser.skip_current_line();
     REQUIRE(ir == std::nullopt);
     CHECK(peek_diag().message == gta3sc::Diag::unexpected_special_name);
-    CHECK(consume_diag().args.at(0) == "AND");
+    CHECK(consume_diag().args.at(0) == d("AND"));
 
     ir = parser.parse_statement();
     parser.skip_current_line();
     REQUIRE(ir == std::nullopt);
     CHECK(peek_diag().message == gta3sc::Diag::unexpected_special_name);
-    CHECK(consume_diag().args.at(0) == "OR");
+    CHECK(consume_diag().args.at(0) == d("OR"));
 
     ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
     CHECK(peek_diag().message == gta3sc::Diag::unexpected_special_name);
-    CHECK(consume_diag().args.at(0) == "NOT");
+    CHECK(consume_diag().args.at(0) == d("NOT"));
 }
 TEST_CASE_FIXTURE(ParserFixture, "parsing mixed AND/OR")
 {
@@ -1479,7 +1484,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a WHILE without ENDWHILE")
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
     CHECK(peek_diag().message == gta3sc::Diag::expected_word);
-    CHECK(consume_diag().args.at(0) == "ENDWHILE");
+    CHECK(consume_diag().args.at(0) == d("ENDWHILE"));
 }
 
 TEST_CASE_FIXTURE(ParserFixture,
@@ -1533,7 +1538,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a REPEAT without ENDREPEAT")
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
     CHECK(peek_diag().message == gta3sc::Diag::expected_word);
-    CHECK(consume_diag().args.at(0) == "ENDREPEAT");
+    CHECK(consume_diag().args.at(0) == d("ENDREPEAT"));
 }
 
 TEST_CASE_FIXTURE(ParserFixture, "parsing valid var declaration commands")
@@ -1624,7 +1629,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing weird closing blocks")
     auto ir = parser.parse_statement();
     REQUIRE(ir == std::nullopt);
     CHECK(peek_diag().message == gta3sc::Diag::unexpected_special_name);
-    CHECK(consume_diag().args.at(0) == "ENDWHILE");
+    CHECK(consume_diag().args.at(0) == d("ENDWHILE"));
 }
 
 TEST_CASE_FIXTURE(ParserFixture, "parsing labels in AND/OR")
@@ -1965,7 +1970,8 @@ TEST_CASE_FIXTURE(ParserFixture, "number of arguments of LAUNCH_MISSION")
     }
 }
 
-TEST_CASE_FIXTURE(ParserFixture, "number of arguments of LOAD_AND_LAUNCH_MISSION")
+TEST_CASE_FIXTURE(ParserFixture,
+                  "number of arguments of LOAD_AND_LAUNCH_MISSION")
 {
     SUBCASE("correct number of arguments")
     {

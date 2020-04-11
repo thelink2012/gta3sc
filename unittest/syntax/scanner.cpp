@@ -1,22 +1,24 @@
-#include "compiler-fixture.hpp"
+#include "syntax-fixture.hpp"
 #include <doctest.h>
-#include <gta3sc/scanner.hpp>
-using gta3sc::Category;
-using namespace gta3sc::test;
+#include <gta3sc/syntax/scanner.hpp>
+using namespace gta3sc::test::syntax;
+using gta3sc::syntax::Category;
+using gta3sc::syntax::Token;
 
-namespace gta3sc::test
+namespace gta3sc::test::syntax
 {
-class ScannerFixture : public CompilerFixture
+class ScannerFixture : public SyntaxFixture
 {
 public:
-    ScannerFixture() : scanner(gta3sc::Preprocessor(make_source(""), diagman))
+    ScannerFixture() :
+        scanner(gta3sc::syntax::Preprocessor(make_source(""), diagman))
     {}
 
 protected:
     void build_scanner(std::string_view src)
     {
-        auto pp = gta3sc::Preprocessor(make_source(src), diagman);
-        this->scanner = gta3sc::Scanner(std::move(pp));
+        auto pp = gta3sc::syntax::Preprocessor(make_source(src), diagman);
+        this->scanner = gta3sc::syntax::Scanner(std::move(pp));
     }
 
     auto spelling(const Token& token) const -> std::string_view
@@ -25,11 +27,11 @@ protected:
     }
 
 protected:
-    gta3sc::Scanner scanner;
+    gta3sc::syntax::Scanner scanner;
 };
 }
 
-namespace gta3sc
+namespace gta3sc::syntax
 {
 std::ostream& operator<<(std::ostream& os, const Category& category)
 {
@@ -76,7 +78,7 @@ TEST_CASE_FIXTURE(ScannerFixture, "scanner with word")
                   "word: word: word              \n"
                   "%$&~ AbC {}                   \n");
 
-    gta3sc::Token token;
+    gta3sc::syntax::Token token;
 
     token = scanner.next().value();
     REQUIRE(token.category == Category::Word);
@@ -149,7 +151,7 @@ TEST_CASE_FIXTURE(ScannerFixture, "scanner with string literal")
                   " \"string\"abc                       \n"
                   " not_string                          \n");
 
-    gta3sc::Token token;
+    gta3sc::syntax::Token token;
 
     token = scanner.next().value();
     REQUIRE(token.category == Category::String);
@@ -189,7 +191,7 @@ TEST_CASE_FIXTURE(ScannerFixture, "scanner with filename")
                   " file-nam+@e.sc                \n"
                   " file-nam+@e.sc                \n");
 
-    gta3sc::Token token;
+    gta3sc::syntax::Token token;
 
     token = scanner.next_filename().value();
     REQUIRE(token.category == Category::Word);
@@ -265,7 +267,7 @@ TEST_CASE_FIXTURE(ScannerFixture, "scanner with operators")
                   "-. -.1 -1.0          \n"
                   "+ @   - @   = #  + = \n");
 
-    gta3sc::Token token;
+    gta3sc::syntax::Token token;
 
     token = scanner.next().value();
     REQUIRE(token.category == Category::Plus);

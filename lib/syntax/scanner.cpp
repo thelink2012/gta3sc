@@ -1,7 +1,7 @@
 #include <cassert>
-#include <gta3sc/scanner.hpp>
+#include <gta3sc/syntax/scanner.hpp>
 
-namespace gta3sc
+namespace gta3sc::syntax
 {
 auto Scanner::source_file() const -> const SourceFile&
 {
@@ -108,7 +108,7 @@ auto Scanner::next() -> std::optional<Token>
 
     switch(peek_char)
     {
-    // clang-format off
+        // clang-format off
         newline: case '\r': case '\n': case '\0':
             if(peek_char == '\r') getc();
             if(peek_char == '\n') getc();

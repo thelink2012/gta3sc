@@ -1,7 +1,7 @@
 #pragma once
-#include <gta3sc/preprocessor.hpp>
+#include <gta3sc/syntax/preprocessor.hpp>
 
-namespace gta3sc
+namespace gta3sc::syntax
 {
 /// Lexical category of a token.
 enum class Category : uint8_t

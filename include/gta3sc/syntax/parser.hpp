@@ -1,10 +1,10 @@
 #pragma once
 #include <gta3sc/ir/linked-ir.hpp>
 #include <gta3sc/ir/parser-ir.hpp>
-#include <gta3sc/scanner.hpp>
+#include <gta3sc/syntax/scanner.hpp>
 #include <gta3sc/util/arena-allocator.hpp>
 
-namespace gta3sc
+namespace gta3sc::syntax
 {
 /// The parser checks the syntactical validity of a stream of tokens.
 ///

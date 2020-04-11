@@ -1,10 +1,10 @@
 #include "charconv.hpp"
-#include <gta3sc/sema.hpp>
+#include <gta3sc/syntax/sema.hpp>
 using namespace std::literals::string_view_literals;
 
 // gta3script-specs 7fe565c767ee85fb8c99b594b3b3d280aa1b1c80
 
-namespace gta3sc
+namespace gta3sc::syntax
 {
 using ParamType = CommandManager::ParamType;
 using EntityId = CommandManager::EntityId;

@@ -5,9 +5,13 @@
 #include <variant>
 #include <vector>
 
-namespace gta3sc
+namespace gta3sc::syntax
 {
 enum class Category : uint8_t;
+}
+
+namespace gta3sc
+{
 class DiagnosticHandler;
 class DiagnosticBuilder;
 
@@ -84,8 +88,8 @@ enum class Diag
 /// Information about a diagnostic.
 struct Diagnostic
 {
-    using Arg = std::variant<Category, std::string, std::vector<std::string>,
-                             int64_t>;
+    using Arg = std::variant<int64_t, syntax::Category, std::string,
+                             std::vector<std::string>>;
 
     Diag message; ///< The diagnostic message.
     SourceLocation

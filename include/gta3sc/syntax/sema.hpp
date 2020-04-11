@@ -7,7 +7,7 @@
 #include <gta3sc/ir/symbol-table.hpp>
 #include <gta3sc/util/arena-allocator.hpp>
 
-namespace gta3sc
+namespace gta3sc::syntax
 {
 /// This is a semantic analyzer.
 ///

@@ -1,6 +1,6 @@
-#include <gta3sc/preprocessor.hpp>
+#include <gta3sc/syntax/preprocessor.hpp>
 
-namespace gta3sc
+namespace gta3sc::syntax
 {
 bool Preprocessor::is_whitespace(const char* p) const
 {

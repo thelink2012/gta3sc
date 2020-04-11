@@ -1,9 +1,9 @@
 add_executable(gta3sc_unittest
     main.cpp
-    preprocessor.cpp
-    scanner.cpp
-    parser.cpp
-    sema.cpp
+    syntax/preprocessor.cpp
+    syntax/scanner.cpp
+    syntax/parser.cpp
+    syntax/sema.cpp
 )
 target_compile_features(gta3sc_unittest PUBLIC cxx_std_17)
 target_link_libraries(gta3sc_unittest PRIVATE gta3sc)

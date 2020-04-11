@@ -2,7 +2,7 @@
 #include <gta3sc/diagnostics.hpp>
 #include <gta3sc/sourceman.hpp>
 
-namespace gta3sc
+namespace gta3sc::syntax
 {
 /// The preprocessor is a character stream over a source file.
 ///

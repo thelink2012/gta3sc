@@ -1,15 +1,17 @@
-#include "command-manager-fixture.hpp"
-#include "compiler-fixture.hpp"
+#include "../command-manager-fixture.hpp"
+#include "syntax-fixture.hpp"
 #include <doctest.h>
-#include <gta3sc/parser.hpp>
-#include <gta3sc/sema.hpp>
+#include <gta3sc/syntax/parser.hpp>
+#include <gta3sc/syntax/sema.hpp>
 using namespace gta3sc::test;
+using namespace gta3sc::test::syntax;
 using namespace std::literals::string_view_literals;
+using gta3sc::test::syntax::d;
 
-namespace gta3sc::test
+namespace gta3sc::test::syntax
 {
 class SemaFixture
-    : public CompilerFixture
+    : public SyntaxFixture
     , public CommandManagerFixture
 {
 public:
@@ -21,8 +23,8 @@ public:
         if(!parser_error)
         {
             REQUIRE(ir != std::nullopt);
-            this->sema = gta3sc::Sema(std::move(*ir), symrepo, cmdman, diagman,
-                                      arena);
+            this->sema = gta3sc::syntax::Sema(std::move(*ir), symrepo, cmdman,
+                                              diagman, arena);
         }
         else
         {
@@ -33,24 +35,25 @@ public:
 
 private:
     auto make_parser(gta3sc::SourceFile source,
-                     gta3sc::ArenaMemoryResource& arena) -> gta3sc::Parser
+                     gta3sc::ArenaMemoryResource& arena)
+            -> gta3sc::syntax::Parser
     {
-        auto pp = gta3sc::Preprocessor(std::move(source), diagman);
-        auto scanner = gta3sc::Scanner(std::move(pp));
-        return gta3sc::Parser(std::move(scanner), arena);
+        auto pp = gta3sc::syntax::Preprocessor(std::move(source), diagman);
+        auto scanner = gta3sc::syntax::Scanner(std::move(pp));
+        return gta3sc::syntax::Parser(std::move(scanner), arena);
     }
 
-    auto default_sema() -> gta3sc::Sema
+    auto default_sema() -> gta3sc::syntax::Sema
     {
-        return gta3sc::Sema(gta3sc::LinkedIR<gta3sc::ParserIR>(arena), symrepo,
-                            cmdman, diagman, arena);
+        return gta3sc::syntax::Sema(gta3sc::LinkedIR<gta3sc::ParserIR>(arena),
+                                    symrepo, cmdman, diagman, arena);
     }
 
     gta3sc::ArenaMemoryResource arena;
 
 protected:
     gta3sc::SymbolRepository symrepo;
-    gta3sc::Sema sema;
+    gta3sc::syntax::Sema sema;
 };
 }
 
@@ -311,9 +314,9 @@ TEST_CASE_FIXTURE(SemaFixture, "sema parsing variable reference")
         build_sema("VAR_INT x]10[ z[10]");
         REQUIRE(sema.validate() == std::nullopt);
         CHECK(peek_diag().message == gta3sc::Diag::expected_word);
-        CHECK(consume_diag().args.at(0) == "[");
+        CHECK(consume_diag().args.at(0) == d("["));
         CHECK(peek_diag().message == gta3sc::Diag::expected_word);
-        CHECK(consume_diag().args.at(0) == "]");
+        CHECK(consume_diag().args.at(0) == d("]"));
     }
 
     SUBCASE("missing opening bracket")
@@ -321,9 +324,9 @@ TEST_CASE_FIXTURE(SemaFixture, "sema parsing variable reference")
         build_sema("VAR_INT x10] z[10]");
         REQUIRE(sema.validate() == std::nullopt);
         CHECK(peek_diag().message == gta3sc::Diag::expected_word);
-        CHECK(consume_diag().args.at(0) == "[");
+        CHECK(consume_diag().args.at(0) == d("["));
         CHECK(peek_diag().message == gta3sc::Diag::expected_word);
-        CHECK(consume_diag().args.at(0) == "]");
+        CHECK(consume_diag().args.at(0) == d("]"));
         CHECK(consume_diag().message == gta3sc::Diag::expected_subscript);
     }
 
@@ -332,7 +335,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema parsing variable reference")
         build_sema("VAR_INT x[10 z[10]");
         REQUIRE(sema.validate() == std::nullopt);
         CHECK(peek_diag().message == gta3sc::Diag::expected_word);
-        CHECK(consume_diag().args.at(0) == "]");
+        CHECK(consume_diag().args.at(0) == d("]"));
     }
 
     SUBCASE("empty var name")

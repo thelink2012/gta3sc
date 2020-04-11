@@ -1,12 +1,12 @@
 #include "charconv.hpp"
-#include <gta3sc/parser.hpp>
+#include <gta3sc/syntax/parser.hpp>
 using namespace std::literals::string_view_literals;
 
 // grammar from https://git.io/fNxZP f1f8a9096cb7a861e410d3f208f2589737220327
 
 // TODO parse mission start/end such that we ensure its amount of params
 
-namespace gta3sc
+namespace gta3sc::syntax
 {
 // The parser does not know anything about commands, so we have to
 // hardcode the special commands in here.
@@ -514,7 +514,7 @@ auto Parser::parse_subscript_file() -> std::optional<LinkedIR<ParserIR>>
         return std::nullopt;
 
     if(const auto mission_start_command = (*mission_start)->command;
-        mission_start_command->args.size() != 0)
+       mission_start_command->args.size() != 0)
     {
         report(mission_start_command->source, Diag::too_many_arguments);
         return std::nullopt;
@@ -525,7 +525,7 @@ auto Parser::parse_subscript_file() -> std::optional<LinkedIR<ParserIR>>
         return std::nullopt;
 
     if(const auto mission_end_command = body_stms->back().command;
-        mission_end_command->args.size() != 0)
+       mission_end_command->args.size() != 0)
     {
         report(mission_end_command->source, Diag::too_many_arguments);
         return std::nullopt;
@@ -545,7 +545,7 @@ auto Parser::parse_subscript_file() -> std::optional<LinkedIR<ParserIR>>
 auto Parser::parse_mission_script_file() -> std::optional<LinkedIR<ParserIR>>
 {
     // mission_script_file := subscript_file ;
-    // 
+    //
     // A mission script file has the same structure as of a subscript file.
     return parse_subscript_file();
 }
@@ -779,7 +779,7 @@ auto Parser::parse_embedded_statement(bool allow_special_name)
             }
 
             if(const auto command = (*ir)->command;
-                    is_var_decl_command(command->name) && command->args.size() == 0)
+               is_var_decl_command(command->name) && command->args.size() == 0)
             {
                 report(command->source, Diag::too_few_arguments);
                 return std::nullopt;
@@ -1047,7 +1047,7 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
         }
 
         if(const auto endif_command = body_stms->back().command;
-            endif_command->args.size() != 0)
+           endif_command->args.size() != 0)
         {
             report(endif_command->source, Diag::too_many_arguments);
             return std::nullopt;
@@ -1143,7 +1143,7 @@ auto Parser::parse_repeat_statement() -> std::optional<LinkedIR<ParserIR>>
 
     assert(*repeat_command && (*repeat_command)->command != nullptr);
     if(const auto repeat_num_args = (*repeat_command)->command->args.size();
-            repeat_num_args < 2)
+       repeat_num_args < 2)
     {
         report((*repeat_command)->command->source, Diag::too_few_arguments);
         return std::nullopt;
@@ -1160,7 +1160,7 @@ auto Parser::parse_repeat_statement() -> std::optional<LinkedIR<ParserIR>>
 
     assert(!body_stms->empty() && body_stms->back().command != nullptr);
     if(const auto endrepeat_command = body_stms->back().command;
-            endrepeat_command->args.size() != 0)
+       endrepeat_command->args.size() != 0)
     {
         report((*repeat_command)->command->source, Diag::too_many_arguments);
         return std::nullopt;
