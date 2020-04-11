@@ -252,6 +252,12 @@ public:
         return info->start_loc + (cp - code_data());
     }
 
+    /// Gets the source location of a given character view.
+    auto location_of(std::string_view view) const -> SourceLocation
+    {
+        return location_of(view.data());
+    }
+
     /// Gets a string view to a source range.
     auto view_of(SourceRange range) const -> std::string_view
     {

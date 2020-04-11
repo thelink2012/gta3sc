@@ -49,6 +49,15 @@ public:
     /// Parses a main script file.
     auto parse_main_script_file() -> std::optional<LinkedIR<ParserIR>>;
 
+    /// Parses a main extension file.
+    auto parse_main_extension_file() -> std::optional<LinkedIR<ParserIR>>;
+
+    /// Parses a subscript file.
+    auto parse_subscript_file() -> std::optional<LinkedIR<ParserIR>>;
+
+    /// Parses a mission script file.
+    auto parse_mission_script_file() -> std::optional<LinkedIR<ParserIR>>;
+
     /// Parses the next statement in the token stream.
     ///
     /// Any parsing error causes the parser to produce a diagnostic
@@ -163,6 +172,9 @@ private:
     /// the language grammar for special purposes (e.g. 'REPEAT', `VAR_INT`).
     bool is_special_name(std::string_view name, bool check_var_decl) const;
 
+    /// Checks whether the given command name is a variable declaration.
+    bool is_var_decl_command(std::string_view name) const;
+
     /// Checks whether the specified lexical category is of a relational
     /// comparision operator (i.e. `<=`, `<`, `>`, `>=`).
     bool is_relational_operator(Category) const;
@@ -175,6 +187,10 @@ private:
 
     /// Produces a diagnostic regarding a unexpected grammar name.
     auto report_special_name(SourceRange range) -> DiagnosticBuilder;
+
+    /// Ensures that the rule that the first line of file must be
+    /// MISSION_START is correct. Otherwise, produces a diagnostic.
+    bool ensure_mission_start_at_top_of_file();
 
 private:
     // The following should behave according to the language grammar.

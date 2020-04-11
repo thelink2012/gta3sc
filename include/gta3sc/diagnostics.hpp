@@ -25,6 +25,7 @@ enum class Diag
     expected_words,     // %0 => vector<string>
     expected_command,
     expected_require_command,
+    expected_mission_start_at_top,
     expected_argument,
     expected_identifier,
     expected_integer,

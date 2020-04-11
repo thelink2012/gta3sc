@@ -1334,12 +1334,14 @@ TEST_CASE_FIXTURE(SemaFixture, "sema validate subscript")
 
 TEST_CASE_FIXTURE(SemaFixture, "sema too few arguments")
 {
+    /* Responsability of the parser now :)
     SUBCASE("VAR_INT with no args")
     {
         build_sema("VAR_INT ");
         REQUIRE(sema.validate() == std::nullopt);
         CHECK(consume_diag().message == gta3sc::Diag::too_few_arguments);
     }
+    */
 
     SUBCASE("START_NEW_SCRIPT with no args")
     {

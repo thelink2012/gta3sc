@@ -23,9 +23,9 @@ namespace gta3sc
 ///
 /// Do note however that no argument matching is performed whatsoever.
 /// This implies commands with a syntactical specification (e.g. GOSUB_FILE,
-/// VAR_INT, ENDWHILE) might not follow it (e.g. the first argument of
-/// GOSUB_FILE might not be an identifier). The amount of arguments might be
-/// wrong as well (e.g. ENDWHILE with two arguments).
+/// VAR_INT) might not follow it (e.g. the first argument of GOSUB_FILE might
+/// not be an identifier). The amount of arguments of these commands however
+/// are guaranted to be correct.
 ///
 /// This IR is immutable and preserves source code information such as the
 /// location of each of its identifiers.

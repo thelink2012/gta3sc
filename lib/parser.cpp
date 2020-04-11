@@ -4,6 +4,8 @@ using namespace std::literals::string_view_literals;
 
 // grammar from https://git.io/fNxZP f1f8a9096cb7a861e410d3f208f2589737220327
 
+// TODO parse mission start/end such that we ensure its amount of params
+
 namespace gta3sc
 {
 // The parser does not know anything about commands, so we have to
@@ -14,6 +16,8 @@ constexpr auto COMMAND_VAR_INT = "VAR_INT"sv;
 constexpr auto COMMAND_LVAR_INT = "LVAR_INT"sv;
 constexpr auto COMMAND_VAR_FLOAT = "VAR_FLOAT"sv;
 constexpr auto COMMAND_LVAR_FLOAT = "LVAR_FLOAT"sv;
+constexpr auto COMMAND_VAR_TEXT_LABEL = "VAR_TEXT_LABEL"sv;
+constexpr auto COMMAND_LVAR_TEXT_LABEL = "LVAR_TEXT_LABEL"sv;
 constexpr auto COMMAND_ANDOR = "ANDOR"sv;
 constexpr auto COMMAND_GOTO = "GOTO"sv;
 constexpr auto COMMAND_GOTO_IF_FALSE = "GOTO_IF_FALSE"sv;
@@ -83,12 +87,8 @@ auto Parser::report_special_name(SourceRange source) -> DiagnosticBuilder
 
 bool Parser::is_special_name(std::string_view name, bool check_var_decl) const
 {
-    if(check_var_decl)
-    {
-        if(name == COMMAND_VAR_INT || name == COMMAND_LVAR_INT
-           || name == COMMAND_VAR_FLOAT || name == COMMAND_LVAR_FLOAT)
-            return true;
-    }
+    if(check_var_decl && is_var_decl_command(name))
+        return true;
     return (name == "{" || name == "}" || name == "NOT" || name == "AND"
             || name == "OR" || name == COMMAND_IF || name == COMMAND_IFNOT
             || name == COMMAND_ELSE || name == COMMAND_ENDIF
@@ -98,6 +98,13 @@ bool Parser::is_special_name(std::string_view name, bool check_var_decl) const
             || name == COMMAND_LAUNCH_MISSION
             || name == COMMAND_LOAD_AND_LAUNCH_MISSION
             || name == COMMAND_MISSION_START || name == COMMAND_MISSION_END);
+}
+
+bool Parser::is_var_decl_command(std::string_view name) const
+{
+    return name == COMMAND_VAR_INT || name == COMMAND_VAR_FLOAT
+           || name == COMMAND_VAR_TEXT_LABEL || name == COMMAND_LVAR_INT
+           || name == COMMAND_LVAR_FLOAT || name == COMMAND_LVAR_TEXT_LABEL;
 }
 
 bool Parser::iequal(std::string_view a, std::string_view b) const
@@ -210,6 +217,15 @@ auto Parser::consume() -> std::optional<Token>
 
 auto Parser::consume_filename() -> std::optional<Token>
 {
+    // Due to the hack in `consume_whitespace` we need this
+    // other hack here. If not for that hack, we could never
+    // have a peek token here.
+    if(has_peek_token[0] && is_peek(Category::EndOfLine))
+    {
+        report(*peek(), Diag::expected_identifier);
+        return std::nullopt;
+    }
+
     assert(has_peek_token[0] == false);
     return scanner.next_filename();
 }
@@ -477,6 +493,63 @@ auto Parser::parse_main_script_file() -> std::optional<LinkedIR<ParserIR>>
     return parse_statement_list({});
 }
 
+auto Parser::parse_main_extension_file() -> std::optional<LinkedIR<ParserIR>>
+{
+    // main_script_file := {statement} ;
+    return parse_statement_list({});
+}
+
+auto Parser::parse_subscript_file() -> std::optional<LinkedIR<ParserIR>>
+{
+    // subscript_file := 'MISSION_START' eol
+    //                  {statement}
+    //                  [label_prefix] 'MISSION_END' eol
+    //                  {statement} ;
+
+    if(!ensure_mission_start_at_top_of_file())
+        return std::nullopt;
+
+    auto mission_start = parse_command();
+    if(!mission_start)
+        return std::nullopt;
+
+    if(const auto mission_start_command = (*mission_start)->command;
+        mission_start_command->args.size() != 0)
+    {
+        report(mission_start_command->source, Diag::too_many_arguments);
+        return std::nullopt;
+    }
+
+    auto body_stms = parse_statement_list("MISSION_END");
+    if(!body_stms)
+        return std::nullopt;
+
+    if(const auto mission_end_command = body_stms->back().command;
+        mission_end_command->args.size() != 0)
+    {
+        report(mission_end_command->source, Diag::too_many_arguments);
+        return std::nullopt;
+    }
+
+    auto rest_stms = parse_statement_list({});
+    if(!rest_stms)
+        return std::nullopt;
+
+    LinkedIR<ParserIR> linked_ir(*arena);
+    linked_ir.push_front(*mission_start);
+    linked_ir.splice_back(std::move(*body_stms));
+    linked_ir.splice_back(std::move(*rest_stms));
+    return linked_ir;
+}
+
+auto Parser::parse_mission_script_file() -> std::optional<LinkedIR<ParserIR>>
+{
+    // mission_script_file := subscript_file ;
+    // 
+    // A mission script file has the same structure as of a subscript file.
+    return parse_subscript_file();
+}
+
 auto Parser::parse_statement(bool allow_special_name)
         -> std::optional<LinkedIR<ParserIR>>
 {
@@ -702,6 +775,13 @@ auto Parser::parse_embedded_statement(bool allow_special_name)
                && is_special_name((*ir)->command->name, false))
             {
                 report_special_name((*ir)->command->source);
+                return std::nullopt;
+            }
+
+            if(const auto command = (*ir)->command;
+                    is_var_decl_command(command->name) && command->args.size() == 0)
+            {
+                report(command->source, Diag::too_few_arguments);
                 return std::nullopt;
             }
 
@@ -950,13 +1030,27 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
         if(!body_stms)
             return std::nullopt;
 
-        if(body_stms->back().command->name == COMMAND_ELSE)
+        if(const auto else_command = body_stms->back().command;
+           else_command->name == COMMAND_ELSE)
         {
+            if(else_command->args.size() != 0)
+            {
+                report(else_command->source, Diag::too_many_arguments);
+                return std::nullopt;
+            }
+
             auto else_stms = parse_statement_list("ENDIF");
             if(!else_stms)
                 return std::nullopt;
 
             body_stms->splice_back(*std::move(else_stms));
+        }
+
+        if(const auto endif_command = body_stms->back().command;
+            endif_command->args.size() != 0)
+        {
+            report(endif_command->source, Diag::too_many_arguments);
+            return std::nullopt;
         }
 
         body_stms->splice_front(*std::move(andor_list));
@@ -1008,6 +1102,15 @@ auto Parser::parse_while_statement_detail(bool is_whilenot)
     if(!body_stms)
         return std::nullopt;
 
+    assert(!body_stms->empty() && body_stms->back().command);
+
+    if(const auto& endwhile_command = body_stms->back().command;
+       endwhile_command->args.size() != 0)
+    {
+        report(endwhile_command->source, Diag::too_many_arguments);
+        return std::nullopt;
+    }
+
     const auto src_info = while_token->source;
 
     body_stms->splice_front(*std::move(andor_list));
@@ -1038,9 +1141,30 @@ auto Parser::parse_repeat_statement() -> std::optional<LinkedIR<ParserIR>>
     if(!consume(Category::EndOfLine))
         return std::nullopt;
 
+    assert(*repeat_command && (*repeat_command)->command != nullptr);
+    if(const auto repeat_num_args = (*repeat_command)->command->args.size();
+            repeat_num_args < 2)
+    {
+        report((*repeat_command)->command->source, Diag::too_few_arguments);
+        return std::nullopt;
+    }
+    else if(repeat_num_args > 2)
+    {
+        report((*repeat_command)->command->source, Diag::too_many_arguments);
+        return std::nullopt;
+    }
+
     auto body_stms = parse_statement_list("ENDREPEAT");
     if(!body_stms)
         return std::nullopt;
+
+    assert(!body_stms->empty() && body_stms->back().command != nullptr);
+    if(const auto endrepeat_command = body_stms->back().command;
+            endrepeat_command->args.size() != 0)
+    {
+        report((*repeat_command)->command->source, Diag::too_many_arguments);
+        return std::nullopt;
+    }
 
     body_stms->push_front(*repeat_command);
     return body_stms;
@@ -1502,6 +1626,34 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
     assert(is_peek(Category::EndOfLine) || is_peek(Category::Whitespace));
 
     return linked;
+}
+
+bool Parser::ensure_mission_start_at_top_of_file()
+{
+    // The MISSION_START command shall be the very first line of the subscript
+    // file and shall not be preceded by anything but ASCII spaces ( ) and
+    // horizontal tabs (\t). Comments instead of whitespaces are disallowed.
+
+    bool has_mission_start = is_peek(Category::Word, "MISSION_START"sv);
+
+    auto file_contents = source_file().code_view();
+    for(auto it = file_contents.begin();
+        it != file_contents.end() && has_mission_start; ++it)
+    {
+        if(*it == 'M' || *it == 'm')
+            break;
+        if(*it != ' ' || *it != '\t')
+            has_mission_start = false;
+    }
+
+    if(!has_mission_start)
+    {
+        diagnostics().report(source_file().location_of(file_contents),
+                             Diag::expected_mission_start_at_top);
+        return false;
+    }
+
+    return true;
 }
 }
 

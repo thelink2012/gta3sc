@@ -6,6 +6,10 @@ using namespace gta3sc::test;
 using namespace std::literals::string_view_literals;
 using namespace std::literals::string_literals;
 
+// TODO test parse_main_extension_file
+// TODO test parse_subscript_file
+// TODO test parse_mission_script_file
+
 namespace gta3sc::test
 {
 class ParserFixture : public CompilerFixture
@@ -1728,4 +1732,372 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing labels in ENDREPEAT")
     REQUIRE(it->label != nullptr);
     REQUIRE(it->label->name == "LABEL");
     REQUIRE(++it == ir->end());
+}
+
+TEST_CASE_FIXTURE(ParserFixture, "number of arguments of ENDWHILE")
+{
+    SUBCASE("correct number of arguments")
+    {
+        build_parser("WHILE SOMETHING\nENDWHILE\n");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(ir->size() == 3);
+        REQUIRE(ir->back().command != nullptr);
+        REQUIRE(ir->back().command->args.size() == 0);
+    }
+
+    SUBCASE("too many arguments")
+    {
+        build_parser("WHILE SOMETHING\nENDWHILE 1\n");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::too_many_arguments);
+    }
+}
+
+TEST_CASE_FIXTURE(ParserFixture, "number of arguments of REPEAT")
+{
+    SUBCASE("correct number of arguments")
+    {
+        build_parser("REPEAT 10 a\nENDREPEAT\n");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(ir->size() == 2);
+        REQUIRE(ir->front().command != nullptr);
+        REQUIRE(ir->front().command->args.size() == 2);
+    }
+
+    SUBCASE("too few arguments")
+    {
+        build_parser("REPEAT 10\nENDREPEAT\n");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::too_few_arguments);
+    }
+
+    SUBCASE("too many arguments")
+    {
+        build_parser("REPEAT 10 a b\nENDREPEAT\n");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::too_many_arguments);
+    }
+}
+
+TEST_CASE_FIXTURE(ParserFixture, "number of arguments of ENDREPEAT")
+{
+    SUBCASE("correct number of arguments")
+    {
+        build_parser("REPEAT 10 a\nENDREPEAT\n");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(ir->size() == 2);
+        REQUIRE(ir->back().command != nullptr);
+        REQUIRE(ir->back().command->args.size() == 0);
+    }
+
+    SUBCASE("too many arguments")
+    {
+        build_parser("REPEAT 10 a\nENDREPEAT 10\n");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::too_many_arguments);
+    }
+}
+
+TEST_CASE_FIXTURE(ParserFixture, "number of arguments of ELSE")
+{
+    SUBCASE("correct number of arguments")
+    {
+        build_parser("IF SOMETHING\nELSE\nENDIF");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(ir->size() == 4);
+        REQUIRE(std::next(ir->begin(), 2)->command != nullptr);
+        REQUIRE(std::next(ir->begin(), 2)->command->args.size() == 0);
+    }
+
+    SUBCASE("too many arguments")
+    {
+        build_parser("IF SOMETHING\nELSE xyz\nENDIF");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::too_many_arguments);
+    }
+}
+
+TEST_CASE_FIXTURE(ParserFixture, "number of arguments of ENDIF")
+{
+    SUBCASE("correct number of arguments (without ELSE)")
+    {
+        build_parser("IF SOMETHING\nENDIF");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(ir->size() == 3);
+        REQUIRE(ir->back().command != nullptr);
+        REQUIRE(ir->back().command->args.size() == 0);
+    }
+
+    SUBCASE("too many arguments (without ELSE)")
+    {
+        build_parser("IF SOMETHING\nENDIF xyz");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::too_many_arguments);
+    }
+
+    SUBCASE("correct number of arguments (with ELSE)")
+    {
+        build_parser("IF SOMETHING\nELSE\nENDIF");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(ir->size() == 4);
+        REQUIRE(ir->back().command != nullptr);
+        REQUIRE(ir->back().command->args.size() == 0);
+    }
+
+    SUBCASE("too many arguments (with ELSE)")
+    {
+        build_parser("IF SOMETHING\nELSE\nENDIF xyz");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::too_many_arguments);
+    }
+}
+
+TEST_CASE_FIXTURE(ParserFixture, "number of arguments of MISSION_START")
+{
+    SUBCASE("correct number of arguments")
+    {
+        build_parser("MISSION_START\nMISSION_END");
+        auto ir = parser.parse_subscript_file();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(ir->size() == 2);
+        REQUIRE(ir->front().command != nullptr);
+        REQUIRE(ir->front().command->args.size() == 0);
+    }
+
+    SUBCASE("too many arguments")
+    {
+        build_parser("MISSION_START a\nMISSION_END");
+        auto ir = parser.parse_subscript_file();
+        REQUIRE(ir == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::too_many_arguments);
+    }
+}
+
+TEST_CASE_FIXTURE(ParserFixture, "number of arguments of MISSION_END")
+{
+    SUBCASE("correct number of arguments")
+    {
+        build_parser("MISSION_START\nMISSION_END");
+        auto ir = parser.parse_subscript_file();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(ir->size() == 2);
+        REQUIRE(ir->back().command != nullptr);
+        REQUIRE(ir->back().command->args.size() == 0);
+    }
+
+    SUBCASE("too many arguments")
+    {
+        build_parser("MISSION_START a\nMISSION_END a");
+        auto ir = parser.parse_subscript_file();
+        REQUIRE(ir == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::too_many_arguments);
+    }
+}
+
+TEST_CASE_FIXTURE(ParserFixture, "number of arguments of GOSUB_FILE")
+{
+    SUBCASE("correct number of arguments")
+    {
+        build_parser("GOSUB_FILE a a.sc");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(ir->size() == 1);
+        REQUIRE(ir->front().command != nullptr);
+        REQUIRE(ir->front().command->args.size() == 2);
+    }
+
+    SUBCASE("too few arguments")
+    {
+        build_parser("GOSUB_FILE a ");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::expected_identifier);
+    }
+
+    SUBCASE("too many arguments")
+    {
+        build_parser("GOSUB_FILE a a.sc b");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::expected_token);
+    }
+}
+
+TEST_CASE_FIXTURE(ParserFixture, "number of arguments of LAUNCH_MISSION")
+{
+    SUBCASE("correct number of arguments")
+    {
+        build_parser("LAUNCH_MISSION a.sc");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(ir->size() == 1);
+        REQUIRE(ir->front().command != nullptr);
+        REQUIRE(ir->front().command->args.size() == 1);
+    }
+
+    SUBCASE("too few arguments")
+    {
+        build_parser("LAUNCH_MISSION");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::expected_identifier);
+    }
+
+    SUBCASE("too many arguments")
+    {
+        build_parser("LAUNCH_MISSION a.sc b");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::expected_token);
+    }
+}
+
+TEST_CASE_FIXTURE(ParserFixture, "number of arguments of LOAD_AND_LAUNCH_MISSION")
+{
+    SUBCASE("correct number of arguments")
+    {
+        build_parser("LOAD_AND_LAUNCH_MISSION a.sc");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(ir->size() == 1);
+        REQUIRE(ir->front().command != nullptr);
+        REQUIRE(ir->front().command->args.size() == 1);
+    }
+
+    SUBCASE("too few arguments")
+    {
+        build_parser("LOAD_AND_LAUNCH_MISSION");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::expected_identifier);
+    }
+
+    SUBCASE("too many arguments")
+    {
+        build_parser("LOAD_AND_LAUNCH_MISSION a.sc b");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::expected_token);
+    }
+}
+
+TEST_CASE_FIXTURE(ParserFixture, "number of arguments of VAR_INT")
+{
+    SUBCASE("correct number of arguments")
+    {
+        build_parser("VAR_INT a\nVAR_INT b c");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir != std::nullopt);
+    }
+
+    SUBCASE("too few arguments")
+    {
+        build_parser("VAR_INT");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::too_few_arguments);
+    }
+}
+
+TEST_CASE_FIXTURE(ParserFixture, "number of arguments of LVAR_INT")
+{
+    SUBCASE("correct number of arguments")
+    {
+        build_parser("LVAR_INT a\nLVAR_INT b c");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir != std::nullopt);
+    }
+
+    SUBCASE("too few arguments")
+    {
+        build_parser("LVAR_INT");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::too_few_arguments);
+    }
+}
+
+TEST_CASE_FIXTURE(ParserFixture, "number of arguments of VAR_FLOAT")
+{
+    SUBCASE("correct number of arguments")
+    {
+        build_parser("VAR_FLOAT a\nVAR_FLOAT b c");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir != std::nullopt);
+    }
+
+    SUBCASE("too few arguments")
+    {
+        build_parser("VAR_FLOAT");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::too_few_arguments);
+    }
+}
+
+TEST_CASE_FIXTURE(ParserFixture, "number of arguments of LVAR_FLOAT")
+{
+    SUBCASE("correct number of arguments")
+    {
+        build_parser("LVAR_FLOAT a\nLVAR_FLOAT b c");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir != std::nullopt);
+    }
+
+    SUBCASE("too few arguments")
+    {
+        build_parser("LVAR_FLOAT");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::too_few_arguments);
+    }
+}
+
+TEST_CASE_FIXTURE(ParserFixture, "number of arguments of VAR_TEXT_LABEL")
+{
+    SUBCASE("correct number of arguments")
+    {
+        build_parser("VAR_TEXT_LABEL a\nVAR_TEXT_LABEL b c");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir != std::nullopt);
+    }
+
+    SUBCASE("too few arguments")
+    {
+        build_parser("VAR_TEXT_LABEL");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::too_few_arguments);
+    }
+}
+
+TEST_CASE_FIXTURE(ParserFixture, "number of arguments of LVAR_TEXT_LABEL")
+{
+    SUBCASE("correct number of arguments")
+    {
+        build_parser("LVAR_TEXT_LABEL a\nLVAR_TEXT_LABEL b c");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir != std::nullopt);
+    }
+
+    SUBCASE("too few arguments")
+    {
+        build_parser("LVAR_TEXT_LABEL");
+        auto ir = parser.parse_statement();
+        REQUIRE(ir == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::too_few_arguments);
+    }
 }
