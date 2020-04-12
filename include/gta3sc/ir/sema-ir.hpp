@@ -1,6 +1,7 @@
 #pragma once
 #include <gta3sc/command-manager.hpp>
 #include <gta3sc/ir/symbol-table.hpp>
+#include <gta3sc/util/intrusive-list.hpp>
 
 // TODO this is in progress
 
@@ -10,7 +11,7 @@ namespace gta3sc
 template<typename T> // TODO remove this
 using observer_ptr = T*;
 
-class SemaIR
+class SemaIR : public util::IntrusiveBidirectionalListNode<SemaIR>
 {
 public:
     struct Command;

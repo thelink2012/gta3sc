@@ -105,7 +105,7 @@ auto Sema::check_semantics_pass() -> std::optional<LinkedIR<SemaIR>>
 {
     assert(report_count == 0);
 
-    LinkedIR<SemaIR> linked(*arena);
+    LinkedIR<SemaIR> linked;
 
     this->current_scope = -1;
     ScopeId scope_accum = first_scope;
@@ -120,7 +120,7 @@ auto Sema::check_semantics_pass() -> std::optional<LinkedIR<SemaIR>>
         this->analyzing_alternative_command = false;
         this->analyzing_repeat_command = false;
 
-        linked.push_back(SemaIR::create(arena));
+        linked.push_back(*SemaIR::create(arena));
 
         if(line.command)
         {

@@ -5,6 +5,7 @@
 #include <gta3sc/adt/span.hpp>
 #include <gta3sc/sourceman.hpp>
 #include <gta3sc/util/arena-allocator.hpp>
+#include <gta3sc/util/intrusive-list.hpp>
 #include <string_view>
 #include <variant>
 
@@ -29,7 +30,7 @@ namespace gta3sc
 ///
 /// This IR is immutable and preserves source code information such as the
 /// location of each of its identifiers.
-class ParserIR
+class ParserIR : public util::IntrusiveBidirectionalListNode<ParserIR>
 {
 public:
     struct LabelDef;
@@ -429,9 +430,10 @@ inline auto ParserIR::Builder::command(arena_ptr<const Command> command_ptr)
 inline auto ParserIR::Builder::command(std::string_view name,
                                        SourceRange source) -> Builder&&
 {
+    assert(!this->command_ptr && !this->has_command_name);
     this->command_ptr = nullptr;
     this->has_command_name = true;
-    this->command_name = name;
+    this->command_name = util::allocate_string_upper(name, *arena);
     this->command_source = source;
     return std::move(*this);
 }
@@ -527,9 +529,7 @@ inline void ParserIR::Builder::create_command_from_attributes()
     assert(this->has_command_name);
 
     this->command_ptr = new(*arena, alignof(Command)) const Command{
-            this->command_source,
-            util::allocate_string_upper(this->command_name, *arena),
-            std::move(this->args),
+            this->command_source, this->command_name, std::move(this->args),
             this->has_not_flag ? this->not_flag_value : false};
 
     this->has_command_name = false;

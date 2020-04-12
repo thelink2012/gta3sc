@@ -42,6 +42,14 @@ protected:
 };
 }
 
+namespace
+{
+auto size(const gta3sc::LinkedIR<gta3sc::ParserIR>& ir)
+{
+    return std::distance(ir.begin(), ir.end());
+}
+}
+
 TEST_CASE_FIXTURE(ParserFixture, "parsing an empty main script file")
 {
     build_parser("");
@@ -67,28 +75,28 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a label definition")
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    REQUIRE(ir->size() == 1);
+    REQUIRE(size(*ir) == 1);
     REQUIRE(ir->front().label->name == "LABEL");
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    REQUIRE(ir->size() == 1);
+    REQUIRE(size(*ir) == 1);
     REQUIRE(ir->front().label->name == "LABEL");
     REQUIRE(ir->front().command->name == "WAIT");
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    REQUIRE(ir->size() == 1);
+    REQUIRE(size(*ir) == 1);
     REQUIRE(ir->front().label->name == "LABEL");
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    REQUIRE(ir->size() == 1);
+    REQUIRE(size(*ir) == 1);
     REQUIRE(ir->front().command->name == "WAIT");
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    REQUIRE(ir->size() == 1);
+    REQUIRE(size(*ir) == 1);
     REQUIRE(ir->front().label->name == "LA:BEL");
 
     ir = parser.parse_statement();
@@ -124,7 +132,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a label definition")
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    REQUIRE(ir->size() == 1);
+    REQUIRE(size(*ir) == 1);
     REQUIRE(ir->front().label->name == "LABEL");
 }
 
@@ -267,7 +275,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a command")
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    REQUIRE(ir->size() == 1);
+    REQUIRE(size(*ir) == 1);
     REQUIRE(ir->front().label->name == "L");
     REQUIRE(ir->front().command->name == "C:");
     REQUIRE(ir->front().command->args.size() == 0);
@@ -625,7 +633,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing permutations of absolute expressions")
     REQUIRE(ir->front().command->name == "ABS");
     REQUIRE(ir->front().command->args.size() == 1);
     REQUIRE_EQ(*ir->front().command->args[0]->as_identifier(), "X"sv);
-    REQUIRE(ir->size() == 1);
+    REQUIRE(size(*ir) == 1);
 }
 
 TEST_CASE_FIXTURE(ParserFixture, "parsing permutations of unary expressions")
@@ -650,7 +658,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing permutations of unary expressions")
         REQUIRE(ir->front().command->args.size() == 2);
         REQUIRE_EQ(*ir->front().command->args[0]->as_identifier(), "X"sv);
         REQUIRE_EQ(*ir->front().command->args[1]->as_integer(), 1);
-        REQUIRE(ir->size() == 1);
+        REQUIRE(size(*ir) == 1);
     }
 }
 
@@ -692,7 +700,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing permutations of binary expressions")
         REQUIRE(ir->front().command->args.size() == 2);
         REQUIRE_EQ(*ir->front().command->args[0]->as_identifier(), "X"sv);
         REQUIRE_EQ(*ir->front().command->args[1]->as_identifier(), "Y"sv);
-        REQUIRE(ir->size() == 1);
+        REQUIRE(size(*ir) == 1);
 
         ir = parser.parse_statement();
         REQUIRE(ir != std::nullopt);
@@ -700,7 +708,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing permutations of binary expressions")
         REQUIRE(ir->front().command->args.size() == 2);
         REQUIRE_EQ(*ir->front().command->args[0]->as_identifier(), "X"sv);
         REQUIRE_EQ(*ir->front().command->args[1]->as_identifier(), "X"sv);
-        REQUIRE(ir->size() == 1);
+        REQUIRE(size(*ir) == 1);
     }
 }
 
@@ -717,13 +725,13 @@ TEST_CASE_FIXTURE(ParserFixture,
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    REQUIRE(ir->size() == 3);
+    REQUIRE(size(*ir) == 3);
     auto it = ir->begin();
     REQUIRE(std::next(it)->command->name == "IS_THING_EQUAL_TO_THING");
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    REQUIRE(ir->size() == 3);
+    REQUIRE(size(*ir) == 3);
     it = ir->begin();
     REQUIRE(std::next(it)->command->name == "IS_THING_EQUAL_TO_THING");
 
@@ -743,7 +751,7 @@ TEST_CASE_FIXTURE(ParserFixture,
         REQUIRE(ir->front().command->args.size() == 2);
         REQUIRE_EQ(*ir->front().command->args[0]->as_identifier(), a);
         REQUIRE_EQ(*ir->front().command->args[1]->as_identifier(), b);
-        REQUIRE(ir->size() == 1);
+        REQUIRE(size(*ir) == 1);
     }
 }
 
@@ -789,7 +797,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing permutations of ternary expressions")
         REQUIRE(ir->front().command->args.size() == 2);
         REQUIRE_EQ(*ir->front().command->args[0]->as_identifier(), "X"sv);
         REQUIRE_EQ(*ir->front().command->args[1]->as_identifier(), "X"sv);
-        REQUIRE(ir->size() == 1);
+        REQUIRE(size(*ir) == 1);
 
         // x = x + y
         ir = parser.parse_statement();
@@ -798,7 +806,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing permutations of ternary expressions")
         REQUIRE(ir->front().command->args.size() == 2);
         REQUIRE_EQ(*ir->front().command->args[0]->as_identifier(), "X"sv);
         REQUIRE_EQ(*ir->front().command->args[1]->as_identifier(), "Y"sv);
-        REQUIRE(ir->size() == 1);
+        REQUIRE(size(*ir) == 1);
 
         // x = y + x
         if(command_name == "ADD_THING_TO_THING"
@@ -810,7 +818,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing permutations of ternary expressions")
             REQUIRE(ir->front().command->args.size() == 2);
             REQUIRE_EQ(*ir->front().command->args[0]->as_identifier(), "X"sv);
             REQUIRE_EQ(*ir->front().command->args[1]->as_identifier(), "Y"sv);
-            REQUIRE(ir->size() == 1);
+            REQUIRE(size(*ir) == 1);
         }
         else
         {
@@ -1559,7 +1567,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing valid var declaration commands")
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    REQUIRE(ir->size() == 1);
+    REQUIRE(size(*ir) == 1);
     REQUIRE(ir->front().command->name == "LVAR_FLOAT");
     REQUIRE(ir->front().command->args.size() == 3);
     REQUIRE_EQ(*ir->front().command->args[0]->as_identifier(), "X"sv);
@@ -1652,7 +1660,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing labels in }")
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    REQUIRE(ir->size() == 3);
+    REQUIRE(size(*ir) == 3);
 
     auto it = ir->begin();
     REQUIRE(it->command->name == "{");
@@ -1675,7 +1683,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing labels in ELSE/ENDIF")
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    REQUIRE(ir->size() == 6);
+    REQUIRE(size(*ir) == 6);
 
     auto it = ir->begin();
     REQUIRE(it->command->name == "IF");
@@ -1703,7 +1711,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing labels in ENDWHILE")
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    REQUIRE(ir->size() == 4);
+    REQUIRE(size(*ir) == 4);
 
     auto it = ir->begin();
     REQUIRE(it->command->name == "WHILE");
@@ -1726,7 +1734,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing labels in ENDREPEAT")
 
     auto ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
-    REQUIRE(ir->size() == 3);
+    REQUIRE(size(*ir) == 3);
 
     auto it = ir->begin();
     REQUIRE(it->command->name == "REPEAT");
@@ -1746,7 +1754,7 @@ TEST_CASE_FIXTURE(ParserFixture, "number of arguments of ENDWHILE")
         build_parser("WHILE SOMETHING\nENDWHILE\n");
         auto ir = parser.parse_statement();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 3);
+        REQUIRE(size(*ir) == 3);
         REQUIRE(ir->back().command != nullptr);
         REQUIRE(ir->back().command->args.size() == 0);
     }
@@ -1767,7 +1775,7 @@ TEST_CASE_FIXTURE(ParserFixture, "number of arguments of REPEAT")
         build_parser("REPEAT 10 a\nENDREPEAT\n");
         auto ir = parser.parse_statement();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 2);
+        REQUIRE(size(*ir) == 2);
         REQUIRE(ir->front().command != nullptr);
         REQUIRE(ir->front().command->args.size() == 2);
     }
@@ -1796,7 +1804,7 @@ TEST_CASE_FIXTURE(ParserFixture, "number of arguments of ENDREPEAT")
         build_parser("REPEAT 10 a\nENDREPEAT\n");
         auto ir = parser.parse_statement();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 2);
+        REQUIRE(size(*ir) == 2);
         REQUIRE(ir->back().command != nullptr);
         REQUIRE(ir->back().command->args.size() == 0);
     }
@@ -1817,7 +1825,7 @@ TEST_CASE_FIXTURE(ParserFixture, "number of arguments of ELSE")
         build_parser("IF SOMETHING\nELSE\nENDIF");
         auto ir = parser.parse_statement();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 4);
+        REQUIRE(size(*ir) == 4);
         REQUIRE(std::next(ir->begin(), 2)->command != nullptr);
         REQUIRE(std::next(ir->begin(), 2)->command->args.size() == 0);
     }
@@ -1838,7 +1846,7 @@ TEST_CASE_FIXTURE(ParserFixture, "number of arguments of ENDIF")
         build_parser("IF SOMETHING\nENDIF");
         auto ir = parser.parse_statement();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 3);
+        REQUIRE(size(*ir) == 3);
         REQUIRE(ir->back().command != nullptr);
         REQUIRE(ir->back().command->args.size() == 0);
     }
@@ -1856,7 +1864,7 @@ TEST_CASE_FIXTURE(ParserFixture, "number of arguments of ENDIF")
         build_parser("IF SOMETHING\nELSE\nENDIF");
         auto ir = parser.parse_statement();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 4);
+        REQUIRE(size(*ir) == 4);
         REQUIRE(ir->back().command != nullptr);
         REQUIRE(ir->back().command->args.size() == 0);
     }
@@ -1877,7 +1885,7 @@ TEST_CASE_FIXTURE(ParserFixture, "number of arguments of MISSION_START")
         build_parser("MISSION_START\nMISSION_END");
         auto ir = parser.parse_subscript_file();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 2);
+        REQUIRE(size(*ir) == 2);
         REQUIRE(ir->front().command != nullptr);
         REQUIRE(ir->front().command->args.size() == 0);
     }
@@ -1898,7 +1906,7 @@ TEST_CASE_FIXTURE(ParserFixture, "number of arguments of MISSION_END")
         build_parser("MISSION_START\nMISSION_END");
         auto ir = parser.parse_subscript_file();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 2);
+        REQUIRE(size(*ir) == 2);
         REQUIRE(ir->back().command != nullptr);
         REQUIRE(ir->back().command->args.size() == 0);
     }
@@ -1919,7 +1927,7 @@ TEST_CASE_FIXTURE(ParserFixture, "number of arguments of GOSUB_FILE")
         build_parser("GOSUB_FILE a a.sc");
         auto ir = parser.parse_statement();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 1);
+        REQUIRE(size(*ir) == 1);
         REQUIRE(ir->front().command != nullptr);
         REQUIRE(ir->front().command->args.size() == 2);
     }
@@ -1948,7 +1956,7 @@ TEST_CASE_FIXTURE(ParserFixture, "number of arguments of LAUNCH_MISSION")
         build_parser("LAUNCH_MISSION a.sc");
         auto ir = parser.parse_statement();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 1);
+        REQUIRE(size(*ir) == 1);
         REQUIRE(ir->front().command != nullptr);
         REQUIRE(ir->front().command->args.size() == 1);
     }
@@ -1978,7 +1986,7 @@ TEST_CASE_FIXTURE(ParserFixture,
         build_parser("LOAD_AND_LAUNCH_MISSION a.sc");
         auto ir = parser.parse_statement();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 1);
+        REQUIRE(size(*ir) == 1);
         REQUIRE(ir->front().command != nullptr);
         REQUIRE(ir->front().command->args.size() == 1);
     }

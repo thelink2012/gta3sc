@@ -4,7 +4,7 @@ namespace gta3sc
 {
 // Iterator for the list of string constants stored in the constants map.
 using ConstantListIterator
-        = util::IntrusiveListForwardIterator<const CommandManager::ConstantDef>;
+        = util::ConstIntrusiveListForwardIterator<CommandManager::ConstantDef>;
 
 // Mutable iterator for the list of string constants stored in the constants
 // map.

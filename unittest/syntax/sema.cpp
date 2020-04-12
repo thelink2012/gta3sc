@@ -45,7 +45,7 @@ private:
 
     auto default_sema() -> gta3sc::syntax::Sema
     {
-        return gta3sc::syntax::Sema(gta3sc::LinkedIR<gta3sc::ParserIR>(arena),
+        return gta3sc::syntax::Sema(gta3sc::LinkedIR<gta3sc::ParserIR>(),
                                     symrepo, cmdman, diagman, arena);
     }
 
@@ -55,6 +55,14 @@ protected:
     gta3sc::SymbolRepository symrepo;
     gta3sc::syntax::Sema sema;
 };
+}
+
+namespace
+{
+auto size(const gta3sc::LinkedIR<gta3sc::SemaIR>& ir)
+{
+    return std::distance(ir.begin(), ir.end());
+}
 }
 
 TEST_CASE_FIXTURE(SemaFixture, "sema valid variables declarations")
@@ -357,7 +365,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema valid command")
     build_sema("WAIT 98\nsome_label: print_HELP hello\n");
     auto ir = sema.validate();
     REQUIRE(ir != std::nullopt);
-    REQUIRE(ir->size() == 2);
+    REQUIRE(size(*ir) == 2);
 
     REQUIRE(ir->front().label == nullptr);
     REQUIRE(ir->front().command != nullptr);
@@ -379,7 +387,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema valid NOTed command")
     build_sema("IF NOT WAIT 0\nENDIF");
     auto ir = sema.validate();
     REQUIRE(ir != std::nullopt);
-    REQUIRE(ir->size() == 3);
+    REQUIRE(size(*ir) == 3);
 
     const auto& wait = *std::next(ir->begin());
     REQUIRE(wait.label == nullptr);
@@ -395,7 +403,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INT parameter")
         build_sema("VAR_INT x\nSET_VAR_INT x 100\n");
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 2);
+        REQUIRE(size(*ir) == 2);
 
         const auto& command_1 = *std::next(ir->begin(), 1)->command;
         REQUIRE(command_1.args.size() == 2);
@@ -426,7 +434,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema FLOAT parameter")
         build_sema("VAR_FLOAT x\nSET_VAR_FLOAT x 1.0");
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 2);
+        REQUIRE(size(*ir) == 2);
         REQUIRE(ir->back().command->args.size() == 2);
         REQUIRE(*ir->back().command->args[1]->as_float() == 1.0);
     }
@@ -458,7 +466,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema TEXT_LABEL parameter")
                    "PRINT_HELP $$x\n");
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 4);
+        REQUIRE(size(*ir) == 4);
 
         const auto& second = *std::prev(ir->end(), 3);
         const auto& third = *std::prev(ir->end(), 2);
@@ -523,7 +531,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema LABEL parameter")
         build_sema("laBel1: GOTO lAbel1");
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 1);
+        REQUIRE(size(*ir) == 1);
         REQUIRE(ir->front().label == symrepo.lookup_label("LABEL1"));
         REQUIRE(ir->front().command != nullptr);
         REQUIRE(ir->front().command->args[0]->as_label() == ir->front().label);
@@ -534,7 +542,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema LABEL parameter")
         build_sema("ON: GOTO ON");
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 1);
+        REQUIRE(size(*ir) == 1);
         REQUIRE(ir->front().label == symrepo.lookup_label("ON"));
         REQUIRE(ir->front().command != nullptr);
         REQUIRE(ir->front().command->args[0]->as_label() == ir->front().label);
@@ -562,7 +570,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema STRING parameter")
         build_sema("SAVE_STRING_TO_DEBUG_FILE \"Hello World\"");
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 1);
+        REQUIRE(size(*ir) == 1);
         REQUIRE(ir->front().command != nullptr);
         REQUIRE(ir->front().command->args.size() == 1);
         REQUIRE(*ir->front().command->args[0]->as_string() == "Hello World"sv);
@@ -585,7 +593,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema VAR_INT parameter")
         build_sema("{\nVAR_INT g1 $g2\nSET_VAR_INT $g2 1\nSET_VAR_INT g1 1\n}");
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 5);
+        REQUIRE(size(*ir) == 5);
         const auto& set_var_int_1 = *std::prev(ir->end(), 3);
         const auto& set_var_int_2 = *std::prev(ir->end(), 2);
         REQUIRE(set_var_int_1.command->args.size() == 2);
@@ -633,7 +641,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema LVAR_INT parameter")
                 "{\nLVAR_INT l1 $l2\nSET_LVAR_INT $l2 1\nSET_LVAR_INT l1 1\n}");
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 5);
+        REQUIRE(size(*ir) == 5);
         const auto& set_lvar_int_1 = *std::prev(ir->end(), 3);
         const auto& set_lvar_int_2 = *std::prev(ir->end(), 2);
         REQUIRE(set_lvar_int_1.command->args.size() == 2);
@@ -681,7 +689,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema VAR_FLOAT parameter")
                    "g1 1.0\n}");
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 5);
+        REQUIRE(size(*ir) == 5);
         const auto& set_var_flt_1 = *std::prev(ir->end(), 3);
         const auto& set_var_flt_2 = *std::prev(ir->end(), 2);
         REQUIRE(set_var_flt_1.command->args.size() == 2);
@@ -729,7 +737,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema LVAR_FLOAT parameter")
                    "1.0\nSET_LVAR_FLOAT l1 1.0\n}");
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 5);
+        REQUIRE(size(*ir) == 5);
         const auto& set_lvar_flt_1 = *std::prev(ir->end(), 3);
         const auto& set_lvar_flt_2 = *std::prev(ir->end(), 2);
         REQUIRE(set_lvar_flt_1.command->args.size() == 2);
@@ -777,7 +785,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema VAR_TEXT_LABEL parameter")
                    "\nSET_VAR_TEXT_LABEL g1 TEXT\n}");
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 5);
+        REQUIRE(size(*ir) == 5);
         const auto& set_var_1 = *std::prev(ir->end(), 3);
         const auto& set_var_2 = *std::prev(ir->end(), 2);
         REQUIRE(set_var_1.command->args.size() == 2);
@@ -825,7 +833,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema LVAR_TEXT_LABEL parameter")
                    "\nSET_LVAR_TEXT_LABEL l1 TEXT\n}");
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 5);
+        REQUIRE(size(*ir) == 5);
         const auto& set_lvar_1 = *std::prev(ir->end(), 3);
         const auto& set_lvar_2 = *std::prev(ir->end(), 2);
         REQUIRE(set_lvar_1.command->args.size() == 2);
@@ -875,7 +883,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema OUTPUT_INT parameter")
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
 
-        REQUIRE(ir->size() == 6);
+        REQUIRE(size(*ir) == 6);
 
         auto arg1 = std::prev(ir->end(), 3)->command->args[2];
         auto arg2 = std::prev(ir->end(), 2)->command->args[2];
@@ -924,7 +932,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema OUTPUT_FLOAT parameter")
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
 
-        REQUIRE(ir->size() == 6);
+        REQUIRE(size(*ir) == 6);
 
         auto arg1 = std::prev(ir->end(), 3)->command->args[2];
         auto arg2 = std::prev(ir->end(), 2)->command->args[2];
@@ -970,7 +978,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_INT parameter")
         build_sema("{\nVAR_INT x\nLVAR_INT y\nWAIT x\nWAIT y\nWAIT 8\n}");
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 7);
+        REQUIRE(size(*ir) == 7);
 
         auto arg_1 = std::next(ir->begin(), 3)->command->args[0];
         auto arg_2 = std::next(ir->begin(), 4)->command->args[0];
@@ -1000,7 +1008,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_INT parameter")
                    "CREATE_CHAR ON mEDic 0.0 0.0 0.0 x\n}");
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 8);
+        REQUIRE(size(*ir) == 8);
 
         const auto& wait_off = *std::next(ir->begin(), 2)->command;
         const auto& wait_on = *std::next(ir->begin(), 3)->command;
@@ -1087,7 +1095,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_FLOAT parameter")
                    "GENERATE_RANDOM_FLOAT_IN_RANGE 0.0 2.0 y\n}");
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 6);
+        REQUIRE(size(*ir) == 6);
 
         auto arg_1 = std::next(ir->begin(), 3)->command->args[0];
         auto arg_2 = std::next(ir->begin(), 3)->command->args[1];
@@ -1158,7 +1166,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_OPT parameter")
                    "label1: START_NEW_SCRIPT label1 gi gf li lf 123 1.0 ON\n}");
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 13);
+        REQUIRE(size(*ir) == 13);
 
         auto cmd = std::prev(ir->end(), 2)->command;
         REQUIRE(cmd->args.size() == 8);
@@ -1251,7 +1259,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema validate subscript")
                    "SET_VAR_INT y 3\n");
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 5);
+        REQUIRE(size(*ir) == 5);
 
         auto var_ref_1
                 = std::prev(ir->end(), 4)->command->args[0]->as_var_ref();
@@ -1438,7 +1446,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema alternators")
         build_sema("VAR_TEXT_LABEL x\nSET x y\nSET x $x\n");
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 3);
+        REQUIRE(size(*ir) == 3);
 
         const auto& command_1 = *std::next(ir->begin(), 1)->command;
         const auto& command_2 = *std::next(ir->begin(), 2)->command;
@@ -1460,7 +1468,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema alternators")
         build_sema("VAR_INT x\nSET x ON\nSET x CHEETAH");
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(ir->size() == 3);
+        REQUIRE(size(*ir) == 3);
 
         const auto& command_1 = *std::next(ir->begin(), 1)->command;
         const auto& command_2 = *std::next(ir->begin(), 2)->command;

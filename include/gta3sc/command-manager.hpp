@@ -116,7 +116,7 @@ public:
     public:
         /// An iterator that iterates on alternative commands.
         using const_iterator
-                = util::IntrusiveListForwardIterator<const AlternativeDef>;
+                = util::ConstIntrusiveListForwardIterator<AlternativeDef>;
 
         /// Returns the front iterator for the alternatives in this alternator.
         auto begin() const -> const_iterator;

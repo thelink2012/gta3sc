@@ -1,40 +1,34 @@
 #pragma once
-#include <gta3sc/util/arena-allocator.hpp>
-
-// XXX: This data-structure is still under heavy work! Semantics are
-// not very well defined. Implementation neither. It should probably
-// be rewritten and properly documented once we have enough experience
-// with its usage.
-//
-// Semantics first, implementation later.
-
-#include <list>
+#include <gta3sc/util/intrusive-list.hpp>
 
 namespace gta3sc
 {
-template<typename T>
-class LinkedIR
+/// A container of IR instructions.
+///
+/// This is an intrusive doubly linked list where each element is an IR
+/// instruction. See `util::IntrusiveList` for more details.
+template<typename IR>
+class LinkedIR : public util::IntrusiveList<IR>
 {
 private:
-    using list_type = std::list<arena_ptr<T>, ArenaAllocator<arena_ptr<T>>>;
-    list_type list;
+    using super_type = util::IntrusiveList<IR>;
 
 public:
-    struct iterator;
-    using size_type = typename list_type::size_type;
-    using arena_pointer = arena_ptr<T>;
-    using reference = T&;
-    using pointer = T*;
-    using value_type = T;
-
-    using difference_type = typename list_type::difference_type;
+    using typename super_type::const_iterator;
+    using typename super_type::const_pointer;
+    using typename super_type::const_reference;
+    using typename super_type::const_reverse_iterator;
+    using typename super_type::difference_type;
+    using typename super_type::iterator;
+    using typename super_type::pointer;
+    using typename super_type::reference;
+    using typename super_type::reverse_iterator;
+    using typename super_type::size_type;
+    using typename super_type::value_type;
 
 public:
-    explicit LinkedIR(std::initializer_list<arena_pointer> init,
-                      ArenaMemoryResource& arena) :
-        list(init, &arena)
-    {}
-    explicit LinkedIR(ArenaMemoryResource& arena) : list(&arena) {}
+    LinkedIR() = default;
+    LinkedIR(std::initializer_list<pointer> ilist) : super_type(ilist) {}
 
     LinkedIR(const LinkedIR&) = delete;
     LinkedIR& operator=(const LinkedIR&) = delete;
@@ -42,109 +36,24 @@ public:
     LinkedIR(LinkedIR&&) = default;
     LinkedIR& operator=(LinkedIR&&) = default;
 
-    iterator begin() noexcept { return iterator(list.begin()); }
-    iterator end() noexcept { return iterator(list.end()); }
-
-    bool empty() const noexcept { return list.empty(); }
-
-    // Hmm should this be O(1) really? If this becomes an intrusive list, we
-    // cannot guarante O(1) without nasty tricks.
-    // Please rename the method if this becomes O(n).
-    size_type size() const noexcept { return list.size(); }
-
-    void push_front(arena_pointer ir) { return list.push_front(ir); }
-
-    void push_back(arena_pointer ir) { return list.push_back(ir); }
-
-    reference front() { return *list.front(); }
-    reference back() { return *list.back(); }
-
-    void splice(iterator pos, LinkedIR&& other)
+    /// Moves the elements of `other` into the front of this.
+    void splice_front(LinkedIR&& other)
     {
-        list.splice(pos.it, std::move(other.list));
+        this->splice(this->begin(), std::move(other));
     }
 
-    void insert(iterator pos, arena_pointer other)
+    /// Moves the element of `other` into the back of this.
+    void splice_back(LinkedIR&& other)
     {
-        list.insert(pos.it, other);
+        this->splice(this->end(), std::move(other));
     }
 
-    void splice_front(LinkedIR&& other) { splice(begin(), std::move(other)); }
-
-    void splice_back(LinkedIR&& other) { splice(end(), std::move(other)); }
-
-    iterator erase(iterator pos) { return iterator(list.erase(pos.it)); }
-
-    // if the list becomes intrusive this method should be on the node
+    /// Replaces the element at the specified `pos` by `other`.
     //
-    // THIS WASTES MEMORY, THE list_type::Node STAYS IN MEMORY
-    // this is not a problem with intrusive lists!
-    arena_pointer detach(iterator pos)
+    /// Returns the iterator to `other`.
+    auto replace(iterator pos, reference other) -> iterator
     {
-        auto ptr = std::addressof(*pos);
-        erase(pos);
-        return ptr;
+        return this->insert(this->erase(pos), other);
     }
-
-    /*
-    arena_pointer replace(iterator pos, LinkedIR&& other)
-    {
-        splice(erase(pos), std::move(other));
-    }
-
-    arena_pointer replace(iterator pos, arena_pointer other)
-    {
-        insert(erase(pos), other);
-    }
-    */
-
-public:
-    struct iterator
-    {
-    public:
-        using difference_type = typename list_type::iterator::difference_type;
-        using iterator_category =
-                typename list_type::iterator::iterator_category;
-        using reference = LinkedIR::reference;
-        using pointer = LinkedIR::pointer;
-        using value_type = LinkedIR::value_type;
-
-        reference operator*() { return **it; }
-        arena_pointer operator->() { return *it; }
-
-        iterator& operator++()
-        {
-            ++it;
-            return *this;
-        }
-        iterator operator++(int)
-        {
-            auto temp = *this;
-            ++(*this);
-            return temp;
-        }
-
-        iterator& operator--()
-        {
-            --it;
-            return *this;
-        }
-        iterator operator--(int)
-        {
-            auto temp = *this;
-            --(*this);
-            return temp;
-        }
-
-        bool operator==(const iterator& rhs) const { return it == rhs.it; }
-        bool operator!=(const iterator& rhs) const { return !(*this == rhs); }
-
-    protected:
-        typename list_type::iterator it;
-
-        explicit iterator(typename list_type::iterator it) : it(it) {}
-
-        friend class LinkedIR;
-    };
 };
 }
