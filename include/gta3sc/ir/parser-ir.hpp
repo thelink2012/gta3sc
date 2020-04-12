@@ -5,9 +5,11 @@
 #include <gta3sc/adt/span.hpp>
 #include <gta3sc/sourceman.hpp>
 #include <gta3sc/util/arena-allocator.hpp>
-#include <gta3sc/util/intrusive-list.hpp>
+#include <gta3sc/util/intrusive-list-node.hpp>
 #include <string_view>
 #include <variant>
+
+// TODO move impl to a cpp file and clear up includes
 
 namespace gta3sc
 {
