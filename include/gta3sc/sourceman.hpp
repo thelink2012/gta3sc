@@ -14,53 +14,65 @@ enum class SourceLocation : uint32_t
 { // strong typedef
 };
 
-inline SourceLocation operator+(SourceLocation lhs, std::ptrdiff_t rhs)
+inline bool operator==(SourceLocation lhs, SourceLocation rhs)
+{
+    return static_cast<uint32_t>(lhs) == static_cast<uint32_t>(rhs);
+}
+
+inline bool operator!=(SourceLocation lhs, SourceLocation rhs)
+{
+    return !(lhs == rhs);
+}
+
+inline auto operator+(SourceLocation lhs, std::ptrdiff_t rhs) -> SourceLocation
 {
     return SourceLocation{
             static_cast<uint32_t>(static_cast<uint32_t>(lhs) + rhs)};
 }
 
-inline SourceLocation& operator+=(SourceLocation& lhs, std::ptrdiff_t rhs)
+inline auto operator+=(SourceLocation& lhs, std::ptrdiff_t rhs)
+        -> SourceLocation&
 {
     lhs = lhs + rhs;
     return lhs;
 }
 
-inline SourceLocation operator-(SourceLocation lhs, std::ptrdiff_t rhs)
+inline auto operator-(SourceLocation lhs, std::ptrdiff_t rhs) -> SourceLocation
 {
     return SourceLocation{
             static_cast<uint32_t>(static_cast<uint32_t>(lhs) - rhs)};
 }
 
-inline SourceLocation& operator-=(SourceLocation& lhs, std::ptrdiff_t rhs)
+inline auto operator-=(SourceLocation& lhs, std::ptrdiff_t rhs)
+        -> SourceLocation&
 {
     lhs = lhs - rhs;
     return lhs;
 }
 
-inline std::ptrdiff_t operator-(SourceLocation lhs, SourceLocation rhs)
+inline auto operator-(SourceLocation lhs, SourceLocation rhs) -> std::ptrdiff_t
 {
     return static_cast<std::ptrdiff_t>(lhs) - static_cast<std::ptrdiff_t>(rhs);
 }
 
-inline SourceLocation& operator++(SourceLocation& lhs)
+inline auto operator++(SourceLocation& lhs) -> SourceLocation&
 {
     lhs += 1;
     return lhs;
 }
 
-inline SourceLocation& operator--(SourceLocation& lhs)
+inline auto operator--(SourceLocation& lhs) -> SourceLocation&
 {
     lhs -= 1;
     return lhs;
 }
 
-inline SourceLocation operator++(const SourceLocation& lhs, int)
+inline auto operator++(const SourceLocation& lhs, int) -> SourceLocation
 {
     return lhs + 1;
 }
 
-inline SourceLocation operator--(const SourceLocation& lhs, int)
+inline auto operator--(const SourceLocation& lhs, int) -> SourceLocation
 {
     return lhs - 1;
 }
@@ -94,6 +106,13 @@ struct SourceRange
         count = std::min(count, this->size() - offset);
         return SourceRange(this->begin + offset, count);
     }
+
+    bool operator==(const SourceRange& rhs) const
+    {
+        return begin == rhs.begin && end == rhs.end;
+    }
+
+    bool operator!=(const SourceRange& rhs) const { return !(*this == rhs); }
 };
 
 class SourceFile;

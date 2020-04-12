@@ -90,6 +90,10 @@ public:
                               ArenaMemoryResource*)
             -> arena_ptr<const Argument>;
 
+    /// Compares whether a given IR is equivalent to another IR.
+    bool operator==(const ParserIR&) const;
+    bool operator!=(const ParserIR&) const;
+
     struct Command
     {
     public:
@@ -100,6 +104,10 @@ public:
 
         /// Please use `ParserIR::Builder::build_command`.
         Command() = delete;
+
+        /// Compares whether a given command is equivalent to another command.
+        bool operator==(const Command&) const;
+        bool operator!=(const Command&) const;
 
     protected:
         explicit Command(SourceRange source, std::string_view name,
@@ -128,6 +136,10 @@ public:
         /// The name of the label is automatically made uppercase.
         static auto create(std::string_view name, SourceRange source,
                            ArenaMemoryResource*) -> arena_ptr<const LabelDef>;
+
+        /// Compares whether a given label definition is equivalent to another.
+        bool operator==(const LabelDef&) const;
+        bool operator!=(const LabelDef&) const;
 
     private:
         explicit LabelDef(SourceRange source, std::string_view name) :
@@ -165,8 +177,13 @@ public:
         auto as_string() const -> const std::string_view*;
 
         /// Returns whether the value of this is equal the value of another
-        /// argument.
+        /// argument (i.e. same as `operator==` without comparing source
+        /// location).
         bool is_same_value(const Argument& other) const;
+
+        /// Compares whether a given argument is equivalent to another.
+        bool operator==(const Argument&) const;
+        bool operator!=(const Argument&) const;
 
     protected:
         enum class IdentifierTag
@@ -362,6 +379,41 @@ inline auto ParserIR::create_string(std::string_view string, SourceRange source,
             const Argument(Argument::StringTag{}, string, source);
 }
 
+inline bool ParserIR::operator==(const ParserIR& other) const
+{
+    if(!!this->label != !!other.label)
+        return false;
+    if(!!this->command != !!other.command)
+        return false;
+
+    if(this->label && *this->label != *other.label)
+        return false;
+
+    if(this->command && *this->command != *other.command)
+        return false;
+
+    return true;
+}
+
+inline bool ParserIR::operator!=(const ParserIR& other) const
+{
+    return !(*this == other);
+}
+
+inline bool ParserIR::Command::operator==(const Command& other) const
+{
+    return this->source == other.source && this->name == other.name
+           && this->not_flag == other.not_flag
+           && std::equal(this->args.begin(), this->args.end(),
+                         other.args.begin(), other.args.end(),
+                         [](const auto& a, const auto& b) { return *a == *b; });
+}
+
+inline bool ParserIR::Command::operator!=(const Command& other) const
+{
+    return !(*this == other);
+}
+
 inline auto ParserIR::LabelDef::create(std::string_view name,
                                        SourceRange source,
                                        ArenaMemoryResource* arena)
@@ -369,6 +421,16 @@ inline auto ParserIR::LabelDef::create(std::string_view name,
 {
     return new(*arena, alignof(LabelDef))
             const LabelDef{source, util::allocate_string_upper(name, *arena)};
+}
+
+inline bool ParserIR::LabelDef::operator==(const LabelDef& other) const
+{
+    return this->source == other.source && this->name == other.name;
+}
+
+inline bool ParserIR::LabelDef::operator!=(const LabelDef& other) const
+{
+    return !(*this == other);
 }
 
 inline auto ParserIR::Argument::as_integer() const -> const int32_t*
@@ -405,6 +467,16 @@ inline auto ParserIR::Argument::as_string() const -> const std::string_view*
 inline bool ParserIR::Argument::is_same_value(const Argument& other) const
 {
     return this->value == other.value;
+}
+
+inline bool ParserIR::Argument::operator==(const Argument& other) const
+{
+    return this->source == other.source && this->is_same_value(other);
+}
+
+inline bool ParserIR::Argument::operator!=(const Argument& other) const
+{
+    return !(*this == other);
 }
 
 inline auto ParserIR::Builder::label(arena_ptr<const LabelDef> label_ptr)

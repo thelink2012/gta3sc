@@ -7,6 +7,11 @@
 #include <ostream>
 #include <queue>
 
+// FIXME I don't feel it's good to include this here but are doing so
+// in order to pretty print
+#include <gta3sc/ir/linked-ir.hpp>
+#include <gta3sc/ir/parser-ir.hpp>
+
 namespace gta3sc::test::syntax
 {
 class SyntaxFixture
@@ -49,6 +54,7 @@ protected:
 
 namespace gta3sc
 {
+// TODO can we improve this using internal methods?
 inline std::ostream& operator<<(std::ostream& os, const Diag& message)
 {
     os << "Diag(" << static_cast<uint32_t>(message) << ")";
@@ -68,6 +74,69 @@ inline bool operator==(const Diagnostic::Arg& lhs, std::string rhs)
 inline bool operator==(const Diagnostic::Arg& lhs, std::vector<std::string> rhs)
 {
     return lhs == gta3sc::Diagnostic::Arg(std::move(rhs));
+}
+}
+
+namespace gta3sc
+{
+// TODO improve these by having std::formatter specializations on lib
+
+inline std::ostream& operator<<(std::ostream& os, const ParserIR::Argument& arg)
+{
+    if(const int* value = arg.as_integer())
+        os << *value;
+    else if(const float* value = arg.as_float())
+        os << *value;
+    else if(const auto* value = arg.as_identifier())
+        os << *value;
+    else if(const auto* value = arg.as_filename())
+        os << *value;
+    else if(const auto* value = arg.as_string())
+        os << std::quoted(*value);
+    else
+        assert(false);
+    return os;
+}
+
+inline std::ostream& operator<<(std::ostream& os,
+                                const ParserIR::LabelDef& label_def)
+{
+    os << label_def.name << ':';
+    return os;
+}
+
+inline std::ostream& operator<<(std::ostream& os,
+                                const ParserIR::Command& command)
+{
+    if(command.not_flag)
+        os << "NOT ";
+    os << command.name;
+    for(auto it = command.args.begin(); it != command.args.end(); ++it)
+        os << ' ' << **it;
+    return os;
+}
+
+inline std::ostream& operator<<(std::ostream& os, const ParserIR& ir)
+{
+    if(ir.label)
+    {
+        os << *ir.label;
+        if(ir.command)
+            os << ' ';
+    }
+
+    if(ir.command)
+        os << *ir.command;
+
+    return os;
+}
+
+inline std::ostream& operator<<(std::ostream& os,
+                                const LinkedIR<ParserIR>& ir_list)
+{
+    for(auto it = ir_list.begin(); it != ir_list.end(); ++it)
+        os << *it << '\n';
+    return os;
 }
 }
 

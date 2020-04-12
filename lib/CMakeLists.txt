@@ -3,10 +3,12 @@ add_library(gta3sc
   diagnostics.cpp
   sourceman.cpp
   ir/symbol-table.cpp
+  util/name-generator.cpp
   syntax/preprocessor.cpp
   syntax/scanner.cpp
   syntax/parser.cpp
   syntax/sema.cpp
+  syntax/lowering/repeat-stmt-rewriter.cpp
 )
 target_compile_features(gta3sc PUBLIC cxx_std_17)
 target_include_directories(gta3sc
