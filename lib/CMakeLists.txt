@@ -2,6 +2,7 @@ add_library(gta3sc
   command-manager.cpp
   diagnostics.cpp
   sourceman.cpp
+  ir/parser-ir.cpp
   ir/symbol-table.cpp
   util/name-generator.cpp
   syntax/preprocessor.cpp
