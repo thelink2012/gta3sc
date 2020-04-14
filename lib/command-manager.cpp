@@ -1,5 +1,8 @@
 #include <gta3sc/command-manager.hpp>
 
+// FIXME none of the insertion commands here handle the case of the string
+// key being lowercase, which shouldn't reinsert the command.
+
 namespace gta3sc
 {
 // Iterator for the list of string constants stored in the constants map.

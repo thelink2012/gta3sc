@@ -2060,3 +2060,79 @@ TEST_CASE_FIXTURE(SemaFixture, "sema used objects")
         REQUIRE(!symrepo.lookup_used_object("OTHER_LEVEL_MODEL"));
     }
 }
+
+TEST_CASE_FIXTURE(SemaFixture, "local timers")
+{
+    SUBCASE("successful timer creation")
+    {
+        build_sema("{\n}");
+        REQUIRE(sema.validate() != std::nullopt);
+
+        const auto timera = symrepo.lookup_var("TIMERA", 1);
+        const auto timerb = symrepo.lookup_var("TIMERB", 1);
+
+        REQUIRE(timera != nullptr);
+        REQUIRE(timerb != nullptr);
+
+        SUBCASE("timers are not arrays")
+        {
+            REQUIRE(!timera->is_array());
+            REQUIRE(!timerb->is_array());
+        }
+
+        SUBCASE("timers are integers")
+        {
+            REQUIRE(timera->type == gta3sc::SymVariable::Type::INT);
+            REQUIRE(timera->type == gta3sc::SymVariable::Type::INT);
+        }
+
+        SUBCASE("timers use the first variable indices")
+        {
+            REQUIRE(timera->id == 0);
+            REQUIRE(timerb->id == 1);
+        }
+    }
+
+    SUBCASE("timers do not exist in global scope")
+    {
+        build_sema("{\n}");
+        REQUIRE(sema.validate() != std::nullopt);
+        REQUIRE(symrepo.lookup_var("TIMERA") == nullptr);
+        REQUIRE(symrepo.lookup_var("TIMERB") == nullptr);
+    }
+
+    SUBCASE("cannot declare global variable with name of timers")
+    {
+        build_sema("VAR_INT timera timerb");
+        REQUIRE(sema.validate() == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::duplicate_var_timer);
+        REQUIRE(consume_diag().message == gta3sc::Diag::duplicate_var_timer);
+    }
+
+    SUBCASE("cannot declare local variable with name of timers")
+    {
+        build_sema("{\nLVAR_INT timera timerb\n}");
+        REQUIRE(sema.validate() == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::duplicate_var_timer);
+        REQUIRE(consume_diag().message == gta3sc::Diag::duplicate_var_timer);
+    }
+
+    SUBCASE("timer ids are at the end of the scope")
+    {
+        build_sema("{\nLVAR_INT x\n}");
+        REQUIRE(sema.validate() != std::nullopt);
+
+        const auto timera = symrepo.lookup_var("TIMERA", 1);
+        const auto timerb = symrepo.lookup_var("TIMERB", 1);
+        const auto x = symrepo.lookup_var("X", 1);
+
+        REQUIRE(x != nullptr);
+        REQUIRE(x->id == 0);
+
+        REQUIRE(timera != nullptr);
+        REQUIRE(timera->id == 1);
+
+        REQUIRE(timerb != nullptr);
+        REQUIRE(timerb->id == 2);
+    }
+}

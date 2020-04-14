@@ -65,6 +65,7 @@ enum class Diag
     duplicate_var_string_constant,
     duplicate_label,
     duplicate_script_name,
+    duplicate_var_timer,
     var_decl_outside_of_scope,
     var_decl_subscript_must_be_literal,
     var_decl_subscript_must_be_nonzero,

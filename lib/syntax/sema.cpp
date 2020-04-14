@@ -9,6 +9,9 @@ namespace gta3sc::syntax
 using ParamType = CommandManager::ParamType;
 using EntityId = CommandManager::EntityId;
 
+static constexpr std::string_view varname_timera = "TIMERA";
+static constexpr std::string_view varname_timerb = "TIMERB";
+
 auto Sema::validate() -> std::optional<LinkedIR<SemaIR>>
 {
     assert(!ran_analysis);
@@ -23,6 +26,7 @@ auto Sema::validate() -> std::optional<LinkedIR<SemaIR>>
 bool Sema::discover_declarations_pass()
 {
     assert(report_count == 0);
+    SourceRange scope_enter_source{};
     this->current_scope = -1;
 
     for(auto& line : parser_ir)
@@ -38,6 +42,7 @@ bool Sema::discover_declarations_pass()
             {
                 assert(current_scope == -1);
                 this->current_scope = symrepo->allocate_scope();
+                scope_enter_source = line.command->source;
 
                 // We need the index of the first local scope in order to
                 // enumerate scopes during `check_semantics_pass`.
@@ -49,7 +54,24 @@ bool Sema::discover_declarations_pass()
             else if(line.command->name == "}"sv)
             {
                 assert(current_scope != -1);
+
+                // Instead of inserting the timer variable into the symbol table
+                // as the scope is activated, we do it just before deactivation.
+                // This way, the id of the variables are the last ones in the
+                // scope, making the placement of timers more intuitive.
+
+                const auto [_, inserted_timera] = symrepo->insert_var(
+                        varname_timera, current_scope, SymVariable::Type::INT,
+                        std::nullopt, scope_enter_source);
+
+                const auto [__, inserted_timerb] = symrepo->insert_var(
+                        varname_timerb, current_scope, SymVariable::Type::INT,
+                        std::nullopt, scope_enter_source);
+
+                assert(inserted_timera && inserted_timerb);
+
                 this->current_scope = -1;
+                scope_enter_source = SourceRange{};
             }
             else if(line.command->name == "VAR_INT"sv)
             {
@@ -785,6 +807,11 @@ bool Sema::validate_target_scope_vars(SemaIR::Argument** begin,
     if(num_target_vars == 0)
         return true;
 
+    const auto target_scope_timera = symrepo->lookup_var(varname_timera,
+                                                         target_scope_id);
+    const auto target_scope_timerb = symrepo->lookup_var(varname_timerb,
+                                                         target_scope_id);
+
     // Use a temporary buffer in the arena. This will be unused memory after
     // this function returns, but it's no big deal. It only happens for
     // START_NEW_SCRIPT alike commands and the allocation size is proportional
@@ -794,6 +821,10 @@ bool Sema::validate_target_scope_vars(SemaIR::Argument** begin,
 
     for(auto& [name, lvar] : symrepo->var_tables[target_scope_id])
     {
+        // Do not use timers as target variables.
+        if(lvar == target_scope_timera || lvar == target_scope_timerb)
+            continue;
+
         if(lvar->id < num_target_vars)
             target_vars[lvar->id] = lvar;
     }
@@ -919,9 +950,14 @@ void Sema::declare_variable(const ParserIR::Command& command, ScopeId scope_id_,
         if(subscript)
             subscript_literal = subscript->literal;
 
-        if(auto [_, inserted] = symrepo->insert_var(
-                   var_name, scope_id, type, subscript_literal, arg->source);
-           !inserted)
+        if(var_name == varname_timera || var_name == varname_timerb)
+        {
+            report(var_source, Diag::duplicate_var_timer);
+        }
+        else if(auto [_, inserted] = symrepo->insert_var(
+                        var_name, scope_id, type, subscript_literal,
+                        arg->source);
+                !inserted)
         {
             if(scope_id == 0)
                 report(var_source, Diag::duplicate_var_global);
