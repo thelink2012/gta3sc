@@ -334,6 +334,9 @@ public:
     Builder(Builder&&) = default;
     Builder& operator=(Builder&&) = default;
 
+    /// Builds the command repository.
+    auto build() && -> CommandManager;
+
     /// Behaves the same as `CommandManager::find_command`.
     auto find_command(std::string_view name) const -> const CommandDef*;
 
@@ -438,11 +441,12 @@ public:
     /// Returns the entity identifier and whether insertion took place.
     auto insert_entity_type(std::string_view name) -> std::pair<EntityId, bool>;
 
-protected:
-    friend class CommandManager;
-
+private:
     /// The arena used to allocate definitions.
     ArenaMemoryResource* arena;
+
+protected:
+    friend class CommandManager;
 
     // Maps that are going to be moved to `CommandManager`.
     CommandsMap commands_map;

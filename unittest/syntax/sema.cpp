@@ -15,7 +15,14 @@ class SemaFixture
     , public CommandManagerFixture
 {
 public:
-    SemaFixture() : sema(default_sema()), symrepo(arena) {}
+    SemaFixture() : sema(default_sema()), symrepo(arena)
+    {
+        modelman = ModelManager::Builder(arena)
+                           .insert_model("CHEETAH")
+                           .insert_model("LEVEL_MODEL")
+                           .insert_model("OTHER_LEVEL_MODEL")
+                           .build();
+    }
 
     void build_sema(std::string_view src, bool parser_error = false)
     {
@@ -24,7 +31,7 @@ public:
         {
             REQUIRE(ir != std::nullopt);
             this->sema = gta3sc::syntax::Sema(std::move(*ir), symrepo, cmdman,
-                                              diagman, arena);
+                                              modelman, diagman, arena);
         }
         else
         {
@@ -46,13 +53,14 @@ private:
     auto default_sema() -> gta3sc::syntax::Sema
     {
         return gta3sc::syntax::Sema(gta3sc::LinkedIR<gta3sc::ParserIR>(),
-                                    symrepo, cmdman, diagman, arena);
+                                    symrepo, cmdman, modelman, diagman, arena);
     }
 
     gta3sc::ArenaMemoryResource arena;
 
 protected:
     gta3sc::SymbolRepository symrepo;
+    gta3sc::ModelManager modelman;
     gta3sc::syntax::Sema sema;
 };
 }
@@ -1871,5 +1879,184 @@ TEST_CASE_FIXTURE(SemaFixture, "sema hardcoded START_NEW_SCRIPT")
                    "}\n");
         REQUIRE(sema.validate() == std::nullopt);
         CHECK(consume_diag().message == gta3sc::Diag::var_entity_type_mismatch);
+    }
+}
+
+TEST_CASE_FIXTURE(SemaFixture, "sema used objects")
+{
+    const auto defaultmodel_enum
+            = cmdman.find_enumeration("DEFAULTMODEL").value();
+
+    SUBCASE("DEFAULTMODEL has precedence over level model")
+    {
+        build_sema("VAR_INT x\nCREATE_OBJECT CHEETAH 0.0 0.0 0.0 x");
+
+        auto ir = sema.validate();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(size(*ir) == 2);
+
+        CHECK(cmdman.find_constant(defaultmodel_enum, "CHEETAH"));
+        CHECK(modelman.find_model("CHEETAH") != nullptr);
+
+        REQUIRE(ir->back().command);
+        REQUIRE(ir->back().command->args.size() == 5);
+        REQUIRE(!ir->back().command->args[0]->as_used_object());
+        REQUIRE(ir->back().command->args[0]->as_string_constant());
+        REQUIRE(ir->back().command->args[0]->as_string_constant()->enum_id
+                == defaultmodel_enum);
+        REQUIRE(ir->back().command->args[0]->as_string_constant()->value
+                == cmdman.find_constant(defaultmodel_enum, "CHEETAH")->value);
+
+        REQUIRE(!symrepo.lookup_used_object("CHEETAH"));
+    }
+
+    SUBCASE("level model has precedence over variable reference")
+    {
+        build_sema("VAR_INT LEVEL_MODEL\n"
+                   "CREATE_OBJECT LEVEL_MODEL 0.0 0.0 0.0 LEVEL_MODEL");
+
+        auto ir = sema.validate();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(size(*ir) == 2);
+
+        CHECK(modelman.find_model("LEVEL_MODEL") != nullptr);
+
+        REQUIRE(ir->back().command);
+        REQUIRE(ir->back().command->args.size() == 5);
+        REQUIRE(!ir->back().command->args[0]->as_string_constant());
+        REQUIRE(ir->back().command->args[0]->as_used_object());
+        REQUIRE(ir->back().command->args[0]->as_used_object()
+                == symrepo.lookup_used_object("LEVEL_MODEL"));
+
+        REQUIRE(symrepo.lookup_used_object("LEVEL_MODEL")->id == 0);
+    }
+
+    SUBCASE("variable may be used as argument to object model param")
+    {
+        build_sema("VAR_INT x\n"
+                   "CREATE_OBJECT x 0.0 0.0 0.0 x");
+
+        auto ir = sema.validate();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(size(*ir) == 2);
+
+        CHECK(modelman.find_model("X") == nullptr);
+
+        REQUIRE(ir->back().command);
+        REQUIRE(ir->back().command->args.size() == 5);
+        REQUIRE(ir->back().command->args[0]->as_var_ref());
+        REQUIRE(ir->back().command->args[0]->as_var_ref()->def
+                == symrepo.lookup_var("X"));
+
+        REQUIRE(symrepo.lookup_used_object("X") == nullptr);
+    }
+
+    SUBCASE("used object model must be known to exist")
+    {
+        build_sema("VAR_INT x\nCREATE_OBJECT NOT_LEVEL_MODEL 0.0 0.0 0.0 x");
+        REQUIRE(sema.validate() == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::undefined_variable);
+    }
+
+    SUBCASE("level model does not affect DEFAULTMODEL params")
+    {
+        build_sema("VAR_INT x\nCREATE_CAR LEVEL_MODEL 0.0 0.0 0.0 x");
+        REQUIRE(sema.validate() == std::nullopt);
+        REQUIRE(consume_diag().message == gta3sc::Diag::undefined_variable);
+    }
+
+    SUBCASE("level models do not affect the namespace of symbols seen by var "
+            "declaration")
+    {
+        build_sema("VAR_INT LEVEL_MODEL");
+        REQUIRE(sema.validate() != std::nullopt);
+        CHECK(modelman.find_model("LEVEL_MODEL") != nullptr);
+    }
+
+    SUBCASE("multiple used objects have different sequential ids (normal)")
+    {
+        build_sema("VAR_INT x\n"
+                   "CREATE_OBJECT LEVEL_MODEL 0.0 0.0 0.0 x\n"
+                   "CREATE_OBJECT OTHER_LEVEL_MODEL 0.0 0.0 0.0 x");
+        auto ir = sema.validate();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(size(*ir) == 3);
+
+        REQUIRE(std::next(ir->begin(), 1)->command);
+        REQUIRE(std::next(ir->begin(), 1)->command->args.size() == 5);
+        REQUIRE(std::next(ir->begin(), 1)->command->args[0]->as_used_object()
+                == symrepo.lookup_used_object("LEVEL_MODEL"));
+
+        REQUIRE(std::next(ir->begin(), 2)->command);
+        REQUIRE(std::next(ir->begin(), 2)->command->args.size() == 5);
+        REQUIRE(std::next(ir->begin(), 2)->command->args[0]->as_used_object()
+                == symrepo.lookup_used_object("OTHER_LEVEL_MODEL"));
+
+        REQUIRE(symrepo.lookup_used_object("LEVEL_MODEL"));
+        REQUIRE(symrepo.lookup_used_object("LEVEL_MODEL")->id == 0);
+        REQUIRE(symrepo.lookup_used_object("OTHER_LEVEL_MODEL"));
+        REQUIRE(symrepo.lookup_used_object("OTHER_LEVEL_MODEL")->id == 1);
+    }
+
+    SUBCASE("multiple used objects have different sequential ids (reversed)")
+    {
+        build_sema("VAR_INT x\n"
+                   "CREATE_OBJECT OTHER_LEVEL_MODEL 0.0 0.0 0.0 x\n"
+                   "CREATE_OBJECT LEVEL_MODEL 0.0 0.0 0.0 x");
+        auto ir = sema.validate();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(size(*ir) == 3);
+
+        REQUIRE(std::next(ir->begin(), 1)->command);
+        REQUIRE(std::next(ir->begin(), 1)->command->args.size() == 5);
+        REQUIRE(std::next(ir->begin(), 1)->command->args[0]->as_used_object()
+                == symrepo.lookup_used_object("OTHER_LEVEL_MODEL"));
+
+        REQUIRE(std::next(ir->begin(), 2)->command);
+        REQUIRE(std::next(ir->begin(), 2)->command->args.size() == 5);
+        REQUIRE(std::next(ir->begin(), 2)->command->args[0]->as_used_object()
+                == symrepo.lookup_used_object("LEVEL_MODEL"));
+
+        REQUIRE(symrepo.lookup_used_object("OTHER_LEVEL_MODEL"));
+        REQUIRE(symrepo.lookup_used_object("OTHER_LEVEL_MODEL")->id == 0);
+        REQUIRE(symrepo.lookup_used_object("LEVEL_MODEL"));
+        REQUIRE(symrepo.lookup_used_object("LEVEL_MODEL")->id == 1);
+    }
+
+    SUBCASE("multiple usages of used object do not define multiple entries in "
+            "symbol table")
+    {
+        build_sema("VAR_INT x\n"
+                   "CREATE_OBJECT LEVEL_MODEL 0.0 0.0 0.0 x\n"
+                   "CREATE_OBJECT LEVEL_MODEL 0.0 0.0 0.0 x\n");
+        auto ir = sema.validate();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(size(*ir) == 3);
+
+        REQUIRE(std::next(ir->begin(), 1)->command);
+        REQUIRE(std::next(ir->begin(), 1)->command->args.size() == 5);
+        REQUIRE(std::next(ir->begin(), 1)->command->args[0]->as_used_object()
+                == symrepo.lookup_used_object("LEVEL_MODEL"));
+
+        REQUIRE(std::next(ir->begin(), 2)->command);
+        REQUIRE(std::next(ir->begin(), 2)->command->args.size() == 5);
+        REQUIRE(std::next(ir->begin(), 2)->command->args[0]->as_used_object()
+                == symrepo.lookup_used_object("LEVEL_MODEL"));
+
+        REQUIRE(symrepo.lookup_used_object("LEVEL_MODEL"));
+        REQUIRE(symrepo.lookup_used_object("LEVEL_MODEL")->id == 0);
+        REQUIRE(symrepo.used_objects.size() == 1);
+    }
+
+    SUBCASE("unused level models is not an used object")
+    {
+        build_sema("VAR_INT x\nCREATE_OBJECT CHEETAH 0.0 0.0 0.0 x");
+        REQUIRE(sema.validate() != std::nullopt);
+
+        CHECK(modelman.find_model("LEVEL_MODEL") != nullptr);
+        CHECK(modelman.find_model("OTHER_LEVEL_MODEL") != nullptr);
+
+        REQUIRE(!symrepo.lookup_used_object("LEVEL_MODEL"));
+        REQUIRE(!symrepo.lookup_used_object("OTHER_LEVEL_MODEL"));
     }
 }

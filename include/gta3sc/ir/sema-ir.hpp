@@ -119,9 +119,9 @@ public:
         const std::variant<int32_t, float, TextLabel, String, VarRef,
                            // TODO observer_ptr<SymFilename>,
                            observer_ptr<SymLabel>,
+                           observer_ptr<SymUsedObject>,
                            // TODO observer_ptr<SymConstantInt>,
                            // TODO observer_ptr<SymConstantFloat>,
-                           // TODO observer_ptr<__HeaderModel>,
                            // TODO observer_ptr<__StreamedScriptConstant>,
                            StringConstant>
                 value;
@@ -130,6 +130,7 @@ public:
 
         auto as_punned_integer() const -> const int32_t*
         {
+            // TODO should this return used objects?
             if(auto value = as_integer())
                 return value;
             else if(auto sconst = as_string_constant())
@@ -179,6 +180,14 @@ public:
         auto as_string_constant() const -> const StringConstant*
         {
             return std::get_if<StringConstant>(&this->value);
+        }
+
+        auto as_used_object() const -> const SymUsedObject*
+        {
+            if(auto uobj = std::get_if<observer_ptr<SymUsedObject>>(
+                       &this->value))
+                return *uobj;
+            return nullptr;
         }
 
     protected:
@@ -262,6 +271,7 @@ public:
                 Argument(Argument::VarRef{var, index}, source);
     }
 
+    // TODO why do we need this overload?
     static auto create_string_constant(CommandManager::EnumId enum_id,
                                        int32_t value, SourceRange source,
                                        ArenaMemoryResource* arena)
@@ -277,6 +287,12 @@ public:
             -> arena_ptr<Argument>
     {
         return create_string_constant(cdef.enum_id, cdef.value, source, arena);
+    }
+
+    static auto create_used_object(SymUsedObject* uobj, SourceRange source,
+                                   ArenaMemoryResource* arena)
+    {
+        return new(*arena, alignof(Argument)) Argument(uobj, source);
     }
 };
 }

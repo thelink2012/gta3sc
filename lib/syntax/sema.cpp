@@ -114,6 +114,9 @@ auto Sema::check_semantics_pass() -> std::optional<LinkedIR<SemaIR>>
     this->command_script_name = cmdman->find_command("SCRIPT_NAME"sv);
     this->command_start_new_script = cmdman->find_command("START_NEW_SCRIPT"sv);
 
+    this->model_enum = cmdman->find_enumeration("MODEL");
+    this->defaultmodel_enum = cmdman->find_enumeration("DEFAULTMODEL");
+
     for(auto& line : parser_ir)
     {
         this->analyzing_var_decl = false;
@@ -344,8 +347,25 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
             }
             else if(arg.as_identifier())
             {
-                if(auto cdef = cmdman->find_constant(param.enum_type,
-                                                     *arg.as_identifier()))
+                std::string_view ident = *arg.as_identifier();
+                if(is_object_param(param))
+                {
+                    if(auto cdef = find_defaultmodel_constant(ident))
+                    {
+                        return SemaIR::create_string_constant(*cdef, arg.source,
+                                                              arena);
+                    }
+                    else if(auto model = modelman->find_model(ident))
+                    {
+                        auto [uobj, _] = symrepo->insert_used_object(
+                                ident, arg.source);
+                        assert(uobj != nullptr);
+                        return SemaIR::create_used_object(uobj, arg.source,
+                                                          arena);
+                    }
+                }
+                else if(auto cdef = cmdman->find_constant(param.enum_type,
+                                                          ident))
                 {
                     return SemaIR::create_string_constant(*cdef, arg.source,
                                                           arena);
@@ -934,6 +954,19 @@ auto Sema::lookup_var_lvar(std::string_view name) const -> SymVariable*
     }
 
     return nullptr;
+}
+
+auto Sema::find_defaultmodel_constant(std::string_view name) const
+        -> const CommandManager::ConstantDef*
+{
+    if(this->defaultmodel_enum)
+        return cmdman->find_constant(*defaultmodel_enum, name);
+    return nullptr;
+}
+
+bool Sema::is_object_param(const CommandManager::ParamDef& param) const
+{
+    return this->model_enum && param.enum_type == *model_enum;
 }
 
 bool Sema::is_gvar_param(ParamType param_type) const

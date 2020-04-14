@@ -1,5 +1,6 @@
 add_library(gta3sc 
   command-manager.cpp
+  model-manager.cpp
   diagnostics.cpp
   sourceman.cpp
   ir/parser-ir.cpp

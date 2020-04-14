@@ -21,15 +21,20 @@ private:
 
         builder.insert_entity_type("CAR");
         builder.insert_entity_type("CHAR");
+        builder.insert_entity_type("OBJECT");
+
         CHECK(builder.find_entity_type("CAR").value_or(EntityId{0})
               != EntityId{0});
         CHECK(builder.find_entity_type("CHAR").value_or(EntityId{0})
+              != EntityId{0});
+        CHECK(builder.find_entity_type("OBJECT").value_or(EntityId{0})
               != EntityId{0});
 
         CHECK(builder.find_enumeration("GLOBAL"));
         builder.insert_enumeration("PEDTYPE");
         builder.insert_enumeration("DEFAULTMODEL");
         builder.insert_enumeration("FADE");
+        builder.insert_enumeration("MODEL"); // special
 
         builder.insert_or_assign_constant(*builder.find_enumeration("GLOBAL"),
                                           "FALSE", 0);
@@ -131,6 +136,15 @@ private:
                      ParamDef{ParamType::INPUT_FLOAT},
                      ParamDef{ParamType::OUTPUT_INT,
                               *builder.find_entity_type("CAR"), EnumId{}}});
+
+        add_command(builder, "CREATE_OBJECT",
+                    {ParamDef{ParamType::INPUT_INT, EntityId{},
+                              *builder.find_enumeration("MODEL")},
+                     ParamDef{ParamType::INPUT_FLOAT},
+                     ParamDef{ParamType::INPUT_FLOAT},
+                     ParamDef{ParamType::INPUT_FLOAT},
+                     ParamDef{ParamType::OUTPUT_INT,
+                              *builder.find_entity_type("OBJECT"), EnumId{}}});
 
         add_command(builder, "DO_FADE",
                     {ParamDef{ParamType::INPUT_INT},

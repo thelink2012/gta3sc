@@ -161,6 +161,11 @@ CommandManager::Builder::Builder(ArenaMemoryResource& arena) : arena(&arena)
     assert(no_entity_type == CommandManager::no_entity_type);
 }
 
+auto CommandManager::Builder::build() && -> CommandManager
+{
+    return CommandManager(std::move(*this));
+}
+
 auto CommandManager::Builder::find_command(std::string_view name) const
         -> const CommandDef*
 {

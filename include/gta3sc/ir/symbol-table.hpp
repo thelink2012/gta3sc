@@ -7,6 +7,8 @@
 #include <unordered_map>
 #include <vector>
 
+// TODO review the constness of stuff here
+
 namespace gta3sc
 {
 class SymbolRepository;
@@ -41,6 +43,14 @@ struct SymVariable
     std::optional<uint16_t> dim; ///< Array dimensions if any.
 
     bool is_array() const { return !!dim; }
+};
+
+/// Represents an used object.
+struct SymUsedObject
+{
+    SourceRange
+            source; ///< The location the object was used for the first time.
+    uint32_t id;    ///< The ordering of this used object (0-indexed).
 };
 
 /// An unordered associative container mapping names to symbols of type `T`.
@@ -92,6 +102,9 @@ public:
     /// The symbol table of labels.
     SymbolTable<SymLabel> label_table;
 
+    /// The symbol table for used objects.
+    SymbolTable<SymUsedObject> used_objects;
+
     /// The symbol table for each scope.
     ///
     /// The table at the i-th index of the vector stores the symbol table
@@ -132,6 +145,11 @@ public:
     /// \return the label or `nullptr` if it does not exist.
     auto lookup_label(std::string_view name) const -> SymLabel*;
 
+    /// Lookups a used object.
+    ///
+    /// \return the used object or `nullptr` if never used.
+    auto lookup_used_object(std::string_view name) const -> SymUsedObject*;
+
     /// Inserts a new variable into a certain scope.
     ///
     /// No insertion takes place if the variable already exists in the
@@ -161,5 +179,17 @@ public:
     ///         any insertion took place.
     auto insert_label(std::string_view name, ScopeId scope_id,
                       SourceRange source) -> std::pair<SymLabel*, bool>;
+
+    /// Inserts an used object into the symbol table.
+    ///
+    /// No insertion takes place if an used object of same name already exists.
+    ///
+    /// \param name the model name of the used object.
+    /// \param source the location the used object was seen.
+    ///
+    /// \return a pair with the used object and a boolean indicating whether
+    ///         any insertion took place.
+    auto insert_used_object(std::string_view name, SourceRange source)
+            -> std::pair<SymUsedObject*, bool>;
 };
 }

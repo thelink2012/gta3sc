@@ -5,6 +5,7 @@
 #include <gta3sc/ir/parser-ir.hpp>
 #include <gta3sc/ir/sema-ir.hpp>
 #include <gta3sc/ir/symbol-table.hpp>
+#include <gta3sc/model-manager.hpp>
 #include <gta3sc/util/arena-allocator.hpp>
 
 namespace gta3sc::syntax
@@ -25,10 +26,11 @@ public:
     /// \param diag a handler to emit diagnostics into.
     /// \param arena the arena that should be used to allocate IR in.
     explicit Sema(LinkedIR<ParserIR> parser_ir, SymbolRepository& symrepo,
-                  const CommandManager& cmdman, DiagnosticHandler& diag,
-                  ArenaMemoryResource& arena) :
+                  const CommandManager& cmdman, const ModelManager& modelman,
+                  DiagnosticHandler& diag, ArenaMemoryResource& arena) :
         parser_ir(std::move(parser_ir)),
         cmdman(&cmdman),
+        modelman(&modelman),
         symrepo(&symrepo),
         diag_(&diag),
         arena(&arena)
@@ -147,6 +149,14 @@ private:
     /// the current local scope.
     auto lookup_var_lvar(std::string_view name) const -> SymVariable*;
 
+    /// Finds a constant in the default model enumeration.
+    auto find_defaultmodel_constant(std::string_view name) const
+            -> const CommandManager::ConstantDef*;
+
+    /// Checks whether the given parameter has an object string constant
+    /// association.
+    bool is_object_param(const CommandManager::ParamDef& param) const;
+
     /// Checks whether a parameter type accepts only global variables.
     bool is_gvar_param(CommandManager::ParamType param_type) const;
 
@@ -191,6 +201,7 @@ private:
     DiagnosticHandler* diag_; // Do not use directly. Please call `report`.
     SymbolRepository* symrepo;
     const CommandManager* cmdman;
+    const ModelManager* modelman;
     LinkedIR<ParserIR> parser_ir;
 
     // The following variables are part of the "state machine" of
@@ -208,6 +219,9 @@ private:
     const CommandManager::AlternatorDef* alternator_set{};
     const CommandManager::CommandDef* command_script_name{};
     const CommandManager::CommandDef* command_start_new_script{};
+
+    std::optional<CommandManager::EnumId> model_enum;
+    std::optional<CommandManager::EnumId> defaultmodel_enum;
 
     /// Set of script names already seen.
     std::vector<std::string_view> seen_script_names;

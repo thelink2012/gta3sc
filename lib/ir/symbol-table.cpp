@@ -28,6 +28,13 @@ auto SymbolRepository::lookup_label(std::string_view name) const -> SymLabel*
     return (it == label_table.end() ? nullptr : it->second);
 }
 
+auto SymbolRepository::lookup_used_object(std::string_view name) const
+        -> SymUsedObject*
+{
+    auto it = used_objects.find(name);
+    return (it == used_objects.end() ? nullptr : it->second);
+}
+
 auto SymbolRepository::insert_var(std::string_view name_, ScopeId scope_id,
                                   SymVariable::Type type,
                                   std::optional<uint16_t> dim,
@@ -58,6 +65,21 @@ auto SymbolRepository::insert_label(std::string_view name_, ScopeId scope_id,
     const auto symbol = new(*arena, alignof(SymLabel))
             SymLabel{source, scope_id};
     const auto [iter, _] = label_table.emplace(name, symbol);
+    return {iter->second, true};
+}
+
+auto SymbolRepository::insert_used_object(std::string_view name_,
+                                          SourceRange source)
+        -> std::pair<SymUsedObject*, bool>
+{
+    if(auto uobj = lookup_used_object(name_))
+        return {uobj, false};
+
+    const auto id = static_cast<uint32_t>(used_objects.size());
+    const auto name = util::allocate_string(name_, *arena);
+    const auto symbol = new(*arena, alignof(SymUsedObject))
+            SymUsedObject{source, id};
+    const auto [iter, _] = used_objects.emplace(name, symbol);
     return {iter->second, true};
 }
 }
