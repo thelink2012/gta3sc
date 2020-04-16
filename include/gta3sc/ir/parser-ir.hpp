@@ -9,8 +9,7 @@
 
 namespace gta3sc
 {
-/// This is an intermediate representation for syntactically
-/// valid GTA3script.
+/// This is an intermediate representation for syntactically valid GTA3script.
 ///
 /// The implication of this being syntatically valid is that e.g.
 /// for every WHILE command, there is a matching ENDWHILE one.
@@ -26,8 +25,11 @@ namespace gta3sc
 /// not be an identifier). The amount of arguments of these commands however
 /// are guaranted to be correct.
 ///
-/// This IR is immutable and preserves source code information such as the
-/// location of each of its identifiers.
+/// This IR is immutable (except for [1]) and preserves source code information
+/// such as the location of each of its identifiers.
+///
+/// [1]: The IR is mostly modelled as an intrusive linked list (see `LinkedIR`)
+/// and the node pointers present in this structure have interior mutability.
 class ParserIR : public util::IntrusiveBidirectionalListNode<ParserIR>
 {
 public:
@@ -37,17 +39,14 @@ public:
     class Builder;
 
 public:
-    arena_ptr<const LabelDef> const label = nullptr;
-    arena_ptr<const Command> const command = nullptr;
+    arena_ptr<const LabelDef> const label{};
+    arena_ptr<const Command> const command{};
 
 public:
     ParserIR() = delete;
 
     ParserIR(const ParserIR&) = delete;
     ParserIR& operator=(const ParserIR&) = delete;
-
-    ParserIR(ParserIR&&) = delete;
-    ParserIR& operator=(ParserIR&&) = delete;
 
     // Creates an instruction.
     static auto create(arena_ptr<const LabelDef>, arena_ptr<const Command>,
@@ -101,14 +100,16 @@ public:
         /// Please use `ParserIR::Builder::build_command`.
         Command() = delete;
 
+        Command(const Command&) = delete;
+        Command& operator=(const Command&) = delete;
+
         /// Compares whether a given command is equivalent to another command.
         bool operator==(const Command&) const;
         bool operator!=(const Command&) const;
 
     protected:
-        explicit Command(SourceRange source, std::string_view name,
-                         adt::span<arena_ptr<const Argument>> args,
-                         bool not_flag) :
+        Command(SourceRange source, std::string_view name,
+                adt::span<arena_ptr<const Argument>> args, bool not_flag) :
             source(source),
             name(name),
             args(std::move(args)),
@@ -126,6 +127,9 @@ public:
 
         /// Please use `LabelDef::create`.
         LabelDef() = delete;
+
+        LabelDef(const LabelDef&) = delete;
+        LabelDef& operator=(const LabelDef&) = delete;
 
         /// Creates a label definition.
         ///
@@ -151,6 +155,9 @@ public:
 
         /// Please use `ParserIR` creation methods.
         Argument() = delete;
+
+        Argument(const Argument&) = delete;
+        Argument& operator=(const Argument&) = delete;
 
         /// Returns the contained integer or `nullptr` if this argument is not
         /// an integer.
@@ -212,12 +219,11 @@ public:
 
     private:
         const std::variant<int32_t, float, Identifier, Filename, String> value;
-    };
 
-protected:
-    friend struct Command;
-    friend struct LabelDef;
-    friend struct Argument;
+        // Keep the size of this structure small.
+        // This would improve if we used a strong typedef over std::pair.
+        static_assert(sizeof(value) <= 4 * sizeof(void*));
+    };
 
 private:
     explicit ParserIR(arena_ptr<const LabelDef> label,
@@ -251,7 +257,8 @@ public:
     Builder(Builder&&) = default;
     Builder& operator=(Builder&&) = default;
 
-    /// Sets the instruction in construction to define the specified label.
+    /// Sets (or unsets) the instruction in construction to define the
+    /// specified label.
     auto label(arena_ptr<const LabelDef>) -> Builder&&;
 
     /// Sets the instruction in construction to define a label.
@@ -327,3 +334,5 @@ static_assert(std::is_trivially_destructible_v<ParserIR::Command>);
 static_assert(std::is_trivially_destructible_v<ParserIR::LabelDef>);
 static_assert(std::is_trivially_destructible_v<ParserIR::Argument>);
 }
+
+// TODO use some kind of strong_typedef instead of std::pair in Argument

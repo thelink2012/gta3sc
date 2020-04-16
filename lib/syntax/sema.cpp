@@ -104,6 +104,11 @@ bool Sema::discover_declarations_pass()
         }
     }
 
+    // Allocate `vars_entity_type` for scopes in the symbol table.
+    this->vars_entity_type.resize(symrepo->var_tables.size());
+    for(size_t i = 0; i < symrepo->var_tables.size(); ++i)
+        this->vars_entity_type[i].resize(symrepo->var_tables[i].size());
+
     // Ensure variables do not collide with other names in the same namespace.
     for(ScopeId i = 0; i < symrepo->var_tables.size(); ++i)
     {
@@ -145,7 +150,7 @@ auto Sema::check_semantics_pass() -> std::optional<LinkedIR<SemaIR>>
         this->analyzing_alternative_command = false;
         this->analyzing_repeat_command = false;
 
-        linked.push_back(*SemaIR::create(arena));
+        SemaIR::Builder builder(*arena);
 
         if(line.command)
         {
@@ -176,10 +181,18 @@ auto Sema::check_semantics_pass() -> std::optional<LinkedIR<SemaIR>>
         }
 
         if(line.label)
-            linked.back().label = validate_label_def(*line.label);
+        {
+            const SymLabel* label = validate_label_def(*line.label);
+            builder.label(label);
+        }
 
         if(line.command)
-            linked.back().command = validate_command(*line.command);
+        {
+            const SemaIR::Command* command = validate_command(*line.command);
+            builder.command(command);
+        }
+
+        linked.push_back(*std::move(builder).build());
     }
 
     if(report_count != 0)
@@ -189,7 +202,7 @@ auto Sema::check_semantics_pass() -> std::optional<LinkedIR<SemaIR>>
 }
 
 auto Sema::validate_label_def(const ParserIR::LabelDef& label_def)
-        -> observer_ptr<SymLabel>
+        -> const SymLabel*
 {
     auto sym_label = symrepo->lookup_label(label_def.name);
     if(!sym_label)
@@ -203,7 +216,7 @@ auto Sema::validate_label_def(const ParserIR::LabelDef& label_def)
 }
 
 auto Sema::validate_command(const ParserIR::Command& command)
-        -> arena_ptr<SemaIR::Command>
+        -> arena_ptr<const SemaIR::Command>
 {
     bool failed = false;
     const CommandManager::CommandDef* command_def{};
@@ -235,8 +248,9 @@ auto Sema::validate_command(const ParserIR::Command& command)
         }
     }
 
-    auto result = SemaIR::Command::create(*command_def, command.source, arena);
-    result->not_flag = command.not_flag;
+    SemaIR::Builder builder(*arena);
+    builder.command(*command_def, command.source);
+    builder.not_flag(command.not_flag);
 
     auto arg_it = command.args.begin();
     auto param_it = command_def->params.begin();
@@ -245,7 +259,7 @@ auto Sema::validate_command(const ParserIR::Command& command)
     {
         if(auto ir_arg = validate_argument(*param_it, **arg_it);
            ir_arg && !failed)
-            result->push_arg(ir_arg, arena);
+            builder.arg(ir_arg);
         else
             failed = true;
 
@@ -271,6 +285,9 @@ auto Sema::validate_command(const ParserIR::Command& command)
                 .args(expected_args, got_args);
     }
 
+    arena_ptr<const SemaIR::Command> result
+            = std::move(builder).build_command();
+
     if(!failed)
     {
         if(!validate_hardcoded_command(*result))
@@ -282,7 +299,7 @@ auto Sema::validate_command(const ParserIR::Command& command)
 
 auto Sema::validate_argument(const CommandManager::ParamDef& param,
                              const ParserIR::Argument& arg)
-        -> arena_ptr<SemaIR::Argument>
+        -> arena_ptr<const SemaIR::Argument>
 {
     switch(param.type)
     {
@@ -297,7 +314,7 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
                                                   *arg.as_identifier());
                 assert(cdef != nullptr);
 
-                return SemaIR::create_string_constant(*cdef, arg.source, arena);
+                return SemaIR::create_constant(*cdef, arg.source, arena);
             }
             return validate_integer_literal(param, arg);
         }
@@ -361,7 +378,7 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
                         *arg.as_identifier());
                 assert(cdef != nullptr);
 
-                return SemaIR::create_string_constant(*cdef, arg.source, arena);
+                return SemaIR::create_constant(*cdef, arg.source, arena);
             }
             else if(arg.as_integer())
             {
@@ -374,23 +391,22 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
                 {
                     if(auto cdef = find_defaultmodel_constant(ident))
                     {
-                        return SemaIR::create_string_constant(*cdef, arg.source,
-                                                              arena);
+                        return SemaIR::create_constant(*cdef, arg.source,
+                                                       arena);
                     }
                     else if(auto model = modelman->find_model(ident))
                     {
                         auto [uobj, _] = symrepo->insert_used_object(
                                 ident, arg.source);
                         assert(uobj != nullptr);
-                        return SemaIR::create_used_object(uobj, arg.source,
+                        return SemaIR::create_used_object(*uobj, arg.source,
                                                           arena);
                     }
                 }
                 else if(auto cdef = cmdman->find_constant(param.enum_type,
                                                           ident))
                 {
-                    return SemaIR::create_string_constant(*cdef, arg.source,
-                                                          arena);
+                    return SemaIR::create_constant(*cdef, arg.source, arena);
                 }
                 return validate_var_ref(param, arg);
             }
@@ -431,8 +447,7 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
                 if(auto cdef = cmdman->find_constant(cmdman->global_enum,
                                                      *arg.as_identifier()))
                 {
-                    return SemaIR::create_string_constant(*cdef, arg.source,
-                                                          arena);
+                    return SemaIR::create_constant(*cdef, arg.source, arena);
                 }
                 return validate_var_ref(param, arg);
             }
@@ -462,7 +477,7 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
 
 auto Sema::validate_integer_literal(const CommandManager::ParamDef& param,
                                     const ParserIR::Argument& arg)
-        -> arena_ptr<SemaIR::Argument>
+        -> arena_ptr<const SemaIR::Argument>
 {
     assert(param.type == ParamType::INT || param.type == ParamType::INPUT_INT
            || param.type == ParamType::INPUT_OPT);
@@ -479,7 +494,7 @@ auto Sema::validate_integer_literal(const CommandManager::ParamDef& param,
 
 auto Sema::validate_float_literal(const CommandManager::ParamDef& param,
                                   const ParserIR::Argument& arg)
-        -> arena_ptr<SemaIR::Argument>
+        -> arena_ptr<const SemaIR::Argument>
 {
     assert(param.type == ParamType::FLOAT
            || param.type == ParamType::INPUT_FLOAT
@@ -497,7 +512,7 @@ auto Sema::validate_float_literal(const CommandManager::ParamDef& param,
 
 auto Sema::validate_text_label(const CommandManager::ParamDef& param,
                                const ParserIR::Argument& arg)
-        -> arena_ptr<SemaIR::Argument>
+        -> arena_ptr<const SemaIR::Argument>
 {
     assert(param.type == ParamType::TEXT_LABEL);
 
@@ -513,7 +528,7 @@ auto Sema::validate_text_label(const CommandManager::ParamDef& param,
 
 auto Sema::validate_label(const CommandManager::ParamDef& param,
                           const ParserIR::Argument& arg)
-        -> arena_ptr<SemaIR::Argument>
+        -> arena_ptr<const SemaIR::Argument>
 {
     assert(param.type == ParamType::LABEL);
 
@@ -530,12 +545,12 @@ auto Sema::validate_label(const CommandManager::ParamDef& param,
         return nullptr;
     }
 
-    return SemaIR::create_label(sym_label, arg.source, arena);
+    return SemaIR::create_label(*sym_label, arg.source, arena);
 }
 
 auto Sema::validate_string_literal(const CommandManager::ParamDef& param,
                                    const ParserIR::Argument& arg)
-        -> arena_ptr<SemaIR::Argument>
+        -> arena_ptr<const SemaIR::Argument>
 {
     assert(param.type == ParamType::STRING);
 
@@ -550,7 +565,7 @@ auto Sema::validate_string_literal(const CommandManager::ParamDef& param,
 
 auto Sema::validate_var_ref(const CommandManager::ParamDef& param,
                             const ParserIR::Argument& arg)
-        -> arena_ptr<SemaIR::Argument>
+        -> arena_ptr<const SemaIR::Argument>
 {
     bool failed = false;
     SymVariable* sym_var{};
@@ -676,12 +691,12 @@ auto Sema::validate_var_ref(const CommandManager::ParamDef& param,
     if(param.entity_type != EntityId{0})
     {
         if(param.type == ParamType::OUTPUT_INT
-           && sym_var->entity_type == EntityId{0})
+           && var_entity_type(*sym_var) == EntityId{0})
         {
-            sym_var->entity_type = param.entity_type;
+            set_var_entity_type(*sym_var, param.entity_type);
         }
 
-        if(sym_var->entity_type != param.entity_type)
+        if(var_entity_type(*sym_var) != param.entity_type)
         {
             failed = true;
             report(var_source, Diag::var_entity_type_mismatch);
@@ -691,13 +706,13 @@ auto Sema::validate_var_ref(const CommandManager::ParamDef& param,
     if(failed)
         return nullptr;
     else if(sym_subscript)
-        return SemaIR::create_variable(sym_var, sym_subscript, arg_source,
+        return SemaIR::create_variable(*sym_var, *sym_subscript, arg_source,
                                        arena);
     else if(subscript && subscript->literal)
-        return SemaIR::create_variable(sym_var, *subscript->literal, arg_source,
-                                       arena);
+        return SemaIR::create_variable(*sym_var, *subscript->literal,
+                                       arg_source, arena);
     else
-        return SemaIR::create_variable(sym_var, arg_source, arena);
+        return SemaIR::create_variable(*sym_var, arg_source, arena);
 }
 
 bool Sema::validate_hardcoded_command(const SemaIR::Command& command)
@@ -723,12 +738,13 @@ bool Sema::validate_set(const SemaIR::Command& command)
         auto rhs = command.args[1]->as_var_ref();
         if(lhs && rhs)
         {
-            if(lhs->def->entity_type == EntityId{0}
-               && rhs->def->entity_type != EntityId{0})
+            const auto lhs_entity_type = var_entity_type(lhs->def);
+            const auto rhs_entity_type = var_entity_type(rhs->def);
+            if(lhs_entity_type == EntityId{0} && rhs_entity_type != EntityId{0})
             {
-                lhs->def->entity_type = rhs->def->entity_type;
+                set_var_entity_type(lhs->def, rhs_entity_type);
             }
-            else if(lhs->def->entity_type != rhs->def->entity_type)
+            else if(lhs_entity_type != rhs_entity_type)
             {
                 report(command.source, Diag::var_entity_type_mismatch)
                         .range(command.args[0]->source)
@@ -795,8 +811,8 @@ bool Sema::validate_start_new_script(const SemaIR::Command& command)
     return true;
 }
 
-bool Sema::validate_target_scope_vars(SemaIR::Argument** begin,
-                                      SemaIR::Argument** end,
+bool Sema::validate_target_scope_vars(const SemaIR::Argument** begin,
+                                      const SemaIR::Argument** end,
                                       ScopeId target_scope_id)
 {
     assert(target_scope_id != 0);
@@ -847,7 +863,7 @@ bool Sema::validate_target_scope_vars(SemaIR::Argument** begin,
             // care of validating that for us, so for sure the argument
             // is one of these. We'll support additionally text labels,
             // but anything else is a logic error in the compiler.
-            if(arg.as_punned_integer())
+            if(arg.pun_as_integer())
             {
                 if(target_vars[i]->type != SymVariable::Type::INT)
                 {
@@ -855,7 +871,7 @@ bool Sema::validate_target_scope_vars(SemaIR::Argument** begin,
                     report(arg.source, Diag::target_var_type_mismatch);
                 }
             }
-            else if(arg.as_punned_float())
+            else if(arg.pun_as_float())
             {
                 if(target_vars[i]->type != SymVariable::Type::FLOAT)
                 {
@@ -873,18 +889,20 @@ bool Sema::validate_target_scope_vars(SemaIR::Argument** begin,
             }
             else if(auto var_ref = arg.as_var_ref())
             {
-                const auto* source_var = var_ref->def;
-                if(target_vars[i]->type != source_var->type)
+                const auto& source_var = var_ref->def;
+                if(target_vars[i]->type != source_var.type)
                 {
                     failed = true;
                     report(arg.source, Diag::target_var_type_mismatch);
                 }
-                else if(target_vars[i]->entity_type == EntityId{0}
-                        && source_var->entity_type != EntityId{0})
+                else if(var_entity_type(*target_vars[i]) == EntityId{0}
+                        && var_entity_type(source_var) != EntityId{0})
                 {
-                    target_var->entity_type = source_var->entity_type;
+                    set_var_entity_type(*target_var,
+                                        var_entity_type(source_var));
                 }
-                else if(target_var->entity_type != source_var->entity_type)
+                else if(var_entity_type(*target_var)
+                        != var_entity_type(source_var))
                 {
                     failed = true;
                     report(arg.source, Diag::target_var_entity_type_mismatch);
@@ -954,7 +972,7 @@ void Sema::declare_variable(const ParserIR::Command& command, ScopeId scope_id_,
         {
             report(var_source, Diag::duplicate_var_timer);
         }
-        else if(auto [_, inserted] = symrepo->insert_var(
+        else if(auto [var, inserted] = symrepo->insert_var(
                         var_name, scope_id, type, subscript_literal,
                         arg->source);
                 !inserted)
@@ -990,6 +1008,22 @@ auto Sema::lookup_var_lvar(std::string_view name) const -> SymVariable*
     }
 
     return nullptr;
+}
+
+auto Sema::var_entity_type(const SymVariable& var) const
+        -> CommandManager::EntityId
+{
+    assert(var.scope < vars_entity_type.size());
+    assert(var.id < vars_entity_type[var.scope].size());
+    return vars_entity_type[var.scope][var.id];
+}
+
+void Sema::set_var_entity_type(const SymVariable& var,
+                               CommandManager::EntityId entity_type)
+{
+    assert(var.scope < vars_entity_type.size());
+    assert(var.id < vars_entity_type[var.scope].size());
+    vars_entity_type[var.scope][var.id] = entity_type;
 }
 
 auto Sema::find_defaultmodel_constant(std::string_view name) const

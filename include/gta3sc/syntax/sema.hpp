@@ -17,6 +17,10 @@ namespace gta3sc::syntax
 /// representation guaranted to be semantically valid. It also discovers and
 /// inserts names into a symbol repository along the process.
 ///
+/// The output IR is as close as possible to the input IR. That is, no
+/// rewriting whatsoever is performed on the arguments (e.g. the argument to
+/// SET_PROGRESS_TOTAL is the same as in the input IR, which is guaranted to
+/// be zero if semantic checks were successful).
 class Sema
 {
 public:
@@ -42,6 +46,11 @@ public:
     /// otherwise `std::nullopt`.
     auto validate() -> std::optional<LinkedIR<SemaIR>>;
 
+    /// Gets the entity type of the given variable at the end of the input.
+    ///
+    /// Must run `validate` beforehand.
+    auto var_entity_type(const SymVariable&) const -> CommandManager::EntityId;
+
 private:
     struct VarRef;
 
@@ -66,38 +75,38 @@ private:
     // These functions are called from the semantic checking pass.
 
     auto validate_label_def(const ParserIR::LabelDef& label_def)
-            -> observer_ptr<SymLabel>;
+            -> const SymLabel*;
 
     auto validate_command(const ParserIR::Command& command)
-            -> arena_ptr<SemaIR::Command>;
+            -> arena_ptr<const SemaIR::Command>;
 
     auto validate_argument(const CommandManager::ParamDef& param,
                            const ParserIR::Argument& arg)
-            -> arena_ptr<SemaIR::Argument>;
+            -> arena_ptr<const SemaIR::Argument>;
 
     auto validate_integer_literal(const CommandManager::ParamDef& param,
                                   const ParserIR::Argument& arg)
-            -> arena_ptr<SemaIR::Argument>;
+            -> arena_ptr<const SemaIR::Argument>;
 
     auto validate_float_literal(const CommandManager::ParamDef& param,
                                 const ParserIR::Argument& arg)
-            -> arena_ptr<SemaIR::Argument>;
+            -> arena_ptr<const SemaIR::Argument>;
 
     auto validate_text_label(const CommandManager::ParamDef& param,
                              const ParserIR::Argument& arg)
-            -> arena_ptr<SemaIR::Argument>;
+            -> arena_ptr<const SemaIR::Argument>;
 
     auto validate_label(const CommandManager::ParamDef& param,
                         const ParserIR::Argument& arg)
-            -> arena_ptr<SemaIR::Argument>;
+            -> arena_ptr<const SemaIR::Argument>;
 
     auto validate_string_literal(const CommandManager::ParamDef& param,
                                  const ParserIR::Argument& arg)
-            -> arena_ptr<SemaIR::Argument>;
+            -> arena_ptr<const SemaIR::Argument>;
 
     auto validate_var_ref(const CommandManager::ParamDef& param,
                           const ParserIR::Argument& arg)
-            -> arena_ptr<SemaIR::Argument>;
+            -> arena_ptr<const SemaIR::Argument>;
 
     // The following functions validates the semantics of commands that
     // require further compiler intervention. They produce diagnostics
@@ -111,8 +120,8 @@ private:
 
     bool validate_start_new_script(const SemaIR::Command&);
 
-    bool validate_target_scope_vars(SemaIR::Argument** begin,
-                                    SemaIR::Argument** end,
+    bool validate_target_scope_vars(const SemaIR::Argument** begin,
+                                    const SemaIR::Argument** end,
                                     ScopeId target_scope_id);
 
     // The following functions validates declarations and inserts their
@@ -148,6 +157,10 @@ private:
     /// Lookups a variable in the global scope as well as in
     /// the current local scope.
     auto lookup_var_lvar(std::string_view name) const -> SymVariable*;
+
+    /// Sets the entity type for `var` in `vars_entity_type`.
+    void set_var_entity_type(const SymVariable& var,
+                             CommandManager::EntityId entity_type);
 
     /// Finds a constant in the default model enumeration.
     auto find_defaultmodel_constant(std::string_view name) const
@@ -225,5 +238,11 @@ private:
 
     /// Set of script names already seen.
     std::vector<std::string_view> seen_script_names;
+
+    /// The entity type for the variables in the program.
+    std::vector<std::vector<CommandManager::EntityId>> vars_entity_type;
 };
 }
+
+// TODO should vars_entity_type (and similar) be stored in Sema or
+// SymbolRepository?

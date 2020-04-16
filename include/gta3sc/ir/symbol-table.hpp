@@ -33,13 +33,10 @@ struct SymVariable
         TEXT_LABEL,
     };
 
-    using EntityId = CommandManager::EntityId;
-
-    SourceRange source;   ///< The location the variable was declared.
-    uint32_t id;          ///< The ordering of this variable in its scope.
-    ScopeId scope;        ///< The scope on which the variable is in.
-    Type type;            ///< The type of the variable.
-    EntityId entity_type; ///< The type of entity this variable holds.
+    SourceRange source; ///< The location the variable was declared.
+    uint32_t id;        ///< The ordering of this variable in its scope.
+    ScopeId scope;      ///< The scope on which the variable is in.
+    Type type;          ///< The type of the variable.
     std::optional<uint16_t> dim; ///< Array dimensions if any.
 
     bool is_array() const { return !!dim; }
