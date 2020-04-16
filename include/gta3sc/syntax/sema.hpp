@@ -156,7 +156,7 @@ private:
 
     /// Lookups a variable in the global scope as well as in
     /// the current local scope.
-    auto lookup_var_lvar(std::string_view name) const -> SymVariable*;
+    auto lookup_var_lvar(std::string_view name) const -> const SymVariable*;
 
     /// Sets the entity type for `var` in `vars_entity_type`.
     void set_var_entity_type(const SymVariable& var,

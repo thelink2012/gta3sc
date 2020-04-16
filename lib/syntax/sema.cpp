@@ -568,8 +568,8 @@ auto Sema::validate_var_ref(const CommandManager::ParamDef& param,
         -> arena_ptr<const SemaIR::Argument>
 {
     bool failed = false;
-    SymVariable* sym_var{};
-    SymVariable* sym_subscript{};
+    const SymVariable* sym_var{};
+    const SymVariable* sym_subscript{};
 
     if(!arg.as_identifier())
     {
@@ -832,7 +832,8 @@ bool Sema::validate_target_scope_vars(const SemaIR::Argument** begin,
     // this function returns, but it's no big deal. It only happens for
     // START_NEW_SCRIPT alike commands and the allocation size is proportional
     // to the number of arguments passed.
-    SymVariable** target_vars = new(*arena) SymVariable*[num_target_vars];
+    const SymVariable** target_vars = new(*arena)
+            const SymVariable*[num_target_vars];
     std::fill(target_vars, target_vars + num_target_vars, nullptr);
 
     for(auto& [name, lvar] : symrepo->var_tables[target_scope_id])
@@ -848,7 +849,8 @@ bool Sema::validate_target_scope_vars(const SemaIR::Argument** begin,
     for(size_t i = 0; i < num_target_vars; ++i)
     {
         const auto& arg = **(begin + i);
-        SymVariable* target_var = target_vars[i];
+        const SymVariable* target_var = target_vars[i];
+
         if(target_var == nullptr)
         {
             failed = true;
@@ -996,7 +998,7 @@ auto Sema::report(SourceRange source, Diag message) -> DiagnosticBuilder
     return report(source.begin, message).range(source);
 }
 
-auto Sema::lookup_var_lvar(std::string_view name) const -> SymVariable*
+auto Sema::lookup_var_lvar(std::string_view name) const -> const SymVariable*
 {
     if(auto gvar = symrepo->lookup_var(name, 0))
         return gvar;

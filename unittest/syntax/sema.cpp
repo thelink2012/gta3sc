@@ -91,9 +91,9 @@ TEST_CASE_FIXTURE(SemaFixture, "sema valid variables declarations")
 
     REQUIRE(sema.validate() != std::nullopt);
 
-    gta3sc::SymVariable* gvar[10] = {};
-    gta3sc::SymVariable* lvar1[10] = {};
-    gta3sc::SymVariable* lvar2[10] = {};
+    const gta3sc::SymVariable* gvar[10] = {};
+    const gta3sc::SymVariable* lvar1[10] = {};
+    const gta3sc::SymVariable* lvar2[10] = {};
 
     gvar[1] = symrepo.lookup_var("GVAR1");
     gvar[2] = symrepo.lookup_var("GVAR2");

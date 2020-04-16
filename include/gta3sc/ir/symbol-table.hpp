@@ -97,10 +97,10 @@ private:
 
 public:
     /// The symbol table of labels.
-    SymbolTable<SymLabel> label_table;
+    SymbolTable<const SymLabel> label_table;
 
     /// The symbol table for used objects.
-    SymbolTable<SymUsedObject> used_objects;
+    SymbolTable<const SymUsedObject> used_objects;
 
     /// The symbol table for each scope.
     ///
@@ -109,7 +109,7 @@ public:
     ///
     /// The scope of index `0` is used for storing global variables and
     /// is always present in the repository.
-    std::vector<SymbolTable<SymVariable>> var_tables;
+    std::vector<SymbolTable<const SymVariable>> var_tables;
 
 public:
     SymbolRepository(ArenaMemoryResource& arena);
@@ -135,17 +135,18 @@ public:
     ///
     /// \return the variable or `nullptr` if it does not exist.
     auto lookup_var(std::string_view name, ScopeId scope_id = 0) const
-            -> SymVariable*;
+            -> const SymVariable*;
 
     /// Lookups a label.
     ///
     /// \return the label or `nullptr` if it does not exist.
-    auto lookup_label(std::string_view name) const -> SymLabel*;
+    auto lookup_label(std::string_view name) const -> const SymLabel*;
 
     /// Lookups a used object.
     ///
     /// \return the used object or `nullptr` if never used.
-    auto lookup_used_object(std::string_view name) const -> SymUsedObject*;
+    auto lookup_used_object(std::string_view name) const
+            -> const SymUsedObject*;
 
     /// Inserts a new variable into a certain scope.
     ///
@@ -162,7 +163,7 @@ public:
     ///         any insertion took place.
     auto insert_var(std::string_view name, ScopeId scope_id,
                     SymVariable::Type type, std::optional<uint16_t> dim,
-                    SourceRange source) -> std::pair<SymVariable*, bool>;
+                    SourceRange source) -> std::pair<const SymVariable*, bool>;
 
     /// Inserts a label into the symbol table.
     ///
@@ -175,7 +176,7 @@ public:
     /// \return a pair with the label and a boolean indicating whether
     ///         any insertion took place.
     auto insert_label(std::string_view name, ScopeId scope_id,
-                      SourceRange source) -> std::pair<SymLabel*, bool>;
+                      SourceRange source) -> std::pair<const SymLabel*, bool>;
 
     /// Inserts an used object into the symbol table.
     ///
@@ -187,6 +188,6 @@ public:
     /// \return a pair with the used object and a boolean indicating whether
     ///         any insertion took place.
     auto insert_used_object(std::string_view name, SourceRange source)
-            -> std::pair<SymUsedObject*, bool>;
+            -> std::pair<const SymUsedObject*, bool>;
 };
 }
