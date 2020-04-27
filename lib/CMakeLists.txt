@@ -12,6 +12,7 @@ add_library(gta3sc
   syntax/parser.cpp
   syntax/sema.cpp
   syntax/lowering/repeat-stmt-rewriter.cpp
+  codegen/trilogy/emitter.cpp
 )
 target_compile_features(gta3sc PUBLIC cxx_std_17)
 target_include_directories(gta3sc

@@ -5,6 +5,7 @@ add_executable(gta3sc_unittest
     syntax/parser.cpp
     syntax/sema.cpp
     syntax/lowering/repeat-stmt-rewriter.cpp
+    codegen/trilogy/emitter.cpp
 )
 target_compile_features(gta3sc_unittest PUBLIC cxx_std_17)
 target_link_libraries(gta3sc_unittest PRIVATE gta3sc)
