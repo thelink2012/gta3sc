@@ -1,6 +1,6 @@
 #pragma once
 #include <cstring>
-#include <doctest.h>
+#include <doctest/doctest.h>
 #include <gta3sc/diagnostics.hpp>
 #include <gta3sc/sourceman.hpp>
 #include <memory>

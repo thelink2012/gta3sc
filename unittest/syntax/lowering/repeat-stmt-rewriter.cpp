@@ -1,5 +1,5 @@
 #include "../syntax-fixture.hpp"
-#include <doctest.h>
+#include <doctest/doctest.h>
 #include <gta3sc/syntax/lowering/repeat-stmt-rewriter.hpp>
 #include <gta3sc/syntax/parser.hpp>
 #include <string>
@@ -135,10 +135,10 @@ TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "rewriting REPEAT")
                                                .build();
 
         auto set_somevar_0 = gta3sc::ParserIR::Builder(arena)
-                                           .command("SET")
-                                           .arg_ident("SOMEVAR")
-                                           .arg_int(0)
-                                           .build();
+                                     .command("SET")
+                                     .arg_ident("SOMEVAR")
+                                     .arg_int(0)
+                                     .build();
 
         rewrite_result = rewriter.visit(*repeat_10_somevar);
         REQUIRE(rewrite_result);
@@ -172,9 +172,8 @@ TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "rewriting ENDREPEAT")
                                                  .arg_ident("somevar")
                                                  .build());
         CHECK(rewrite_result);
-        rewrite_result = rewriter.visit(*gta3sc::ParserIR::Builder(arena)
-                                                 .command("ENDREPEAT")
-                                                 .build());
+        rewrite_result = rewriter.visit(
+                *gta3sc::ParserIR::Builder(arena).command("ENDREPEAT").build());
         REQUIRE(rewrite_result);
         REQUIRE(rewrite_result.ir
                 == gta3sc::LinkedIR<gta3sc::ParserIR>(
@@ -191,15 +190,13 @@ TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "rewriting ENDREPEAT")
                          gta3sc::ParserIR::Builder(arena)
                                  .command("GOTO_IF_FALSE")
                                  .arg_ident("TEST_LABEL_0")
-                                 .build()
-                        }));
+                                 .build()}));
     }
 
     SUBCASE("does not rewrite ENDREPEAT if no REPEAT seen")
     {
-        rewrite_result = rewriter.visit(*gta3sc::ParserIR::Builder(arena)
-                                                 .command("ENDREPEAT")
-                                                 .build());
+        rewrite_result = rewriter.visit(
+                *gta3sc::ParserIR::Builder(arena).command("ENDREPEAT").build());
         REQUIRE(!rewrite_result);
     }
 
@@ -211,13 +208,11 @@ TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "rewriting ENDREPEAT")
                                                  .arg_ident("somevar")
                                                  .build());
         CHECK(rewrite_result);
-        rewrite_result = rewriter.visit(*gta3sc::ParserIR::Builder(arena)
-                                                 .command("ENDREPEAT")
-                                                 .build());
+        rewrite_result = rewriter.visit(
+                *gta3sc::ParserIR::Builder(arena).command("ENDREPEAT").build());
         CHECK(rewrite_result);
-        rewrite_result = rewriter.visit(*gta3sc::ParserIR::Builder(arena)
-                                                 .command("ENDREPEAT")
-                                                 .build());
+        rewrite_result = rewriter.visit(
+                *gta3sc::ParserIR::Builder(arena).command("ENDREPEAT").build());
         REQUIRE(!rewrite_result);
     }
 
@@ -250,8 +245,7 @@ TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "rewriting ENDREPEAT")
                          gta3sc::ParserIR::Builder(arena)
                                  .command("GOTO_IF_FALSE")
                                  .arg_ident("TEST_LABEL_0")
-                                 .build()
-                        }));
+                                 .build()}));
     }
 
     SUBCASE("rewrite not affected by type of iter_var")
@@ -262,9 +256,8 @@ TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "rewriting ENDREPEAT")
                                                  .arg_int(20)
                                                  .build());
         CHECK(rewrite_result);
-        rewrite_result = rewriter.visit(*gta3sc::ParserIR::Builder(arena)
-                                                 .command("ENDREPEAT")
-                                                 .build());
+        rewrite_result = rewriter.visit(
+                *gta3sc::ParserIR::Builder(arena).command("ENDREPEAT").build());
         REQUIRE(rewrite_result);
         REQUIRE(rewrite_result.ir
                 == gta3sc::LinkedIR<gta3sc::ParserIR>(
@@ -281,8 +274,7 @@ TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "rewriting ENDREPEAT")
                          gta3sc::ParserIR::Builder(arena)
                                  .command("GOTO_IF_FALSE")
                                  .arg_ident("TEST_LABEL_0")
-                                 .build()
-                        }));
+                                 .build()}));
     }
 
     SUBCASE("rewrite not affected by type of num_times")
@@ -293,9 +285,8 @@ TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "rewriting ENDREPEAT")
                                                  .arg_ident("somevar")
                                                  .build());
         CHECK(rewrite_result);
-        rewrite_result = rewriter.visit(*gta3sc::ParserIR::Builder(arena)
-                                                 .command("ENDREPEAT")
-                                                 .build());
+        rewrite_result = rewriter.visit(
+                *gta3sc::ParserIR::Builder(arena).command("ENDREPEAT").build());
         REQUIRE(rewrite_result);
         REQUIRE(rewrite_result.ir
                 == gta3sc::LinkedIR<gta3sc::ParserIR>(
@@ -312,8 +303,7 @@ TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "rewriting ENDREPEAT")
                          gta3sc::ParserIR::Builder(arena)
                                  .command("GOTO_IF_FALSE")
                                  .arg_ident("TEST_LABEL_0")
-                                 .build()
-                        }));
+                                 .build()}));
     }
 
     SUBCASE("successful nesting")
@@ -339,9 +329,8 @@ TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "rewriting ENDREPEAT")
                                                  .build());
         REQUIRE(rewrite_result);
 
-        rewrite_result = rewriter.visit(*gta3sc::ParserIR::Builder(arena)
-                                                 .command("ENDREPEAT")
-                                                 .build());
+        rewrite_result = rewriter.visit(
+                *gta3sc::ParserIR::Builder(arena).command("ENDREPEAT").build());
         REQUIRE(rewrite_result);
         REQUIRE(rewrite_result.ir
                 == gta3sc::LinkedIR<gta3sc::ParserIR>(
@@ -358,11 +347,9 @@ TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "rewriting ENDREPEAT")
                          gta3sc::ParserIR::Builder(arena)
                                  .command("GOTO_IF_FALSE")
                                  .arg_ident("TEST_LABEL_2")
-                                 .build()
-                        }));
-        rewrite_result = rewriter.visit(*gta3sc::ParserIR::Builder(arena)
-                                                 .command("ENDREPEAT")
-                                                 .build());
+                                 .build()}));
+        rewrite_result = rewriter.visit(
+                *gta3sc::ParserIR::Builder(arena).command("ENDREPEAT").build());
         REQUIRE(rewrite_result);
         REQUIRE(rewrite_result.ir
                 == gta3sc::LinkedIR<gta3sc::ParserIR>(
@@ -379,12 +366,10 @@ TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "rewriting ENDREPEAT")
                          gta3sc::ParserIR::Builder(arena)
                                  .command("GOTO_IF_FALSE")
                                  .arg_ident("TEST_LABEL_1")
-                                 .build()
-                        }));
+                                 .build()}));
 
-        rewrite_result = rewriter.visit(*gta3sc::ParserIR::Builder(arena)
-                                                 .command("ENDREPEAT")
-                                                 .build());
+        rewrite_result = rewriter.visit(
+                *gta3sc::ParserIR::Builder(arena).command("ENDREPEAT").build());
         REQUIRE(rewrite_result);
         REQUIRE(rewrite_result.ir
                 == gta3sc::LinkedIR<gta3sc::ParserIR>(
@@ -401,7 +386,6 @@ TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "rewriting ENDREPEAT")
                          gta3sc::ParserIR::Builder(arena)
                                  .command("GOTO_IF_FALSE")
                                  .arg_ident("TEST_LABEL_0")
-                                 .build()
-                        }));
+                                 .build()}));
     }
 }

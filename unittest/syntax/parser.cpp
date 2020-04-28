@@ -1,5 +1,5 @@
 #include "syntax-fixture.hpp"
-#include <doctest.h>
+#include <doctest/doctest.h>
 #include <gta3sc/syntax/parser.hpp>
 #include <string>
 using namespace gta3sc::test::syntax;

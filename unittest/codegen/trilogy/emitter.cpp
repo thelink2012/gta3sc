@@ -1,6 +1,6 @@
 #include "../../stringification.hpp"
 #include <cmath>
-#include <doctest.h>
+#include <doctest/doctest.h>
 #include <gta3sc/codegen/trilogy/emitter.hpp>
 
 namespace gta3sc::test::codegen::trilogy

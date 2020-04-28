@@ -22,7 +22,7 @@ matrix:
       env:
         - |
           MATRIX_EVAL='CC=clang-9 && CXX=clang++-9 \
-            && CMAKE="scan-build-9 --status-bugs -v --use-cc=$CC --use-c++=$CXX cmake"'
+            && CMAKE="scan-build-9 --status-bugs -v --use-cc=$CC --use-c++=$CXX --exclude $TRAVIS_BUILD_DIR/thirdparty cmake"'
         - CMAKE_BUILD_TYPE=Debug
         - COVERAGE=0
     - name: x86_64-linux-gnu-gcc-coverage

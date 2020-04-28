@@ -1,5 +1,5 @@
 #pragma once
-#include <doctest.h>
+#include <doctest/doctest.h>
 #include <gta3sc/command-manager.hpp>
 
 namespace gta3sc::test
