@@ -1,9 +1,9 @@
 #pragma once
 #include <cstdint>
-#include <gta3sc/adt/span.hpp>
 #include <gta3sc/sourceman.hpp>
 #include <gta3sc/util/arena-allocator.hpp>
 #include <gta3sc/util/intrusive-list-node.hpp>
+#include <gta3sc/util/span.hpp>
 #include <string_view>
 #include <variant>
 
@@ -94,7 +94,8 @@ public:
     public:
         SourceRange source;    ///< Source code location of the argument.
         std::string_view name; ///< The name of this command.
-        adt::span<arena_ptr<const Argument>> args; ///< View into the arguments.
+        util::span<arena_ptr<const Argument>>
+                args;          ///< View into the arguments.
         bool not_flag = false; ///< Whether the result of the command is NOTed.
 
         /// Please use `ParserIR::Builder::build_command`.
@@ -109,7 +110,7 @@ public:
 
     protected:
         Command(SourceRange source, std::string_view name,
-                adt::span<arena_ptr<const Argument>> args, bool not_flag) :
+                util::span<arena_ptr<const Argument>> args, bool not_flag) :
             source(source),
             name(name),
             args(std::move(args)),
@@ -324,7 +325,7 @@ private:
     SourceRange command_source;
 
     size_t args_capacity = 0;
-    adt::span<arena_ptr<const Argument>> args;
+    util::span<arena_ptr<const Argument>> args;
 };
 
 // These resources are stored in a memory arena. Disposing storage

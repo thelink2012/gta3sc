@@ -18,3 +18,4 @@ target_compile_features(gta3sc PUBLIC cxx_std_17)
 target_include_directories(gta3sc
   PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
   PUBLIC $<INSTALL_INTERFACE:include>)
+target_link_libraries(gta3sc span-lite)

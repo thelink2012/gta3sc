@@ -15,6 +15,7 @@ if(GTA3SC_COVERAGE)
   set(COVERAGE_LCOV_EXCLUDES '/usr/*' '${CMAKE_CURRENT_SOURCE_DIR}/unittest/*')
 endif()
 
+add_subdirectory(thirdparty)
 add_subdirectory(lib)
 if(BUILD_TESTING)
   enable_testing()

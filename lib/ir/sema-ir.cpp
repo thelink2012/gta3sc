@@ -210,11 +210,11 @@ auto SemaIR::Builder::arg(arena_ptr<const Argument> value) -> Builder&&
         const auto new_args = new(*arena) arena_ptr<const Argument>[new_caps];
         std::move(this->args.begin(), this->args.end(), new_args);
 
-        this->args = adt::span(new_args, args.size());
+        this->args = util::span(new_args, args.size());
         this->args_capacity = new_caps;
     }
 
-    this->args = adt::span(this->args.data(), this->args.size() + 1);
+    this->args = util::span(this->args.data(), this->args.size() + 1);
     *(this->args.rbegin()) = value;
 
     return std::move(*this);

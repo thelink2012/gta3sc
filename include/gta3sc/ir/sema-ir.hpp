@@ -15,7 +15,7 @@ namespace gta3sc
 /// This structure may hold structured statements (e.g. IF, REPEAT) following
 /// the same rules as `ParserIR`, except this time the arguments are guaranteed
 /// to be correct.
-/// 
+///
 /// Counter setting commands (e.g. SET_PROGRESS_TOTAL) may have its argument
 /// different from zero.
 ///
@@ -109,8 +109,9 @@ public:
     {
     public:
         SourceRange source; ///< Source code  location of the command.
-        const CommandManager::CommandDef& def;     ///< The command definition.
-        adt::span<arena_ptr<const Argument>> args; ///< View into the arguments.
+        const CommandManager::CommandDef& def; ///< The command definition.
+        util::span<arena_ptr<const Argument>>
+                args;          ///< View into the arguments.
         bool not_flag = false; ///< Whether the result of the command is NOTed.
 
         /// Please use `SemaIR::Builder::build_command`.
@@ -121,7 +122,7 @@ public:
 
     protected:
         Command(SourceRange source, const CommandManager::CommandDef& def,
-                adt::span<arena_ptr<const Argument>> args, bool not_flag) :
+                util::span<arena_ptr<const Argument>> args, bool not_flag) :
             source(source), def(def), args(std::move(args)), not_flag(not_flag)
         {}
 
@@ -355,7 +356,7 @@ private:
     SourceRange command_source;
 
     size_t args_capacity = 0;
-    adt::span<arena_ptr<const Argument>> args;
+    util::span<arena_ptr<const Argument>> args;
 };
 
 // These resources are stored in a memory arena. Disposing storage

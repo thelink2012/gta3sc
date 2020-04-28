@@ -2,3 +2,4 @@ codecov:
   branch: gta3sc-rewrite
 ignore:
   - "unittest/.*"
+  - "thirdparty/.*"

@@ -1,8 +1,8 @@
 #pragma once
 #include <algorithm>
-#include <gta3sc/adt/span.hpp>
 #include <gta3sc/util/arena-allocator.hpp>
 #include <gta3sc/util/intrusive-list-node.hpp>
+#include <gta3sc/util/span.hpp>
 #include <optional>
 #include <string_view>
 #include <unordered_map>
@@ -100,7 +100,7 @@ public:
         /// The name of the command.
         std::string_view name;
         /// The parameters of the command.
-        adt::span<ParamDef> params;
+        util::span<ParamDef> params;
         /// The opcode associated with the command in the target script engine.
         std::optional<uint16_t> target_id;
         /// Whether this command is handled by the target script engine.
@@ -468,7 +468,7 @@ void CommandManager::Builder::set_command_params(CommandDef& command,
     auto a_params = static_cast<ParamDef*>(
             arena->allocate(params_size * sizeof(ParamDef), alignof(ParamDef)));
     std::uninitialized_copy(params_begin, params_end, a_params);
-    command.params = adt::span(a_params, params_size);
+    command.params = util::span(a_params, params_size);
 }
 
 template<typename RandomAccessIterator>
