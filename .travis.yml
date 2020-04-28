@@ -2,7 +2,7 @@ language: cpp
 dist: bionic
 matrix:
   include:
-    - name: x86_64-linux-clang-release
+    - name: x86_64-linux-gnu-clang-release
       os: linux
       addons:
         apt:
@@ -12,7 +12,8 @@ matrix:
         - MATRIX_EVAL="CC=clang-9 && CXX=clang++-9"
         - CMAKE="cmake"
         - CMAKE_BUILD_TYPE=RelWithDebInfo
-    - name: x86_64-linux-clang-analysis
+        - COVERAGE=0
+    - name: x86_64-linux-gnu-clang-analysis
       os: linux
       addons:
         apt:
@@ -23,7 +24,8 @@ matrix:
           MATRIX_EVAL='CC=clang-9 && CXX=clang++-9 \
             && CMAKE="scan-build-9 --status-bugs -v --use-cc=$CC --use-c++=$CXX cmake"'
         - CMAKE_BUILD_TYPE=Debug
-    - name: x86_64-linux-gcc-coverage
+        - COVERAGE=0
+    - name: x86_64-linux-gnu-gcc-coverage
       os: linux
       addons:
         apt:
@@ -35,6 +37,7 @@ matrix:
         - CMAKE="cmake"
         - CMAKE_BUILD_TYPE=Debug
         - CMAKE_PREFIX_PATH="$HOME/.local/usr/local" # gcov location
+        - COVERAGE=1
       install:
         - sudo apt-get -y install libperlio-gzip-perl libconfig-json-perl
         - wget https://github.com/linux-test-project/lcov/archive/master.zip -O lcov.zip
