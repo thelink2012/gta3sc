@@ -1277,7 +1277,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
 
     Category cats[6];
     SourceRange spans[6];
-    arena_ptr<const ParserIR::Argument> args[6];
+    arena_ptr<const ParserIR::Argument> args[6] {};
 
     size_t num_toks = 0;
     size_t num_args = 0;
