@@ -20,7 +20,7 @@ using ScopeId = uint32_t;
 struct SymLabel
 {
     SourceRange source; ///< The location the label was declared.
-    ScopeId scope;      ///< The scope on which the label is in.
+    ScopeId scope{};    ///< The scope on which the label is in.
 };
 
 /// Represents a declared variable.
@@ -34,8 +34,8 @@ struct SymVariable
     };
 
     SourceRange source; ///< The location the variable was declared.
-    uint32_t id;        ///< The ordering of this variable in its scope.
-    ScopeId scope;      ///< The scope on which the variable is in.
+    uint32_t id{};      ///< The ordering of this variable in its scope.
+    ScopeId scope{};    ///< The scope on which the variable is in.
     Type type;          ///< The type of the variable.
     std::optional<uint16_t> dim; ///< Array dimensions if any.
 
@@ -47,7 +47,7 @@ struct SymUsedObject
 {
     SourceRange
             source; ///< The location the object was used for the first time.
-    uint32_t id;    ///< The ordering of this used object (0-indexed).
+    uint32_t id{};  ///< The ordering of this used object (0-indexed).
 };
 
 /// An unordered associative container mapping names to symbols of type `T`.
@@ -112,7 +112,7 @@ public:
     std::vector<SymbolTable<const SymVariable>> var_tables;
 
 public:
-    SymbolRepository(ArenaMemoryResource& arena);
+    explicit SymbolRepository(ArenaMemoryResource& arena);
 
     SymbolRepository(const SymbolRepository&) = delete;
     SymbolRepository& operator=(const SymbolRepository&) = delete;
@@ -190,4 +190,4 @@ public:
     auto insert_used_object(std::string_view name, SourceRange source)
             -> std::pair<const SymUsedObject*, bool>;
 };
-}
+} // namespace gta3sc

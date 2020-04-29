@@ -18,4 +18,4 @@ constexpr auto bit_cast(const From& src) noexcept -> To
     std::memcpy(&dst, &src, sizeof(dst));
     return dst;
 }
-}
+} // namespace gta3sc::util

@@ -33,8 +33,8 @@ public:
     LinkedIR(const LinkedIR&) = delete;
     LinkedIR& operator=(const LinkedIR&) = delete;
 
-    LinkedIR(LinkedIR&&) = default;
-    LinkedIR& operator=(LinkedIR&&) = default;
+    LinkedIR(LinkedIR&&) noexcept = default;
+    LinkedIR& operator=(LinkedIR&&) noexcept = default;
 
     /// Moves the elements of `other` into the front of this.
     void splice_front(LinkedIR&& other)
@@ -56,4 +56,4 @@ public:
         return this->insert(this->erase(pos), other);
     }
 };
-}
+} // namespace gta3sc

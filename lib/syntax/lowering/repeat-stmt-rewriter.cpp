@@ -108,4 +108,4 @@ auto RepeatStmtRewriter::generate_loop_label(SourceRange source)
     namegen->generate(namegen_buffer);
     return ParserIR::LabelDef::create(namegen_buffer, source, arena);
 }
-}
+} // namespace gta3sc::syntax

@@ -65,7 +65,7 @@ public:
     ///
     /// The identifier is automatically converted to uppercase during the
     /// creation of the object.
-    static auto create_identifier(std::string_view value, SourceRange source,
+    static auto create_identifier(std::string_view name, SourceRange source,
                                   ArenaMemoryResource*)
             -> arena_ptr<const Argument>;
 
@@ -111,10 +111,7 @@ public:
     protected:
         Command(SourceRange source, std::string_view name,
                 util::span<arena_ptr<const Argument>> args, bool not_flag) :
-            source(source),
-            name(name),
-            args(std::move(args)),
-            not_flag(not_flag)
+            source(source), name(name), args(args), not_flag(not_flag)
         {}
 
         friend class ParserIR::Builder;
@@ -334,6 +331,6 @@ static_assert(std::is_trivially_destructible_v<ParserIR>);
 static_assert(std::is_trivially_destructible_v<ParserIR::Command>);
 static_assert(std::is_trivially_destructible_v<ParserIR::LabelDef>);
 static_assert(std::is_trivially_destructible_v<ParserIR::Argument>);
-}
+} // namespace gta3sc
 
 // TODO use some kind of strong_typedef instead of std::pair in Argument

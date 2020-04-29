@@ -296,7 +296,9 @@ auto CommandManager::Builder::insert_or_assign_constant(EnumId enum_id,
     }
     else
     {
-        MutableConstantListIterator prev_it{}, curr_it(it->second, nullptr);
+        MutableConstantListIterator prev_it{};
+        MutableConstantListIterator curr_it(it->second, nullptr);
+
         for(MutableConstantListIterator end{}; curr_it != end;
             prev_it = curr_it++)
         {
@@ -329,4 +331,4 @@ auto CommandManager::Builder::insert_entity_type(std::string_view name)
     assert(inserted);
     return {it->second, true};
 }
-}
+} // namespace gta3sc

@@ -10,8 +10,8 @@ class CodeEmitterFixture
 };
 }
 
-using namespace gta3sc::codegen::trilogy;
-using namespace gta3sc::test::codegen::trilogy;
+using gta3sc::test::codegen::trilogy::CodeEmitterFixture;
+using gta3sc::codegen::trilogy::CodeEmitter;
 using std::back_inserter;
 
 TEST_CASE_FIXTURE(CodeEmitterFixture, "initial emitter state")
@@ -356,7 +356,7 @@ TEST_CASE_FIXTURE(CodeEmitterFixture, "emit integer argument")
 
 TEST_CASE_FIXTURE(CodeEmitterFixture, "emit Q11.4 fixed-point argument")
 {
-    constexpr float q11_4_resolution = 0.0625f;
+    constexpr float q11_4_resolution = 0.0625F;
 
     CodeEmitter emitter;
 
@@ -448,7 +448,7 @@ TEST_CASE_FIXTURE(CodeEmitterFixture, "emit Q11.4 fixed-point argument")
     SUBCASE("positive floating-points are rounded to the lowest nearest "
             "fixed-point")
     {
-        const auto base_float = q11_4_resolution * 8.0f;
+        const auto base_float = q11_4_resolution * 8.0F;
 
         const auto fixedpoint_7 = std::vector{std::byte{0x06}, std::byte{0x07},
                                               std::byte{0x00}};
@@ -476,7 +476,7 @@ TEST_CASE_FIXTURE(CodeEmitterFixture, "emit Q11.4 fixed-point argument")
     SUBCASE("negative floating-points are rounded to the highest nearest "
             "fixed-point")
     {
-        const auto base_float = -(q11_4_resolution * 8.0f);
+        const auto base_float = -(q11_4_resolution * 8.0F);
 
         const auto fixedpoint_minus_7 = std::vector{
                 std::byte{0x06}, std::byte{0xF9}, std::byte{0xFF}};
@@ -769,7 +769,8 @@ TEST_CASE_FIXTURE(CodeEmitterFixture, "emit raw bytes")
 
     SUBCASE("overload omitting output_size is same as passing data_size")
     {
-        std::vector<std::byte> output1, output2;
+        std::vector<std::byte> output1;
+        std::vector<std::byte> output2;
 
         emitter.emit_raw_bytes(raw_seq.data(), raw_seq.size(), raw_seq.size())
                 .drain(back_inserter(output1));

@@ -1,7 +1,7 @@
 #include "syntax-fixture.hpp"
 #include <doctest/doctest.h>
 #include <gta3sc/syntax/preprocessor.hpp>
-using namespace gta3sc::test::syntax;
+using namespace gta3sc::test::syntax; // NOLINT
 
 namespace gta3sc::test::syntax
 {
@@ -29,7 +29,7 @@ protected:
 protected:
     gta3sc::syntax::Preprocessor pp;
 };
-}
+} // namespace gta3sc::test::syntax
 
 TEST_CASE_FIXTURE(PreprocessorFixture, "simple character stream")
 {

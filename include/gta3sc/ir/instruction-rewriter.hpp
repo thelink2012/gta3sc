@@ -33,4 +33,4 @@ class InstructionRewriter
     : public InstructionVisitor<IR, InstructionRewriterResult<IR>>
 {
 };
-}
+} // namespace gta3sc

@@ -290,4 +290,4 @@ private:
 protected:
     CommandManager cmdman;
 };
-}
+} // namespace gta3sc::test

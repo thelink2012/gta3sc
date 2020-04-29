@@ -3,7 +3,7 @@
 #include <gta3sc/syntax/lowering/repeat-stmt-rewriter.hpp>
 #include <gta3sc/syntax/parser.hpp>
 #include <string>
-using namespace gta3sc::test::syntax;
+using namespace gta3sc::test::syntax; // NOLINT
 
 namespace gta3sc::test::syntax
 {
@@ -22,7 +22,7 @@ protected:
     gta3sc::ArenaMemoryResource arena;
     gta3sc::util::NameGenerator namegen;
 };
-}
+} // namespace gta3sc::test::syntax
 
 TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "no statement to rewrite")
 {

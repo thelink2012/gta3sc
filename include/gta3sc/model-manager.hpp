@@ -77,4 +77,4 @@ protected:
     friend class ModelManager;
     ModelsMap models;
 };
-}
+} // namespace gta3sc

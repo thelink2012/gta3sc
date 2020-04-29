@@ -310,8 +310,8 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
                 // This command has been matched during alternation in a
                 // command selector. Thus, if this is an identifier, it
                 // is a valid global string constant.
-                const auto* cdef = cmdman->find_constant(cmdman->global_enum,
-                                                         *arg.as_identifier());
+                const auto* cdef = cmdman->find_constant(
+                        CommandManager::global_enum, *arg.as_identifier());
                 assert(cdef != nullptr);
 
                 return SemaIR::create_constant(*cdef, arg.source, arena);
@@ -330,7 +330,8 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
                 return nullptr;
             }
 
-            if(cmdman->find_constant(cmdman->global_enum, *arg.as_identifier()))
+            if(cmdman->find_constant(CommandManager::global_enum,
+                                     *arg.as_identifier()))
             {
                 report(arg.source, Diag::cannot_use_string_constant_here);
                 return nullptr;
@@ -420,7 +421,7 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
                 return validate_float_literal(param, arg);
             else if(arg.as_identifier())
             {
-                if(cmdman->find_constant(cmdman->global_enum,
+                if(cmdman->find_constant(CommandManager::global_enum,
                                          *arg.as_identifier()))
                 {
                     report(arg.source, Diag::cannot_use_string_constant_here);
@@ -445,7 +446,7 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
             else if(arg.as_identifier())
             {
                 if(const auto* cdef = cmdman->find_constant(
-                           cmdman->global_enum, *arg.as_identifier()))
+                           CommandManager::global_enum, *arg.as_identifier()))
                 {
                     return SemaIR::create_constant(*cdef, arg.source, arena);
                 }
@@ -459,7 +460,7 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
         case ParamType::OUTPUT_FLOAT:
         {
             if(arg.as_identifier()
-               && cmdman->find_constant(cmdman->global_enum,
+               && cmdman->find_constant(CommandManager::global_enum,
                                         *arg.as_identifier()))
             {
                 report(arg.source, Diag::cannot_use_string_constant_here);
@@ -500,7 +501,7 @@ auto Sema::validate_float_literal(const CommandManager::ParamDef& param,
            || param.type == ParamType::INPUT_FLOAT
            || param.type == ParamType::INPUT_OPT);
 
-    float value = 0.0f; // always recovers to this value
+    float value = 0.0F; // always recovers to this value
 
     if(const auto* const floating = arg.as_float())
         value = *floating;
@@ -787,7 +788,7 @@ bool Sema::validate_start_new_script(const SemaIR::Command& command)
 {
     assert(&command.def == command_start_new_script);
 
-    if(command.args.size() >= 1)
+    if(!command.args.empty())
     {
         if(const auto* target_label = command.args[0]->as_label())
         {
@@ -832,8 +833,7 @@ bool Sema::validate_target_scope_vars(const SemaIR::Argument** begin,
     // this function returns, but it's no big deal. It only happens for
     // START_NEW_SCRIPT alike commands and the allocation size is proportional
     // to the number of arguments passed.
-    const SymVariable** target_vars = new(*arena)
-            const SymVariable*[num_target_vars];
+    const auto** target_vars = new(*arena) const SymVariable*[num_target_vars];
     std::fill(target_vars, target_vars + num_target_vars, nullptr);
 
     for(auto& [name, lvar] : symrepo->var_tables[target_scope_id])
@@ -987,10 +987,10 @@ void Sema::declare_variable(const ParserIR::Command& command, ScopeId scope_id_,
     }
 }
 
-auto Sema::report(SourceLocation loc, Diag message) -> DiagnosticBuilder
+auto Sema::report(SourceLocation source, Diag message) -> DiagnosticBuilder
 {
     this->report_count++;
-    return diag_->report(loc, message);
+    return diag_->report(source, message);
 }
 
 auto Sema::report(SourceRange source, Diag message) -> DiagnosticBuilder
@@ -1134,7 +1134,8 @@ bool Sema::is_matching_alternative(
         // The global string constants have higher precedence when checking for
         // anything that is an identifier, and that shall only match with INTs.
         if(param.type != ParamType::INT && arg.as_identifier()
-           && cmdman->find_constant(cmdman->global_enum, *arg.as_identifier()))
+           && cmdman->find_constant(CommandManager::global_enum,
+                                    *arg.as_identifier()))
         {
             return false;
         }
@@ -1145,7 +1146,7 @@ bool Sema::is_matching_alternative(
             {
                 if(arg.as_identifier())
                 {
-                    if(!cmdman->find_constant(cmdman->global_enum,
+                    if(!cmdman->find_constant(CommandManager::global_enum,
                                               *arg.as_identifier()))
                         return false;
                 }
@@ -1242,7 +1243,7 @@ auto Sema::parse_var_ref(std::string_view identifier, SourceRange source)
     const auto is_bracket = [](char c) { return c == '[' || c == ']'; };
     const auto is_digit = [](char c) { return c >= '0' && c <= '9'; };
 
-    assert(identifier.size() > 0);
+    assert(!identifier.empty());
     assert(!is_bracket(identifier.front()));
 
     const auto* const it_open = std::find_if(identifier.begin(),
@@ -1292,9 +1293,9 @@ auto Sema::parse_var_ref(std::string_view identifier, SourceRange source)
         var_source = source;
     }
 
-    assert(var_name.size() > 0);
+    assert(!var_name.empty());
     assert(var_name.size() == var_source.size());
-    assert(!subscript || subscript->name.size() > 0);
+    assert(!subscript || !subscript->name.empty());
     assert(!subscript || subscript->name.size() == subscript->source.size());
 
     // We have to validate the subscript is either another identifier
@@ -1313,11 +1314,10 @@ auto Sema::parse_var_ref(std::string_view identifier, SourceRange source)
         {
             if(std::all_of(subval.begin(), subval.end(), is_digit))
             {
-                using namespace gta3sc::utils;
-                int32_t value;
+                int32_t value{};
 
-                if(auto [_, ec] = from_chars(&*subval.begin(), &*subval.end(),
-                                             value);
+                if(auto [_, ec] = util::from_chars(&*subval.begin(),
+                                                   &*subval.end(), value);
                    ec != std::errc())
                 {
                     assert(ec == std::errc::result_out_of_range);
@@ -1350,6 +1350,6 @@ auto Sema::parse_var_ref(std::string_view identifier, SourceRange source)
         }
     }
 
-    return VarRef{var_name, var_source, std::move(subscript)};
+    return VarRef{var_name, var_source, subscript};
 }
-}
+} // namespace gta3sc::syntax

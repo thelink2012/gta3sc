@@ -72,6 +72,7 @@ auto Parser::report(const Token &token, Diag message) -> DiagnosticBuilder
     return report(token.source, message);
 }
 
+// NOLINTNEXTLINE(readability-make-member-function-const): Produces side-effect
 auto Parser::report(SourceRange source, Diag message) -> DiagnosticBuilder
 {
     return diagnostics().report(source.begin, message).range(source);
@@ -107,9 +108,9 @@ bool Parser::is_var_decl_command(std::string_view name) const
            || name == COMMAND_LVAR_FLOAT || name == COMMAND_LVAR_TEXT_LABEL;
 }
 
-bool Parser::iequal(std::string_view a, std::string_view b) const
+bool Parser::iequal(std::string_view lhs, std::string_view rhs) const
 {
-    return std::equal(a.begin(), a.end(), b.begin(), b.end(),
+    return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(),
                       [](unsigned char ac, unsigned char bc) {
                           if(ac >= 'a' && ac <= 'z')
                               ac -= 32; // transform into upper
@@ -371,7 +372,7 @@ bool Parser::is_identifier(std::string_view lexeme) const
     // Constraints:
     // An identifier should not end with a `:` character.
 
-    if(lexeme.size() >= 1)
+    if(!lexeme.empty())
     {
         const auto front = lexeme.front();
         const auto back = lexeme.back();
@@ -447,10 +448,10 @@ auto Parser::parse_argument()
     }
     else if(token->category == Category::Word && is_integer(lexeme))
     {
-        using namespace gta3sc::utils;
         int32_t value{};
 
-        if(auto [_, ec] = from_chars(&*lexeme.begin(), &*lexeme.end(), value);
+        if(auto [_, ec] = util::from_chars(&*lexeme.begin(), &*lexeme.end(),
+                                           value);
            ec != std::errc())
         {
             assert(ec == std::errc::result_out_of_range);
@@ -462,11 +463,10 @@ auto Parser::parse_argument()
     }
     else if(token->category == Category::Word && is_float(lexeme))
     {
-        using namespace gta3sc::utils;
         float value{};
 
-        if(auto [_, ec] = from_chars(&*lexeme.begin(), &*lexeme.end(), value,
-                                     chars_format::fixed);
+        if(auto [_, ec] = util::from_chars(&*lexeme.begin(), &*lexeme.end(),
+                                           value, util::chars_format::fixed);
            ec != std::errc())
         {
             assert(ec == std::errc::result_out_of_range);
@@ -514,7 +514,7 @@ auto Parser::parse_subscript_file() -> std::optional<LinkedIR<ParserIR>>
         return std::nullopt;
 
     if(const auto *const mission_start_command = (*mission_start)->command;
-       mission_start_command->args.size() != 0)
+       !mission_start_command->args.empty())
     {
         report(mission_start_command->source, Diag::too_many_arguments);
         return std::nullopt;
@@ -525,7 +525,7 @@ auto Parser::parse_subscript_file() -> std::optional<LinkedIR<ParserIR>>
         return std::nullopt;
 
     if(const auto *const mission_end_command = body_stms->back().command;
-       mission_end_command->args.size() != 0)
+       !mission_end_command->args.empty())
     {
         report(mission_end_command->source, Diag::too_many_arguments);
         return std::nullopt;
@@ -780,7 +780,7 @@ auto Parser::parse_embedded_statement(bool allow_special_name)
             }
 
             if(const auto *const command = (*ir)->command;
-               is_var_decl_command(command->name) && command->args.size() == 0)
+               is_var_decl_command(command->name) && command->args.empty())
             {
                 report(command->source, Diag::too_few_arguments);
                 return std::nullopt;
@@ -1041,7 +1041,7 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
         if(const auto *const else_command = body_stms->back().command;
            else_command->name == COMMAND_ELSE)
         {
-            if(else_command->args.size() != 0)
+            if(!else_command->args.empty())
             {
                 report(else_command->source, Diag::too_many_arguments);
                 return std::nullopt;
@@ -1055,7 +1055,7 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
         }
 
         if(const auto *const endif_command = body_stms->back().command;
-           endif_command->args.size() != 0)
+           !endif_command->args.empty())
         {
             report(endif_command->source, Diag::too_many_arguments);
             return std::nullopt;
@@ -1113,7 +1113,7 @@ auto Parser::parse_while_statement_detail(bool is_whilenot)
     assert(!body_stms->empty() && body_stms->back().command);
 
     if(const auto &endwhile_command = body_stms->back().command;
-       endwhile_command->args.size() != 0)
+       !endwhile_command->args.empty())
     {
         report(endwhile_command->source, Diag::too_many_arguments);
         return std::nullopt;
@@ -1168,7 +1168,7 @@ auto Parser::parse_repeat_statement() -> std::optional<LinkedIR<ParserIR>>
 
     assert(!body_stms->empty() && body_stms->back().command != nullptr);
     if(const auto *const endrepeat_command = body_stms->back().command;
-       endrepeat_command->args.size() != 0)
+       !endrepeat_command->args.empty())
     {
         report((*repeat_command)->command->source, Diag::too_many_arguments);
         return std::nullopt;
@@ -1282,8 +1282,8 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
     size_t num_toks = 0;
     size_t num_args = 0;
 
-    assert(std::size(cats) >= std::size(args));
-    assert(std::size(cats) == std::size(spans));
+    static_assert(std::size(cats) >= std::size(args));
+    static_assert(std::size(cats) == std::size(spans));
 
     // This is a very special part of the language grammar. We can quickly
     // and cleanly parse this by applying some pattern matching on the tokens
@@ -1446,7 +1446,8 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
             && args[1]->as_identifier() && *args[1]->as_identifier() == "ABS"sv
             && cats[3] == Category::Word)
     {
-        const auto a = args[0], b = args[2];
+        const auto a = args[0];
+        const auto b = args[2];
         if(a->is_same_value(*b))
         {
             linked.push_back(*ParserIR::Builder(*arena)
@@ -1515,7 +1516,8 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
         }
 
         std::string_view command_name;
-        auto a = args[0], b = args[1];
+        auto a = args[0];
+        auto b = args[1];
 
         if(is_conditional)
         {
@@ -1581,7 +1583,9 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
             return std::nullopt;
         }
 
-        const auto a = args[0], b = args[1], c = args[2];
+        const auto a = args[0];
+        const auto b = args[1];
+        const auto c = args[2];
 
         const bool is_associative = (cats[3] == Category::Plus
                                      || cats[3] == Category::Star);
@@ -1650,7 +1654,7 @@ bool Parser::ensure_mission_start_at_top_of_file()
     {
         if(*it == 'M' || *it == 'm')
             break;
-        if(*it != ' ' || *it != '\t')
+        if(*it != ' ' && *it != '\t')
             has_mission_start = false;
     }
 
@@ -1663,6 +1667,6 @@ bool Parser::ensure_mission_start_at_top_of_file()
 
     return true;
 }
-}
+} // namespace gta3sc::syntax
 
 // TODO perform parsing recovery

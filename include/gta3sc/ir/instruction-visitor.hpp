@@ -14,7 +14,7 @@ public:
     using Result = TResult;
 
 public:
-    virtual ~InstructionVisitor() {}
+    virtual ~InstructionVisitor() = default;
     virtual auto visit(const IRType&) -> Result = 0;
 };
-}
+} // namespace gta3sc

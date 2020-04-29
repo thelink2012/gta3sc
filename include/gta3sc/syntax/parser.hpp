@@ -183,10 +183,10 @@ private:
     auto report(const Token& token, Diag message) -> DiagnosticBuilder;
 
     /// Produces a diagnostic report associated with a given range.
-    auto report(SourceRange range, Diag message) -> DiagnosticBuilder;
+    auto report(SourceRange source, Diag message) -> DiagnosticBuilder;
 
     /// Produces a diagnostic regarding a unexpected grammar name.
-    auto report_special_name(SourceRange range) -> DiagnosticBuilder;
+    auto report_special_name(SourceRange source) -> DiagnosticBuilder;
 
     /// Ensures that the rule that the first line of file must be
     /// MISSION_START is correct. Otherwise, produces a diagnostic.
@@ -273,4 +273,4 @@ private:
     bool has_peek_token[6] = {};
     std::optional<Token> peek_tokens[6];
 };
-}
+} // namespace gta3sc::syntax

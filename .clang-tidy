@@ -6,93 +6,90 @@
 # A list of checks can be found at
 # https://clang.llvm.org/extra/clang-tidy/checks/list.html
 #
-# TODO
+# List of disabled checks:
+#
+#   android-cloexec-*
+#       Requires non portable fixes.
+#
+#   fuchsia-*
+#       Too much strict and sometimes conflicts with modernize checks.
+#
+#   cert-dcl21-cpp
+#       Bad advice in Modern C++ [https://stackoverflow.com/a/16835004/2679626].
+#
+#   readability-else-after-return
+#       Ends up converting else-if chains into plain ifs in case the previous
+#       body contains ends in a return. This hurts readability more than it
+#       helps. Other than that, the purpose of the check is fair (reduce
+#       identation exit early).
+#
+#   readability-redundant-access-specifiers
+#       Redundant access specifiers are used to separate member variables from
+#       member functions.
+#
+#   readability-magic-numbers
+#   cppcoreguidelines-avoid-magic-numbers
+#       Too aggressive and flags too many literals as magic numbers.
+#
+#   readability-convert-member-functions-to-static
+#       Some member functions are non-static by design.
+#
+#   readability-braces-around-statements
+#   google-readability-braces-around-statements
+#       TODO
+#
+#   google-runtime-references
+#       This is a very specific coding convention not used in this project.
+#
+#   google-readability-todo
+#       I really like Google TODOs. Unfortunately, I don't think they fit
+#       too well outside of their environment (how to specify bug id?).
+#       Maybe this can be revisited in the future.
+#
+#   cppcoreguidelines-pro-bounds-array-to-pointer-decay
+#   hicpp-no-array-decay,
+#       Would be useful if didn't flag every assert.
+#
+#   cppcoreguidelines-non-private-member-variables-in-classes
+#       Breaks our design. May be revisited in the future.
+#
 
 Checks: '
         ,*,
-        ,-android-*,
-        ,-fuchsia-*,
-        ,-bugprone-narrowing-conversions,
-        ,-bugprone-branch-clone,
-        ,-bugprone-move-forwarding-reference,
+        ,-android-cloexec-*,
         ,-cert-dcl21-cpp,
-        ,-cert-dcl03-c,
-        ,-cert-dcl58-cpp,
         ,-cppcoreguidelines-special-member-functions,
         ,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,
         ,-cppcoreguidelines-avoid-magic-numbers,
         ,-cppcoreguidelines-pro-bounds-pointer-arithmetic,
         ,-cppcoreguidelines-non-private-member-variables-in-classes,
-        ,-cppcoreguidelines-init-variables,
         ,-cppcoreguidelines-owning-memory,
-        ,-cppcoreguidelines-pro-type-reinterpret-cast,
         ,-cppcoreguidelines-pro-type-const-cast,
         ,-cppcoreguidelines-avoid-c-arrays,
-        ,-cppcoreguidelines-narrowing-conversions,
-        ,-cppcoreguidelines-pro-type-member-init,
-        ,-cppcoreguidelines-pro-type-vararg,
         ,-cppcoreguidelines-pro-bounds-constant-array-index,
-        ,-cppcoreguidelines-avoid-goto,
+        ,-fuchsia-*,
         ,-google-readability-braces-around-statements,
-        ,-google-readability-namespace-comments,
         ,-google-runtime-references,
         ,-google-readability-todo,
-        ,-google-explicit-constructor,
-        ,-google-runtime-int,
-        ,-google-build-using-namespace,
         ,-google-readability-function-size,
-        ,-hicpp-use-auto,
         ,-hicpp-special-member-functions,
         ,-hicpp-braces-around-statements,
         ,-hicpp-no-array-decay,
-        ,-hicpp-uppercase-literal-suffix,
-        ,-hicpp-signed-bitwise,
-        ,-hicpp-move-const-arg,
-        ,-hicpp-explicit-conversions,
-        ,-hicpp-use-equals-default,
         ,-hicpp-avoid-c-arrays,
-        ,-hicpp-noexcept-move,
-        ,-hicpp-member-init,
-        ,-hicpp-vararg,
-        ,-hicpp-use-nullptr,
-        ,-hicpp-static-assert,
-        ,-hicpp-avoid-goto,
         ,-hicpp-function-size,
-        ,-hicpp-multiway-paths-covered,
         ,-llvm-header-guard,
-        ,-llvm-namespace-comment,
-        ,-llvm-qualified-auto,
-        ,-llvm-include-order,
         ,-misc-non-private-member-variables-in-classes,
-        ,-misc-unused-parameters,
-        ,-misc-static-assert,
-        ,-misc-redundant-expression,
-        ,-modernize-use-auto,
         ,-modernize-use-trailing-return-type,
         ,-modernize-use-nodiscard,
-        ,-modernize-loop-convert,
-        ,-modernize-use-default-member-init,
-        ,-modernize-use-equals-default,
         ,-modernize-avoid-c-arrays,
-        ,-modernize-use-nullptr,
-        ,-performance-move-const-arg,
-        ,-performance-noexcept-move-constructor,
         ,-readability-named-parameter,
         ,-readability-braces-around-statements,
         ,-readability-redundant-access-specifiers,
         ,-readability-else-after-return,
         ,-readability-magic-numbers,
         ,-readability-convert-member-functions-to-static,
-        ,-readability-uppercase-literal-suffix,
         ,-readability-implicit-bool-conversion,
-        ,-readability-qualified-auto,
-        ,-readability-inconsistent-declaration-parameter-name,
         ,-readability-identifier-naming,
-        ,-readability-isolate-declaration,
-        ,-readability-redundant-member-init,
-        ,-readability-make-member-function-const,
-        ,-readability-container-size-empty,
-        ,-readability-static-accessed-through-instance,
         ,-readability-function-size,
         '
 

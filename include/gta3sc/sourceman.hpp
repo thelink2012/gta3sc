@@ -140,7 +140,7 @@ public:
     static constexpr SourceRange no_source_range{};
 
 public:
-    SourceManager() {}
+    SourceManager() = default;
 
     SourceManager(SourceManager&&) = default;
     SourceManager& operator=(SourceManager&&) = default;
@@ -188,7 +188,7 @@ protected:
         /// Start of the location range used by this source file.
         SourceLocation start_loc;
         /// The length of the source file in bytes.
-        uint32_t file_length;
+        uint32_t file_length{};
 
         /// Number of SourceFile handles pointing to this structure.
         size_t refcount = 0;
@@ -242,12 +242,12 @@ public:
     SourceFile(const SourceFile&) = delete;
     SourceFile& operator=(const SourceFile&) = delete;
 
-    SourceFile(SourceFile&& rhs)
+    SourceFile(SourceFile&& rhs) noexcept
     {
         this->info = std::exchange(rhs.info, nullptr);
     }
 
-    SourceFile& operator=(SourceFile&& rhs)
+    SourceFile& operator=(SourceFile&& rhs) noexcept
     {
         this->info = std::exchange(rhs.info, nullptr);
         return *this;
@@ -304,4 +304,4 @@ private:
 // should be renamed to something else like FileManager (maybe even
 // split into a SourceManager class that takes FileManager as input)
 // remember to rename methods such as code_data to e.g. data
-}
+} // namespace gta3sc

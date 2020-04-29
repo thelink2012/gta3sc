@@ -5,7 +5,7 @@
 #include <cstring>
 #include <system_error>
 
-namespace gta3sc::utils
+namespace gta3sc::util
 {
 // This is a placeholder implementation of std::from_chars.
 //
@@ -34,10 +34,12 @@ inline auto from_chars(const char* first, const char* last, int32_t& value,
     // We also do not support (nor require) other radices.
     assert(base == 10);
 
-    constexpr long min_value = (-2147483647 - 1), max_value = 2147483647;
+    // NOLINTNEXTLINE(google-runtime-int): Allow long because of strtol
+    constexpr long min_value = (-2147483647 - 1);
+    constexpr long max_value = 2147483647; // NOLINT
 
-    static_assert(std::numeric_limits<long>::min() <= min_value
-                  && std::numeric_limits<long>::max() >= max_value);
+    static_assert(std::numeric_limits<long>::min() <= min_value      // NOLINT
+                  && std::numeric_limits<long>::max() >= max_value); // NOLINT
 
     char buffer[64];
     const auto length = std::min<size_t>(last - first, std::size(buffer) - 1);
@@ -46,7 +48,7 @@ inline auto from_chars(const char* first, const char* last, int32_t& value,
     buffer[length] = '\0';
 
     errno = 0;
-    char* endptr = 0;
+    char* endptr = nullptr;
     const auto result = std::strtol(buffer, &endptr, base);
 
     if(errno == ERANGE || result < min_value || result > max_value)
@@ -75,7 +77,7 @@ inline auto from_chars(const char* first, const char* last, float& value,
     buffer[length] = '\0';
 
     errno = 0;
-    char* endptr = 0;
+    char* endptr = nullptr;
     const auto result = std::strtof(buffer, &endptr);
 
     if(errno == ERANGE)
@@ -88,4 +90,4 @@ inline auto from_chars(const char* first, const char* last, float& value,
     value = result;
     return from_chars_result{endptr, std::errc()};
 }
-}
+} // namespace gta3sc::utils

@@ -106,9 +106,9 @@ auto Scanner::next() -> std::optional<Token>
 
     auto start_pos = this->location();
 
+    // clang-format off
     switch(peek_char)
     {
-    // clang-format off
         newline: case '\r': case '\n': case '\0':
             if(peek_char == '\r') getc();
             if(peek_char == '\n') getc();
@@ -121,19 +121,15 @@ auto Scanner::next() -> std::optional<Token>
 
             // Trailing spaces should be handled as a newline.
             if(is_newline(peek_char))
-                goto newline;
+                goto newline; // NOLINT: modelling a finite state machine
 
             return Token(Category::Whitespace, start_pos, location());
 
         case '-':
             this->getc();
-            if(peek_char == '.')
+            if(peek_char == '.' || is_digit(peek_char))
             {
-                goto word_token;
-            }
-            else if(is_digit(peek_char))
-            {
-                goto word_token;
+                goto word_token; // NOLINT: modelling a finite state machine
             }
             else if(peek_char == '=')
             {
@@ -282,8 +278,7 @@ auto Scanner::next() -> std::optional<Token>
                 this->getc();
 
             return Token(Category::Word, start_pos, location());
-
-            // clang-format on
     }
+    // clang-format on
 }
-}
+} // namespace gta3sc::syntax

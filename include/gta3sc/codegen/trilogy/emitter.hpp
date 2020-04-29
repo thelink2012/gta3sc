@@ -142,8 +142,8 @@ private:
 template<typename OutputIterator>
 inline auto CodeEmitter::drain(OutputIterator output_iter) -> OutputIterator
 {
-    for(auto it = this->buffer.begin(); it != this->buffer.end(); ++it)
-        *output_iter++ = *it;
+    for(const auto& byte_val : this->buffer)
+        *output_iter++ = byte_val;
 
     this->buffer_clear();
     return output_iter;
@@ -179,4 +179,4 @@ inline auto CodeEmitter::emit_raw_bytes(const T* data, size_t data_size)
 {
     return emit_raw_bytes(data, data_size, data_size);
 }
-}
+} // namespace gta3sc::codegen::trilogy

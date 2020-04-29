@@ -35,13 +35,12 @@ enum class Category : uint8_t
 /// Classified lexeme.
 struct Token
 {
-    Category category;  ///< Category of this token.
-    SourceRange source; ///< Origin of this token.
+    Category category{Category::EndOfLine}; ///< Category of this token.
+    SourceRange source;                     ///< Origin of this token.
 
-    explicit Token() : category(Category::EndOfLine), source() {}
+    Token() = default;
 
-    explicit Token(Category category, SourceLocation begin,
-                   SourceLocation end) :
+    Token(Category category, SourceLocation begin, SourceLocation end) :
         category(category), source(begin, end)
     {}
 };
@@ -116,4 +115,4 @@ private:
     Preprocessor pp;
     char peek_char;
 };
-}
+} // namespace gta3sc::syntax

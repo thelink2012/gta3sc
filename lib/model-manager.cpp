@@ -28,4 +28,4 @@ auto ModelManager::Builder::insert_model(std::string_view name) -> Builder&&
     }
     return std::move(*this);
 }
-}
+} // namespace gta3sc

@@ -269,11 +269,11 @@ void ParserIR::Builder::create_command_from_attributes()
 {
     assert(this->has_command_name);
 
-    this->command_ptr = new(*arena, alignof(Command)) const Command{
-            this->command_source, this->command_name, std::move(this->args),
-            this->has_not_flag ? this->not_flag_value : false};
+    this->command_ptr = new(*arena, alignof(Command))
+            const Command{this->command_source, this->command_name, this->args,
+                          this->has_not_flag ? this->not_flag_value : false};
 
     this->has_command_name = false;
     this->has_not_flag = false;
 }
-}
+} // namespace gta3sc

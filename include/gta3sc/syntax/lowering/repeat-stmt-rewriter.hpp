@@ -54,4 +54,4 @@ private:
     std::string namegen_buffer;
     std::vector<RepeatStmt> repeat_stack;
 };
-}
+} // namespace gta3sc::syntax

@@ -123,7 +123,7 @@ public:
     protected:
         Command(SourceRange source, const CommandManager::CommandDef& def,
                 util::span<arena_ptr<const Argument>> args, bool not_flag) :
-            source(source), def(def), args(std::move(args)), not_flag(not_flag)
+            source(source), def(def), args(args), not_flag(not_flag)
         {}
 
         friend class Builder;
@@ -328,8 +328,8 @@ public:
 
     /// Appends an argument referencing to the given used object to the
     /// command in construction.
-    auto arg_object(const SymUsedObject& uobj, SourceRange source = no_source)
-            -> Builder&&;
+    auto arg_object(const SymUsedObject& used_object,
+                    SourceRange source = no_source) -> Builder&&;
 
     /// Builds an instruction from the attributes in the builder.
     auto build() && -> arena_ptr<SemaIR>;
@@ -352,7 +352,7 @@ private:
     const SymLabel* label_ptr{};
     arena_ptr<const Command> command_ptr{};
 
-    const CommandManager::CommandDef* command_def;
+    const CommandManager::CommandDef* command_def{};
     SourceRange command_source;
 
     size_t args_capacity = 0;
@@ -364,7 +364,7 @@ private:
 static_assert(std::is_trivially_destructible_v<SemaIR>);
 static_assert(std::is_trivially_destructible_v<SemaIR::Command>);
 static_assert(std::is_trivially_destructible_v<SemaIR::Argument>);
-}
+} // namespace gta3sc
 
 // TODO replace arena* with arena& (in parserir too)
 // TODO the builder should probably not be returning an rvalue to itself unless

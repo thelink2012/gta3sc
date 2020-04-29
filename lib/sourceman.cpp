@@ -155,4 +155,4 @@ auto SourceManager::load_file(const std::filesystem::path& path,
 
     return SourceFile(it->second);
 }
-}
+} // namespace gta3sc

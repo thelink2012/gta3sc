@@ -6,7 +6,7 @@
 // TODO migrate from ostream to std::format
 // https://github.com/onqtam/doctest/blob/master/doc/markdown/stringification.md
 
-namespace std
+namespace std // NOLINT(cert-dcl58-cpp): FIXME
 {
 inline std::ostream& operator<<(std::ostream& os, std::byte byte_val)
 {
@@ -26,4 +26,4 @@ inline std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
     os << "}";
     return os;
 }
-}
+} // namespace std

@@ -214,4 +214,4 @@ private:
 
 // The builder must be a small object.
 static_assert(sizeof(DiagnosticBuilder) <= 2 * sizeof(size_t));
-}
+} // namespace gta3sc

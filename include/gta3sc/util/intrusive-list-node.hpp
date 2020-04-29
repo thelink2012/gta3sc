@@ -18,7 +18,7 @@ namespace detail
 
     template<typename T>
     class IntrusiveBidirectionalListNodeAlgorithms;
-}
+} // namespace detail
 
 template<typename T>
 using IntrusiveListForwardIterator
@@ -120,7 +120,7 @@ namespace detail
     public:
         /// Constructs an iterator pointing to the past-the-end element of a
         /// singly linked list.
-        IntrusiveListForwardIterator() {}
+        IntrusiveListForwardIterator() = default;
 
         /// Constructs an iterator pointing to the specified node.
         explicit IntrusiveListForwardIterator(maybe_const<node_type>& node) :
@@ -142,6 +142,7 @@ namespace detail
                 = default;
 
         /// Enable conversion from iterator to const_iterator.
+        // NOLINTNEXTLINE(google-explicit-constructor)
         template<bool IsOtherConstIter,
                  typename = std::enable_if_t<IsConstIter && !IsOtherConstIter>>
         IntrusiveListForwardIterator(
@@ -210,7 +211,7 @@ namespace detail
 
     public:
         /// Constructs an invalid iterator.
-        IntrusiveListBidirectionalIterator() {}
+        IntrusiveListBidirectionalIterator() = default;
 
         /// Constructs an iterator pointing to the specified node.
         explicit IntrusiveListBidirectionalIterator(
@@ -235,6 +236,7 @@ namespace detail
                 = default;
 
         /// Enable conversion from iterator to const_iterator.
+        // NOLINTNEXTLINE(google-explicit-constructor)
         template<bool IsOtherConstIter,
                  typename = std::enable_if_t<IsConstIter && !IsOtherConstIter>>
         IntrusiveListBidirectionalIterator(
@@ -319,7 +321,7 @@ namespace detail
         }
     };
 
-}
+} // namespace detail
 
 //
 // Algorithms
@@ -332,4 +334,4 @@ inline void unlink_node(IntrusiveBidirectionalListNode<T>& node)
     using Algorithms = detail::IntrusiveBidirectionalListNodeAlgorithms<T>;
     return Algorithms::unlink_node(node);
 }
-}
+} // namespace gta3sc::util

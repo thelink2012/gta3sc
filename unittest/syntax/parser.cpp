@@ -2,7 +2,7 @@
 #include <doctest/doctest.h>
 #include <gta3sc/syntax/parser.hpp>
 #include <string>
-using namespace gta3sc::test::syntax;
+using namespace gta3sc::test::syntax; // NOLINT
 using namespace std::literals::string_view_literals;
 using namespace std::literals::string_literals;
 using gta3sc::test::syntax::d;
@@ -40,7 +40,7 @@ private:
 protected:
     gta3sc::syntax::Parser parser;
 };
-}
+} // namespace gta3sc::test::syntax
 
 namespace
 {
@@ -402,25 +402,25 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing float argument")
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front().command->name == "WAIT");
     REQUIRE(ir->front().command->args.size() == 7);
-    REQUIRE(*ir->front().command->args[0]->as_float() == 0.1f);
-    REQUIRE(*ir->front().command->args[1]->as_float() == -0.1f);
-    REQUIRE(*ir->front().command->args[2]->as_float() == 0.1f);
-    REQUIRE(*ir->front().command->args[3]->as_float() == 0.1f);
-    REQUIRE(*ir->front().command->args[4]->as_float() == 0.15f);
-    REQUIRE(*ir->front().command->args[5]->as_float() == 0.1f);
-    REQUIRE(*ir->front().command->args[6]->as_float() == -0.1f);
+    REQUIRE(*ir->front().command->args[0]->as_float() == 0.1F);
+    REQUIRE(*ir->front().command->args[1]->as_float() == -0.1F);
+    REQUIRE(*ir->front().command->args[2]->as_float() == 0.1F);
+    REQUIRE(*ir->front().command->args[3]->as_float() == 0.1F);
+    REQUIRE(*ir->front().command->args[4]->as_float() == 0.15F);
+    REQUIRE(*ir->front().command->args[5]->as_float() == 0.1F);
+    REQUIRE(*ir->front().command->args[6]->as_float() == -0.1F);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front().command->name == "WAIT");
     REQUIRE(ir->front().command->args.size() == 7);
-    REQUIRE(*ir->front().command->args[0]->as_float() == 1.0f);
-    REQUIRE(*ir->front().command->args[1]->as_float() == -1.0f);
-    REQUIRE(*ir->front().command->args[2]->as_float() == 1.0f);
-    REQUIRE(*ir->front().command->args[3]->as_float() == 1.1f);
-    REQUIRE(*ir->front().command->args[4]->as_float() == 1.0f);
-    REQUIRE(*ir->front().command->args[5]->as_float() == 1.0f);
-    REQUIRE(*ir->front().command->args[6]->as_float() == -1.0f);
+    REQUIRE(*ir->front().command->args[0]->as_float() == 1.0F);
+    REQUIRE(*ir->front().command->args[1]->as_float() == -1.0F);
+    REQUIRE(*ir->front().command->args[2]->as_float() == 1.0F);
+    REQUIRE(*ir->front().command->args[3]->as_float() == 1.1F);
+    REQUIRE(*ir->front().command->args[4]->as_float() == 1.0F);
+    REQUIRE(*ir->front().command->args[5]->as_float() == 1.0F);
+    REQUIRE(*ir->front().command->args[6]->as_float() == -1.0F);
 
     ir = parser.parse_statement();
     parser.skip_current_line(); // .1a
@@ -1030,6 +1030,9 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing special words in expressions")
             case 1: // MISSION_END ++
                 CHECK(consume_diag().message
                       == gta3sc::Diag::unexpected_special_name);
+                break;
+            default:
+                assert(false);
                 break;
         }
     }

@@ -76,11 +76,11 @@ auto SemaIR::create_constant(const CommandManager::ConstantDef& cdef,
     return new(*arena, alignof(Argument)) const Argument(&cdef, source);
 }
 
-auto SemaIR::create_used_object(const SymUsedObject& uobj, SourceRange source,
-                                ArenaMemoryResource* arena)
+auto SemaIR::create_used_object(const SymUsedObject& used_object,
+                                SourceRange source, ArenaMemoryResource* arena)
         -> arena_ptr<const Argument>
 {
-    return new(*arena, alignof(Argument)) const Argument(&uobj, source);
+    return new(*arena, alignof(Argument)) const Argument(&used_object, source);
 }
 
 auto SemaIR::Argument::as_integer() const -> const int32_t*
@@ -274,10 +274,10 @@ auto SemaIR::Builder::arg_const(const CommandManager::ConstantDef& cdef,
     return arg(SemaIR::create_constant(cdef, source, arena));
 }
 
-auto SemaIR::Builder::arg_object(const SymUsedObject& uobj, SourceRange source)
-        -> Builder&&
+auto SemaIR::Builder::arg_object(const SymUsedObject& used_object,
+                                 SourceRange source) -> Builder&&
 {
-    return arg(SemaIR::create_used_object(uobj, source, arena));
+    return arg(SemaIR::create_used_object(used_object, source, arena));
 }
 
 auto SemaIR::Builder::build() && -> arena_ptr<SemaIR>
@@ -312,11 +312,11 @@ void SemaIR::Builder::create_command_from_attributes()
 {
     assert(this->has_command_def);
 
-    this->command_ptr = new(*arena, alignof(Command)) const Command{
-            this->command_source, *this->command_def, std::move(this->args),
-            this->has_not_flag ? this->not_flag_value : false};
+    this->command_ptr = new(*arena, alignof(Command))
+            const Command{this->command_source, *this->command_def, this->args,
+                          this->has_not_flag ? this->not_flag_value : false};
 
     this->has_command_def = false;
     this->has_not_flag = false;
 }
-}
+} // namespace gta3sc

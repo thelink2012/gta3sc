@@ -19,13 +19,13 @@ public:
 
     /// Constructs a generator on which the generated strings have a common
     /// `prefix`.
-    NameGenerator(std::string prefix);
+    explicit NameGenerator(std::string prefix);
 
     NameGenerator(const NameGenerator&) = delete;
     NameGenerator& operator=(const NameGenerator&) = delete;
 
-    NameGenerator(NameGenerator&& rhs);
-    NameGenerator& operator=(NameGenerator&&);
+    NameGenerator(NameGenerator&& rhs) noexcept;
+    NameGenerator& operator=(NameGenerator&&) noexcept;
 
     /// Generates a unique string into `str`.
     void generate(std::string& str);
@@ -34,4 +34,4 @@ private:
     std::atomic_uint32_t counter{};
     std::string prefix_format;
 };
-};
+} // namespace gta3sc::util

@@ -32,22 +32,15 @@ class ArenaMemoryResource
 {
 public:
     /// Sets the current buffer to null.
-    explicit ArenaMemoryResource() :
-        region_ptr(),
-        region_size(),
-        free_ptr(),
-        owns_region(false),
-        next_region_size(4096)
-    {}
+    ArenaMemoryResource() = default;
 
     /// Sets the current buffer to buffer and the next buffer size to
     /// buffer_size (but not less than 1). Then increase the next buffer
     /// size by an growth factor.
-    explicit ArenaMemoryResource(void* buffer, size_t buffer_size) :
+    ArenaMemoryResource(void* buffer, size_t buffer_size) :
         region_ptr(static_cast<char*>(buffer)),
         region_size(buffer_size),
         free_ptr(static_cast<char*>(buffer)),
-        owns_region(false),
         next_region_size(buffer_size * 2)
     {
         assert(buffer_size > 0);
@@ -91,7 +84,7 @@ public:
     /// assigns it to the current buffer and allocates a block from this buffer.
     void* allocate(size_t bytes, size_t alignment)
     {
-        size_t space;
+        size_t space{};
 
         if(region_ptr)
         {
@@ -157,6 +150,7 @@ public:
         // initial buffer we don't own, or we don't have any more buffers.
         while(owns_region && region_ptr)
         {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
             auto header = *reinterpret_cast<OwnedHeader*>(region_ptr);
             operator delete(region_ptr);
             this->region_ptr = header.prev_region_ptr;
@@ -169,13 +163,13 @@ public:
     }
 
 private:
-    char* region_ptr;   //< The pointer to the current region.
-    size_t region_size; //< The size of the current region.
-    char* free_ptr;     //< Next free memory in the current region.
-    bool owns_region;   //< Whether we we the memory to this region.
-                        //< Only the first region may be unowned.
+    char* region_ptr{};      //< The pointer to the current region.
+    size_t region_size{};    //< The size of the current region.
+    char* free_ptr{};        //< Next free memory in the current region.
+    bool owns_region{false}; //< Whether we we the memory to this region.
+                             //< Only the first region may be unowned.
 
-    size_t next_region_size; //< The size of the next memory region.
+    size_t next_region_size{4096}; //< The size of the next memory region.
 
     /// The first bytes of each region allocated by the arena
     /// contains the following structure.
@@ -216,15 +210,18 @@ public:
     using value_type = T;
 
     /// This constructor is an implicit conversion from an arena resource.
+    // NOLINTNEXTLINE(google-explicit-constructor)
     ArenaAllocator(ArenaMemoryResource* arena) : arena(arena)
     {
         assert(arena != nullptr);
     }
 
+    // NOLINTNEXTLINE(google-explicit-constructor)
     template<typename U>
     ArenaAllocator(const ArenaAllocator<U>& rhs) : arena(rhs.arena)
     {}
 
+    // NOLINTNEXTLINE(google-explicit-constructor)
     template<typename U>
     ArenaAllocator(ArenaAllocator<U>&& rhs) : arena(rhs.arena)
     {}
@@ -258,7 +255,7 @@ protected:
     template<typename U>
     friend class ArenaAllocator;
 };
-}
+} // namespace gta3sc
 
 inline void* operator new(std::size_t count, gta3sc::ArenaMemoryResource& arena,
                           std::size_t align)
@@ -313,16 +310,22 @@ inline auto allocate_string_upper(std::string_view from,
                                   ArenaMemoryResource& arena)
         -> std::string_view
 {
+
     auto chars = allocate_string(from, arena);
     for(const auto& c : chars)
     {
         if(c >= 'a' && c <= 'z')
         {
+            // The following conversion assumes we are running in a platform
+            // using ASCII as the character set. Make sure this is true.
+            static_assert('a' == 97 && 'z' == 122 && 'A' == 65 && 'Z' == 90);
+            constexpr char ascii_case_bit = 0b0100000;
+
             // The following const_cast is safe because allocate_string
             // constructs a mutable character sequence.
-            const_cast<char&>(c) = c - 32;
+            const_cast<char&>(c) -= ascii_case_bit; // Turn case-bit off
         }
     }
     return chars;
 }
-}
+} // namespace gta3sc::util

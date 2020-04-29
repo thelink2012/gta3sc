@@ -85,7 +85,7 @@ public:
     IntrusiveList(const IntrusiveList&) = delete;
     IntrusiveList& operator=(const IntrusiveList&) = delete;
 
-    IntrusiveList(IntrusiveList&& other) : IntrusiveList()
+    IntrusiveList(IntrusiveList&& other) noexcept : IntrusiveList()
     {
         other.swap(*this);
     }
@@ -253,10 +253,10 @@ public:
     }
 
     /// Erases the first element from the container's list.
-    void pop_front(reference node) noexcept { erase(begin()); }
+    void pop_front() noexcept { erase(begin()); }
 
     /// Erases the last element from the container's list.
-    void pop_back(reference node) noexcept { erase(std::prev(end())); }
+    void pop_back() noexcept { erase(std::prev(end())); }
 
     /// Swaps the container's list of this and `other`.
     void swap(IntrusiveList& other) noexcept
@@ -287,7 +287,7 @@ public:
     /// Transfers the elements `[first, last)` from `other` into this.
     ///
     /// The elements are transfered to before `pos`.
-    void splice(const_iterator pos, IntrusiveList& other,
+    void splice(const_iterator pos, [[maybe_unused]] IntrusiveList& other,
                 const_iterator other_first, const_iterator other_last) noexcept
 
     {
@@ -442,4 +442,4 @@ inline bool operator!=(const IntrusiveList<T>& lhs, const IntrusiveList<T>& rhs)
 {
     return !(lhs == rhs);
 }
-}
+} // namespace gta3sc::util

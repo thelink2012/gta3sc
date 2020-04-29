@@ -1,7 +1,7 @@
 #include "syntax-fixture.hpp"
 #include <doctest/doctest.h>
 #include <gta3sc/syntax/scanner.hpp>
-using namespace gta3sc::test::syntax;
+using namespace gta3sc::test::syntax; // NOLINT
 using gta3sc::syntax::Category;
 using gta3sc::syntax::Token;
 
@@ -29,7 +29,7 @@ protected:
 protected:
     gta3sc::syntax::Scanner scanner;
 };
-}
+} // namespace gta3sc::test::syntax
 
 namespace gta3sc::syntax
 {

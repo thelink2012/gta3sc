@@ -135,4 +135,4 @@ char Preprocessor::next()
         }
     }
 }
-}
+} // namespace gta3sc::syntax

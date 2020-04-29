@@ -56,4 +56,4 @@ private:
     bool inside_quotes;
     uint8_t num_block_comments;
 };
-}
+} // namespace gta3sc::syntax

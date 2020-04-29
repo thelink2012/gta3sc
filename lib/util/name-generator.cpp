@@ -15,14 +15,14 @@ NameGenerator::NameGenerator(std::string prefix) :
     this->prefix_format.append("%" PRIu32);
 }
 
-NameGenerator::NameGenerator(NameGenerator&& rhs)
+NameGenerator::NameGenerator(NameGenerator&& rhs) noexcept
 {
     // not thread-safe
     counter.store(rhs.counter.exchange(0));
     this->prefix_format = std::move(rhs.prefix_format);
 }
 
-NameGenerator& NameGenerator::operator=(NameGenerator&& rhs)
+NameGenerator& NameGenerator::operator=(NameGenerator&& rhs) noexcept
 {
     // not thread-safe
     counter.store(rhs.counter.exchange(0));
@@ -34,13 +34,15 @@ void NameGenerator::generate(std::string& str)
 {
     const auto id = counter.fetch_add(1, std::memory_order_relaxed);
 
+    // NOLINTNEXTLINE(hicpp-vararg): FIXME replace with std::format
     int result_size = snprintf(nullptr, 0, prefix_format.c_str(), id);
     assert(result_size > 0);
 
     str.resize(result_size + 1); // +1 to include null terminator
+    // NOLINTNEXTLINE(hicpp-vararg): FIXME replace with std::format
     result_size = snprintf(&str[0], str.size(), prefix_format.c_str(), id);
     assert(result_size > 0 && result_size + 1 == str.size());
 
     str.pop_back(); // exclude null terminator
 }
-}
+} // namespace gta3sc::util

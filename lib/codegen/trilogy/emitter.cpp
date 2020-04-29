@@ -155,10 +155,10 @@ auto CodeEmitter::emit_raw_u16(uint16_t value) -> CodeEmitter&
     this->curr_offset += 2;
 
     buffer[buffer_pos] = bit_cast<std::byte>(
-            static_cast<uint8_t>(value & 0x00FF));
+            static_cast<uint8_t>(value & 0x00FFU));
 
     buffer[buffer_pos + 1] = bit_cast<std::byte>(
-            static_cast<uint8_t>((value & 0xFF00) >> 8));
+            static_cast<uint8_t>((value & 0xFF00U) >> 8U));
 
     return *this;
 }
@@ -170,16 +170,16 @@ auto CodeEmitter::emit_raw_u32(uint32_t value) -> CodeEmitter&
     this->curr_offset += 4;
 
     buffer[buffer_pos] = bit_cast<std::byte>(
-            static_cast<uint8_t>(value & 0x000000FF));
+            static_cast<uint8_t>(value & 0x000000FFU));
 
     buffer[buffer_pos + 1] = bit_cast<std::byte>(
-            static_cast<uint8_t>((value & 0x0000FF00) >> 8));
+            static_cast<uint8_t>((value & 0x0000FF00U) >> 8U));
 
     buffer[buffer_pos + 2] = bit_cast<std::byte>(
-            static_cast<uint8_t>((value & 0x00FF0000) >> 16));
+            static_cast<uint8_t>((value & 0x00FF0000U) >> 16U));
 
     buffer[buffer_pos + 3] = bit_cast<std::byte>(
-            static_cast<uint8_t>((value & 0xFF000000) >> 24));
+            static_cast<uint8_t>((value & 0xFF000000U) >> 24U));
 
     return *this;
 }
@@ -208,11 +208,11 @@ auto CodeEmitter::float_to_q11_4(float value) -> int16_t
 
     // We cast to a 32-bit signed number instead of a 16-bit one just to
     // ensure the bounds of the fixed-point number with an assert.
-    const auto q11_4 = static_cast<int32_t>(value * 16.0f);
+    const auto q11_4 = static_cast<int32_t>(value * 16.0F);
 
     assert(q11_4 >= std::numeric_limits<int16_t>::min()
            && q11_4 <= std::numeric_limits<int16_t>::max());
 
     return static_cast<int16_t>(q11_4);
 }
-}
+} // namespace gta3sc::codegen::trilogy

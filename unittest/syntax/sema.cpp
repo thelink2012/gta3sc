@@ -4,7 +4,7 @@
 #include <gta3sc/syntax/parser.hpp>
 #include <gta3sc/syntax/sema.hpp>
 using namespace gta3sc::test;
-using namespace gta3sc::test::syntax;
+using namespace gta3sc::test::syntax; // NOLINT
 using namespace std::literals::string_view_literals;
 using gta3sc::test::syntax::d;
 
@@ -63,7 +63,7 @@ protected:
     gta3sc::ModelManager modelman;
     gta3sc::syntax::Sema sema;
 };
-}
+} // namespace gta3sc::test::syntax
 
 namespace
 {
@@ -1135,7 +1135,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_FLOAT parameter")
 
         REQUIRE(arg_3->as_integer() == nullptr);
         REQUIRE(arg_3->as_float() != nullptr);
-        REQUIRE(*arg_3->as_float() == 2.0f);
+        REQUIRE(*arg_3->as_float() == 2.0F);
         REQUIRE(arg_3->as_var_ref() == nullptr);
     }
 
@@ -1235,7 +1235,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_OPT parameter")
 
         REQUIRE(arg_6->as_integer() == nullptr);
         REQUIRE(arg_6->as_float() != nullptr);
-        REQUIRE(*arg_6->as_float() == 1.0f);
+        REQUIRE(*arg_6->as_float() == 1.0F);
         REQUIRE(arg_6->as_var_ref() == nullptr);
         REQUIRE(arg_6->as_constant() == nullptr);
 
@@ -1592,7 +1592,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema alternators")
 
 TEST_CASE_FIXTURE(SemaFixture, "sema entities")
 {
-    const auto no_entity = cmdman.no_entity_type;
+    const auto no_entity = gta3sc::CommandManager::no_entity_type;
     const auto entity_car = cmdman.find_entity_type("CAR").value();
     const auto entity_char = cmdman.find_entity_type("CHAR").value();
 

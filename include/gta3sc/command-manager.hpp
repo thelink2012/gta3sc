@@ -455,7 +455,7 @@ protected:
     ConstantsMap constants_map;
     EntitiesMap entities_map;
 };
-}
+} // namespace gta3sc
 
 namespace gta3sc
 {
@@ -479,4 +479,4 @@ void CommandManager::Builder::set_command_params(
     const size_t params_size = params_end - params_begin;
     return set_command_params(command, params_begin, params_end, params_size);
 }
-}
+} // namespace gta3sc

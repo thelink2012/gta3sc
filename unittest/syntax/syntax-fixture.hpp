@@ -50,7 +50,7 @@ protected:
     gta3sc::DiagnosticHandler diagman;
     std::queue<gta3sc::Diagnostic> diags;
 };
-}
+} // namespace gta3sc::test::syntax
 
 namespace gta3sc
 {
@@ -75,7 +75,7 @@ inline bool operator==(const Diagnostic::Arg& lhs, std::vector<std::string> rhs)
 {
     return lhs == gta3sc::Diagnostic::Arg(std::move(rhs));
 }
-}
+} // namespace gta3sc
 
 namespace gta3sc
 {
@@ -111,8 +111,8 @@ inline std::ostream& operator<<(std::ostream& os,
     if(command.not_flag)
         os << "NOT ";
     os << command.name;
-    for(auto* it = command.args.begin(); it != command.args.end(); ++it)
-        os << ' ' << **it;
+    for(const auto& arg : command.args)
+        os << ' ' << *arg;
     return os;
 }
 
@@ -134,11 +134,11 @@ inline std::ostream& operator<<(std::ostream& os, const ParserIR& ir)
 inline std::ostream& operator<<(std::ostream& os,
                                 const LinkedIR<ParserIR>& ir_list)
 {
-    for(auto it = ir_list.begin(); it != ir_list.end(); ++it)
-        os << *it << '\n';
+    for(const auto& ir : ir_list)
+        os << ir << '\n';
     return os;
 }
-}
+} // namespace gta3sc
 
 namespace gta3sc::test::syntax
 {
@@ -146,6 +146,6 @@ namespace gta3sc::test::syntax
 template<typename T>
 auto d(T&& value)
 {
-    return Diagnostic::Arg(std::move(value));
+    return Diagnostic::Arg(std::forward<T>(value));
 }
 }

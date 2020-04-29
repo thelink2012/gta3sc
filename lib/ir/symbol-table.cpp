@@ -83,4 +83,4 @@ auto SymbolRepository::insert_used_object(std::string_view name_,
     const auto [iter, _] = used_objects.emplace(name, symbol);
     return {iter->second, true};
 }
-}
+} // namespace gta3sc

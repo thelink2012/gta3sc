@@ -14,4 +14,4 @@ void DiagnosticHandler::emit(std::unique_ptr<Diagnostic> diag)
     assert(diag != nullptr);
     emitter(*diag);
 }
-}
+} // namespace gta3sc
