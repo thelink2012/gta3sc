@@ -465,7 +465,7 @@ void CommandManager::Builder::set_command_params(CommandDef& command,
                                                  ForwardIterator params_end,
                                                  size_t params_size)
 {
-    auto a_params = static_cast<ParamDef*>(
+    auto* a_params = static_cast<ParamDef*>(
             arena->allocate(params_size * sizeof(ParamDef), alignof(ParamDef)));
     std::uninitialized_copy(params_begin, params_end, a_params);
     command.params = util::span(a_params, params_size);

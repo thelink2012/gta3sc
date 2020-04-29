@@ -111,7 +111,7 @@ inline std::ostream& operator<<(std::ostream& os,
     if(command.not_flag)
         os << "NOT ";
     os << command.name;
-    for(auto it = command.args.begin(); it != command.args.end(); ++it)
+    for(auto* it = command.args.begin(); it != command.args.end(); ++it)
         os << ' ' << **it;
     return os;
 }

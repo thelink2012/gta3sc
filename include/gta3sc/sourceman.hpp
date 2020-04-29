@@ -280,7 +280,7 @@ public:
     /// Gets a string view to a source range.
     auto view_of(SourceRange range) const -> std::string_view
     {
-        const auto begin = code_data() + (range.begin - info->start_loc);
+        const auto* const begin = code_data() + (range.begin - info->start_loc);
         return std::string_view(begin, range.end - range.begin);
     }
 

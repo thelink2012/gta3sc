@@ -44,9 +44,9 @@ auto RepeatStmtRewriter::visit_repeat(const ParserIR& line) -> Result
     if(repeat->args.size() != 2)
         return Result{};
 
-    const auto num_times = repeat->args[0];
-    const auto iter_var = repeat->args[1];
-    const auto loop_label_def = generate_loop_label(repeat->source);
+    const auto* const num_times = repeat->args[0];
+    const auto* const iter_var = repeat->args[1];
+    const auto* const loop_label_def = generate_loop_label(repeat->source);
 
     if(repeat_stack.capacity() == 0)
         repeat_stack.reserve(default_stack_size);

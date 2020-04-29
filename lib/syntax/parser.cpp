@@ -57,17 +57,17 @@ bool Parser::eof() const
     return scanner.eof();
 }
 
-auto Parser::source_file() const -> const SourceFile&
+auto Parser::source_file() const -> const SourceFile &
 {
     return scanner.source_file();
 }
 
-auto Parser::diagnostics() const -> DiagnosticHandler&
+auto Parser::diagnostics() const -> DiagnosticHandler &
 {
     return scanner.diagnostics();
 }
 
-auto Parser::report(const Token& token, Diag message) -> DiagnosticBuilder
+auto Parser::report(const Token &token, Diag message) -> DiagnosticBuilder
 {
     return report(token.source, message);
 }
@@ -330,7 +330,7 @@ bool Parser::is_float(std::string_view lexeme) const
     // floating_form2 := digit { digit } ('.' | 'F') { digit | '.' | 'F' } ;
     // floating := ['-'] (floating_form1 | floating_form2) ;
 
-    auto it = lexeme.begin();
+    const auto *it = lexeme.begin();
 
     if(lexeme.size() >= 2 && *it == '-')
         ++it;
@@ -513,7 +513,7 @@ auto Parser::parse_subscript_file() -> std::optional<LinkedIR<ParserIR>>
     if(!mission_start)
         return std::nullopt;
 
-    if(const auto mission_start_command = (*mission_start)->command;
+    if(const auto *const mission_start_command = (*mission_start)->command;
        mission_start_command->args.size() != 0)
     {
         report(mission_start_command->source, Diag::too_many_arguments);
@@ -524,7 +524,7 @@ auto Parser::parse_subscript_file() -> std::optional<LinkedIR<ParserIR>>
     if(!body_stms)
         return std::nullopt;
 
-    if(const auto mission_end_command = body_stms->back().command;
+    if(const auto *const mission_end_command = body_stms->back().command;
        mission_end_command->args.size() != 0)
     {
         report(mission_end_command->source, Diag::too_many_arguments);
@@ -601,7 +601,7 @@ auto Parser::parse_statement(bool allow_special_name)
         else
         {
             assert(linked_stmts->front().label == nullptr);
-            const auto command = linked_stmts->front().command;
+            const auto *const command = linked_stmts->front().command;
             linked_stmts->replace(linked_stmts->begin(),
                                   *ParserIR::create(label, command, arena));
         }
@@ -629,9 +629,9 @@ auto Parser::parse_statement_list(
         if(!stmt_list->empty()
            && std::next(stmt_list->begin()) == stmt_list->end())
         {
-            if(auto command = stmt_list->front().command)
+            if(const auto *command = stmt_list->front().command)
             {
-                for(auto& name : stop_when)
+                for(const auto &name : stop_when)
                 {
                     if(command->name == name)
                     {
@@ -779,7 +779,7 @@ auto Parser::parse_embedded_statement(bool allow_special_name)
                 return std::nullopt;
             }
 
-            if(const auto command = (*ir)->command;
+            if(const auto *const command = (*ir)->command;
                is_var_decl_command(command->name) && command->args.size() == 0)
             {
                 report(command->source, Diag::too_few_arguments);
@@ -911,8 +911,8 @@ auto Parser::parse_conditional_list(arena_ptr<ParserIR> op_cond0)
     if(is_peek(Category::Word, "AND") || is_peek(Category::Word, "OR"))
     {
         const auto is_and = is_peek(Category::Word, "AND");
-        const auto andor_prefix = is_and ? "AND" : "OR";
-        const auto anti_prefix = is_and ? "OR" : "AND";
+        const auto *const andor_prefix = is_and ? "AND" : "OR";
+        const auto *const anti_prefix = is_and ? "OR" : "AND";
 
         while(is_peek(Category::Word, andor_prefix))
         {
@@ -1038,7 +1038,7 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
         if(!body_stms)
             return std::nullopt;
 
-        if(const auto else_command = body_stms->back().command;
+        if(const auto *const else_command = body_stms->back().command;
            else_command->name == COMMAND_ELSE)
         {
             if(else_command->args.size() != 0)
@@ -1054,7 +1054,7 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
             body_stms->splice_back(*std::move(else_stms));
         }
 
-        if(const auto endif_command = body_stms->back().command;
+        if(const auto *const endif_command = body_stms->back().command;
            endif_command->args.size() != 0)
         {
             report(endif_command->source, Diag::too_many_arguments);
@@ -1112,7 +1112,7 @@ auto Parser::parse_while_statement_detail(bool is_whilenot)
 
     assert(!body_stms->empty() && body_stms->back().command);
 
-    if(const auto& endwhile_command = body_stms->back().command;
+    if(const auto &endwhile_command = body_stms->back().command;
        endwhile_command->args.size() != 0)
     {
         report(endwhile_command->source, Diag::too_many_arguments);
@@ -1167,7 +1167,7 @@ auto Parser::parse_repeat_statement() -> std::optional<LinkedIR<ParserIR>>
         return std::nullopt;
 
     assert(!body_stms->empty() && body_stms->back().command != nullptr);
-    if(const auto endrepeat_command = body_stms->back().command;
+    if(const auto *const endrepeat_command = body_stms->back().command;
        endrepeat_command->args.size() != 0)
     {
         report((*repeat_command)->command->source, Diag::too_many_arguments);
@@ -1277,7 +1277,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
 
     Category cats[6];
     SourceRange spans[6];
-    arena_ptr<const ParserIR::Argument> args[6] {};
+    arena_ptr<const ParserIR::Argument> args[6]{};
 
     size_t num_toks = 0;
     size_t num_args = 0;
@@ -1402,7 +1402,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
     // nor mission directives. This is a constraint of the grammar.
     if(num_args > 0 && cats[0] == Category::Word && args[0]->as_identifier())
     {
-        auto lhs = args[0]->as_identifier();
+        const auto *lhs = args[0]->as_identifier();
         if(*lhs == COMMAND_GOSUB_FILE || *lhs == COMMAND_LAUNCH_MISSION
            || *lhs == COMMAND_LOAD_AND_LAUNCH_MISSION
            || *lhs == COMMAND_MISSION_START || *lhs == COMMAND_MISSION_END)
@@ -1499,13 +1499,13 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
                            COMMAND_IS_THING_GREATER_OR_EQUAL_TO_THING},
         };
 
-        const auto it_cond = std::find_if(
+        const auto *const it_cond = std::find_if(
                 std::begin(lookup_conditional), std::end(lookup_conditional),
-                [&](const auto& pair) { return pair.first == cats[1]; });
+                [&](const auto &pair) { return pair.first == cats[1]; });
 
-        const auto it_assign = std::find_if(
+        const auto *const it_assign = std::find_if(
                 std::begin(lookup_assignment), std::end(lookup_assignment),
-                [&](const auto& pair) { return pair.first == cats[1]; });
+                [&](const auto &pair) { return pair.first == cats[1]; });
 
         if(it_cond == std::end(lookup_conditional)
            && it_assign == std::end(lookup_assignment))
@@ -1519,7 +1519,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
 
         if(is_conditional)
         {
-            const auto it = it_cond;
+            const auto *const it = it_cond;
 
             if(it == std::end(lookup_conditional))
             {
@@ -1537,7 +1537,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
         }
         else
         {
-            const auto it = it_assign;
+            const auto *const it = it_assign;
 
             if(it == std::end(lookup_assignment))
             {
@@ -1571,9 +1571,9 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
                            COMMAND_SUB_THING_FROM_THING_TIMED},
         };
 
-        auto it = std::find_if(
+        const auto *it = std::find_if(
                 std::begin(lookup_ternary), std::end(lookup_ternary),
-                [&](const auto& pair) { return pair.first == cats[3]; });
+                [&](const auto &pair) { return pair.first == cats[3]; });
 
         if(it == std::end(lookup_ternary))
         {
@@ -1645,7 +1645,7 @@ bool Parser::ensure_mission_start_at_top_of_file()
     bool has_mission_start = is_peek(Category::Word, "MISSION_START"sv);
 
     auto file_contents = source_file().code_view();
-    for(auto it = file_contents.begin();
+    for(const auto *it = file_contents.begin();
         it != file_contents.end() && has_mission_start; ++it)
     {
         if(*it == 'M' || *it == 'm')

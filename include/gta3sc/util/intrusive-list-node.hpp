@@ -155,7 +155,7 @@ namespace detail
             return static_cast<maybe_const<value_type>&>(*curr);
         }
 
-        auto operator-> () const -> maybe_const<value_type>*
+        auto operator->() const -> maybe_const<value_type>*
         {
             return static_cast<maybe_const<value_type>*>(curr);
         }
@@ -248,7 +248,7 @@ namespace detail
             return static_cast<maybe_const<value_type>&>(*curr);
         }
 
-        auto operator-> () const -> maybe_const<value_type>*
+        auto operator->() const -> maybe_const<value_type>*
         {
             return static_cast<maybe_const<value_type>*>(curr);
         }
@@ -293,30 +293,30 @@ namespace detail
     template<typename T>
     class IntrusiveBidirectionalListNodeAlgorithms
     {
-        private:
-            using node_type = IntrusiveBidirectionalListNode<T>;
-            using iterator = IntrusiveListBidirectionalIterator<T, false>;
-            using pointer = typename iterator::pointer;
+    private:
+        using node_type = IntrusiveBidirectionalListNode<T>;
+        using iterator = IntrusiveListBidirectionalIterator<T, false>;
+        using pointer = typename iterator::pointer;
 
-        public:
-            /// Unlinks the given node from its list.
-            static inline void unlink_node(node_type& node)
+    public:
+        /// Unlinks the given node from its list.
+        static inline void unlink_node(node_type& node)
+        {
+            pointer node_prev = node.prev;
+            pointer node_next = node.next;
+
+            if(node.prev)
             {
-                pointer node_prev = node.prev;
-                pointer node_next = node.next;
-
-                if(node.prev)
-                {
-                    node.prev->next = node_next;
-                    node.prev = nullptr;
-                }
-
-                if(node.next)
-                {
-                    node.next->prev = node_prev;
-                    node.next = nullptr;
-                }
+                node.prev->next = node_next;
+                node.prev = nullptr;
             }
+
+            if(node.next)
+            {
+                node.next->prev = node_prev;
+                node.next = nullptr;
+            }
+        }
     };
 
 }

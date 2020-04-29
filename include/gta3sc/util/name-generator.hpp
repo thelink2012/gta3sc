@@ -31,7 +31,7 @@ public:
     void generate(std::string& str);
 
 private:
-    std::atomic_uint32_t counter {};
+    std::atomic_uint32_t counter{};
     std::string prefix_format;
 };
 };

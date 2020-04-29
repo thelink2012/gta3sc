@@ -204,7 +204,7 @@ auto Sema::check_semantics_pass() -> std::optional<LinkedIR<SemaIR>>
 auto Sema::validate_label_def(const ParserIR::LabelDef& label_def)
         -> const SymLabel*
 {
-    auto sym_label = symrepo->lookup_label(label_def.name);
+    const auto* sym_label = symrepo->lookup_label(label_def.name);
     if(!sym_label)
     {
         // This is impossible! All the labels in the input IR were previously
@@ -221,7 +221,7 @@ auto Sema::validate_command(const ParserIR::Command& command)
     bool failed = false;
     const CommandManager::CommandDef* command_def{};
 
-    if(const auto alternator = cmdman->find_alternator(command.name))
+    if(const auto* const alternator = cmdman->find_alternator(command.name))
     {
         auto it = std::find_if(alternator->begin(), alternator->end(),
                                [&](const auto& alternative) {
@@ -252,12 +252,12 @@ auto Sema::validate_command(const ParserIR::Command& command)
     builder.command(*command_def, command.source);
     builder.not_flag(command.not_flag);
 
-    auto arg_it = command.args.begin();
-    auto param_it = command_def->params.begin();
+    auto* arg_it = command.args.begin();
+    auto* param_it = command_def->params.begin();
 
     while(arg_it != command.args.end() && param_it != command_def->params.end())
     {
-        if(auto ir_arg = validate_argument(*param_it, **arg_it);
+        if(const auto* ir_arg = validate_argument(*param_it, **arg_it);
            ir_arg && !failed)
             builder.arg(ir_arg);
         else
@@ -310,8 +310,8 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
                 // This command has been matched during alternation in a
                 // command selector. Thus, if this is an identifier, it
                 // is a valid global string constant.
-                auto cdef = cmdman->find_constant(cmdman->global_enum,
-                                                  *arg.as_identifier());
+                const auto* cdef = cmdman->find_constant(cmdman->global_enum,
+                                                         *arg.as_identifier());
                 assert(cdef != nullptr);
 
                 return SemaIR::create_constant(*cdef, arg.source, arena);
@@ -374,7 +374,7 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
                 // that corresponds to a string constant from any enumeration.
 
                 assert(arg.as_identifier());
-                auto cdef = cmdman->find_constant_any_means(
+                const auto* cdef = cmdman->find_constant_any_means(
                         *arg.as_identifier());
                 assert(cdef != nullptr);
 
@@ -389,12 +389,12 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
                 std::string_view ident = *arg.as_identifier();
                 if(is_object_param(param))
                 {
-                    if(auto cdef = find_defaultmodel_constant(ident))
+                    if(const auto* cdef = find_defaultmodel_constant(ident))
                     {
                         return SemaIR::create_constant(*cdef, arg.source,
                                                        arena);
                     }
-                    else if(auto model = modelman->find_model(ident))
+                    else if(const auto* model = modelman->find_model(ident))
                     {
                         auto [uobj, _] = symrepo->insert_used_object(
                                 ident, arg.source);
@@ -403,8 +403,8 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
                                                           arena);
                     }
                 }
-                else if(auto cdef = cmdman->find_constant(param.enum_type,
-                                                          ident))
+                else if(const auto* cdef = cmdman->find_constant(
+                                param.enum_type, ident))
                 {
                     return SemaIR::create_constant(*cdef, arg.source, arena);
                 }
@@ -444,8 +444,8 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
             }
             else if(arg.as_identifier())
             {
-                if(auto cdef = cmdman->find_constant(cmdman->global_enum,
-                                                     *arg.as_identifier()))
+                if(const auto* cdef = cmdman->find_constant(
+                           cmdman->global_enum, *arg.as_identifier()))
                 {
                     return SemaIR::create_constant(*cdef, arg.source, arena);
                 }
@@ -484,7 +484,7 @@ auto Sema::validate_integer_literal(const CommandManager::ParamDef& param,
 
     int32_t value = 0; // always recovers to this value
 
-    if(const auto integer = arg.as_integer())
+    if(const auto* const integer = arg.as_integer())
         value = *integer;
     else
         report(arg.source, Diag::expected_integer);
@@ -502,7 +502,7 @@ auto Sema::validate_float_literal(const CommandManager::ParamDef& param,
 
     float value = 0.0f; // always recovers to this value
 
-    if(const auto floating = arg.as_float())
+    if(const auto* const floating = arg.as_float())
         value = *floating;
     else
         report(arg.source, Diag::expected_float);
@@ -518,7 +518,7 @@ auto Sema::validate_text_label(const CommandManager::ParamDef& param,
 
     std::string_view value{"DUMMY"sv}; // always recovers to this value
 
-    if(const auto ident = arg.as_identifier())
+    if(const auto* const ident = arg.as_identifier())
         value = *ident;
     else
         report(arg.source, Diag::expected_text_label);
@@ -538,7 +538,7 @@ auto Sema::validate_label(const CommandManager::ParamDef& param,
         return nullptr;
     }
 
-    auto sym_label = symrepo->lookup_label(*arg.as_identifier());
+    const auto* sym_label = symrepo->lookup_label(*arg.as_identifier());
     if(!sym_label)
     {
         report(arg.source, Diag::undefined_label);
@@ -734,8 +734,8 @@ bool Sema::validate_set(const SemaIR::Command& command)
 
     if(command.args.size() == 2)
     {
-        auto lhs = command.args[0]->as_var_ref();
-        auto rhs = command.args[1]->as_var_ref();
+        const auto* lhs = command.args[0]->as_var_ref();
+        const auto* rhs = command.args[1]->as_var_ref();
         if(lhs && rhs)
         {
             const auto lhs_entity_type = var_entity_type(lhs->def);
@@ -763,7 +763,7 @@ bool Sema::validate_script_name(const SemaIR::Command& command)
 
     if(command.args.size() == 1)
     {
-        if(const auto name = command.args[0]->as_text_label())
+        if(const auto* const name = command.args[0]->as_text_label())
         {
             auto it = std::find(seen_script_names.begin(),
                                 seen_script_names.end(), *name);
@@ -789,7 +789,7 @@ bool Sema::validate_start_new_script(const SemaIR::Command& command)
 
     if(command.args.size() >= 1)
     {
-        if(auto target_label = command.args[0]->as_label())
+        if(const auto* target_label = command.args[0]->as_label())
         {
             if(target_label->scope == 0)
             {
@@ -823,10 +823,10 @@ bool Sema::validate_target_scope_vars(const SemaIR::Argument** begin,
     if(num_target_vars == 0)
         return true;
 
-    const auto target_scope_timera = symrepo->lookup_var(varname_timera,
-                                                         target_scope_id);
-    const auto target_scope_timerb = symrepo->lookup_var(varname_timerb,
-                                                         target_scope_id);
+    const auto* const target_scope_timera = symrepo->lookup_var(
+            varname_timera, target_scope_id);
+    const auto* const target_scope_timerb = symrepo->lookup_var(
+            varname_timerb, target_scope_id);
 
     // Use a temporary buffer in the arena. This will be unused memory after
     // this function returns, but it's no big deal. It only happens for
@@ -889,7 +889,7 @@ bool Sema::validate_target_scope_vars(const SemaIR::Argument** begin,
                     report(arg.source, Diag::target_var_type_mismatch);
                 }
             }
-            else if(auto var_ref = arg.as_var_ref())
+            else if(const auto* var_ref = arg.as_var_ref())
             {
                 const auto& source_var = var_ref->def;
                 if(target_vars[i]->type != source_var.type)
@@ -1000,12 +1000,12 @@ auto Sema::report(SourceRange source, Diag message) -> DiagnosticBuilder
 
 auto Sema::lookup_var_lvar(std::string_view name) const -> const SymVariable*
 {
-    if(auto gvar = symrepo->lookup_var(name, 0))
+    if(const auto* gvar = symrepo->lookup_var(name, 0))
         return gvar;
 
     if(current_scope != -1)
     {
-        if(auto lvar = symrepo->lookup_var(name, current_scope))
+        if(const auto* lvar = symrepo->lookup_var(name, current_scope))
             return lvar;
     }
 
@@ -1171,7 +1171,7 @@ bool Sema::is_matching_alternative(
                 const auto arg_ident = *arg.as_identifier();
                 auto [var_name, var_source, _] = parse_var_ref(arg_ident,
                                                                arg.source);
-                auto sym_var = symrepo->lookup_var(var_name);
+                const auto* sym_var = symrepo->lookup_var(var_name);
                 if(!sym_var || !matches_var_type(param.type, sym_var->type))
                     return false;
 
@@ -1190,7 +1190,8 @@ bool Sema::is_matching_alternative(
                 const auto arg_ident = *arg.as_identifier();
                 auto [var_name, var_source, _] = parse_var_ref(arg_ident,
                                                                arg.source);
-                auto sym_var = symrepo->lookup_var(var_name, current_scope);
+                const auto* sym_var = symrepo->lookup_var(var_name,
+                                                          current_scope);
                 if(!sym_var || !matches_var_type(param.type, sym_var->type))
                     return false;
 
@@ -1244,8 +1245,8 @@ auto Sema::parse_var_ref(std::string_view identifier, SourceRange source)
     assert(identifier.size() > 0);
     assert(!is_bracket(identifier.front()));
 
-    const auto it_open = std::find_if(identifier.begin(), identifier.end(),
-                                      is_bracket);
+    const auto* const it_open = std::find_if(identifier.begin(),
+                                             identifier.end(), is_bracket);
     if(it_open != identifier.end())
     {
         const auto it_open_pos = std::distance(identifier.begin(), it_open);
@@ -1255,8 +1256,8 @@ auto Sema::parse_var_ref(std::string_view identifier, SourceRange source)
             // Recovery strategy: Assume *it == ']'
         }
 
-        const auto it_close = std::find_if(it_open + 1, identifier.end(),
-                                           is_bracket);
+        const auto* const it_close = std::find_if(it_open + 1, identifier.end(),
+                                                  is_bracket);
         const auto it_close_pos = std::distance(identifier.begin(), it_close);
 
         if(it_close == identifier.end() || *it_close == '[')

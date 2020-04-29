@@ -98,7 +98,7 @@ public:
             space = (region_ptr + region_size) - free_ptr;
             if(align(alignment, bytes, free_ptr, space))
             {
-                auto result = free_ptr;
+                auto* result = free_ptr;
                 this->free_ptr += bytes;
                 return result;
             }
@@ -113,11 +113,11 @@ public:
         if(next_region_size < requires_size)
             next_region_size = requires_size;
 
-        auto next_region_ptr = static_cast<char*>(operator new(
+        auto* next_region_ptr = static_cast<char*>(operator new(
                 next_region_size));
         if(next_region_ptr)
         {
-            auto next_region_header = new(next_region_ptr) OwnedHeader;
+            auto* next_region_header = new(next_region_ptr) OwnedHeader;
             next_region_header->prev_region_ptr = region_ptr;
             next_region_header->prev_region_size = region_size;
             next_region_header->owns_prev_region = owns_region;
@@ -131,7 +131,7 @@ public:
             assert(free_ptr <= region_ptr + region_size);
 
             space = (region_ptr + region_size) - free_ptr;
-            auto result = align(alignment, bytes, free_ptr, space);
+            auto* result = align(alignment, bytes, free_ptr, space);
             assert(result != nullptr);
 
             this->free_ptr += bytes;
@@ -231,7 +231,7 @@ public:
 
     auto allocate(size_t n) -> T*
     {
-        auto ptr = arena->allocate(n * sizeof(T), alignof(T));
+        auto* ptr = arena->allocate(n * sizeof(T), alignof(T));
         return static_cast<T*>(ptr);
     }
 
@@ -302,7 +302,7 @@ namespace gta3sc::util
 inline auto allocate_string(std::string_view from, ArenaMemoryResource& arena)
         -> std::string_view
 {
-    auto ptr = new(arena, alignof(char)) char[from.size()];
+    auto* ptr = new(arena, alignof(char)) char[from.size()];
     std::memcpy(ptr, from.data(), from.size());
     return {ptr, from.size()};
 }
@@ -314,7 +314,7 @@ inline auto allocate_string_upper(std::string_view from,
         -> std::string_view
 {
     auto chars = allocate_string(from, arena);
-    for(auto& c : chars)
+    for(const auto& c : chars)
     {
         if(c >= 'a' && c <= 'z')
         {

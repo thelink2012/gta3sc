@@ -108,7 +108,7 @@ auto Scanner::next() -> std::optional<Token>
 
     switch(peek_char)
     {
-        // clang-format off
+    // clang-format off
         newline: case '\r': case '\n': case '\0':
             if(peek_char == '\r') getc();
             if(peek_char == '\n') getc();

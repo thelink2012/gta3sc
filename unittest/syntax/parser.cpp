@@ -650,7 +650,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing permutations of unary expressions")
             "SUB_THING_FROM_THING",
     };
 
-    for(auto& command_name : expects_table)
+    for(const auto& command_name : expects_table)
     {
         auto ir = parser.parse_statement();
         REQUIRE(ir != std::nullopt);
@@ -692,7 +692,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing permutations of binary expressions")
             "SUB_THING_FROM_THING_TIMED",
     };
 
-    for(auto& command_name : expects_table)
+    for(const auto& command_name : expects_table)
     {
         auto ir = parser.parse_statement();
         REQUIRE(ir != std::nullopt);
@@ -743,7 +743,7 @@ TEST_CASE_FIXTURE(ParserFixture,
             {"IS_THING_GREATER_OR_EQUAL_TO_THING", "X", "Y"},
     };
 
-    for(auto& [command_name, a, b] : expects_table)
+    for(const auto& [command_name, a, b] : expects_table)
     {
         auto ir = parser.parse_statement();
         REQUIRE(ir != std::nullopt);
@@ -788,7 +788,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing permutations of ternary expressions")
             "ADD_THING_TO_THING_TIMED", "SUB_THING_FROM_THING_TIMED",
     };
 
-    for(auto& command_name : expects_table)
+    for(const auto& command_name : expects_table)
     {
         // x = x + x
         auto ir = parser.parse_statement();

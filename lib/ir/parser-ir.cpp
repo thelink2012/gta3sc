@@ -116,21 +116,21 @@ auto ParserIR::Argument::as_float() const -> const float*
 
 auto ParserIR::Argument::as_identifier() const -> const std::string_view*
 {
-    if(auto ident = std::get_if<Identifier>(&this->value))
+    if(const auto* ident = std::get_if<Identifier>(&this->value))
         return &ident->second;
     return nullptr;
 }
 
 auto ParserIR::Argument::as_filename() const -> const std::string_view*
 {
-    if(auto fi = std::get_if<Filename>(&this->value))
+    if(const auto* fi = std::get_if<Filename>(&this->value))
         return &fi->second;
     return nullptr;
 }
 
 auto ParserIR::Argument::as_string() const -> const std::string_view*
 {
-    if(auto s = std::get_if<String>(&this->value))
+    if(const auto* s = std::get_if<String>(&this->value))
         return &s->second;
     return nullptr;
 }
@@ -196,7 +196,7 @@ auto ParserIR::Builder::arg(arena_ptr<const Argument> value) -> Builder&&
     if(this->args.size() >= static_cast<std::ptrdiff_t>(args_capacity))
     {
         const auto new_caps = !args_capacity ? 6 : args_capacity * 2;
-        const auto new_args = new(*arena) arena_ptr<const Argument>[new_caps];
+        auto* const new_args = new(*arena) arena_ptr<const Argument>[new_caps];
         std::move(this->args.begin(), this->args.end(), new_args);
 
         this->args = util::span(new_args, args.size());

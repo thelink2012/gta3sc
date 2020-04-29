@@ -901,8 +901,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema OUTPUT_INT parameter")
 
         REQUIRE(size(*ir) == 6);
 
-        auto arg1 = std::prev(ir->end(), 3)->command->args[2];
-        auto arg2 = std::prev(ir->end(), 2)->command->args[2];
+        const auto* arg1 = std::prev(ir->end(), 3)->command->args[2];
+        const auto* arg2 = std::prev(ir->end(), 2)->command->args[2];
 
         REQUIRE(std::addressof(arg1->as_var_ref()->def)
                 == symrepo.lookup_var("X", 0));
@@ -952,8 +952,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema OUTPUT_FLOAT parameter")
 
         REQUIRE(size(*ir) == 6);
 
-        auto arg1 = std::prev(ir->end(), 3)->command->args[2];
-        auto arg2 = std::prev(ir->end(), 2)->command->args[2];
+        const auto* arg1 = std::prev(ir->end(), 3)->command->args[2];
+        const auto* arg2 = std::prev(ir->end(), 2)->command->args[2];
 
         REQUIRE(std::addressof(arg1->as_var_ref()->def)
                 == symrepo.lookup_var("X", 0));
@@ -1000,9 +1000,9 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_INT parameter")
         REQUIRE(ir != std::nullopt);
         REQUIRE(size(*ir) == 7);
 
-        auto arg_1 = std::next(ir->begin(), 3)->command->args[0];
-        auto arg_2 = std::next(ir->begin(), 4)->command->args[0];
-        auto arg_3 = std::next(ir->begin(), 5)->command->args[0];
+        const auto* arg_1 = std::next(ir->begin(), 3)->command->args[0];
+        const auto* arg_2 = std::next(ir->begin(), 4)->command->args[0];
+        const auto* arg_3 = std::next(ir->begin(), 5)->command->args[0];
 
         REQUIRE(arg_1->as_integer() == nullptr);
         REQUIRE(arg_1->as_float() == nullptr);
@@ -1119,9 +1119,9 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_FLOAT parameter")
         REQUIRE(ir != std::nullopt);
         REQUIRE(size(*ir) == 6);
 
-        auto arg_1 = std::next(ir->begin(), 3)->command->args[0];
-        auto arg_2 = std::next(ir->begin(), 3)->command->args[1];
-        auto arg_3 = std::next(ir->begin(), 4)->command->args[1];
+        const auto* arg_1 = std::next(ir->begin(), 3)->command->args[0];
+        const auto* arg_2 = std::next(ir->begin(), 3)->command->args[1];
+        const auto* arg_3 = std::next(ir->begin(), 4)->command->args[1];
 
         REQUIRE(arg_1->as_integer() == nullptr);
         REQUIRE(arg_1->as_float() == nullptr);
@@ -1192,16 +1192,16 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_OPT parameter")
         REQUIRE(ir != std::nullopt);
         REQUIRE(size(*ir) == 13);
 
-        auto cmd = std::prev(ir->end(), 2)->command;
+        const auto* cmd = std::prev(ir->end(), 2)->command;
         REQUIRE(cmd->args.size() == 8);
 
-        auto arg_1 = cmd->args[1];
-        auto arg_2 = cmd->args[2];
-        auto arg_3 = cmd->args[3];
-        auto arg_4 = cmd->args[4];
-        auto arg_5 = cmd->args[5];
-        auto arg_6 = cmd->args[6];
-        auto arg_7 = cmd->args[7];
+        const auto* arg_1 = cmd->args[1];
+        const auto* arg_2 = cmd->args[2];
+        const auto* arg_3 = cmd->args[3];
+        const auto* arg_4 = cmd->args[4];
+        const auto* arg_5 = cmd->args[5];
+        const auto* arg_6 = cmd->args[6];
+        const auto* arg_7 = cmd->args[7];
 
         REQUIRE(arg_1->as_integer() == nullptr);
         REQUIRE(arg_1->as_float() == nullptr);
@@ -1289,13 +1289,13 @@ TEST_CASE_FIXTURE(SemaFixture, "sema validate subscript")
         REQUIRE(ir != std::nullopt);
         REQUIRE(size(*ir) == 5);
 
-        auto var_ref_1
+        const auto* var_ref_1
                 = std::prev(ir->end(), 4)->command->args[0]->as_var_ref();
-        auto var_ref_2
+        const auto* var_ref_2
                 = std::prev(ir->end(), 3)->command->args[0]->as_var_ref();
-        auto var_ref_3
+        const auto* var_ref_3
                 = std::prev(ir->end(), 2)->command->args[0]->as_var_ref();
-        auto var_ref_4
+        const auto* var_ref_4
                 = std::prev(ir->end(), 1)->command->args[0]->as_var_ref();
 
         REQUIRE(var_ref_1 != nullptr);
@@ -2094,8 +2094,8 @@ TEST_CASE_FIXTURE(SemaFixture, "local timers")
         build_sema("{\n}");
         REQUIRE(sema.validate() != std::nullopt);
 
-        const auto timera = symrepo.lookup_var("TIMERA", 1);
-        const auto timerb = symrepo.lookup_var("TIMERB", 1);
+        const auto* const timera = symrepo.lookup_var("TIMERA", 1);
+        const auto* const timerb = symrepo.lookup_var("TIMERB", 1);
 
         REQUIRE(timera != nullptr);
         REQUIRE(timerb != nullptr);
@@ -2148,9 +2148,9 @@ TEST_CASE_FIXTURE(SemaFixture, "local timers")
         build_sema("{\nLVAR_INT x\n}");
         REQUIRE(sema.validate() != std::nullopt);
 
-        const auto timera = symrepo.lookup_var("TIMERA", 1);
-        const auto timerb = symrepo.lookup_var("TIMERB", 1);
-        const auto x = symrepo.lookup_var("X", 1);
+        const auto* const timera = symrepo.lookup_var("TIMERA", 1);
+        const auto* const timerb = symrepo.lookup_var("TIMERB", 1);
+        const auto* const x = symrepo.lookup_var("X", 1);
 
         REQUIRE(x != nullptr);
         REQUIRE(x->id == 0);

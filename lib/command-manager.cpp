@@ -220,7 +220,7 @@ auto CommandManager::Builder::insert_command(std::string_view name)
         return {it->second, false};
 
     auto a_name = util::allocate_string_upper(name, *arena);
-    auto a_cmd = new(*arena, alignof(CommandDef)) CommandDef{a_name};
+    auto* a_cmd = new(*arena, alignof(CommandDef)) CommandDef{a_name};
 
     auto [it, inserted] = commands_map.emplace(a_name, a_cmd);
     assert(inserted);
@@ -234,7 +234,7 @@ auto CommandManager::Builder::insert_alternator(std::string_view name)
         return {it->second, false};
 
     auto a_name = util::allocate_string_upper(name, *arena);
-    auto a_alternator = new(*arena, alignof(AlternatorDef)) AlternatorDef{};
+    auto* a_alternator = new(*arena, alignof(AlternatorDef)) AlternatorDef{};
 
     auto [it, inserted] = alternators_map.emplace(a_name, a_alternator);
     assert(inserted);
@@ -245,7 +245,7 @@ auto CommandManager::Builder::insert_alternative(AlternatorDef& alternator,
                                                  const CommandDef& command)
         -> const AlternativeDef*
 {
-    auto a_alternative = new(*arena, alignof(AlternativeDef))
+    auto* a_alternative = new(*arena, alignof(AlternativeDef))
             AlternativeDef(command);
 
     if(alternator.last)
@@ -288,7 +288,7 @@ auto CommandManager::Builder::insert_or_assign_constant(EnumId enum_id,
     if(it == constants_map.end())
     {
         auto a_name = util::allocate_string_upper(name, *arena);
-        auto cdef = new(*arena, alignof(ConstantDef))
+        auto* cdef = new(*arena, alignof(ConstantDef))
                 ConstantDef{enum_id, value};
         auto [_, inserted] = constants_map.emplace(a_name, cdef);
         assert(inserted);

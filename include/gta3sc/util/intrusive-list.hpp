@@ -269,8 +269,8 @@ public:
         }
 
         const bool was_other_empty = other.empty();
-        auto other_first_node = other.sentinel.next;
-        auto other_last_node = other.sentinel.prev;
+        auto* other_first_node = other.sentinel.next;
+        auto* other_last_node = other.sentinel.prev;
 
         other.unsafe_link(*sentinel.next, *sentinel.prev);
 

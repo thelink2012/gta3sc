@@ -3,8 +3,8 @@
 #include <gta3sc/ir/parser-ir.hpp>
 #include <gta3sc/util/arena-allocator.hpp>
 #include <gta3sc/util/name-generator.hpp>
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace gta3sc::syntax
 {

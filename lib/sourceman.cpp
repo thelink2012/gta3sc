@@ -20,7 +20,8 @@ bool SourceManager::iequal(std::string_view a, std::string_view b) const
 bool SourceManager::scan_directory(const std::filesystem::path& dir)
 {
     std::error_code ec;
-    for(auto& entry : std::filesystem::recursive_directory_iterator(dir, ec))
+    for(const auto& entry :
+        std::filesystem::recursive_directory_iterator(dir, ec))
     {
         if(ec)
             break;

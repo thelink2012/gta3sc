@@ -128,17 +128,17 @@ TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "rewriting REPEAT")
     {
         gta3sc::syntax::RepeatStmtRewriter::Result rewrite_result;
 
-        const auto repeat_10_somevar = gta3sc::ParserIR::Builder(arena)
-                                               .command("REPEAT")
-                                               .arg_int(10)
-                                               .arg_ident("somevar")
-                                               .build();
+        auto *const repeat_10_somevar = gta3sc::ParserIR::Builder(arena)
+                                                .command("REPEAT")
+                                                .arg_int(10)
+                                                .arg_ident("somevar")
+                                                .build();
 
-        auto set_somevar_0 = gta3sc::ParserIR::Builder(arena)
-                                     .command("SET")
-                                     .arg_ident("SOMEVAR")
-                                     .arg_int(0)
-                                     .build();
+        auto *set_somevar_0 = gta3sc::ParserIR::Builder(arena)
+                                      .command("SET")
+                                      .arg_ident("SOMEVAR")
+                                      .arg_int(0)
+                                      .build();
 
         rewrite_result = rewriter.visit(*repeat_10_somevar);
         REQUIRE(rewrite_result);

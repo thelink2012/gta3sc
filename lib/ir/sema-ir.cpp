@@ -95,14 +95,14 @@ auto SemaIR::Argument::as_float() const -> const float*
 
 auto SemaIR::Argument::as_text_label() const -> const std::string_view*
 {
-    if(auto text_label = std::get_if<TextLabel>(&this->value))
+    if(const auto* text_label = std::get_if<TextLabel>(&this->value))
         return &text_label->second;
     return nullptr;
 }
 
 auto SemaIR::Argument::as_string() const -> const std::string_view*
 {
-    if(auto string = std::get_if<String>(&this->value))
+    if(const auto* string = std::get_if<String>(&this->value))
         return &string->second;
     return nullptr;
 }
@@ -114,14 +114,14 @@ auto SemaIR::Argument::as_var_ref() const -> const VarRef*
 
 auto SemaIR::Argument::as_label() const -> const SymLabel*
 {
-    if(auto label = std::get_if<const SymLabel*>(&this->value))
+    if(const auto* label = std::get_if<const SymLabel*>(&this->value))
         return *label;
     return nullptr;
 }
 
 auto SemaIR::Argument::as_constant() const -> const CommandManager::ConstantDef*
 {
-    if(auto sconst = std::get_if<const CommandManager::ConstantDef*>(
+    if(const auto* sconst = std::get_if<const CommandManager::ConstantDef*>(
                &this->value))
         return *sconst;
     return nullptr;
@@ -129,16 +129,16 @@ auto SemaIR::Argument::as_constant() const -> const CommandManager::ConstantDef*
 
 auto SemaIR::Argument::as_used_object() const -> const SymUsedObject*
 {
-    if(auto uobj = std::get_if<const SymUsedObject*>(&this->value))
+    if(const auto* uobj = std::get_if<const SymUsedObject*>(&this->value))
         return *uobj;
     return nullptr;
 }
 
 auto SemaIR::Argument::pun_as_integer() const -> std::optional<int32_t>
 {
-    if(auto value = as_integer())
+    if(const auto* value = as_integer())
         return *value;
-    else if(auto sconst = as_constant())
+    else if(const auto* sconst = as_constant())
         return sconst->value;
     else
         return std::nullopt;
@@ -146,7 +146,7 @@ auto SemaIR::Argument::pun_as_integer() const -> std::optional<int32_t>
 
 auto SemaIR::Argument::pun_as_float() const -> std::optional<float>
 {
-    if(auto value = as_float())
+    if(const auto* value = as_float())
         return *value;
     else
         return std::nullopt;
@@ -164,7 +164,7 @@ auto SemaIR::Argument::VarRef::index_as_integer() const -> const int32_t*
 
 auto SemaIR::Argument::VarRef::index_as_variable() const -> const SymVariable*
 {
-    if(auto var = std::get_if<const SymVariable*>(&this->index))
+    if(const auto* var = std::get_if<const SymVariable*>(&this->index))
         return *var;
     return nullptr;
 }
@@ -207,7 +207,7 @@ auto SemaIR::Builder::arg(arena_ptr<const Argument> value) -> Builder&&
     if(this->args.size() >= static_cast<std::ptrdiff_t>(args_capacity))
     {
         const auto new_caps = !args_capacity ? 6 : args_capacity * 2;
-        const auto new_args = new(*arena) arena_ptr<const Argument>[new_caps];
+        auto* const new_args = new(*arena) arena_ptr<const Argument>[new_caps];
         std::move(this->args.begin(), this->args.end(), new_args);
 
         this->args = util::span(new_args, args.size());
