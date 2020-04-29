@@ -10,9 +10,9 @@ matrix:
           packages: ['libstdc++-9-dev', 'clang-9']
       env:
         - MATRIX_EVAL="CC=clang-9 && CXX=clang++-9"
-        - CMAKE="cmake"
         - CMAKE_BUILD_TYPE=RelWithDebInfo
         - COVERAGE=0
+        - ANALYSIS=0
     - name: x86_64-linux-gnu-clang-analysis
       os: linux
       addons:
@@ -20,11 +20,10 @@ matrix:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['libstdc++-9-dev', 'clang-9', 'clang-tools-9']
       env:
-        - |
-          MATRIX_EVAL='CC=clang-9 && CXX=clang++-9 \
-            && CMAKE="scan-build-9 --status-bugs -v --use-cc=$CC --use-c++=$CXX --exclude $TRAVIS_BUILD_DIR/thirdparty cmake"'
+        - MATRIX_EVAL="CC=clang-9 && CXX=clang++-9"
         - CMAKE_BUILD_TYPE=Debug
         - COVERAGE=0
+        - ANALYSIS=1
     - name: x86_64-linux-gnu-gcc-coverage
       os: linux
       addons:
@@ -34,10 +33,10 @@ matrix:
       env:
         - MATRIX_EVAL="CC=gcc-9 && CXX=g++-9"
         - GCOV_BINARY=/usr/bin/gcov-9
-        - CMAKE="cmake"
         - CMAKE_BUILD_TYPE=Debug
         - CMAKE_PREFIX_PATH="$HOME/.local/usr/local" # gcov location
         - COVERAGE=1
+        - ANALYSIS=0
       install:
         - sudo apt-get -y install libperlio-gzip-perl libconfig-json-perl
         - wget https://github.com/linux-test-project/lcov/archive/master.zip -O lcov.zip
@@ -52,9 +51,9 @@ script:
   - mkdir build
   - cd build
   - |
-    $CMAKE .. \
+    cmake .. \
         -DBUILD_TESTING=1 \
         -DGTA3SC_COVERAGE=$COVERAGE \
-        -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE \
-        -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-  - $CMAKE --build . --target coverage
+        -DGTA3SC_ANALYSIS=$ANALYSIS \
+        -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE
+  - cmake --build . --target coverage

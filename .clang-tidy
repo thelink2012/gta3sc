@@ -1,0 +1,122 @@
+---
+
+# As many checks as possible should be enabled. For every disabled check, a
+# reason must be given below.
+#
+# A list of checks can be found at
+# https://clang.llvm.org/extra/clang-tidy/checks/list.html
+#
+# TODO
+
+Checks: '
+        ,*,
+        ,-android-*,
+        ,-fuchsia-*,
+        ,-bugprone-narrowing-conversions,
+        ,-bugprone-branch-clone,
+        ,-bugprone-move-forwarding-reference,
+        ,-cert-dcl21-cpp,
+        ,-cert-dcl03-c,
+        ,-cert-dcl58-cpp,
+        ,-cppcoreguidelines-special-member-functions,
+        ,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+        ,-cppcoreguidelines-avoid-magic-numbers,
+        ,-cppcoreguidelines-pro-bounds-pointer-arithmetic,
+        ,-cppcoreguidelines-non-private-member-variables-in-classes,
+        ,-cppcoreguidelines-init-variables,
+        ,-cppcoreguidelines-owning-memory,
+        ,-cppcoreguidelines-pro-type-reinterpret-cast,
+        ,-cppcoreguidelines-pro-type-const-cast,
+        ,-cppcoreguidelines-avoid-c-arrays,
+        ,-cppcoreguidelines-narrowing-conversions,
+        ,-cppcoreguidelines-pro-type-member-init,
+        ,-cppcoreguidelines-pro-type-vararg,
+        ,-cppcoreguidelines-pro-bounds-constant-array-index,
+        ,-cppcoreguidelines-avoid-goto,
+        ,-google-readability-braces-around-statements,
+        ,-google-readability-namespace-comments,
+        ,-google-runtime-references,
+        ,-google-readability-todo,
+        ,-google-explicit-constructor,
+        ,-google-runtime-int,
+        ,-google-build-using-namespace,
+        ,-google-readability-function-size,
+        ,-hicpp-use-auto,
+        ,-hicpp-special-member-functions,
+        ,-hicpp-braces-around-statements,
+        ,-hicpp-no-array-decay,
+        ,-hicpp-uppercase-literal-suffix,
+        ,-hicpp-signed-bitwise,
+        ,-hicpp-move-const-arg,
+        ,-hicpp-explicit-conversions,
+        ,-hicpp-use-equals-default,
+        ,-hicpp-avoid-c-arrays,
+        ,-hicpp-noexcept-move,
+        ,-hicpp-member-init,
+        ,-hicpp-vararg,
+        ,-hicpp-use-nullptr,
+        ,-hicpp-static-assert,
+        ,-hicpp-avoid-goto,
+        ,-hicpp-function-size,
+        ,-hicpp-multiway-paths-covered,
+        ,-llvm-header-guard,
+        ,-llvm-namespace-comment,
+        ,-llvm-qualified-auto,
+        ,-llvm-include-order,
+        ,-misc-non-private-member-variables-in-classes,
+        ,-misc-unused-parameters,
+        ,-misc-static-assert,
+        ,-misc-redundant-expression,
+        ,-modernize-use-auto,
+        ,-modernize-use-trailing-return-type,
+        ,-modernize-use-nodiscard,
+        ,-modernize-loop-convert,
+        ,-modernize-use-default-member-init,
+        ,-modernize-use-equals-default,
+        ,-modernize-avoid-c-arrays,
+        ,-modernize-use-nullptr,
+        ,-performance-move-const-arg,
+        ,-performance-noexcept-move-constructor,
+        ,-readability-named-parameter,
+        ,-readability-braces-around-statements,
+        ,-readability-redundant-access-specifiers,
+        ,-readability-else-after-return,
+        ,-readability-magic-numbers,
+        ,-readability-convert-member-functions-to-static,
+        ,-readability-uppercase-literal-suffix,
+        ,-readability-implicit-bool-conversion,
+        ,-readability-qualified-auto,
+        ,-readability-inconsistent-declaration-parameter-name,
+        ,-readability-identifier-naming,
+        ,-readability-isolate-declaration,
+        ,-readability-redundant-member-init,
+        ,-readability-make-member-function-const,
+        ,-readability-container-size-empty,
+        ,-readability-static-accessed-through-instance,
+        ,-readability-function-size,
+        '
+
+WarningsAsErrors: '*'
+
+CheckOptions:    
+  - key:             readability-identifier-naming.UnionCase
+    value:           CamelCase
+  - key:             readability-identifier-naming.EnumCase
+    value:           CamelCase
+  - key:             readability-identifier-naming.ClassCase
+    value:           CamelCase
+  - key:             readability-identifier-naming.NamespaceCase
+    value:           lower_case
+  - key:             readability-identifier-naming.FunctionCase
+    value:           lower_case
+  - key:             readability-identifier-naming.MemberCase
+    value:           lower_case
+  - key:             readability-identifier-naming.ParameterCase
+    value:           lower_case
+  - key:             readability-identifier-naming.VariableCase
+    value:           lower_case
+  - key:             readability-identifier-naming.ConstantCase
+    value:           lower_case
+
+HeaderFilterRegex: '\/include\/gta3sc\/.*|\/lib\/.*|\/src\/.*|\/unittest\/.*'
+FormatStyle: file

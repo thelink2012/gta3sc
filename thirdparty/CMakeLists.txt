@@ -1,3 +1,6 @@
+# Disable static analysis / lint on third-party code
+set(CMAKE_CXX_CLANG_TIDY "")
+
 add_subdirectory(span-lite EXCLUDE_FROM_ALL)
 
 if(BUILD_TESTING)
@@ -5,7 +8,8 @@ if(BUILD_TESTING)
     add_subdirectory(doctest EXCLUDE_FROM_ALL)
 
     # Hack for fixing https://github.com/onqtam/doctest/issues/210
-    add_custom_target(gta3sc_gen_doctest_h DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/doctest/doctest/doctest.h)
+    add_custom_target(gta3sc_gen_doctest_h
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/doctest/doctest/doctest.h)
     add_dependencies(doctest gta3sc_gen_doctest_h)
 
     # Import doctest_discover_tests(<target>)
