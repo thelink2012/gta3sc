@@ -21,7 +21,7 @@ For a high-level overview of the project, see the [Design Internals](./DESIGN.ad
 
 ## Building
 
-You need a C++17 enabled compiler. Windows (MSVC) and Linux (GCC/Clang) are officially supported.
+You need a C++20 enabled compiler. Windows (MSVC) and Linux (GCC/Clang) are officially supported.
 
 Before building make sure you have fetched all submodules:
 

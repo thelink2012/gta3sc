@@ -36,7 +36,7 @@ bool SourceManager::scan_directory(const std::filesystem::path& dir)
            && (extension[2] == 'c' || extension[2] == 'C'))
         {
             this->filename_to_path.emplace_back(
-                    FilenamePathPair{path.filename().generic_u8string(), path});
+                    FilenamePathPair{path.filename().generic_string(), path});
         }
     }
     return !!ec;
