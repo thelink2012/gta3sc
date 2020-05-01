@@ -50,9 +50,11 @@ protected:
     }
 
 protected:
-    gta3sc::SourceManager sourceman;
-    gta3sc::DiagnosticHandler diagman;
-    std::queue<gta3sc::Diagnostic> diags;
+    // Do not lint regarding protected member variables, this isn't quite in
+    // the library code and we'll need protected access to the fixture.
+    gta3sc::SourceManager sourceman;      // NOLINT
+    gta3sc::DiagnosticHandler diagman;    // NOLINT
+    std::queue<gta3sc::Diagnostic> diags; // NOLINT
 };
 } // namespace gta3sc::test::syntax
 

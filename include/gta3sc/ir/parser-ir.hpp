@@ -161,7 +161,8 @@ public:
     struct Argument
     {
     public:
-        SourceRange source; ///< Source code location of the argument.
+        /// Source code location of the argument.
+        SourceRange source; // NOLINT: FIXME
 
         /// Please use `ParserIR` creation methods.
         Argument() noexcept = delete;

@@ -126,7 +126,10 @@ public:
         auto end() const -> const_iterator;
 
     protected:
-        friend class CommandManager;
+        friend class CommandManager::Builder;
+        void push_back(AlternativeDef& alternative);
+
+    private:
         arena_ptr<AlternativeDef> first{};
         arena_ptr<AlternativeDef> last{};
     };
@@ -191,8 +194,10 @@ public:
     static constexpr EntityId no_entity_type = EntityId{0};
 
 public:
-    /// Constructs the repository of commands from its builder.
-    explicit CommandManager(Builder&& builder);
+    /// Constructs an empty command manager.
+    ///
+    /// Use `Builder` to construct a non-empty command manager.
+    CommandManager() noexcept = default;
 
     CommandManager(const CommandManager&) = delete;
     CommandManager& operator=(const CommandManager&) = delete;
@@ -314,6 +319,11 @@ private:
 
     /// Map of entity names to entity identifiers.
     EntitiesMap entities_map;
+
+protected:
+    CommandManager(CommandsMap&& commands_map, AlternatorsMap&& alternators_map,
+                   EnumsMap&& enums_map, ConstantsMap&& constants_map,
+                   EntitiesMap&& entities_map) noexcept;
 };
 
 /// This is a builder capable of constructing a command repository.
@@ -328,7 +338,7 @@ public:
     /// Allocations of command definitions, alternators, constants, and whatnot
     /// will be perfomed in the given arena. Therefore, the arena should be live
     /// as long as the resulting `CommandManager` is alive.
-    explicit Builder(ArenaMemoryResource& arena);
+    explicit Builder(ArenaMemoryResource& arena) noexcept;
 
     Builder(const Builder&) = delete;
     Builder& operator=(const Builder&) = delete;
@@ -448,9 +458,6 @@ public:
 private:
     /// The arena used to allocate definitions.
     ArenaMemoryResource* arena;
-
-protected:
-    friend class CommandManager;
 
     // Maps that are going to be moved to `CommandManager`.
     CommandsMap commands_map;

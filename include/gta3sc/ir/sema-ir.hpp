@@ -144,7 +144,7 @@ public:
         struct VarRef;
 
     public:
-        SourceRange source;
+        SourceRange source; // NOLINT: FIXME
 
         /// Please use `SemaIR` creation methods.
         Argument() noexcept = delete;

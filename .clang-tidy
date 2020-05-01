@@ -47,11 +47,13 @@
 #       Maybe this can be revisited in the future.
 #
 #   cppcoreguidelines-pro-bounds-array-to-pointer-decay
-#   hicpp-no-array-decay,
+#   hicpp-no-array-decay
 #       Would be useful if didn't flag every assert.
 #
-#   cppcoreguidelines-non-private-member-variables-in-classes
-#       Breaks our design. May be revisited in the future.
+#   cppcoreguidelines-pro-bounds-pointer-arithmetic
+#       Would be useful if `std::string_view::iterator` wasn't implemented
+#       as an alias to `const char*` in libstdc++.
+#
 #
 
 Checks: '
@@ -61,7 +63,6 @@ Checks: '
         ,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,
         ,-cppcoreguidelines-avoid-magic-numbers,
         ,-cppcoreguidelines-pro-bounds-pointer-arithmetic,
-        ,-cppcoreguidelines-non-private-member-variables-in-classes,
         ,-cppcoreguidelines-owning-memory,
         ,-cppcoreguidelines-pro-type-const-cast,
         ,-cppcoreguidelines-avoid-c-arrays,
@@ -76,7 +77,6 @@ Checks: '
         ,-hicpp-avoid-c-arrays,
         ,-hicpp-function-size,
         ,-llvm-header-guard,
-        ,-misc-non-private-member-variables-in-classes,
         ,-modernize-use-trailing-return-type,
         ,-modernize-use-nodiscard,
         ,-modernize-avoid-c-arrays,
@@ -94,6 +94,8 @@ Checks: '
 WarningsAsErrors: '*'
 
 CheckOptions:    
+  - key:             misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic
+    value:           1
   - key:             readability-identifier-naming.UnionCase
     value:           CamelCase
   - key:             readability-identifier-naming.EnumCase

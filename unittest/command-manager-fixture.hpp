@@ -10,7 +10,7 @@ public:
     CommandManagerFixture() : cmdman(build()) {}
 
 private:
-    auto build() -> CommandManager::Builder
+    auto build() -> CommandManager
     {
         using ParamDef = gta3sc::CommandManager::ParamDef;
         using ParamType = gta3sc::CommandManager::ParamType;
@@ -30,20 +30,15 @@ private:
         CHECK(builder.find_entity_type("OBJECT").value_or(EntityId{0})
               != EntityId{0});
 
-        CHECK(builder.find_enumeration("GLOBAL"));
         builder.insert_enumeration("PEDTYPE");
         builder.insert_enumeration("DEFAULTMODEL");
         builder.insert_enumeration("FADE");
         builder.insert_enumeration("MODEL"); // special
 
-        builder.insert_or_assign_constant(*builder.find_enumeration("GLOBAL"),
-                                          "FALSE", 0);
-        builder.insert_or_assign_constant(*builder.find_enumeration("GLOBAL"),
-                                          "TRUE", 1);
-        builder.insert_or_assign_constant(*builder.find_enumeration("GLOBAL"),
-                                          "OFF", 0);
-        builder.insert_or_assign_constant(*builder.find_enumeration("GLOBAL"),
-                                          "ON", 1);
+        builder.insert_or_assign_constant(EnumId{0}, "FALSE", 0);
+        builder.insert_or_assign_constant(EnumId{0}, "TRUE", 1);
+        builder.insert_or_assign_constant(EnumId{0}, "OFF", 0);
+        builder.insert_or_assign_constant(EnumId{0}, "ON", 1);
 
         builder.insert_or_assign_constant(*builder.find_enumeration("PEDTYPE"),
                                           "PEDTYPE_CIVMALE", 4);
@@ -261,7 +256,7 @@ private:
                        {builder.find_command("ACCEPTS_ONLY_LVAR_INT"),
                         builder.find_command("ACCEPTS_ONLY_LVAR_FLOAT")});
 
-        return builder;
+        return std::move(builder).build();
     }
 
     static void
@@ -288,6 +283,6 @@ private:
     ArenaMemoryResource arena;
 
 protected:
-    CommandManager cmdman;
+    CommandManager cmdman; // NOLINT
 };
 } // namespace gta3sc::test

@@ -313,7 +313,7 @@ namespace detail
             return !(*this == rhs);
         }
 
-    protected:
+    private:
         maybe_const<node_type>* curr{};
     };
 

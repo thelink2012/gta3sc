@@ -27,7 +27,7 @@ protected:
     }
 
 protected:
-    gta3sc::syntax::Scanner scanner;
+    gta3sc::syntax::Scanner scanner; // NOLINT
 };
 } // namespace gta3sc::test::syntax
 

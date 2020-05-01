@@ -14,12 +14,16 @@ using ConstantListIterator
 using MutableConstantListIterator
         = util::IntrusiveListForwardIterator<CommandManager::ConstantDef>;
 
-CommandManager::CommandManager(Builder&& builder) :
-    commands_map(std::move(builder.commands_map)),
-    alternators_map(std::move(builder.alternators_map)),
-    enums_map(std::move(builder.enums_map)),
-    constants_map(std::move(builder.constants_map)),
-    entities_map(std::move(builder.entities_map))
+CommandManager::CommandManager(CommandsMap&& commands_map,
+                               AlternatorsMap&& alternators_map,
+                               EnumsMap&& enums_map,
+                               ConstantsMap&& constants_map,
+                               EntitiesMap&& entities_map) noexcept :
+    commands_map(std::move(commands_map)),
+    alternators_map(std::move(alternators_map)),
+    enums_map(std::move(enums_map)),
+    constants_map(std::move(constants_map)),
+    entities_map(std::move(entities_map))
 {}
 
 bool CommandManager::ParamDef::is_optional() const
@@ -47,6 +51,21 @@ auto CommandManager::AlternatorDef::begin() const -> const_iterator
 auto CommandManager::AlternatorDef::end() const -> const_iterator
 {
     return const_iterator();
+}
+
+void CommandManager::AlternatorDef::push_back(AlternativeDef& alternative)
+{
+    if(this->last)
+    {
+        this->last->next = &alternative;
+    }
+    else
+    {
+        assert(!first);
+        this->first = &alternative;
+    }
+
+    this->last = &alternative;
 }
 
 auto CommandManager::find_command(std::string_view name) const
@@ -106,6 +125,7 @@ auto CommandManager::find_enumeration(const EnumsMap& enums_map,
 {
     if(auto it = enums_map.find(name); it != enums_map.end())
         return it->second;
+
     return std::nullopt;
 }
 
@@ -156,20 +176,15 @@ auto CommandManager::find_entity_type(const EntitiesMap& entities_map,
     return std::nullopt;
 }
 
-CommandManager::Builder::Builder(ArenaMemoryResource& arena) : arena(&arena)
-{
-    // FIXME would be nice to allocate this lazily, but remember that
-    // find/insert should always be able to find these. And the id of these
-    // is always zero. After this fix, this ctor can be marked noexcept.
-    const auto global_enum = insert_enumeration("GLOBAL").first;
-    const auto no_entity_type = insert_entity_type("NONE").first;
-    assert(global_enum == CommandManager::global_enum);
-    assert(no_entity_type == CommandManager::no_entity_type);
-}
+CommandManager::Builder::Builder(ArenaMemoryResource& arena) noexcept :
+    arena(&arena)
+{}
 
 auto CommandManager::Builder::build() && -> CommandManager
 {
-    return CommandManager(std::move(*this));
+    return CommandManager(std::move(commands_map), std::move(alternators_map),
+                          std::move(enums_map), std::move(constants_map),
+                          std::move(entities_map));
 }
 
 auto CommandManager::Builder::find_command(std::string_view name) const
@@ -251,17 +266,7 @@ auto CommandManager::Builder::insert_alternative(AlternatorDef& alternator,
     auto* a_alternative = new(*arena, alignof(AlternativeDef))
             AlternativeDef(command);
 
-    if(alternator.last)
-    {
-        alternator.last->next = a_alternative;
-    }
-    else
-    {
-        assert(!alternator.first);
-        alternator.first = a_alternative;
-    }
-
-    alternator.last = a_alternative;
+    alternator.push_back(*a_alternative);
     return a_alternative;
 }
 
@@ -274,8 +279,9 @@ auto CommandManager::Builder::insert_enumeration(std::string_view name)
     auto a_name = util::allocate_string_upper(name, *arena);
 
     const auto next_id = static_cast<std::underlying_type_t<EnumId>>(
-            enums_map.size());
+            enums_map.size() + 1);
     assert(next_id < std::numeric_limits<decltype(next_id)>::max());
+    assert(EnumId{next_id} != global_enum);
 
     auto [it, inserted] = enums_map.emplace(a_name, EnumId{next_id});
     assert(inserted);
@@ -327,8 +333,9 @@ auto CommandManager::Builder::insert_entity_type(std::string_view name)
     auto a_name = util::allocate_string_upper(name, *arena);
 
     const auto next_id = static_cast<std::underlying_type_t<EntityId>>(
-            entities_map.size());
+            entities_map.size() + 1);
     assert(next_id < std::numeric_limits<decltype(next_id)>::max());
+    assert(EntityId{next_id} != no_entity_type);
 
     auto [it, inserted] = entities_map.emplace(a_name, EntityId{next_id});
     assert(inserted);

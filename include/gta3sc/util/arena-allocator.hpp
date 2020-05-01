@@ -250,10 +250,11 @@ public:
     }
 
 protected:
-    ArenaMemoryResource* arena;
-
     template<typename U>
     friend class ArenaAllocator;
+
+    // NOLINTNEXTLINE(misc-non-private-member-variables-in-classes)
+    ArenaMemoryResource* arena;
 };
 } // namespace gta3sc
 
@@ -310,7 +311,6 @@ inline auto allocate_string_upper(std::string_view from,
                                   ArenaMemoryResource& arena)
         -> std::string_view
 {
-
     auto chars = allocate_string(from, arena);
     for(const auto& c : chars)
     {

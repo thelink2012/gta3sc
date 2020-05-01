@@ -38,7 +38,7 @@ private:
     gta3sc::ArenaMemoryResource arena;
 
 protected:
-    gta3sc::syntax::Parser parser;
+    gta3sc::syntax::Parser parser; // NOLINT
 };
 } // namespace gta3sc::test::syntax
 

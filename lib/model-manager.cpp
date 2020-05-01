@@ -2,8 +2,8 @@
 
 namespace gta3sc
 {
-inline ModelManager::ModelManager(ModelManager::Builder&& builder) :
-    models(std::move(builder.models))
+ModelManager::ModelManager(ModelsMap&& models) noexcept :
+    models(std::move(models))
 {}
 
 auto ModelManager::find_model(std::string_view name) const -> const ModelDef*
@@ -14,7 +14,7 @@ auto ModelManager::find_model(std::string_view name) const -> const ModelDef*
 
 auto ModelManager::Builder::build() && -> ModelManager
 {
-    return ModelManager(std::move(*this));
+    return ModelManager(std::move(this->models));
 }
 
 auto ModelManager::Builder::insert_model(std::string_view name) -> Builder&&

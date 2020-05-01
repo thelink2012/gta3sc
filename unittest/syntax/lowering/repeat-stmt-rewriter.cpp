@@ -19,8 +19,8 @@ protected:
     }
 
 protected:
-    gta3sc::ArenaMemoryResource arena;
-    gta3sc::util::NameGenerator namegen;
+    gta3sc::ArenaMemoryResource arena;   // NOLINT
+    gta3sc::util::NameGenerator namegen; // NOLINT
 };
 } // namespace gta3sc::test::syntax
 

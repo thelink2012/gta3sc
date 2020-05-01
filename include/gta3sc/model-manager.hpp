@@ -26,10 +26,9 @@ public:
 
 public:
     /// Constructs an empty model repository.
+    ///
+    /// Use `Builder` to construct a non-empty object.
     ModelManager() noexcept = default;
-
-    /// Constructs a repository of models from its builder.
-    explicit ModelManager(ModelManager::Builder&& builder);
 
     ModelManager(const ModelManager&) = delete;
     ModelManager& operator=(const ModelManager&) = delete;
@@ -47,6 +46,9 @@ public:
 private:
     using ModelsMap = std::unordered_map<std::string_view, arena_ptr<ModelDef>>;
     ModelsMap models;
+
+protected:
+    explicit ModelManager(ModelsMap&& models) noexcept;
 };
 
 /// A builder capable of constructing a `ModelManager`.
@@ -76,9 +78,6 @@ public:
 
 private:
     ArenaMemoryResource* arena;
-
-protected:
-    friend class ModelManager;
     ModelsMap models;
 };
 } // namespace gta3sc

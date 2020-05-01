@@ -331,7 +331,7 @@ bool Parser::is_float(std::string_view lexeme) const
     // floating_form2 := digit { digit } ('.' | 'F') { digit | '.' | 'F' } ;
     // floating := ['-'] (floating_form1 | floating_form2) ;
 
-    const auto *it = lexeme.begin();
+    auto it = lexeme.begin();
 
     if(lexeme.size() >= 2 && *it == '-')
         ++it;

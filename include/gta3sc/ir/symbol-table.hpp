@@ -97,10 +97,10 @@ private:
 
 public:
     /// The symbol table of labels.
-    SymbolTable<const SymLabel> label_table;
+    SymbolTable<const SymLabel> label_table; // NOLINT: FIXME
 
     /// The symbol table for used objects.
-    SymbolTable<const SymUsedObject> used_objects;
+    SymbolTable<const SymUsedObject> used_objects; // NOLINT: FIXME
 
     /// The symbol table for each scope.
     ///
@@ -109,7 +109,7 @@ public:
     ///
     /// The scope of index `0` is used for storing global variables and
     /// is always present in the repository.
-    std::vector<SymbolTable<const SymVariable>> var_tables;
+    std::vector<SymbolTable<const SymVariable>> var_tables; // NOLINT: FIXME
 
 public:
     explicit SymbolRepository(ArenaMemoryResource& arena);
