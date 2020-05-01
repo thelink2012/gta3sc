@@ -36,10 +36,14 @@ public:
     arena_ptr<const Command> const command{};
 
 public:
-    SemaIR() = delete;
+    SemaIR() noexcept = delete;
+    ~SemaIR() noexcept = default;
 
     SemaIR(const SemaIR&) = delete;
     SemaIR& operator=(const SemaIR&) = delete;
+
+    SemaIR(SemaIR&&) noexcept = delete;
+    SemaIR& operator=(SemaIR&&) noexcept = delete;
 
     // Creates an instruction.
     static auto create(const SymLabel* label, arena_ptr<const Command> command,
@@ -115,10 +119,14 @@ public:
         bool not_flag = false; ///< Whether the result of the command is NOTed.
 
         /// Please use `SemaIR::Builder::build_command`.
-        Command() = delete;
+        Command() noexcept = delete;
+        ~Command() noexcept = default;
 
         Command(const Command&) = delete;
         Command& operator=(const Command&) = delete;
+
+        Command(Command&&) noexcept = delete;
+        Command& operator=(Command&&) noexcept = delete;
 
     protected:
         Command(SourceRange source, const CommandManager::CommandDef& def,
@@ -139,10 +147,14 @@ public:
         SourceRange source;
 
         /// Please use `SemaIR` creation methods.
-        Argument() = delete;
+        Argument() noexcept = delete;
+        ~Argument() noexcept = default;
 
         Argument(const Argument&) = delete;
         Argument& operator=(const Argument&) = delete;
+
+        Argument(Argument&&) noexcept = delete;
+        Argument& operator=(Argument&&) noexcept = delete;
 
         /// Returns the contained integer or `nullptr` if this argument is not
         /// an integer.
@@ -259,13 +271,15 @@ public:
 
     /// Constructs a builder to create instructions allocating any necessary
     /// data in the given arena.
-    explicit Builder(ArenaMemoryResource& arena) : arena(&arena) {}
+    explicit Builder(ArenaMemoryResource& arena) noexcept : arena(&arena) {}
 
     Builder(const Builder&) = delete;
     Builder& operator=(const Builder&) = delete;
 
-    Builder(Builder&&) = default;
-    Builder& operator=(Builder&&) = default;
+    Builder(Builder&&) noexcept = default;
+    Builder& operator=(Builder&&) noexcept = default;
+
+    ~Builder() noexcept = default;
 
     /// Sets (or unsets if `nullptr`) the instruction in construction to
     /// define the specified label.

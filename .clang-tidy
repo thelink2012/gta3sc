@@ -39,7 +39,7 @@
 #       TODO
 #
 #   google-runtime-references
-#       This is a very specific coding convention not used in this project.
+#       This goes against cppcoreguidelines (F.15).
 #
 #   google-readability-todo
 #       I really like Google TODOs. Unfortunately, I don't think they fit
@@ -58,7 +58,6 @@ Checks: '
         ,*,
         ,-android-cloexec-*,
         ,-cert-dcl21-cpp,
-        ,-cppcoreguidelines-special-member-functions,
         ,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,
         ,-cppcoreguidelines-avoid-magic-numbers,
         ,-cppcoreguidelines-pro-bounds-pointer-arithmetic,
@@ -72,7 +71,6 @@ Checks: '
         ,-google-runtime-references,
         ,-google-readability-todo,
         ,-google-readability-function-size,
-        ,-hicpp-special-member-functions,
         ,-hicpp-braces-around-statements,
         ,-hicpp-no-array-decay,
         ,-hicpp-avoid-c-arrays,

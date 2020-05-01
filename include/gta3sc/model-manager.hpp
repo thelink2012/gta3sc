@@ -26,7 +26,7 @@ public:
 
 public:
     /// Constructs an empty model repository.
-    ModelManager() = default;
+    ModelManager() noexcept = default;
 
     /// Constructs a repository of models from its builder.
     explicit ModelManager(ModelManager::Builder&& builder);
@@ -34,8 +34,10 @@ public:
     ModelManager(const ModelManager&) = delete;
     ModelManager& operator=(const ModelManager&) = delete;
 
-    ModelManager(ModelManager&&) = default;
-    ModelManager& operator=(ModelManager&&) = default;
+    ModelManager(ModelManager&&) noexcept = default;
+    ModelManager& operator=(ModelManager&&) noexcept = default;
+
+    ~ModelManager() noexcept = default;
 
     /// Finds a model in the repository.
     ///
@@ -56,13 +58,15 @@ public:
     /// Allocation of model definitions will happen in the given arena.
     /// Therefore the arena should live as long as the constructed model
     /// repository.
-    explicit Builder(ArenaMemoryResource& arena) : arena(&arena) {}
+    explicit Builder(ArenaMemoryResource& arena) noexcept : arena(&arena) {}
 
     Builder(const Builder&) = delete;
     Builder& operator=(const Builder&) = delete;
 
-    Builder(Builder&&) = default;
-    Builder& operator=(Builder&&) = default;
+    Builder(Builder&&) noexcept = default;
+    Builder& operator=(Builder&&) noexcept = default;
+
+    ~Builder() noexcept = default;
 
     /// Inserts a model into the  repository.
     auto insert_model(std::string_view name) -> Builder&&;

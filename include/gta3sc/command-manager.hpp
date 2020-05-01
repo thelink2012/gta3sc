@@ -197,8 +197,10 @@ public:
     CommandManager(const CommandManager&) = delete;
     CommandManager& operator=(const CommandManager&) = delete;
 
-    CommandManager(CommandManager&&) = default;
-    CommandManager& operator=(CommandManager&&) = default;
+    CommandManager(CommandManager&&) noexcept = default;
+    CommandManager& operator=(CommandManager&&) noexcept = default;
+
+    ~CommandManager() noexcept = default;
 
     /// Finds the command with the specified name in the repository.
     ///
@@ -331,8 +333,10 @@ public:
     Builder(const Builder&) = delete;
     Builder& operator=(const Builder&) = delete;
 
-    Builder(Builder&&) = default;
-    Builder& operator=(Builder&&) = default;
+    Builder(Builder&&) noexcept = default;
+    Builder& operator=(Builder&&) noexcept = default;
+
+    ~Builder() noexcept = default;
 
     /// Builds the command repository.
     auto build() && -> CommandManager;

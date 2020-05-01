@@ -117,8 +117,10 @@ public:
     SymbolRepository(const SymbolRepository&) = delete;
     SymbolRepository& operator=(const SymbolRepository&) = delete;
 
-    SymbolRepository(SymbolRepository&&) = default;
-    SymbolRepository& operator=(SymbolRepository&&) = default;
+    SymbolRepository(SymbolRepository&&) noexcept = default;
+    SymbolRepository& operator=(SymbolRepository&&) noexcept = default;
+
+    ~SymbolRepository() noexcept = default;
 
     /// Allocates a scope and returns its identifier.
     ///

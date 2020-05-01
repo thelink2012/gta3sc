@@ -66,18 +66,19 @@ public:
     using const_pointer = const T*;
 
 public:
-    IntrusiveList() { unsafe_clear(); }
+    IntrusiveList() noexcept { unsafe_clear(); }
 
     /// Behaves the same as construction followed by `assign(first, last)`.
     template<typename InputIt>
-    IntrusiveList(InputIt first, InputIt last) : IntrusiveList()
+    IntrusiveList(InputIt first, InputIt last) noexcept : IntrusiveList()
     {
         assign(first, last);
     }
 
     /// Behaves the same as construction followed by
     /// `assign_pointer(ilist.begin(), ilist.end())`
-    IntrusiveList(std::initializer_list<pointer> ilist) : IntrusiveList()
+    IntrusiveList(std::initializer_list<pointer> ilist) noexcept :
+        IntrusiveList()
     {
         assign_pointer(ilist.begin(), ilist.end());
     }
@@ -261,6 +262,9 @@ public:
     /// Swaps the container's list of this and `other`.
     void swap(IntrusiveList& other) noexcept
     {
+        if(this == &other)
+            return;
+
         if(empty())
         {
             if(other.empty())
@@ -414,12 +418,12 @@ public:
     }
 
 private:
-    void unsafe_clear()
+    void unsafe_clear() noexcept
     {
         sentinel.next = sentinel.prev = static_cast<pointer>(&sentinel);
     }
 
-    void unsafe_link(reference first, reference last)
+    void unsafe_link(reference first, reference last) noexcept
     {
         sentinel.next = &first;
         sentinel.prev = &last;
@@ -432,13 +436,15 @@ private:
 };
 
 template<typename T>
-inline bool operator==(const IntrusiveList<T>& lhs, const IntrusiveList<T>& rhs)
+inline bool operator==(const IntrusiveList<T>& lhs,
+                       const IntrusiveList<T>& rhs) noexcept
 {
     return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
 }
 
 template<typename T>
-inline bool operator!=(const IntrusiveList<T>& lhs, const IntrusiveList<T>& rhs)
+inline bool operator!=(const IntrusiveList<T>& lhs,
+                       const IntrusiveList<T>& rhs) noexcept
 {
     return !(lhs == rhs);
 }

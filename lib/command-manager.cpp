@@ -158,6 +158,9 @@ auto CommandManager::find_entity_type(const EntitiesMap& entities_map,
 
 CommandManager::Builder::Builder(ArenaMemoryResource& arena) : arena(&arena)
 {
+    // FIXME would be nice to allocate this lazily, but remember that
+    // find/insert should always be able to find these. And the id of these
+    // is always zero. After this fix, this ctor can be marked noexcept.
     const auto global_enum = insert_enumeration("GLOBAL").first;
     const auto no_entity_type = insert_entity_type("NONE").first;
     assert(global_enum == CommandManager::global_enum);

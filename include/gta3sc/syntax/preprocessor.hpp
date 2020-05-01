@@ -14,6 +14,7 @@ public:
     explicit Preprocessor(SourceFile source, DiagnosticHandler& diag) :
         source(std::move(source)), diag(&diag)
     {
+        // TODO if we move cursor initialization we can make this noexcept
         this->cursor = this->source.code_data();
         this->start_of_line = true;
         this->end_of_stream = false;
@@ -24,8 +25,10 @@ public:
     Preprocessor(const Preprocessor&) = delete;
     Preprocessor& operator=(const Preprocessor&) = delete;
 
-    Preprocessor(Preprocessor&&) = default;
-    Preprocessor& operator=(Preprocessor&&) = default;
+    Preprocessor(Preprocessor&&) noexcept = default;
+    Preprocessor& operator=(Preprocessor&&) noexcept = default;
+
+    ~Preprocessor() noexcept = default;
 
     /// Gets the next character in the stream.
     char next();

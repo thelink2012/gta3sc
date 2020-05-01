@@ -43,10 +43,14 @@ public:
     arena_ptr<const Command> const command{};
 
 public:
-    ParserIR() = delete;
+    ParserIR() noexcept = delete;
+    ~ParserIR() noexcept = default;
 
     ParserIR(const ParserIR&) = delete;
     ParserIR& operator=(const ParserIR&) = delete;
+
+    ParserIR(ParserIR&&) noexcept = delete;
+    ParserIR& operator=(ParserIR&&) noexcept = delete;
 
     // Creates an instruction.
     static auto create(arena_ptr<const LabelDef>, arena_ptr<const Command>,
@@ -86,8 +90,8 @@ public:
             -> arena_ptr<const Argument>;
 
     /// Compares whether a given IR is equivalent to another IR.
-    bool operator==(const ParserIR&) const;
-    bool operator!=(const ParserIR&) const;
+    friend bool operator==(const ParserIR&, const ParserIR&);
+    friend bool operator!=(const ParserIR&, const ParserIR&);
 
     struct Command
     {
@@ -99,14 +103,18 @@ public:
         bool not_flag = false; ///< Whether the result of the command is NOTed.
 
         /// Please use `ParserIR::Builder::build_command`.
-        Command() = delete;
+        Command() noexcept = delete;
+        ~Command() noexcept = default;
 
         Command(const Command&) = delete;
         Command& operator=(const Command&) = delete;
 
+        Command(Command&&) noexcept = delete;
+        Command& operator=(Command&&) noexcept = delete;
+
         /// Compares whether a given command is equivalent to another command.
-        bool operator==(const Command&) const;
-        bool operator!=(const Command&) const;
+        friend bool operator==(const Command&, const Command&);
+        friend bool operator!=(const Command&, const Command&);
 
     protected:
         Command(SourceRange source, std::string_view name,
@@ -124,10 +132,14 @@ public:
         std::string_view name;
 
         /// Please use `LabelDef::create`.
-        LabelDef() = delete;
+        LabelDef() noexcept = delete;
+        ~LabelDef() noexcept = default;
 
         LabelDef(const LabelDef&) = delete;
         LabelDef& operator=(const LabelDef&) = delete;
+
+        LabelDef(LabelDef&&) noexcept = delete;
+        LabelDef& operator=(LabelDef&&) noexcept = delete;
 
         /// Creates a label definition.
         ///
@@ -136,8 +148,8 @@ public:
                            ArenaMemoryResource*) -> arena_ptr<const LabelDef>;
 
         /// Compares whether a given label definition is equivalent to another.
-        bool operator==(const LabelDef&) const;
-        bool operator!=(const LabelDef&) const;
+        friend bool operator==(const LabelDef&, const LabelDef&);
+        friend bool operator!=(const LabelDef&, const LabelDef&);
 
     private:
         explicit LabelDef(SourceRange source, std::string_view name) :
@@ -152,10 +164,14 @@ public:
         SourceRange source; ///< Source code location of the argument.
 
         /// Please use `ParserIR` creation methods.
-        Argument() = delete;
+        Argument() noexcept = delete;
+        ~Argument() noexcept = default;
 
         Argument(const Argument&) = delete;
         Argument& operator=(const Argument&) = delete;
+
+        Argument(Argument&&) noexcept = delete;
+        Argument& operator=(Argument&&) noexcept = delete;
 
         /// Returns the contained integer or `nullptr` if this argument is not
         /// an integer.
@@ -183,8 +199,8 @@ public:
         bool is_same_value(const Argument& other) const;
 
         /// Compares whether a given argument is equivalent to another.
-        bool operator==(const Argument&) const;
-        bool operator!=(const Argument&) const;
+        friend bool operator==(const Argument&, const Argument&);
+        friend bool operator!=(const Argument&, const Argument&);
 
     protected:
         enum class IdentifierTag
@@ -247,13 +263,15 @@ public:
 
     /// Constructs a builder to create instructions allocating any necessary
     /// data in the given arena.
-    explicit Builder(ArenaMemoryResource& arena) : arena(&arena) {}
+    explicit Builder(ArenaMemoryResource& arena) noexcept : arena(&arena) {}
 
     Builder(const Builder&) = delete;
     Builder& operator=(const Builder&) = delete;
 
-    Builder(Builder&&) = default;
-    Builder& operator=(Builder&&) = default;
+    Builder(Builder&&) noexcept = default;
+    Builder& operator=(Builder&&) noexcept = default;
+
+    ~Builder() noexcept = default;
 
     /// Sets (or unsets) the instruction in construction to define the
     /// specified label.

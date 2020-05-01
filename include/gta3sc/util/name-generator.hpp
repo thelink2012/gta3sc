@@ -27,6 +27,8 @@ public:
     NameGenerator(NameGenerator&& rhs) noexcept;
     NameGenerator& operator=(NameGenerator&&) noexcept;
 
+    ~NameGenerator() noexcept = default;
+
     /// Generates a unique string into `str`.
     void generate(std::string& str);
 

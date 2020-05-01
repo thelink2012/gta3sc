@@ -14,7 +14,7 @@ constexpr auto COMMAND_IS_THING_GREATER_OR_EQUAL_TO_THING
         = "IS_THING_GREATER_OR_EQUAL_TO_THING"sv;
 
 RepeatStmtRewriter::RepeatStmtRewriter(gta3sc::util::NameGenerator& namegen,
-                                       ArenaMemoryResource& arena) :
+                                       ArenaMemoryResource& arena) noexcept :
     namegen(&namegen), arena(&arena)
 {}
 

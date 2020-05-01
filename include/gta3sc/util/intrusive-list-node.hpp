@@ -120,26 +120,26 @@ namespace detail
     public:
         /// Constructs an iterator pointing to the past-the-end element of a
         /// singly linked list.
-        IntrusiveListForwardIterator() = default;
+        IntrusiveListForwardIterator() noexcept = default;
 
         /// Constructs an iterator pointing to the specified node.
-        explicit IntrusiveListForwardIterator(maybe_const<node_type>& node) :
+        explicit IntrusiveListForwardIterator(
+                maybe_const<node_type>& node) noexcept :
             curr(&node)
         {}
 
         /// Constructs an iterator pointing to the specified node or
         /// past-the-end if the node is null.
         explicit IntrusiveListForwardIterator(maybe_const<node_type>* node,
-                                              std::nullptr_t) :
+                                              std::nullptr_t) noexcept :
             curr(node ? node : nullptr)
         {}
 
-        IntrusiveListForwardIterator(const IntrusiveListForwardIterator&)
-                = default;
+        IntrusiveListForwardIterator(
+                const IntrusiveListForwardIterator&) noexcept = default;
 
         IntrusiveListForwardIterator&
-        operator=(const IntrusiveListForwardIterator&)
-                = default;
+        operator=(const IntrusiveListForwardIterator&) noexcept = default;
 
         /// Enable conversion from iterator to const_iterator.
         // NOLINTNEXTLINE(google-explicit-constructor)
@@ -147,9 +147,16 @@ namespace detail
                  typename = std::enable_if_t<IsConstIter && !IsOtherConstIter>>
         IntrusiveListForwardIterator(
                 const IntrusiveListForwardIterator<T, IsOtherConstIter>&
-                        other) :
+                        other) noexcept :
             curr(other.operator->())
         {}
+
+        IntrusiveListForwardIterator(
+                IntrusiveListForwardIterator&&) noexcept = default;
+        IntrusiveListForwardIterator&
+        operator=(IntrusiveListForwardIterator&&) noexcept = default;
+
+        ~IntrusiveListForwardIterator() noexcept = default;
 
         auto operator*() const -> maybe_const<value_type>&
         {
@@ -176,8 +183,14 @@ namespace detail
             return temp;
         }
 
-        bool operator==(const iterator& rhs) const { return curr == rhs.curr; }
-        bool operator!=(const iterator& rhs) const { return !(*this == rhs); }
+        bool operator==(const iterator& rhs) const noexcept
+        {
+            return curr == rhs.curr;
+        }
+        bool operator!=(const iterator& rhs) const noexcept
+        {
+            return !(*this == rhs);
+        }
 
     private:
         maybe_const<node_type>* curr{};
@@ -211,11 +224,11 @@ namespace detail
 
     public:
         /// Constructs an invalid iterator.
-        IntrusiveListBidirectionalIterator() = default;
+        IntrusiveListBidirectionalIterator() noexcept = default;
 
         /// Constructs an iterator pointing to the specified node.
         explicit IntrusiveListBidirectionalIterator(
-                maybe_const<node_type>& node) :
+                maybe_const<node_type>& node) noexcept :
             curr(&node)
         {}
 
@@ -223,17 +236,15 @@ namespace detail
         /// past-the-end (i.e. to the sentinel) if the node is null.
         explicit IntrusiveListBidirectionalIterator(
                 maybe_const<node_type>* node,
-                maybe_const<node_type>& sentinel) :
+                maybe_const<node_type>& sentinel) noexcept :
             curr(node ? node : &sentinel)
         {}
 
         IntrusiveListBidirectionalIterator(
-                const IntrusiveListBidirectionalIterator&)
-                = default;
+                const IntrusiveListBidirectionalIterator&) noexcept = default;
 
         IntrusiveListBidirectionalIterator&
-        operator=(const IntrusiveListBidirectionalIterator&)
-                = default;
+        operator=(const IntrusiveListBidirectionalIterator&) noexcept = default;
 
         /// Enable conversion from iterator to const_iterator.
         // NOLINTNEXTLINE(google-explicit-constructor)
@@ -241,9 +252,16 @@ namespace detail
                  typename = std::enable_if_t<IsConstIter && !IsOtherConstIter>>
         IntrusiveListBidirectionalIterator(
                 const IntrusiveListBidirectionalIterator<T, IsOtherConstIter>&
-                        other) :
+                        other) noexcept :
             curr(other.operator->())
         {}
+
+        IntrusiveListBidirectionalIterator(
+                IntrusiveListBidirectionalIterator&&) noexcept = default;
+        IntrusiveListBidirectionalIterator&
+        operator=(IntrusiveListBidirectionalIterator&&) noexcept = default;
+
+        ~IntrusiveListBidirectionalIterator() noexcept = default;
 
         auto operator*() const -> maybe_const<value_type>&
         {
@@ -285,8 +303,15 @@ namespace detail
             return temp;
         }
 
-        bool operator==(const iterator& rhs) const { return curr == rhs.curr; }
-        bool operator!=(const iterator& rhs) const { return !(*this == rhs); }
+        bool operator==(const iterator& rhs) const noexcept
+        {
+            return curr == rhs.curr;
+        }
+
+        bool operator!=(const iterator& rhs) const noexcept
+        {
+            return !(*this == rhs);
+        }
 
     protected:
         maybe_const<node_type>* curr{};
@@ -302,7 +327,7 @@ namespace detail
 
     public:
         /// Unlinks the given node from its list.
-        static inline void unlink_node(node_type& node)
+        static inline void unlink_node(node_type& node) noexcept
         {
             pointer node_prev = node.prev;
             pointer node_next = node.next;
@@ -329,7 +354,7 @@ namespace detail
 
 /// Unlinks the given node from its list.
 template<typename T>
-inline void unlink_node(IntrusiveBidirectionalListNode<T>& node)
+inline void unlink_node(IntrusiveBidirectionalListNode<T>& node) noexcept
 {
     using Algorithms = detail::IntrusiveBidirectionalListNodeAlgorithms<T>;
     return Algorithms::unlink_node(node);

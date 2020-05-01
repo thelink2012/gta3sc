@@ -20,6 +20,10 @@ public:
     SyntaxFixture() : diagman([this](const auto& diag) { diags.push(diag); }) {}
 
     virtual ~SyntaxFixture() { CHECK(diags.empty()); }
+    SyntaxFixture(const SyntaxFixture&) = delete;
+    SyntaxFixture& operator=(const SyntaxFixture&) = delete;
+    SyntaxFixture(SyntaxFixture&&) noexcept = default;
+    SyntaxFixture& operator=(SyntaxFixture&&) noexcept = default;
 
 protected:
     auto make_source(std::string_view src) -> gta3sc::SourceFile

@@ -27,14 +27,17 @@ public:
     using typename super_type::value_type;
 
 public:
-    LinkedIR() = default;
-    LinkedIR(std::initializer_list<pointer> ilist) : super_type(ilist) {}
+    LinkedIR() noexcept = default;
+    LinkedIR(std::initializer_list<pointer> ilist) noexcept : super_type(ilist)
+    {}
 
-    LinkedIR(const LinkedIR&) = delete;
-    LinkedIR& operator=(const LinkedIR&) = delete;
+    LinkedIR(const LinkedIR&) noexcept = delete;
+    LinkedIR& operator=(const LinkedIR&) noexcept = delete;
 
     LinkedIR(LinkedIR&&) noexcept = default;
     LinkedIR& operator=(LinkedIR&&) noexcept = default;
+
+    ~LinkedIR() noexcept = default;
 
     /// Moves the elements of `other` into the front of this.
     void splice_front(LinkedIR&& other)

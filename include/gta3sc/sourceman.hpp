@@ -14,65 +14,70 @@ enum class SourceLocation : uint32_t
 { // strong typedef
 };
 
-inline bool operator==(SourceLocation lhs, SourceLocation rhs)
+inline bool operator==(SourceLocation lhs, SourceLocation rhs) noexcept
 {
     return static_cast<uint32_t>(lhs) == static_cast<uint32_t>(rhs);
 }
 
-inline bool operator!=(SourceLocation lhs, SourceLocation rhs)
+inline bool operator!=(SourceLocation lhs, SourceLocation rhs) noexcept
 {
     return !(lhs == rhs);
 }
 
-inline auto operator+(SourceLocation lhs, std::ptrdiff_t rhs) -> SourceLocation
+inline auto operator+(SourceLocation lhs, std::ptrdiff_t rhs) noexcept
+        -> SourceLocation
 {
     return SourceLocation{
             static_cast<uint32_t>(static_cast<uint32_t>(lhs) + rhs)};
 }
 
-inline auto operator+=(SourceLocation& lhs, std::ptrdiff_t rhs)
+inline auto operator+=(SourceLocation& lhs, std::ptrdiff_t rhs) noexcept
         -> SourceLocation&
 {
     lhs = lhs + rhs;
     return lhs;
 }
 
-inline auto operator-(SourceLocation lhs, std::ptrdiff_t rhs) -> SourceLocation
+inline auto operator-(SourceLocation lhs, std::ptrdiff_t rhs) noexcept
+        -> SourceLocation
 {
     return SourceLocation{
             static_cast<uint32_t>(static_cast<uint32_t>(lhs) - rhs)};
 }
 
-inline auto operator-=(SourceLocation& lhs, std::ptrdiff_t rhs)
+inline auto operator-=(SourceLocation& lhs, std::ptrdiff_t rhs) noexcept
         -> SourceLocation&
 {
     lhs = lhs - rhs;
     return lhs;
 }
 
-inline auto operator-(SourceLocation lhs, SourceLocation rhs) -> std::ptrdiff_t
+inline auto operator-(SourceLocation lhs, SourceLocation rhs) noexcept
+        -> std::ptrdiff_t
 {
     return static_cast<std::ptrdiff_t>(lhs) - static_cast<std::ptrdiff_t>(rhs);
 }
 
-inline auto operator++(SourceLocation& lhs) -> SourceLocation&
+inline auto operator++(SourceLocation& lhs) noexcept -> SourceLocation&
 {
     lhs += 1;
     return lhs;
 }
 
-inline auto operator--(SourceLocation& lhs) -> SourceLocation&
+inline auto operator--(SourceLocation& lhs) noexcept -> SourceLocation&
 {
     lhs -= 1;
     return lhs;
 }
 
-inline auto operator++(const SourceLocation& lhs, int) -> SourceLocation
+inline auto operator++(const SourceLocation& lhs, int) noexcept
+        -> SourceLocation
 {
     return lhs + 1;
 }
 
-inline auto operator--(const SourceLocation& lhs, int) -> SourceLocation
+inline auto operator--(const SourceLocation& lhs, int) noexcept
+        -> SourceLocation
 {
     return lhs - 1;
 }
@@ -83,13 +88,13 @@ struct SourceRange
     SourceLocation begin{};
     SourceLocation end{};
 
-    SourceRange() = default;
+    SourceRange() noexcept = default;
 
-    SourceRange(SourceLocation begin, SourceLocation end) :
+    SourceRange(SourceLocation begin, SourceLocation end) noexcept :
         begin(begin), end(end)
     {}
 
-    SourceRange(SourceLocation begin, std::ptrdiff_t len) :
+    SourceRange(SourceLocation begin, std::ptrdiff_t len) noexcept :
         SourceRange(begin, begin + len)
     {}
 
@@ -140,13 +145,15 @@ public:
     static constexpr SourceRange no_source_range{};
 
 public:
-    SourceManager() = default;
-
-    SourceManager(SourceManager&&) = default;
-    SourceManager& operator=(SourceManager&&) = default;
+    SourceManager() noexcept = default;
 
     SourceManager(const SourceManager&) = delete;
     SourceManager& operator=(const SourceManager&) = delete;
+
+    SourceManager(SourceManager&&) noexcept = default;
+    SourceManager& operator=(SourceManager&&) noexcept = default;
+
+    ~SourceManager() noexcept = default;
 
     /// Keeps track of all filenames in the given directory (recursively).
     ///

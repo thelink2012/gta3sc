@@ -51,39 +51,39 @@ auto ParserIR::create_string(std::string_view string, SourceRange source,
             const Argument(Argument::StringTag{}, string, source);
 }
 
-bool ParserIR::operator==(const ParserIR& other) const
+bool operator==(const ParserIR& lhs, const ParserIR& rhs)
 {
-    if(!!this->label != !!other.label)
+    if(!!rhs.label != !!rhs.label)
         return false;
-    if(!!this->command != !!other.command)
-        return false;
-
-    if(this->label && *this->label != *other.label)
+    if(!!rhs.command != !!rhs.command)
         return false;
 
-    if(this->command && *this->command != *other.command)
+    if(rhs.label && *rhs.label != *rhs.label)
+        return false;
+
+    if(rhs.command && *rhs.command != *rhs.command)
         return false;
 
     return true;
 }
 
-bool ParserIR::operator!=(const ParserIR& other) const
+bool operator!=(const ParserIR& lhs, const ParserIR& rhs)
 {
-    return !(*this == other);
+    return !(lhs == rhs);
 }
 
-bool ParserIR::Command::operator==(const Command& other) const
+bool operator==(const ParserIR::Command& lhs, const ParserIR::Command& rhs)
 {
-    return this->source == other.source && this->name == other.name
-           && this->not_flag == other.not_flag
-           && std::equal(this->args.begin(), this->args.end(),
-                         other.args.begin(), other.args.end(),
+    return lhs.source == rhs.source && lhs.name == rhs.name
+           && lhs.not_flag == rhs.not_flag
+           && std::equal(lhs.args.begin(), lhs.args.end(), rhs.args.begin(),
+                         rhs.args.end(),
                          [](const auto& a, const auto& b) { return *a == *b; });
 }
 
-bool ParserIR::Command::operator!=(const Command& other) const
+bool operator!=(const ParserIR::Command& lhs, const ParserIR::Command& rhs)
 {
-    return !(*this == other);
+    return !(lhs == rhs);
 }
 
 auto ParserIR::LabelDef::create(std::string_view name, SourceRange source,
@@ -94,14 +94,14 @@ auto ParserIR::LabelDef::create(std::string_view name, SourceRange source,
             const LabelDef{source, util::allocate_string_upper(name, *arena)};
 }
 
-bool ParserIR::LabelDef::operator==(const LabelDef& other) const
+bool operator==(const ParserIR::LabelDef& lhs, const ParserIR::LabelDef& rhs)
 {
-    return this->source == other.source && this->name == other.name;
+    return lhs.source == rhs.source && lhs.name == rhs.name;
 }
 
-bool ParserIR::LabelDef::operator!=(const LabelDef& other) const
+bool operator!=(const ParserIR::LabelDef& lhs, const ParserIR::LabelDef& rhs)
 {
-    return !(*this == other);
+    return !(lhs == rhs);
 }
 
 auto ParserIR::Argument::as_integer() const -> const int32_t*
@@ -140,14 +140,14 @@ bool ParserIR::Argument::is_same_value(const Argument& other) const
     return this->value == other.value;
 }
 
-bool ParserIR::Argument::operator==(const Argument& other) const
+bool operator==(const ParserIR::Argument& lhs, const ParserIR::Argument& rhs)
 {
-    return this->source == other.source && this->is_same_value(other);
+    return lhs.source == rhs.source && lhs.is_same_value(rhs);
 }
 
-bool ParserIR::Argument::operator!=(const Argument& other) const
+bool operator!=(const ParserIR::Argument& lhs, const ParserIR::Argument& rhs)
 {
-    return !(*this == other);
+    return !(lhs == rhs);
 }
 
 auto ParserIR::Builder::label(arena_ptr<const LabelDef> label_ptr) -> Builder&&

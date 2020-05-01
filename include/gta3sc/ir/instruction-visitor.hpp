@@ -14,7 +14,15 @@ public:
     using Result = TResult;
 
 public:
-    virtual ~InstructionVisitor() = default;
+    InstructionVisitor() noexcept = default;
+    virtual ~InstructionVisitor() noexcept = default;
+
+    InstructionVisitor(const InstructionVisitor&) noexcept = default;
+    InstructionVisitor& operator=(const InstructionVisitor&) noexcept = default;
+
+    InstructionVisitor(InstructionVisitor&&) noexcept = default;
+    InstructionVisitor& operator=(InstructionVisitor&&) noexcept = default;
+
     virtual auto visit(const IRType&) -> Result = 0;
 };
 } // namespace gta3sc

@@ -31,7 +31,8 @@ public:
     /// \param arena the arena that should be used to allocate IR in.
     explicit Sema(LinkedIR<ParserIR> parser_ir, SymbolRepository& symrepo,
                   const CommandManager& cmdman, const ModelManager& modelman,
-                  DiagnosticHandler& diag, ArenaMemoryResource& arena) :
+                  DiagnosticHandler& diag, ArenaMemoryResource& arena) noexcept
+        :
         parser_ir(std::move(parser_ir)),
         cmdman(&cmdman),
         modelman(&modelman),
@@ -39,6 +40,14 @@ public:
         diag_(&diag),
         arena(&arena)
     {}
+
+    Sema(const Sema&) = delete;
+    Sema& operator=(const Sema&) = delete;
+
+    Sema(Sema&&) noexcept = default;
+    Sema& operator=(Sema&&) noexcept = default;
+
+    ~Sema() noexcept = default;
 
     /// Checks the semantic validity of the input IR.
     ///

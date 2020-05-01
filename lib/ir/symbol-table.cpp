@@ -4,6 +4,8 @@ namespace gta3sc
 {
 SymbolRepository::SymbolRepository(ArenaMemoryResource &arena) : arena(&arena)
 {
+    // FIXME defer allocation to later when we make members private
+    // Note that this will turn the ctor into noexcept.
     const auto global_scope = allocate_scope();
     assert(global_scope == 0);
 }

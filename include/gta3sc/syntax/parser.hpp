@@ -22,17 +22,17 @@ class Parser
 public:
     /// \param scanner the scanner to consume tokens from.
     /// \param arena the arena that should be used to allocate IR in.
-    explicit Parser(Scanner scanner, ArenaMemoryResource& arena) :
+    explicit Parser(Scanner scanner, ArenaMemoryResource& arena) noexcept :
         scanner(std::move(scanner)), arena(&arena)
-    {
-        assert(std::size(has_peek_token) == std::size(peek_tokens));
-    }
+    {}
 
     Parser(const Parser&) = delete;
     Parser& operator=(const Parser&) = delete;
 
-    Parser(Parser&&) = default;
-    Parser& operator=(Parser&&) = default;
+    Parser(Parser&&) noexcept = default;
+    Parser& operator=(Parser&&) noexcept = default;
+
+    ~Parser() noexcept = default;
 
     /// Gets the source file associated with this parser.
     auto source_file() const -> const SourceFile&;
@@ -266,11 +266,13 @@ private:
     bool is_identifier(std::string_view) const;
 
 private:
+    static constexpr size_t num_peek_tokens = 6;
+
     Scanner scanner;
     ArenaMemoryResource* arena;
 
     bool in_lexical_scope = false;
-    bool has_peek_token[6] = {};
-    std::optional<Token> peek_tokens[6];
+    bool has_peek_token[num_peek_tokens] = {};
+    std::optional<Token> peek_tokens[num_peek_tokens];
 };
 } // namespace gta3sc::syntax

@@ -23,7 +23,7 @@ namespace gta3sc::codegen::trilogy
 class CodeEmitter
 {
 public:
-    CodeEmitter() = default;
+    CodeEmitter() noexcept = default;
 
     /// Constructs an emitter with the given initial capacity in the buffer.
     explicit CodeEmitter(uint32_t initial_capacity);
@@ -31,8 +31,10 @@ public:
     CodeEmitter(const CodeEmitter&) = delete;
     CodeEmitter& operator=(const CodeEmitter&) = delete;
 
-    CodeEmitter(CodeEmitter&&) = default;
-    CodeEmitter& operator=(CodeEmitter&&) = default;
+    CodeEmitter(CodeEmitter&&) noexcept = default;
+    CodeEmitter& operator=(CodeEmitter&&) noexcept = default;
+
+    ~CodeEmitter() noexcept = default;
 
     /// Returns the number of bytes produced thus far.
     auto offset() const -> uint32_t;

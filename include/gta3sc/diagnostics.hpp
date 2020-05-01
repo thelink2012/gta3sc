@@ -121,8 +121,8 @@ public:
     DiagnosticBuilder(const DiagnosticBuilder&) = delete;
     DiagnosticBuilder& operator=(const DiagnosticBuilder&) = delete;
 
-    DiagnosticBuilder(DiagnosticBuilder&&) = default;
-    DiagnosticBuilder& operator=(DiagnosticBuilder&&) = default;
+    DiagnosticBuilder(DiagnosticBuilder&&) noexcept = default;
+    DiagnosticBuilder& operator=(DiagnosticBuilder&&) noexcept = default;
 
     /// Adds a source range to provide more context to the diagnostic.
     auto range(SourceRange range) && -> DiagnosticBuilder&&
@@ -187,13 +187,17 @@ public:
     using Emitter = std::function<void(const Diagnostic&)>;
 
 public:
-    explicit DiagnosticHandler(Emitter emitter) : emitter(std::move(emitter)) {}
+    explicit DiagnosticHandler(Emitter emitter) noexcept :
+        emitter(std::move(emitter))
+    {}
 
     DiagnosticHandler(const DiagnosticHandler&) = delete;
     DiagnosticHandler& operator=(const DiagnosticHandler&) = delete;
 
-    DiagnosticHandler(DiagnosticHandler&&) = default;
-    DiagnosticHandler& operator=(DiagnosticHandler&&) = default;
+    DiagnosticHandler(DiagnosticHandler&&) noexcept = default;
+    DiagnosticHandler& operator=(DiagnosticHandler&&) noexcept = default;
+
+    ~DiagnosticHandler() noexcept = default;
 
     /// Helper function to facilitate the construction of a `DiagnosticBuilder`.
     auto report(SourceLocation loc, Diag message) -> DiagnosticBuilder

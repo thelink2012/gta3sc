@@ -38,9 +38,10 @@ struct Token
     Category category{Category::EndOfLine}; ///< Category of this token.
     SourceRange source;                     ///< Origin of this token.
 
-    Token() = default;
+    Token() noexcept = default;
 
-    Token(Category category, SourceLocation begin, SourceLocation end) :
+    Token(Category category, SourceLocation begin, SourceLocation end) noexcept
+        :
         category(category), source(begin, end)
     {}
 };
@@ -49,13 +50,16 @@ struct Token
 class Scanner
 {
 public:
-    explicit Scanner(Preprocessor pp) : pp(std::move(pp)), peek_char(0) {}
+    explicit Scanner(Preprocessor pp) noexcept : pp(std::move(pp)), peek_char(0)
+    {}
 
     Scanner(const Scanner&) = delete;
     Scanner& operator=(const Scanner&) = delete;
 
-    Scanner(Scanner&&) = default;
-    Scanner& operator=(Scanner&&) = default;
+    Scanner(Scanner&&) noexcept = default;
+    Scanner& operator=(Scanner&&) noexcept = default;
+
+    ~Scanner() noexcept = default;
 
     /// Consumes the next token in the stream of characters.
     ///

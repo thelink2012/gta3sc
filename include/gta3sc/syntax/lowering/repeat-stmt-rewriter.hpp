@@ -26,13 +26,15 @@ public:
     /// The given arena will be used to allocate the IR of replacement
     /// commands.
     explicit RepeatStmtRewriter(gta3sc::util::NameGenerator&,
-                                ArenaMemoryResource& arena);
+                                ArenaMemoryResource& arena) noexcept;
 
     RepeatStmtRewriter(const RepeatStmtRewriter&) = delete;
     RepeatStmtRewriter& operator=(const RepeatStmtRewriter&) = delete;
 
-    RepeatStmtRewriter(RepeatStmtRewriter&&) = default;
-    RepeatStmtRewriter& operator=(RepeatStmtRewriter&&) = default;
+    RepeatStmtRewriter(RepeatStmtRewriter&&) noexcept = default;
+    RepeatStmtRewriter& operator=(RepeatStmtRewriter&&) noexcept = default;
+
+    ~RepeatStmtRewriter() noexcept = default;
 
     auto visit(const ParserIR&) -> Result final;
 

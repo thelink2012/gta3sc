@@ -15,9 +15,10 @@ struct InstructionRewriterResult
     /// Chain of instructions to replace the input instruction.
     LinkedIR<IR> ir;
 
-    InstructionRewriterResult() = default;
+    InstructionRewriterResult() noexcept = default;
 
-    InstructionRewriterResult(LinkedIR<IR> ir) :
+    // NOLINTNEXTLINE(google-explicit-constructor)
+    InstructionRewriterResult(LinkedIR<IR> ir) noexcept :
         should_rewrite(true), ir(std::move(ir))
     {}
 
