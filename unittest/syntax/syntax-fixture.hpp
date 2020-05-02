@@ -21,9 +21,9 @@ public:
 
     virtual ~SyntaxFixture() { CHECK(diags.empty()); }
     SyntaxFixture(const SyntaxFixture&) = delete;
-    SyntaxFixture& operator=(const SyntaxFixture&) = delete;
+    auto operator=(const SyntaxFixture&) -> SyntaxFixture& = delete;
     SyntaxFixture(SyntaxFixture&&) noexcept = default;
-    SyntaxFixture& operator=(SyntaxFixture&&) noexcept = default;
+    auto operator=(SyntaxFixture&&) noexcept -> SyntaxFixture& = default;
 
 protected:
     auto make_source(std::string_view src) -> gta3sc::SourceFile
@@ -61,23 +61,25 @@ protected:
 namespace gta3sc
 {
 // TODO can we improve this using internal methods?
-inline std::ostream& operator<<(std::ostream& os, const Diag& message)
+inline auto operator<<(std::ostream& os, const Diag& message) -> std::ostream&
 {
     os << "Diag(" << static_cast<uint32_t>(message) << ")";
     return os;
 }
 
-inline bool operator==(const Diagnostic::Arg& lhs, gta3sc::syntax::Category rhs)
+inline auto operator==(const Diagnostic::Arg& lhs, gta3sc::syntax::Category rhs)
+        -> bool
 {
     return lhs == gta3sc::Diagnostic::Arg(rhs);
 }
 
-inline bool operator==(const Diagnostic::Arg& lhs, std::string rhs)
+inline auto operator==(const Diagnostic::Arg& lhs, std::string rhs) -> bool
 {
     return lhs == gta3sc::Diagnostic::Arg(std::move(rhs));
 }
 
-inline bool operator==(const Diagnostic::Arg& lhs, std::vector<std::string> rhs)
+inline auto operator==(const Diagnostic::Arg& lhs, std::vector<std::string> rhs)
+        -> bool
 {
     return lhs == gta3sc::Diagnostic::Arg(std::move(rhs));
 }
@@ -87,7 +89,8 @@ namespace gta3sc
 {
 // TODO improve these by having std::formatter specializations on lib
 
-inline std::ostream& operator<<(std::ostream& os, const ParserIR::Argument& arg)
+inline auto operator<<(std::ostream& os, const ParserIR::Argument& arg)
+        -> std::ostream&
 {
     if(const int* value = arg.as_integer())
         os << *value;
@@ -104,15 +107,15 @@ inline std::ostream& operator<<(std::ostream& os, const ParserIR::Argument& arg)
     return os;
 }
 
-inline std::ostream& operator<<(std::ostream& os,
-                                const ParserIR::LabelDef& label_def)
+inline auto operator<<(std::ostream& os, const ParserIR::LabelDef& label_def)
+        -> std::ostream&
 {
     os << label_def.name << ':';
     return os;
 }
 
-inline std::ostream& operator<<(std::ostream& os,
-                                const ParserIR::Command& command)
+inline auto operator<<(std::ostream& os, const ParserIR::Command& command)
+        -> std::ostream&
 {
     if(command.not_flag)
         os << "NOT ";
@@ -122,7 +125,7 @@ inline std::ostream& operator<<(std::ostream& os,
     return os;
 }
 
-inline std::ostream& operator<<(std::ostream& os, const ParserIR& ir)
+inline auto operator<<(std::ostream& os, const ParserIR& ir) -> std::ostream&
 {
     if(ir.label)
     {
@@ -137,8 +140,8 @@ inline std::ostream& operator<<(std::ostream& os, const ParserIR& ir)
     return os;
 }
 
-inline std::ostream& operator<<(std::ostream& os,
-                                const LinkedIR<ParserIR>& ir_list)
+inline auto operator<<(std::ostream& os, const LinkedIR<ParserIR>& ir_list)
+        -> std::ostream&
 {
     for(const auto& ir : ir_list)
         os << ir << '\n';

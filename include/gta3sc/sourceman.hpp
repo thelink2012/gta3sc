@@ -14,12 +14,12 @@ enum class SourceLocation : uint32_t
 { // strong typedef
 };
 
-inline bool operator==(SourceLocation lhs, SourceLocation rhs) noexcept
+inline auto operator==(SourceLocation lhs, SourceLocation rhs) noexcept -> bool
 {
     return static_cast<uint32_t>(lhs) == static_cast<uint32_t>(rhs);
 }
 
-inline bool operator!=(SourceLocation lhs, SourceLocation rhs) noexcept
+inline auto operator!=(SourceLocation lhs, SourceLocation rhs) noexcept -> bool
 {
     return !(lhs == rhs);
 }
@@ -112,12 +112,15 @@ struct SourceRange
         return SourceRange(this->begin + offset, count);
     }
 
-    bool operator==(const SourceRange& rhs) const
+    auto operator==(const SourceRange& rhs) const -> bool
     {
         return begin == rhs.begin && end == rhs.end;
     }
 
-    bool operator!=(const SourceRange& rhs) const { return !(*this == rhs); }
+    auto operator!=(const SourceRange& rhs) const -> bool
+    {
+        return !(*this == rhs);
+    }
 };
 
 class SourceFile;
@@ -148,10 +151,10 @@ public:
     SourceManager() noexcept = default;
 
     SourceManager(const SourceManager&) = delete;
-    SourceManager& operator=(const SourceManager&) = delete;
+    auto operator=(const SourceManager&) -> SourceManager& = delete;
 
     SourceManager(SourceManager&&) noexcept = default;
-    SourceManager& operator=(SourceManager&&) noexcept = default;
+    auto operator=(SourceManager&&) noexcept -> SourceManager& = default;
 
     ~SourceManager() noexcept = default;
 
@@ -167,7 +170,7 @@ public:
     /// continues from the previous method call.
     ///
     /// Returns whether it was possible to scan the given directory.
-    bool scan_directory(const std::filesystem::path& dir);
+    auto scan_directory(const std::filesystem::path& dir) -> bool;
 
     /// Loads a source file given its filename.
     ///
@@ -206,7 +209,7 @@ protected:
 
 private:
     /// Checks whether two strings are equal (ignoring casing).
-    bool iequal(std::string_view lhs, std::string_view rhs) const;
+    auto iequal(std::string_view lhs, std::string_view rhs) const -> bool;
 
     auto load_file(const std::filesystem::path& path, std::FILE* stream,
                    size_t hint_size = -1) -> std::optional<SourceFile>;
@@ -249,14 +252,14 @@ public:
     }
 
     SourceFile(const SourceFile&) = delete;
-    SourceFile& operator=(const SourceFile&) = delete;
+    auto operator=(const SourceFile&) -> SourceFile& = delete;
 
     SourceFile(SourceFile&& rhs) noexcept
     {
         this->info = std::exchange(rhs.info, nullptr);
     }
 
-    SourceFile& operator=(SourceFile&& rhs) noexcept
+    auto operator=(SourceFile&& rhs) noexcept -> SourceFile&
     {
         this->info = std::exchange(rhs.info, nullptr);
         return *this;

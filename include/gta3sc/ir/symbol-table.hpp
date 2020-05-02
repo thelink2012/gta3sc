@@ -39,7 +39,7 @@ struct SymVariable
     Type type{};        ///< The type of the variable.
     std::optional<uint16_t> dim; ///< Array dimensions if any.
 
-    bool is_array() const { return !!dim; }
+    auto is_array() const -> bool { return !!dim; }
 };
 
 /// Represents an used object.
@@ -115,10 +115,10 @@ public:
     explicit SymbolRepository(ArenaMemoryResource& arena);
 
     SymbolRepository(const SymbolRepository&) = delete;
-    SymbolRepository& operator=(const SymbolRepository&) = delete;
+    auto operator=(const SymbolRepository&) -> SymbolRepository& = delete;
 
     SymbolRepository(SymbolRepository&&) noexcept = default;
-    SymbolRepository& operator=(SymbolRepository&&) noexcept = default;
+    auto operator=(SymbolRepository&&) noexcept -> SymbolRepository& = default;
 
     ~SymbolRepository() noexcept = default;
 

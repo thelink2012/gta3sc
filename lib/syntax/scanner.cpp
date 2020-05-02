@@ -26,39 +26,39 @@ auto Scanner::location() const -> SourceLocation
     return loc;
 }
 
-bool Scanner::eof() const
+auto Scanner::eof() const -> bool
 {
     if(peek_char)
         return false;
     return pp.eof();
 }
 
-char Scanner::getc()
+auto Scanner::getc() -> char
 {
     return std::exchange(peek_char, pp.next());
 }
 
-bool Scanner::is_whitespace(char c) const
+auto Scanner::is_whitespace(char c) const -> bool
 {
     return c == ' ' || c == '\t' || c == '(' || c == ')' || c == ',';
 }
 
-bool Scanner::is_newline(char c) const
+auto Scanner::is_newline(char c) const -> bool
 {
     return c == '\r' || c == '\n' || c == '\0';
 }
 
-bool Scanner::is_digit(char c) const
+auto Scanner::is_digit(char c) const -> bool
 {
     return c >= '0' && c <= '9';
 }
 
-bool Scanner::is_print(char c) const
+auto Scanner::is_print(char c) const -> bool
 {
     return c >= 32 && c <= 126; // printable ASCII
 }
 
-bool Scanner::is_word_char(char c) const
+auto Scanner::is_word_char(char c) const -> bool
 {
     if(is_print(c))
     {

@@ -2,12 +2,12 @@
 
 namespace gta3sc::syntax
 {
-bool Preprocessor::is_whitespace(const char* p) const
+auto Preprocessor::is_whitespace(const char* p) const -> bool
 {
     return *p == ' ' || *p == '\t' || *p == '(' || *p == ')' || *p == ',';
 }
 
-bool Preprocessor::is_newline(const char* p) const
+auto Preprocessor::is_newline(const char* p) const -> bool
 {
     return *p == '\r' || *p == '\n' || *p == '\0';
 }
@@ -22,7 +22,7 @@ auto Preprocessor::diagnostics() const -> DiagnosticHandler&
     return *this->diag;
 }
 
-bool Preprocessor::eof() const
+auto Preprocessor::eof() const -> bool
 {
     return this->end_of_stream;
 }
@@ -32,7 +32,7 @@ auto Preprocessor::location() const -> SourceLocation
     return this->source.location_of(this->cursor);
 }
 
-char Preprocessor::next()
+auto Preprocessor::next() -> char
 {
     // The caller should see a stream that has no blank characters at
     // the beggining of a line and also has comments replaced by blanks.

@@ -57,20 +57,20 @@ public:
     ArenaMemoryResource(ArenaMemoryResource&&) = delete;
     ArenaMemoryResource(const ArenaMemoryResource&) = delete;
 
-    ArenaMemoryResource& operator=(const ArenaMemoryResource&) = delete;
-    ArenaMemoryResource&& operator=(ArenaMemoryResource&&) = delete;
+    auto operator=(const ArenaMemoryResource&) -> ArenaMemoryResource& = delete;
+    auto operator=(ArenaMemoryResource &&) -> ArenaMemoryResource&& = delete;
 
     ~ArenaMemoryResource() { this->release(); }
 
     /// Checks whether memory allocated from `rhs` can be deallocated
     /// from `this` and vice-versa.
-    bool operator==(const ArenaMemoryResource& rhs) const
+    auto operator==(const ArenaMemoryResource& rhs) const -> bool
     {
         return this == &rhs;
     }
 
     /// Returns !(*this == rhs).
-    bool operator!=(const ArenaMemoryResource& rhs) const
+    auto operator!=(const ArenaMemoryResource& rhs) const -> bool
     {
         return !(*this == rhs);
     }
@@ -82,7 +82,7 @@ public:
     ///
     /// Otherwise, allocates another buffer bigger than the current one,
     /// assigns it to the current buffer and allocates a block from this buffer.
-    void* allocate(size_t bytes, size_t alignment)
+    auto allocate(size_t bytes, size_t alignment) -> void*
     {
         size_t space{};
 
@@ -180,8 +180,8 @@ private:
         bool owns_prev_region;   //< Whether the arena owns the previous region.
     };
 
-    static char* align(size_t alignment, size_t bytes, char*& ptr,
-                       size_t& space)
+    static auto align(size_t alignment, size_t bytes, char*& ptr, size_t& space)
+            -> char*
     {
         void* void_ptr = ptr;
         if(std::align(alignment, bytes, void_ptr, space))
@@ -238,13 +238,13 @@ public:
     }
 
     template<typename U>
-    bool operator==(const ArenaAllocator<U>& rhs) const
+    auto operator==(const ArenaAllocator<U>& rhs) const -> bool
     {
         return *this->arena == *rhs.arena;
     }
 
     template<typename U>
-    bool operator!=(const ArenaAllocator<U>& rhs) const
+    auto operator!=(const ArenaAllocator<U>& rhs) const -> bool
     {
         return !(*this == rhs);
     }
@@ -257,26 +257,27 @@ private:
 };
 } // namespace gta3sc
 
-inline void* operator new(std::size_t count, gta3sc::ArenaMemoryResource& arena,
-                          std::size_t align)
+inline auto operator new(std::size_t count, gta3sc::ArenaMemoryResource& arena,
+                         std::size_t align) -> void*
 {
     return arena.allocate(count, align);
 }
 
-inline void* operator new[](std::size_t count,
-                            gta3sc::ArenaMemoryResource& arena,
-                            std::size_t align)
+inline auto operator new[](std::size_t count,
+                           gta3sc::ArenaMemoryResource& arena,
+                           std::size_t align) -> void*
 {
     return arena.allocate(count, align);
 }
 
-inline void* operator new(std::size_t count, gta3sc::ArenaMemoryResource& arena)
+inline auto operator new(std::size_t count, gta3sc::ArenaMemoryResource& arena)
+        -> void*
 {
     return operator new(count, arena, alignof(std::max_align_t));
 }
 
-inline void* operator new[](std::size_t count,
-                            gta3sc::ArenaMemoryResource& arena)
+inline auto operator new[](std::size_t count,
+                           gta3sc::ArenaMemoryResource& arena) -> void*
 {
     return operator new[](count, arena, alignof(std::max_align_t));
 }

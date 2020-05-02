@@ -23,7 +23,7 @@ auto Sema::validate() -> std::optional<LinkedIR<SemaIR>>
         return std::nullopt;
 }
 
-bool Sema::discover_declarations_pass()
+auto Sema::discover_declarations_pass() -> bool
 {
     assert(report_count == 0);
     SourceRange scope_enter_source{};
@@ -716,7 +716,7 @@ auto Sema::validate_var_ref(const CommandManager::ParamDef& param,
         return SemaIR::create_variable(*sym_var, arg_source, arena);
 }
 
-bool Sema::validate_hardcoded_command(const SemaIR::Command& command)
+auto Sema::validate_hardcoded_command(const SemaIR::Command& command) -> bool
 {
     if(&command.def == command_script_name)
         return validate_script_name(command);
@@ -729,7 +729,7 @@ bool Sema::validate_hardcoded_command(const SemaIR::Command& command)
         return true;
 }
 
-bool Sema::validate_set(const SemaIR::Command& command)
+auto Sema::validate_set(const SemaIR::Command& command) -> bool
 {
     assert(is_alternative_command(command.def, *alternator_set));
 
@@ -758,7 +758,7 @@ bool Sema::validate_set(const SemaIR::Command& command)
     return true;
 }
 
-bool Sema::validate_script_name(const SemaIR::Command& command)
+auto Sema::validate_script_name(const SemaIR::Command& command) -> bool
 {
     assert(&command.def == command_script_name);
 
@@ -784,7 +784,7 @@ bool Sema::validate_script_name(const SemaIR::Command& command)
     return true;
 }
 
-bool Sema::validate_start_new_script(const SemaIR::Command& command)
+auto Sema::validate_start_new_script(const SemaIR::Command& command) -> bool
 {
     assert(&command.def == command_start_new_script);
 
@@ -812,9 +812,9 @@ bool Sema::validate_start_new_script(const SemaIR::Command& command)
     return true;
 }
 
-bool Sema::validate_target_scope_vars(const SemaIR::Argument** begin,
+auto Sema::validate_target_scope_vars(const SemaIR::Argument** begin,
                                       const SemaIR::Argument** end,
-                                      ScopeId target_scope_id)
+                                      ScopeId target_scope_id) -> bool
 {
     assert(target_scope_id != 0);
 
@@ -1036,12 +1036,12 @@ auto Sema::find_defaultmodel_constant(std::string_view name) const
     return nullptr;
 }
 
-bool Sema::is_object_param(const CommandManager::ParamDef& param) const
+auto Sema::is_object_param(const CommandManager::ParamDef& param) const -> bool
 {
     return this->model_enum && param.enum_type == *model_enum;
 }
 
-bool Sema::is_gvar_param(ParamType param_type) const
+auto Sema::is_gvar_param(ParamType param_type) const -> bool
 {
     switch(param_type)
     {
@@ -1057,7 +1057,7 @@ bool Sema::is_gvar_param(ParamType param_type) const
     }
 }
 
-bool Sema::is_lvar_param(ParamType param_type) const
+auto Sema::is_lvar_param(ParamType param_type) const -> bool
 {
     switch(param_type)
     {
@@ -1073,8 +1073,8 @@ bool Sema::is_lvar_param(ParamType param_type) const
     }
 }
 
-bool Sema::matches_var_type(ParamType param_type,
-                            SymVariable::Type var_type) const
+auto Sema::matches_var_type(ParamType param_type,
+                            SymVariable::Type var_type) const -> bool
 {
     switch(param_type)
     {
@@ -1106,9 +1106,9 @@ bool Sema::matches_var_type(ParamType param_type,
     }
 }
 
-bool Sema::is_alternative_command(
+auto Sema::is_alternative_command(
         const CommandManager::CommandDef& command_def,
-        const CommandManager::AlternatorDef& from) const
+        const CommandManager::AlternatorDef& from) const -> bool
 {
     auto it = std::find_if(from.begin(), from.end(),
                            [&](const auto& alternative) {
@@ -1117,9 +1117,9 @@ bool Sema::is_alternative_command(
     return (it != from.end());
 }
 
-bool Sema::is_matching_alternative(
+auto Sema::is_matching_alternative(
         const ParserIR::Command& command,
-        const CommandManager::CommandDef& alternative)
+        const CommandManager::CommandDef& alternative) -> bool
 {
     // Alternators do not admit optional arguments, so it's
     // all good to perform this check beforehand.

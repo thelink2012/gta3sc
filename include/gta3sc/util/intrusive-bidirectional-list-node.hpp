@@ -14,7 +14,8 @@ template<typename U>
 constexpr void init(IntrusiveBidirectionalListNode<U>& node) noexcept;
 
 template<typename U>
-constexpr bool empty(const IntrusiveBidirectionalListNode<U>& node) noexcept;
+constexpr auto empty(const IntrusiveBidirectionalListNode<U>& node) noexcept
+        -> bool;
 
 template<typename U>
 constexpr void insert(IntrusiveBidirectionalListNode<U>& pos,
@@ -74,8 +75,8 @@ public:
             IntrusiveBidirectionalListNode<U>& node) noexcept;
 
     template<typename U>
-    friend constexpr bool algorithm::circular_list::empty(
-            const IntrusiveBidirectionalListNode<U>& node) noexcept;
+    friend constexpr auto algorithm::circular_list::empty(
+            const IntrusiveBidirectionalListNode<U>& node) noexcept -> bool;
 
     template<typename U>
     friend constexpr void algorithm::circular_list::insert(
@@ -147,7 +148,8 @@ public:
 
     constexpr IteratorImpl(const IteratorImpl&) noexcept = default;
 
-    constexpr IteratorImpl& operator=(const IteratorImpl&) noexcept = default;
+    constexpr auto operator=(const IteratorImpl&) noexcept
+            -> IteratorImpl& = default;
 
     /// Enable conversion from iterator to const_iterator.
     template<bool IsOtherConstIter,
@@ -160,7 +162,8 @@ public:
 
     constexpr IteratorImpl(IteratorImpl&&) noexcept = default;
 
-    constexpr IteratorImpl& operator=(IteratorImpl&&) noexcept = default;
+    constexpr auto operator=(IteratorImpl&&) noexcept
+            -> IteratorImpl& = default;
 
     constexpr ~IteratorImpl() noexcept = default;
 
@@ -176,7 +179,7 @@ public:
         return static_cast<value_type*>(curr);
     }
 
-    constexpr iterator& operator++()
+    constexpr auto operator++() -> iterator&
     {
         // This should never assert since the past-the-end iterator contains
         // a physical sentinel node in its place.
@@ -185,35 +188,35 @@ public:
         return *this;
     }
 
-    constexpr iterator operator++(int)
+    constexpr auto operator++(int) -> iterator
     {
         auto temp = *this;
         ++(*this);
         return temp;
     }
 
-    constexpr iterator& operator--()
+    constexpr auto operator--() -> iterator&
     {
         assert(curr && curr->prev);
         curr = curr->prev;
         return *this;
     }
 
-    constexpr iterator operator--(int)
+    constexpr auto operator--(int) -> iterator
     {
         auto temp = *this;
         --(*this);
         return temp;
     }
 
-    constexpr friend bool operator==(const iterator& lhs,
-                                     const iterator& rhs) noexcept
+    constexpr friend auto operator==(const iterator& lhs,
+                                     const iterator& rhs) noexcept -> bool
     {
         return lhs.curr == rhs.curr;
     }
 
-    constexpr friend bool operator!=(const iterator& lhs,
-                                     const iterator& rhs) noexcept
+    constexpr friend auto operator!=(const iterator& lhs,
+                                     const iterator& rhs) noexcept -> bool
     {
         return !(lhs == rhs);
     }
@@ -244,7 +247,8 @@ constexpr void init(IntrusiveBidirectionalListNode<T>& node) noexcept
 
 /// Checks whether the circular list on which `node` is in is empty.
 template<typename T>
-constexpr bool empty(const IntrusiveBidirectionalListNode<T>& node) noexcept
+constexpr auto empty(const IntrusiveBidirectionalListNode<T>& node) noexcept
+        -> bool
 {
     if(&node == node.next)
     {

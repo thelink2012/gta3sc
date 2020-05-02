@@ -29,10 +29,10 @@ public:
     explicit CodeEmitter(uint32_t initial_capacity);
 
     CodeEmitter(const CodeEmitter&) = delete;
-    CodeEmitter& operator=(const CodeEmitter&) = delete;
+    auto operator=(const CodeEmitter&) -> CodeEmitter& = delete;
 
     CodeEmitter(CodeEmitter&&) noexcept = default;
-    CodeEmitter& operator=(CodeEmitter&&) noexcept = default;
+    auto operator=(CodeEmitter&&) noexcept -> CodeEmitter& = default;
 
     ~CodeEmitter() noexcept = default;
 

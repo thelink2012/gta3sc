@@ -50,7 +50,7 @@ constexpr auto COMMAND_IS_THING_GREATER_THAN_THING
 constexpr auto COMMAND_IS_THING_GREATER_OR_EQUAL_TO_THING
         = "IS_THING_GREATER_OR_EQUAL_TO_THING"sv;
 
-bool Parser::eof() const
+auto Parser::eof() const -> bool
 {
     if(has_peek_token[0])
         return false;
@@ -86,7 +86,8 @@ auto Parser::report_special_name(SourceRange source) -> DiagnosticBuilder
     return report(source, Diag::unexpected_special_name).args(name);
 }
 
-bool Parser::is_special_name(std::string_view name, bool check_var_decl) const
+auto Parser::is_special_name(std::string_view name, bool check_var_decl) const
+        -> bool
 {
     if(check_var_decl && is_var_decl_command(name))
         return true;
@@ -101,14 +102,14 @@ bool Parser::is_special_name(std::string_view name, bool check_var_decl) const
             || name == COMMAND_MISSION_START || name == COMMAND_MISSION_END);
 }
 
-bool Parser::is_var_decl_command(std::string_view name) const
+auto Parser::is_var_decl_command(std::string_view name) const -> bool
 {
     return name == COMMAND_VAR_INT || name == COMMAND_VAR_FLOAT
            || name == COMMAND_VAR_TEXT_LABEL || name == COMMAND_LVAR_INT
            || name == COMMAND_LVAR_FLOAT || name == COMMAND_LVAR_TEXT_LABEL;
 }
 
-bool Parser::iequal(std::string_view lhs, std::string_view rhs) const
+auto Parser::iequal(std::string_view lhs, std::string_view rhs) const -> bool
 {
     return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(),
                       [](unsigned char ac, unsigned char bc) {
@@ -120,7 +121,7 @@ bool Parser::iequal(std::string_view lhs, std::string_view rhs) const
                       });
 }
 
-bool Parser::is_relational_operator(Category category) const
+auto Parser::is_relational_operator(Category category) const -> bool
 {
     switch(category)
     {
@@ -158,12 +159,13 @@ auto Parser::peek(size_t n) -> std::optional<Token>
     return peek_tokens[n];
 }
 
-bool Parser::is_peek(Category category, size_t n)
+auto Parser::is_peek(Category category, size_t n) -> bool
 {
     return peek(n) && peek(n)->category == category;
 }
 
-bool Parser::is_peek(Category category, std::string_view lexeme, size_t n)
+auto Parser::is_peek(Category category, std::string_view lexeme, size_t n)
+        -> bool
 {
     return is_peek(category, n) && iequal(scanner.spelling(*peek(n)), lexeme);
 }
@@ -298,13 +300,13 @@ void Parser::skip_current_line()
     }
 }
 
-bool Parser::is_digit(char c) const
+auto Parser::is_digit(char c) const -> bool
 {
     // digit := '0'..'9' ;
     return c >= '0' && c <= '9';
 }
 
-bool Parser::is_integer(std::string_view lexeme) const
+auto Parser::is_integer(std::string_view lexeme) const -> bool
 {
     // integer := ['-'] digit {digit} ;
 
@@ -325,7 +327,7 @@ bool Parser::is_integer(std::string_view lexeme) const
     return num_digits > 0;
 }
 
-bool Parser::is_float(std::string_view lexeme) const
+auto Parser::is_float(std::string_view lexeme) const -> bool
 {
     // floating_form1 := '.' digit { digit | '.' | 'F' } ;
     // floating_form2 := digit { digit } ('.' | 'F') { digit | '.' | 'F' } ;
@@ -365,7 +367,7 @@ bool Parser::is_float(std::string_view lexeme) const
     return it == lexeme.end();
 }
 
-bool Parser::is_identifier(std::string_view lexeme) const
+auto Parser::is_identifier(std::string_view lexeme) const -> bool
 {
     // identifier := ('$' | 'A'..'Z') {token_char} ;
     //
@@ -1640,7 +1642,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
     return linked;
 }
 
-bool Parser::ensure_mission_start_at_top_of_file()
+auto Parser::ensure_mission_start_at_top_of_file() -> bool
 {
     // The MISSION_START command shall be the very first line of the subscript
     // file and shall not be preceded by anything but ASCII spaces ( ) and

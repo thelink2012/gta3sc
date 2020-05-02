@@ -23,18 +23,18 @@ public:
     }
 
     Preprocessor(const Preprocessor&) = delete;
-    Preprocessor& operator=(const Preprocessor&) = delete;
+    auto operator=(const Preprocessor&) -> Preprocessor& = delete;
 
     Preprocessor(Preprocessor&&) noexcept = default;
-    Preprocessor& operator=(Preprocessor&&) noexcept = default;
+    auto operator=(Preprocessor&&) noexcept -> Preprocessor& = default;
 
     ~Preprocessor() noexcept = default;
 
     /// Gets the next character in the stream.
-    char next();
+    auto next() -> char;
 
     /// Checks whether the stream reached the end of file.
-    bool eof() const;
+    auto eof() const -> bool;
 
     /// Gets the current source location.
     auto location() const -> SourceLocation;
@@ -46,8 +46,8 @@ public:
     auto diagnostics() const -> DiagnosticHandler&;
 
 private:
-    bool is_whitespace(const char* p) const;
-    bool is_newline(const char* p) const;
+    auto is_whitespace(const char* p) const -> bool;
+    auto is_newline(const char* p) const -> bool;
 
 private:
     SourceFile source;

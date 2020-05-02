@@ -98,7 +98,8 @@ public:
 
     constexpr IteratorImpl(const IteratorImpl&) noexcept = default;
 
-    constexpr IteratorImpl& operator=(const IteratorImpl&) noexcept = default;
+    constexpr auto operator=(const IteratorImpl&) noexcept
+            -> IteratorImpl& = default;
 
     /// Enable conversion from iterator to const_iterator.
     template<bool IsOtherConstIter,
@@ -111,7 +112,8 @@ public:
 
     constexpr IteratorImpl(IteratorImpl&&) noexcept = default;
 
-    constexpr IteratorImpl& operator=(IteratorImpl&&) noexcept = default;
+    constexpr auto operator=(IteratorImpl&&) noexcept
+            -> IteratorImpl& = default;
 
     constexpr ~IteratorImpl() noexcept = default;
 
@@ -127,28 +129,28 @@ public:
         return static_cast<value_type*>(curr);
     }
 
-    constexpr iterator& operator++()
+    constexpr auto operator++() -> iterator&
     {
         assert(curr);
         curr = curr->next;
         return *this;
     }
 
-    constexpr iterator operator++(int)
+    constexpr auto operator++(int) -> iterator
     {
         auto temp = *this;
         ++(*this);
         return temp;
     }
 
-    constexpr friend bool operator==(const iterator& lhs,
-                                     const iterator& rhs) noexcept
+    constexpr friend auto operator==(const iterator& lhs,
+                                     const iterator& rhs) noexcept -> bool
     {
         return lhs.curr == rhs.curr;
     }
 
-    constexpr friend bool operator!=(const iterator& lhs,
-                                     const iterator& rhs) noexcept
+    constexpr friend auto operator!=(const iterator& lhs,
+                                     const iterator& rhs) noexcept -> bool
     {
         return !(lhs == rhs);
     }

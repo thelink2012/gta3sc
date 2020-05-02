@@ -119,10 +119,11 @@ public:
     ~DiagnosticBuilder() noexcept;
 
     DiagnosticBuilder(const DiagnosticBuilder&) = delete;
-    DiagnosticBuilder& operator=(const DiagnosticBuilder&) = delete;
+    auto operator=(const DiagnosticBuilder&) -> DiagnosticBuilder& = delete;
 
     DiagnosticBuilder(DiagnosticBuilder&&) noexcept = default;
-    DiagnosticBuilder& operator=(DiagnosticBuilder&&) noexcept = default;
+    auto operator=(DiagnosticBuilder&&) noexcept
+            -> DiagnosticBuilder& = default;
 
     /// Adds a source range to provide more context to the diagnostic.
     auto range(SourceRange range) && -> DiagnosticBuilder&&
@@ -197,10 +198,11 @@ public:
     {}
 
     DiagnosticHandler(const DiagnosticHandler&) = delete;
-    DiagnosticHandler& operator=(const DiagnosticHandler&) = delete;
+    auto operator=(const DiagnosticHandler&) -> DiagnosticHandler& = delete;
 
     DiagnosticHandler(DiagnosticHandler&&) noexcept = default;
-    DiagnosticHandler& operator=(DiagnosticHandler&&) noexcept = default;
+    auto operator=(DiagnosticHandler&&) noexcept
+            -> DiagnosticHandler& = default;
 
     ~DiagnosticHandler() noexcept = default;
 

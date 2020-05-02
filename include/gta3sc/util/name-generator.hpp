@@ -22,10 +22,10 @@ public:
     explicit NameGenerator(std::string prefix);
 
     NameGenerator(const NameGenerator&) = delete;
-    NameGenerator& operator=(const NameGenerator&) = delete;
+    auto operator=(const NameGenerator&) -> NameGenerator& = delete;
 
     NameGenerator(NameGenerator&& rhs) noexcept;
-    NameGenerator& operator=(NameGenerator&& rhs) noexcept;
+    auto operator=(NameGenerator&& rhs) noexcept -> NameGenerator&;
 
     ~NameGenerator() noexcept = default;
 

@@ -91,7 +91,7 @@ public:
         {}
 
         /// Checks whether this is an optional parameter.
-        bool is_optional() const;
+        auto is_optional() const -> bool;
     };
 
     /// Stores information about a command.
@@ -190,10 +190,10 @@ public:
     CommandManager() noexcept = default;
 
     CommandManager(const CommandManager&) = delete;
-    CommandManager& operator=(const CommandManager&) = delete;
+    auto operator=(const CommandManager&) -> CommandManager& = delete;
 
     CommandManager(CommandManager&&) noexcept = default;
-    CommandManager& operator=(CommandManager&&) noexcept = default;
+    auto operator=(CommandManager&&) noexcept -> CommandManager& = default;
 
     ~CommandManager() noexcept = default;
 
@@ -331,10 +331,10 @@ public:
     explicit Builder(ArenaMemoryResource& arena) noexcept;
 
     Builder(const Builder&) = delete;
-    Builder& operator=(const Builder&) = delete;
+    auto operator=(const Builder&) -> Builder& = delete;
 
     Builder(Builder&&) noexcept = default;
-    Builder& operator=(Builder&&) noexcept = default;
+    auto operator=(Builder&&) noexcept -> Builder& = default;
 
     ~Builder() noexcept = default;
 

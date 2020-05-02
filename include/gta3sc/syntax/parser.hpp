@@ -27,10 +27,10 @@ public:
     {}
 
     Parser(const Parser&) = delete;
-    Parser& operator=(const Parser&) = delete;
+    auto operator=(const Parser&) -> Parser& = delete;
 
     Parser(Parser&&) noexcept = default;
-    Parser& operator=(Parser&&) noexcept = default;
+    auto operator=(Parser&&) noexcept -> Parser& = default;
 
     ~Parser() noexcept = default;
 
@@ -41,7 +41,7 @@ public:
     auto diagnostics() const -> DiagnosticHandler&;
 
     /// Checks whether the end of stream has been reached.
-    bool eof() const;
+    auto eof() const -> bool;
 
     /// Skips to the next line in the token stream.
     void skip_current_line();
@@ -114,11 +114,12 @@ private:
     /// the specified category.
     ///
     /// Please refer to `peek` for additional details on peeking.
-    bool is_peek(Category category, size_t n = 0);
+    auto is_peek(Category category, size_t n = 0) -> bool;
 
     /// Produces the same effect as `is_peek(category, n)` but additionally
     /// checks the lexeme of the token. The comparision is case insensitive.
-    bool is_peek(Category category, std::string_view lexeme, size_t n = 0);
+    auto is_peek(Category category, std::string_view lexeme, size_t n = 0)
+            -> bool;
 
     /// Peeks the type of the expression in the current line.
     ///
@@ -166,18 +167,19 @@ private:
     auto consume_whitespace() -> std::optional<Token>;
 
     /// Compares two strings for equality in a case-insensitive manner.
-    bool iequal(std::string_view lhs, std::string_view rhs) const;
+    auto iequal(std::string_view lhs, std::string_view rhs) const -> bool;
 
     /// Checks whether the specified name is a command name used by
     /// the language grammar for special purposes (e.g. 'REPEAT', `VAR_INT`).
-    bool is_special_name(std::string_view name, bool check_var_decl) const;
+    auto is_special_name(std::string_view name, bool check_var_decl) const
+            -> bool;
 
     /// Checks whether the given command name is a variable declaration.
-    bool is_var_decl_command(std::string_view name) const;
+    auto is_var_decl_command(std::string_view name) const -> bool;
 
     /// Checks whether the specified lexical category is of a relational
     /// comparision operator (i.e. `<=`, `<`, `>`, `>=`).
-    bool is_relational_operator(Category category) const;
+    auto is_relational_operator(Category category) const -> bool;
 
     /// Produces a diagnostic report associated with a given token.
     auto report(const Token& token, Diag message) -> DiagnosticBuilder;
@@ -190,7 +192,7 @@ private:
 
     /// Ensures that the rule that the first line of file must be
     /// MISSION_START is correct. Otherwise, produces a diagnostic.
-    bool ensure_mission_start_at_top_of_file();
+    auto ensure_mission_start_at_top_of_file() -> bool;
 
 private:
     // The following should behave according to the language grammar.
@@ -260,10 +262,10 @@ private:
                                  bool not_flag)
             -> std::optional<LinkedIR<ParserIR>>;
 
-    bool is_digit(char c) const;
-    bool is_integer(std::string_view lexeme) const;
-    bool is_float(std::string_view lexeme) const;
-    bool is_identifier(std::string_view lexeme) const;
+    auto is_digit(char c) const -> bool;
+    auto is_integer(std::string_view lexeme) const -> bool;
+    auto is_float(std::string_view lexeme) const -> bool;
+    auto is_identifier(std::string_view lexeme) const -> bool;
 
 private:
     static constexpr size_t num_peek_tokens = 6;

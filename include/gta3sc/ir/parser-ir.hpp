@@ -47,10 +47,10 @@ public:
     ~ParserIR() noexcept = default;
 
     ParserIR(const ParserIR&) = delete;
-    ParserIR& operator=(const ParserIR&) = delete;
+    auto operator=(const ParserIR&) -> ParserIR& = delete;
 
     ParserIR(ParserIR&&) noexcept = delete;
-    ParserIR& operator=(ParserIR&&) noexcept = delete;
+    auto operator=(ParserIR&&) noexcept -> ParserIR& = delete;
 
     // Creates an instruction.
     static auto create(arena_ptr<const LabelDef> label,
@@ -92,8 +92,8 @@ public:
             -> arena_ptr<const Argument>;
 
     /// Compares whether a given IR is equivalent to another IR.
-    friend bool operator==(const ParserIR& lhs, const ParserIR& rhs);
-    friend bool operator!=(const ParserIR& lhs, const ParserIR& rhs);
+    friend auto operator==(const ParserIR& lhs, const ParserIR& rhs) -> bool;
+    friend auto operator!=(const ParserIR& lhs, const ParserIR& rhs) -> bool;
 
     struct Command
     {
@@ -109,14 +109,14 @@ public:
         ~Command() noexcept = default;
 
         Command(const Command&) = delete;
-        Command& operator=(const Command&) = delete;
+        auto operator=(const Command&) -> Command& = delete;
 
         Command(Command&&) noexcept = delete;
-        Command& operator=(Command&&) noexcept = delete;
+        auto operator=(Command&&) noexcept -> Command& = delete;
 
         /// Compares whether a given command is equivalent to another command.
-        friend bool operator==(const Command& lhs, const Command& rhs);
-        friend bool operator!=(const Command& lhs, const Command& rhs);
+        friend auto operator==(const Command& lhs, const Command& rhs) -> bool;
+        friend auto operator!=(const Command& lhs, const Command& rhs) -> bool;
 
     protected:
         Command(SourceRange source, std::string_view name,
@@ -138,10 +138,10 @@ public:
         ~LabelDef() noexcept = default;
 
         LabelDef(const LabelDef&) = delete;
-        LabelDef& operator=(const LabelDef&) = delete;
+        auto operator=(const LabelDef&) -> LabelDef& = delete;
 
         LabelDef(LabelDef&&) noexcept = delete;
-        LabelDef& operator=(LabelDef&&) noexcept = delete;
+        auto operator=(LabelDef&&) noexcept -> LabelDef& = delete;
 
         /// Creates a label definition.
         ///
@@ -151,8 +151,10 @@ public:
                 -> arena_ptr<const LabelDef>;
 
         /// Compares whether a given label definition is equivalent to another.
-        friend bool operator==(const LabelDef& lhs, const LabelDef& rhs);
-        friend bool operator!=(const LabelDef& lhs, const LabelDef& rhs);
+        friend auto operator==(const LabelDef& lhs, const LabelDef& rhs)
+                -> bool;
+        friend auto operator!=(const LabelDef& lhs, const LabelDef& rhs)
+                -> bool;
 
     private:
         explicit LabelDef(SourceRange source, std::string_view name) :
@@ -172,10 +174,10 @@ public:
         ~Argument() noexcept = default;
 
         Argument(const Argument&) = delete;
-        Argument& operator=(const Argument&) = delete;
+        auto operator=(const Argument&) -> Argument& = delete;
 
         Argument(Argument&&) noexcept = delete;
-        Argument& operator=(Argument&&) noexcept = delete;
+        auto operator=(Argument&&) noexcept -> Argument& = delete;
 
         /// Returns the contained integer or `nullptr` if this argument is not
         /// an integer.
@@ -200,11 +202,13 @@ public:
         /// Returns whether the value of this is equal the value of another
         /// argument (i.e. same as `operator==` without comparing source
         /// location).
-        bool is_same_value(const Argument& other) const;
+        auto is_same_value(const Argument& other) const -> bool;
 
         /// Compares whether a given argument is equivalent to another.
-        friend bool operator==(const Argument& lhs, const Argument& rhs);
-        friend bool operator!=(const Argument& lhs, const Argument& rhs);
+        friend auto operator==(const Argument& lhs, const Argument& rhs)
+                -> bool;
+        friend auto operator!=(const Argument& lhs, const Argument& rhs)
+                -> bool;
 
     protected:
         enum class IdentifierTag
@@ -270,10 +274,10 @@ public:
     explicit Builder(ArenaMemoryResource& arena) noexcept : arena(&arena) {}
 
     Builder(const Builder&) = delete;
-    Builder& operator=(const Builder&) = delete;
+    auto operator=(const Builder&) -> Builder& = delete;
 
     Builder(Builder&&) noexcept = default;
-    Builder& operator=(Builder&&) noexcept = default;
+    auto operator=(Builder&&) noexcept -> Builder& = default;
 
     ~Builder() noexcept = default;
 

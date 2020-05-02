@@ -18,10 +18,12 @@ public:
     virtual ~InstructionVisitor() noexcept = default;
 
     InstructionVisitor(const InstructionVisitor&) noexcept = default;
-    InstructionVisitor& operator=(const InstructionVisitor&) noexcept = default;
+    auto operator=(const InstructionVisitor&) noexcept
+            -> InstructionVisitor& = default;
 
     InstructionVisitor(InstructionVisitor&&) noexcept = default;
-    InstructionVisitor& operator=(InstructionVisitor&&) noexcept = default;
+    auto operator=(InstructionVisitor&&) noexcept
+            -> InstructionVisitor& = default;
 
     virtual auto visit(const IRType&) -> Result = 0;
 };

@@ -42,10 +42,10 @@ public:
     {}
 
     Sema(const Sema&) = delete;
-    Sema& operator=(const Sema&) = delete;
+    auto operator=(const Sema&) -> Sema& = delete;
 
     Sema(Sema&&) noexcept = default;
-    Sema& operator=(Sema&&) noexcept = default;
+    auto operator=(Sema&&) noexcept -> Sema& = default;
 
     ~Sema() noexcept = default;
 
@@ -66,7 +66,7 @@ private:
 
     /// Performs a pass in the input IR to identify declarations
     /// and inserts their names and metadata into the symbol repository.
-    bool discover_declarations_pass();
+    auto discover_declarations_pass() -> bool;
 
     /// Performs a pass in the input IR to check whether it is valid.
     auto check_semantics_pass() -> std::optional<LinkedIR<SemaIR>>;
@@ -122,17 +122,17 @@ private:
     // require further compiler intervention. They produce diagnostics
     // and return false in case of ill-formed programs.
 
-    bool validate_hardcoded_command(const SemaIR::Command& command);
+    auto validate_hardcoded_command(const SemaIR::Command& command) -> bool;
 
-    bool validate_set(const SemaIR::Command& command);
+    auto validate_set(const SemaIR::Command& command) -> bool;
 
-    bool validate_script_name(const SemaIR::Command& command);
+    auto validate_script_name(const SemaIR::Command& command) -> bool;
 
-    bool validate_start_new_script(const SemaIR::Command& command);
+    auto validate_start_new_script(const SemaIR::Command& command) -> bool;
 
-    bool validate_target_scope_vars(const SemaIR::Argument** begin,
+    auto validate_target_scope_vars(const SemaIR::Argument** begin,
                                     const SemaIR::Argument** end,
-                                    ScopeId target_scope_id);
+                                    ScopeId target_scope_id) -> bool;
 
     // The following functions validates declarations and inserts their
     // names and metadata into the symbol repository.
@@ -178,29 +178,30 @@ private:
 
     /// Checks whether the given parameter has an object string constant
     /// association.
-    bool is_object_param(const CommandManager::ParamDef& param) const;
+    auto is_object_param(const CommandManager::ParamDef& param) const -> bool;
 
     /// Checks whether a parameter type accepts only global variables.
-    bool is_gvar_param(CommandManager::ParamType param_type) const;
+    auto is_gvar_param(CommandManager::ParamType param_type) const -> bool;
 
     /// Checks whether a parameter type accepts only local variables.
-    bool is_lvar_param(CommandManager::ParamType param_type) const;
+    auto is_lvar_param(CommandManager::ParamType param_type) const -> bool;
 
     /// Checks whether the typing of a parameter matches the
     /// typing of a variable.
-    bool matches_var_type(CommandManager::ParamType param_type,
-                          SymVariable::Type var_type) const;
+    auto matches_var_type(CommandManager::ParamType param_type,
+                          SymVariable::Type var_type) const -> bool;
 
     /// Checks whether the specified command is an alternative of an certain
     /// alternator.
-    bool
-    is_alternative_command(const CommandManager::CommandDef& command_def,
-                           const CommandManager::AlternatorDef& from) const;
+    auto is_alternative_command(const CommandManager::CommandDef& command_def,
+                                const CommandManager::AlternatorDef& from) const
+            -> bool;
 
     //// Checks whether the specified actual command/args matches the
     //// specification of a certain alternative command.
-    bool is_matching_alternative(const ParserIR::Command& command,
-                                 const CommandManager::CommandDef& alternative);
+    auto is_matching_alternative(const ParserIR::Command& command,
+                                 const CommandManager::CommandDef& alternative)
+            -> bool;
 
 private:
     struct VarSubscript

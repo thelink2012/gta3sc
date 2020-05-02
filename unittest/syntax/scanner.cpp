@@ -33,7 +33,7 @@ protected:
 
 namespace gta3sc::syntax
 {
-std::ostream& operator<<(std::ostream& os, const Category& category)
+auto operator<<(std::ostream& os, const Category& category) -> std::ostream&
 {
     os << "Category(" << static_cast<uint32_t>(category) << ")";
     return os;

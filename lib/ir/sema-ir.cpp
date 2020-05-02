@@ -152,7 +152,7 @@ auto SemaIR::Argument::pun_as_float() const -> std::optional<float>
         return std::nullopt;
 }
 
-bool SemaIR::Argument::VarRef::has_index() const
+auto SemaIR::Argument::VarRef::has_index() const -> bool
 {
     return !std::holds_alternative<std::monostate>(index);
 }

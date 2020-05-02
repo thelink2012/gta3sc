@@ -32,10 +32,10 @@ public:
     {}
 
     LinkedIR(const LinkedIR&) noexcept = delete;
-    LinkedIR& operator=(const LinkedIR&) noexcept = delete;
+    auto operator=(const LinkedIR&) noexcept -> LinkedIR& = delete;
 
     LinkedIR(LinkedIR&&) noexcept = default;
-    LinkedIR& operator=(LinkedIR&&) noexcept = default;
+    auto operator=(LinkedIR&&) noexcept -> LinkedIR& = default;
 
     ~LinkedIR() noexcept = default;
 

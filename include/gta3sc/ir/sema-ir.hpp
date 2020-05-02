@@ -40,10 +40,10 @@ public:
     ~SemaIR() noexcept = default;
 
     SemaIR(const SemaIR&) = delete;
-    SemaIR& operator=(const SemaIR&) = delete;
+    auto operator=(const SemaIR&) -> SemaIR& = delete;
 
     SemaIR(SemaIR&&) noexcept = delete;
-    SemaIR& operator=(SemaIR&&) noexcept = delete;
+    auto operator=(SemaIR&&) noexcept -> SemaIR& = delete;
 
     // Creates an instruction.
     static auto create(const SymLabel* label, arena_ptr<const Command> command,
@@ -123,10 +123,10 @@ public:
         ~Command() noexcept = default;
 
         Command(const Command&) = delete;
-        Command& operator=(const Command&) = delete;
+        auto operator=(const Command&) -> Command& = delete;
 
         Command(Command&&) noexcept = delete;
-        Command& operator=(Command&&) noexcept = delete;
+        auto operator=(Command&&) noexcept -> Command& = delete;
 
     protected:
         Command(SourceRange source, const CommandManager::CommandDef& def,
@@ -151,10 +151,10 @@ public:
         ~Argument() noexcept = default;
 
         Argument(const Argument&) = delete;
-        Argument& operator=(const Argument&) = delete;
+        auto operator=(const Argument&) -> Argument& = delete;
 
         Argument(Argument&&) noexcept = delete;
-        Argument& operator=(Argument&&) noexcept = delete;
+        auto operator=(Argument&&) noexcept -> Argument& = delete;
 
         /// Returns the contained integer or `nullptr` if this argument is not
         /// an integer.
@@ -207,7 +207,7 @@ public:
                     index; ///< The index of an array subscript.
 
             /// Checks whether this variable reference is an array reference.
-            bool has_index() const;
+            auto has_index() const -> bool;
 
             /// Returns the integer in the array subscript or `nullptr` if
             /// either this is not an array or the index is not an integer.
@@ -274,10 +274,10 @@ public:
     explicit Builder(ArenaMemoryResource& arena) noexcept : arena(&arena) {}
 
     Builder(const Builder&) = delete;
-    Builder& operator=(const Builder&) = delete;
+    auto operator=(const Builder&) -> Builder& = delete;
 
     Builder(Builder&&) noexcept = default;
-    Builder& operator=(Builder&&) noexcept = default;
+    auto operator=(Builder&&) noexcept -> Builder& = default;
 
     ~Builder() noexcept = default;
 

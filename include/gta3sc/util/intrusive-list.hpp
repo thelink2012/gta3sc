@@ -89,14 +89,14 @@ public:
     }
 
     constexpr IntrusiveList(const IntrusiveList&) = delete;
-    constexpr IntrusiveList& operator=(const IntrusiveList&) = delete;
+    constexpr auto operator=(const IntrusiveList&) -> IntrusiveList& = delete;
 
     constexpr IntrusiveList(IntrusiveList&& other) noexcept : IntrusiveList()
     {
         other.swap(*this);
     }
 
-    constexpr IntrusiveList& operator=(IntrusiveList&& other) noexcept
+    constexpr auto operator=(IntrusiveList&& other) noexcept -> IntrusiveList&
     {
         if(this == &other)
             return *this;
@@ -178,7 +178,7 @@ public:
     // Capacity
     //
 
-    constexpr bool empty() const noexcept
+    constexpr auto empty() const noexcept -> bool
     {
         return algorithm::circular_list::empty(sentinel);
     }
@@ -398,15 +398,15 @@ private:
 };
 
 template<typename T>
-constexpr bool operator==(const IntrusiveList<T>& lhs,
-                          const IntrusiveList<T>& rhs) noexcept
+constexpr auto operator==(const IntrusiveList<T>& lhs,
+                          const IntrusiveList<T>& rhs) noexcept -> bool
 {
     return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
 }
 
 template<typename T>
-constexpr bool operator!=(const IntrusiveList<T>& lhs,
-                          const IntrusiveList<T>& rhs) noexcept
+constexpr auto operator!=(const IntrusiveList<T>& lhs,
+                          const IntrusiveList<T>& rhs) noexcept -> bool
 {
     return !(lhs == rhs);
 }

@@ -51,7 +51,7 @@ auto ParserIR::create_string(std::string_view string, SourceRange source,
             const Argument(Argument::StringTag{}, string, source);
 }
 
-bool operator==(const ParserIR& lhs, const ParserIR& rhs)
+auto operator==(const ParserIR& lhs, const ParserIR& rhs) -> bool
 {
     if(!!lhs.label != !!rhs.label)
         return false;
@@ -67,12 +67,13 @@ bool operator==(const ParserIR& lhs, const ParserIR& rhs)
     return true;
 }
 
-bool operator!=(const ParserIR& lhs, const ParserIR& rhs)
+auto operator!=(const ParserIR& lhs, const ParserIR& rhs) -> bool
 {
     return !(lhs == rhs);
 }
 
-bool operator==(const ParserIR::Command& lhs, const ParserIR::Command& rhs)
+auto operator==(const ParserIR::Command& lhs, const ParserIR::Command& rhs)
+        -> bool
 {
     return lhs.source == rhs.source && lhs.name == rhs.name
            && lhs.not_flag == rhs.not_flag
@@ -81,7 +82,8 @@ bool operator==(const ParserIR::Command& lhs, const ParserIR::Command& rhs)
                          [](const auto& a, const auto& b) { return *a == *b; });
 }
 
-bool operator!=(const ParserIR::Command& lhs, const ParserIR::Command& rhs)
+auto operator!=(const ParserIR::Command& lhs, const ParserIR::Command& rhs)
+        -> bool
 {
     return !(lhs == rhs);
 }
@@ -94,12 +96,14 @@ auto ParserIR::LabelDef::create(std::string_view name, SourceRange source,
             const LabelDef{source, util::allocate_string_upper(name, *arena)};
 }
 
-bool operator==(const ParserIR::LabelDef& lhs, const ParserIR::LabelDef& rhs)
+auto operator==(const ParserIR::LabelDef& lhs, const ParserIR::LabelDef& rhs)
+        -> bool
 {
     return lhs.source == rhs.source && lhs.name == rhs.name;
 }
 
-bool operator!=(const ParserIR::LabelDef& lhs, const ParserIR::LabelDef& rhs)
+auto operator!=(const ParserIR::LabelDef& lhs, const ParserIR::LabelDef& rhs)
+        -> bool
 {
     return !(lhs == rhs);
 }
@@ -135,17 +139,19 @@ auto ParserIR::Argument::as_string() const -> const std::string_view*
     return nullptr;
 }
 
-bool ParserIR::Argument::is_same_value(const Argument& other) const
+auto ParserIR::Argument::is_same_value(const Argument& other) const -> bool
 {
     return this->value == other.value;
 }
 
-bool operator==(const ParserIR::Argument& lhs, const ParserIR::Argument& rhs)
+auto operator==(const ParserIR::Argument& lhs, const ParserIR::Argument& rhs)
+        -> bool
 {
     return lhs.source == rhs.source && lhs.is_same_value(rhs);
 }
 
-bool operator!=(const ParserIR::Argument& lhs, const ParserIR::Argument& rhs)
+auto operator!=(const ParserIR::Argument& lhs, const ParserIR::Argument& rhs)
+        -> bool
 {
     return !(lhs == rhs);
 }

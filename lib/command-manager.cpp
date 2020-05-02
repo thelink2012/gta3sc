@@ -19,7 +19,7 @@ CommandManager::CommandManager(CommandsMap&& commands_map,
     entities_map(std::move(entities_map))
 {}
 
-bool CommandManager::ParamDef::is_optional() const
+auto CommandManager::ParamDef::is_optional() const -> bool
 {
     switch(type)
     {

@@ -54,10 +54,10 @@ public:
     {}
 
     Scanner(const Scanner&) = delete;
-    Scanner& operator=(const Scanner&) = delete;
+    auto operator=(const Scanner&) -> Scanner& = delete;
 
     Scanner(Scanner&&) noexcept = default;
-    Scanner& operator=(Scanner&&) noexcept = default;
+    auto operator=(Scanner&&) noexcept -> Scanner& = default;
 
     ~Scanner() noexcept = default;
 
@@ -91,7 +91,7 @@ public:
     auto next_filename() -> std::optional<Token>;
 
     /// Checks whether the end of stream has been reached.
-    bool eof() const;
+    auto eof() const -> bool;
 
     /// Gets the current location in the character stream.
     auto location() const -> SourceLocation;
@@ -107,13 +107,13 @@ public:
 
 private:
     /// Consumes the next character in the character stream.
-    char getc();
+    auto getc() -> char;
 
-    bool is_whitespace(char c) const;
-    bool is_newline(char c) const;
-    bool is_digit(char c) const;
-    bool is_print(char c) const;
-    bool is_word_char(char c) const;
+    auto is_whitespace(char c) const -> bool;
+    auto is_newline(char c) const -> bool;
+    auto is_digit(char c) const -> bool;
+    auto is_print(char c) const -> bool;
+    auto is_word_char(char c) const -> bool;
 
 private:
     Preprocessor pp;

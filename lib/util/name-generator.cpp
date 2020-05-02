@@ -22,7 +22,7 @@ NameGenerator::NameGenerator(NameGenerator&& rhs) noexcept
     this->prefix_format = std::move(rhs.prefix_format);
 }
 
-NameGenerator& NameGenerator::operator=(NameGenerator&& rhs) noexcept
+auto NameGenerator::operator=(NameGenerator&& rhs) noexcept -> NameGenerator&
 {
     // not thread-safe
     counter.store(rhs.counter.exchange(0));

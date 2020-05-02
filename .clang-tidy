@@ -105,7 +105,6 @@ Checks: '
         ,-hicpp-avoid-c-arrays,
         ,-llvm-qualified-auto,
         ,-llvm-header-guard,
-        ,-modernize-use-trailing-return-type,
         ,-modernize-use-nodiscard,
         ,-modernize-avoid-c-arrays,
         ,-readability-braces-around-statements,

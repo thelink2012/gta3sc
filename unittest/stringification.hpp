@@ -8,7 +8,7 @@
 
 namespace std // NOLINT(cert-dcl58-cpp): FIXME
 {
-inline std::ostream& operator<<(std::ostream& os, std::byte byte_val)
+inline auto operator<<(std::ostream& os, std::byte byte_val) -> std::ostream&
 {
     // FIXME not exception safe (needs gsl.finally)
     const auto old_flags = os.flags();
@@ -18,7 +18,8 @@ inline std::ostream& operator<<(std::ostream& os, std::byte byte_val)
 }
 
 template<typename T>
-inline std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
+inline auto operator<<(std::ostream& os, const std::vector<T>& v)
+        -> std::ostream&
 {
     os << "{";
     for(size_t i = 0; i < v.size(); ++i)

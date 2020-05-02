@@ -29,10 +29,11 @@ public:
                                 ArenaMemoryResource& arena) noexcept;
 
     RepeatStmtRewriter(const RepeatStmtRewriter&) = delete;
-    RepeatStmtRewriter& operator=(const RepeatStmtRewriter&) = delete;
+    auto operator=(const RepeatStmtRewriter&) -> RepeatStmtRewriter& = delete;
 
     RepeatStmtRewriter(RepeatStmtRewriter&&) noexcept = default;
-    RepeatStmtRewriter& operator=(RepeatStmtRewriter&&) noexcept = default;
+    auto operator=(RepeatStmtRewriter&&) noexcept
+            -> RepeatStmtRewriter& = default;
 
     ~RepeatStmtRewriter() noexcept final = default;
 

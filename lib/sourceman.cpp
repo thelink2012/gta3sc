@@ -5,7 +5,8 @@
 
 namespace gta3sc
 {
-bool SourceManager::iequal(std::string_view lhs, std::string_view rhs) const
+auto SourceManager::iequal(std::string_view lhs, std::string_view rhs) const
+        -> bool
 {
     return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(),
                       [](unsigned char ac, unsigned char bc) {
@@ -17,7 +18,7 @@ bool SourceManager::iequal(std::string_view lhs, std::string_view rhs) const
                       });
 }
 
-bool SourceManager::scan_directory(const std::filesystem::path& dir)
+auto SourceManager::scan_directory(const std::filesystem::path& dir) -> bool
 {
     std::error_code ec;
     for(const auto& entry :

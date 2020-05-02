@@ -31,10 +31,10 @@ public:
     ModelManager() noexcept = default;
 
     ModelManager(const ModelManager&) = delete;
-    ModelManager& operator=(const ModelManager&) = delete;
+    auto operator=(const ModelManager&) -> ModelManager& = delete;
 
     ModelManager(ModelManager&&) noexcept = default;
-    ModelManager& operator=(ModelManager&&) noexcept = default;
+    auto operator=(ModelManager&&) noexcept -> ModelManager& = default;
 
     ~ModelManager() noexcept = default;
 
@@ -63,10 +63,10 @@ public:
     explicit Builder(ArenaMemoryResource& arena) noexcept : arena(&arena) {}
 
     Builder(const Builder&) = delete;
-    Builder& operator=(const Builder&) = delete;
+    auto operator=(const Builder&) -> Builder& = delete;
 
     Builder(Builder&&) noexcept = default;
-    Builder& operator=(Builder&&) noexcept = default;
+    auto operator=(Builder&&) noexcept -> Builder& = default;
 
     ~Builder() noexcept = default;
 
