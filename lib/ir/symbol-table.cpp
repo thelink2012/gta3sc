@@ -1,4 +1,5 @@
 #include <gta3sc/ir/symbol-table.hpp>
+#include <gta3sc/util/arena-utility.hpp>
 
 namespace gta3sc
 {

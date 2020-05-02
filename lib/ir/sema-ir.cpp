@@ -1,4 +1,6 @@
 #include <gta3sc/ir/sema-ir.hpp>
+#include <gta3sc/util/arena-utility.hpp>
+#include <gta3sc/util/ctype.hpp>
 
 namespace gta3sc
 {
@@ -28,7 +30,7 @@ auto SemaIR::create_text_label(std::string_view value, SourceRange source,
 {
     return allocator.new_object<Argument>(
             private_tag, Argument::TextLabelTag{},
-            util::allocate_string_upper(value, allocator), source);
+            util::allocate_string(value, allocator, util::toupper), source);
 }
 
 auto SemaIR::create_label(const SymLabel& label, SourceRange source,

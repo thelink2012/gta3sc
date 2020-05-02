@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <cstring>
 #include <gta3sc/ir/parser-ir.hpp>
+#include <gta3sc/util/arena-utility.hpp>
+#include <gta3sc/util/ctype.hpp>
 
 namespace gta3sc
 {
@@ -30,7 +32,7 @@ auto ParserIR::create_identifier(std::string_view name, SourceRange source,
 {
     return allocator.new_object<Argument>(
             private_tag, Argument::IdentifierTag{},
-            util::allocate_string_upper(name, allocator), source);
+            util::allocate_string(name, allocator, util::toupper), source);
 }
 
 auto ParserIR::create_filename(std::string_view name, SourceRange source,
@@ -39,7 +41,7 @@ auto ParserIR::create_filename(std::string_view name, SourceRange source,
 {
     return allocator.new_object<Argument>(
             private_tag, Argument::FilenameTag{},
-            util::allocate_string_upper(name, allocator), source);
+            util::allocate_string(name, allocator, util::toupper), source);
 }
 
 auto ParserIR::create_string(std::string_view string, SourceRange source,
@@ -93,7 +95,8 @@ auto ParserIR::LabelDef::create(std::string_view name, SourceRange source,
         -> ArenaPtr<const LabelDef>
 {
     return allocator.new_object<LabelDef>(
-            private_tag, source, util::allocate_string_upper(name, allocator));
+            private_tag, source,
+            util::allocate_string(name, allocator, util::toupper));
 }
 
 auto operator==(const ParserIR::LabelDef& lhs, const ParserIR::LabelDef& rhs)
@@ -182,7 +185,7 @@ auto ParserIR::Builder::command(std::string_view name, SourceRange source)
     assert(!this->command_ptr && !this->has_command_name);
     this->command_ptr = nullptr;
     this->has_command_name = true;
-    this->command_name = util::allocate_string_upper(name, allocator);
+    this->command_name = util::allocate_string(name, allocator, util::toupper);
     this->command_source = source;
     return std::move(*this);
 }

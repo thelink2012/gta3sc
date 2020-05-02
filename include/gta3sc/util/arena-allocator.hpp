@@ -1,9 +1,7 @@
 #pragma once
 #include <cassert>
 #include <cstddef>
-#include <cstring>
 #include <memory>
-#include <string_view>
 
 namespace gta3sc
 {
@@ -330,46 +328,3 @@ inline auto operator!=(const ArenaAllocator<T1>& lhs,
     return !(lhs == rhs);
 }
 } // namespace gta3sc
-
-namespace gta3sc::util
-{
-namespace detail
-{
-template<typename UnaryOperation>
-inline auto allocate_string(std::string_view from,
-                            ArenaAllocator<char> allocator,
-                            UnaryOperation transform_op) -> std::string_view
-{
-    const auto result_size = from.size();
-
-    auto* result_ptr = allocator.allocate(result_size);
-    std::uninitialized_default_construct_n(result_ptr, result_size);
-
-    for(size_t i = 0; i < from.size(); ++i)
-        result_ptr[i] = transform_op(from[i]);
-
-    return {result_ptr, result_size};
-}
-} // namespace detail
-
-/// Allocates a string in the arena and returns a view to it.
-inline auto allocate_string(std::string_view from,
-                            ArenaAllocator<char> allocator) -> std::string_view
-{
-    constexpr auto identity = [](char c) { return c; };
-    return detail::allocate_string(from, allocator, identity);
-}
-
-/// Allocates a string, converts it to ASCII uppercase, and returns a view to
-/// it.
-inline auto allocate_string_upper(std::string_view from,
-                                  ArenaAllocator<char> allocator)
-        -> std::string_view
-{
-    return detail::allocate_string(from, allocator, [](char c) {
-        if(c >= 'a' && c <= 'z')
-            c = static_cast<char>(c - 'a' + 'A');
-        return c;
-    });
-}
-} // namespace gta3sc::util

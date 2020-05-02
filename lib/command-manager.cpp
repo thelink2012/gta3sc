@@ -1,4 +1,6 @@
 #include <gta3sc/command-manager.hpp>
+#include <gta3sc/util/arena-utility.hpp>
+#include <gta3sc/util/ctype.hpp>
 
 // FIXME none of the insertion commands here handle the case of the string
 // key being lowercase, which shouldn't reinsert the command.
@@ -215,7 +217,7 @@ auto CommandManager::Builder::insert_command(std::string_view name)
     if(auto it = commands_map.find(name); it != commands_map.end())
         return {it->second, false};
 
-    auto a_name = util::allocate_string_upper(name, allocator);
+    auto a_name = util::allocate_string(name, allocator, util::toupper);
     auto* a_cmd = allocator.new_object<CommandDef>();
     a_cmd->name = a_name;
 
@@ -230,7 +232,7 @@ auto CommandManager::Builder::insert_alternator(std::string_view name)
     if(auto it = alternators_map.find(name); it != alternators_map.end())
         return {it->second, false};
 
-    auto a_name = util::allocate_string_upper(name, allocator);
+    auto a_name = util::allocate_string(name, allocator, util::toupper);
     auto* a_alternator = allocator.new_object<AlternatorDef>();
 
     auto [it, inserted] = alternators_map.emplace(a_name, a_alternator);
@@ -256,7 +258,7 @@ auto CommandManager::Builder::insert_enumeration(std::string_view name)
     if(auto it = enums_map.find(name); it != enums_map.end())
         return {it->second, false};
 
-    auto a_name = util::allocate_string_upper(name, allocator);
+    auto a_name = util::allocate_string(name, allocator, util::toupper);
 
     const auto next_id = static_cast<std::underlying_type_t<EnumId>>(
             enums_map.size() + 1);
@@ -276,7 +278,7 @@ auto CommandManager::Builder::insert_or_assign_constant(EnumId enum_id,
     auto it = constants_map.find(name);
     if(it == constants_map.end())
     {
-        auto a_name = util::allocate_string_upper(name, allocator);
+        auto a_name = util::allocate_string(name, allocator, util::toupper);
         auto* cdef = allocator.new_object<ConstantDef>(enum_id, value);
         auto [_, inserted] = constants_map.emplace(a_name, cdef);
         assert(inserted);
@@ -310,7 +312,7 @@ auto CommandManager::Builder::insert_entity_type(std::string_view name)
     if(auto it = entities_map.find(name); it != entities_map.end())
         return {it->second, false};
 
-    auto a_name = util::allocate_string_upper(name, allocator);
+    auto a_name = util::allocate_string(name, allocator, util::toupper);
 
     const auto next_id = static_cast<std::underlying_type_t<EntityId>>(
             entities_map.size() + 1);
