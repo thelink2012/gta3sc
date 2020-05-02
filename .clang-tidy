@@ -105,7 +105,6 @@ Checks: '
         ,-hicpp-avoid-c-arrays,
         ,-llvm-qualified-auto,
         ,-llvm-header-guard,
-        ,-modernize-use-nodiscard,
         ,-modernize-avoid-c-arrays,
         ,-readability-braces-around-statements,
         ,-readability-redundant-access-specifiers,
@@ -113,7 +112,6 @@ Checks: '
         ,-readability-magic-numbers,
         ,-readability-convert-member-functions-to-static,
         ,-readability-implicit-bool-conversion,
-        ,-readability-identifier-naming,
         ,-readability-redundant-declaration,
         ,-readability-qualified-auto,
         '
@@ -129,6 +127,10 @@ CheckOptions:
     value:           CamelCase
   - key:             readability-identifier-naming.ClassCase
     value:           CamelCase
+  - key:             readability-identifier-naming.TypeAliasCase
+    value:           aNy_CasE  # interoperability with concepts
+#  - key:             readability-identifier-naming.TemplateParameterCase
+#    value:           CamelCase
   - key:             readability-identifier-naming.NamespaceCase
     value:           lower_case
   - key:             readability-identifier-naming.FunctionCase

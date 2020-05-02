@@ -123,7 +123,7 @@ private:
 
     /// Peeks the type of the expression in the current line.
     ///
-    /// If the expression is a ternary expression, then `Category::Equal`
+    /// If the expression is a ternary expression, then `Category::equal`
     /// is returned. Otherwise, the category of the operator token.
     ///
     /// Please refer to `peek` for additional details on peeking.
@@ -154,15 +154,15 @@ private:
     /// produced and `std::nullopt` returned.
     auto consume(Category category) -> std::optional<Token>;
 
-    /// Produces the same effect as `consume(Category::Word)`, but additionally
+    /// Produces the same effect as `consume(Category::word)`, but additionally
     /// checks (also producing a diagnostic) whether the lexeme of the word is
     /// equal `lexeme`.
     auto consume_word(std::string_view lexeme) -> std::optional<Token>;
 
-    /// Behaves like `consume(Category::Word)` except with a custom diagnostic.
+    /// Behaves like `consume(Category::word)` except with a custom diagnostic.
     auto consume_command() -> std::optional<Token>;
 
-    /// Behaves like `consume(Category::Whitespace)` except when right behind
+    /// Behaves like `consume(Category::whitespace)` except when right behind
     /// an end of line in which case it peeks the end of line.
     auto consume_whitespace() -> std::optional<Token>;
 

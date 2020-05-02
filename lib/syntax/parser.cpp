@@ -10,44 +10,44 @@ namespace gta3sc::syntax
 {
 // The parser does not know anything about commands, so we have to
 // hardcode the special commands in here.
-constexpr auto COMMAND_MISSION_START = "MISSION_START"sv;
-constexpr auto COMMAND_MISSION_END = "MISSION_END"sv;
-constexpr auto COMMAND_VAR_INT = "VAR_INT"sv;
-constexpr auto COMMAND_LVAR_INT = "LVAR_INT"sv;
-constexpr auto COMMAND_VAR_FLOAT = "VAR_FLOAT"sv;
-constexpr auto COMMAND_LVAR_FLOAT = "LVAR_FLOAT"sv;
-constexpr auto COMMAND_VAR_TEXT_LABEL = "VAR_TEXT_LABEL"sv;
-constexpr auto COMMAND_LVAR_TEXT_LABEL = "LVAR_TEXT_LABEL"sv;
-constexpr auto COMMAND_ANDOR = "ANDOR"sv;
-constexpr auto COMMAND_GOTO = "GOTO"sv;
-constexpr auto COMMAND_GOTO_IF_FALSE = "GOTO_IF_FALSE"sv;
-constexpr auto COMMAND_GOTO_IF_TRUE = "GOTO_IF_TRUE"sv;
-constexpr auto COMMAND_IF = "IF"sv;
-constexpr auto COMMAND_IFNOT = "IFNOT"sv;
-constexpr auto COMMAND_ELSE = "ELSE"sv;
-constexpr auto COMMAND_ENDIF = "ENDIF"sv;
-constexpr auto COMMAND_WHILE = "WHILE"sv;
-constexpr auto COMMAND_WHILENOT = "WHILENOT"sv;
-constexpr auto COMMAND_ENDWHILE = "ENDWHILE"sv;
-constexpr auto COMMAND_REPEAT = "REPEAT"sv;
-constexpr auto COMMAND_ENDREPEAT = "ENDREPEAT"sv;
-constexpr auto COMMAND_GOSUB_FILE = "GOSUB_FILE"sv;
-constexpr auto COMMAND_LAUNCH_MISSION = "LAUNCH_MISSION"sv;
-constexpr auto COMMAND_LOAD_AND_LAUNCH_MISSION = "LOAD_AND_LAUNCH_MISSION"sv;
-constexpr auto COMMAND_SET = "SET"sv;
-constexpr auto COMMAND_CSET = "CSET"sv;
-constexpr auto COMMAND_ABS = "ABS"sv;
-constexpr auto COMMAND_ADD_THING_TO_THING = "ADD_THING_TO_THING"sv;
-constexpr auto COMMAND_SUB_THING_FROM_THING = "SUB_THING_FROM_THING"sv;
-constexpr auto COMMAND_MULT_THING_BY_THING = "MULT_THING_BY_THING"sv;
-constexpr auto COMMAND_DIV_THING_BY_THING = "DIV_THING_BY_THING"sv;
-constexpr auto COMMAND_ADD_THING_TO_THING_TIMED = "ADD_THING_TO_THING_TIMED"sv;
-constexpr auto COMMAND_SUB_THING_FROM_THING_TIMED
+constexpr auto command_mission_start = "MISSION_START"sv;
+constexpr auto command_mission_end = "MISSION_END"sv;
+constexpr auto command_var_int = "VAR_INT"sv;
+constexpr auto command_lvar_int = "LVAR_INT"sv;
+constexpr auto command_var_float = "VAR_FLOAT"sv;
+constexpr auto command_lvar_float = "LVAR_FLOAT"sv;
+constexpr auto command_var_text_label = "VAR_TEXT_LABEL"sv;
+constexpr auto command_lvar_text_label = "LVAR_TEXT_LABEL"sv;
+constexpr auto command_andor = "ANDOR"sv;
+constexpr auto command_goto = "GOTO"sv;
+constexpr auto command_goto_if_false = "GOTO_IF_FALSE"sv;
+constexpr auto command_goto_if_true = "GOTO_IF_TRUE"sv;
+constexpr auto command_if = "IF"sv;
+constexpr auto command_ifnot = "IFNOT"sv;
+constexpr auto command_else = "ELSE"sv;
+constexpr auto command_endif = "ENDIF"sv;
+constexpr auto command_while = "WHILE"sv;
+constexpr auto command_whilenot = "WHILENOT"sv;
+constexpr auto command_endwhile = "ENDWHILE"sv;
+constexpr auto command_repeat = "REPEAT"sv;
+constexpr auto command_endrepeat = "ENDREPEAT"sv;
+constexpr auto command_gosub_file = "GOSUB_FILE"sv;
+constexpr auto command_launch_mission = "LAUNCH_MISSION"sv;
+constexpr auto command_load_and_launch_mission = "LOAD_AND_LAUNCH_MISSION"sv;
+constexpr auto command_set = "SET"sv;
+constexpr auto command_cset = "CSET"sv;
+constexpr auto command_abs = "ABS"sv;
+constexpr auto command_add_thing_to_thing = "ADD_THING_TO_THING"sv;
+constexpr auto command_sub_thing_from_thing = "SUB_THING_FROM_THING"sv;
+constexpr auto command_mult_thing_by_thing = "MULT_THING_BY_THING"sv;
+constexpr auto command_div_thing_by_thing = "DIV_THING_BY_THING"sv;
+constexpr auto command_add_thing_to_thing_timed = "ADD_THING_TO_THING_TIMED"sv;
+constexpr auto command_sub_thing_from_thing_timed
         = "SUB_THING_FROM_THING_TIMED"sv;
-constexpr auto COMMAND_IS_THING_EQUAL_TO_THING = "IS_THING_EQUAL_TO_THING"sv;
-constexpr auto COMMAND_IS_THING_GREATER_THAN_THING
+constexpr auto command_is_thing_equal_to_thing = "IS_THING_EQUAL_TO_THING"sv;
+constexpr auto command_is_thing_greater_than_thing
         = "IS_THING_GREATER_THAN_THING"sv;
-constexpr auto COMMAND_IS_THING_GREATER_OR_EQUAL_TO_THING
+constexpr auto command_is_thing_greater_or_equal_to_thing
         = "IS_THING_GREATER_OR_EQUAL_TO_THING"sv;
 
 auto Parser::eof() const -> bool
@@ -92,21 +92,21 @@ auto Parser::is_special_name(std::string_view name, bool check_var_decl) const
     if(check_var_decl && is_var_decl_command(name))
         return true;
     return (name == "{" || name == "}" || name == "NOT" || name == "AND"
-            || name == "OR" || name == COMMAND_IF || name == COMMAND_IFNOT
-            || name == COMMAND_ELSE || name == COMMAND_ENDIF
-            || name == COMMAND_WHILE || name == COMMAND_WHILENOT
-            || name == COMMAND_ENDWHILE || name == COMMAND_REPEAT
-            || name == COMMAND_ENDREPEAT || name == COMMAND_GOSUB_FILE
-            || name == COMMAND_LAUNCH_MISSION
-            || name == COMMAND_LOAD_AND_LAUNCH_MISSION
-            || name == COMMAND_MISSION_START || name == COMMAND_MISSION_END);
+            || name == "OR" || name == command_if || name == command_ifnot
+            || name == command_else || name == command_endif
+            || name == command_while || name == command_whilenot
+            || name == command_endwhile || name == command_repeat
+            || name == command_endrepeat || name == command_gosub_file
+            || name == command_launch_mission
+            || name == command_load_and_launch_mission
+            || name == command_mission_start || name == command_mission_end);
 }
 
 auto Parser::is_var_decl_command(std::string_view name) const -> bool
 {
-    return name == COMMAND_VAR_INT || name == COMMAND_VAR_FLOAT
-           || name == COMMAND_VAR_TEXT_LABEL || name == COMMAND_LVAR_INT
-           || name == COMMAND_LVAR_FLOAT || name == COMMAND_LVAR_TEXT_LABEL;
+    return name == command_var_int || name == command_var_float
+           || name == command_var_text_label || name == command_lvar_int
+           || name == command_lvar_float || name == command_lvar_text_label;
 }
 
 auto Parser::iequal(std::string_view lhs, std::string_view rhs) const -> bool
@@ -125,10 +125,10 @@ auto Parser::is_relational_operator(Category category) const -> bool
 {
     switch(category)
     {
-        case Category::Less:
-        case Category::LessEqual:
-        case Category::Greater:
-        case Category::GreaterEqual:
+        case Category::less:
+        case Category::less_equal:
+        case Category::greater:
+        case Category::greater_equal:
             return true;
         default:
             return false;
@@ -144,7 +144,7 @@ auto Parser::peek(size_t n) -> std::optional<Token>
         assert(n == 0 || has_peek_token[n - 1]);
 
         if(n != 0 && peek_tokens[n - 1]
-           && peek_tokens[n - 1]->category == Category::EndOfLine)
+           && peek_tokens[n - 1]->category == Category::end_of_line)
         {
             has_peek_token[n] = true;
             peek_tokens[n] = peek_tokens[n - 1];
@@ -172,28 +172,28 @@ auto Parser::is_peek(Category category, std::string_view lexeme, size_t n)
 
 auto Parser::peek_expression_type() -> std::optional<Category>
 {
-    if(is_peek(Category::PlusPlus) || is_peek(Category::MinusMinus))
+    if(is_peek(Category::plus_plus) || is_peek(Category::minus_minus))
         return peek()->category;
 
     // We want the next token ignoring whitespaces.
-    const auto opos = is_peek(Category::Whitespace, 1) ? 2 : 1;
+    const auto opos = is_peek(Category::whitespace, 1) ? 2 : 1;
 
-    switch(peek(opos) ? peek(opos)->category : Category::Word)
+    switch(peek(opos) ? peek(opos)->category : Category::word)
     {
-        case Category::Equal:
-        case Category::EqualHash:
-        case Category::PlusEqual:
-        case Category::MinusEqual:
-        case Category::StarEqual:
-        case Category::SlashEqual:
-        case Category::PlusEqualAt:
-        case Category::MinusEqualAt:
-        case Category::PlusPlus:
-        case Category::MinusMinus:
-        case Category::Less:
-        case Category::LessEqual:
-        case Category::Greater:
-        case Category::GreaterEqual:
+        case Category::equal:
+        case Category::equal_hash:
+        case Category::plus_equal:
+        case Category::minus_equal:
+        case Category::star_equal:
+        case Category::slash_equal:
+        case Category::plus_equal_at:
+        case Category::minus_equal_at:
+        case Category::plus_plus:
+        case Category::minus_minus:
+        case Category::less:
+        case Category::less_equal:
+        case Category::greater:
+        case Category::greater_equal:
             return peek(opos)->category;
         default:
             return std::nullopt;
@@ -223,7 +223,7 @@ auto Parser::consume_filename() -> std::optional<Token>
     // Due to the hack in `consume_whitespace` we need this
     // other hack here. If not for that hack, we could never
     // have a peek token here.
-    if(has_peek_token[0] && is_peek(Category::EndOfLine))
+    if(has_peek_token[0] && is_peek(Category::end_of_line))
     {
         report(*peek(), Diag::expected_identifier);
         return std::nullopt;
@@ -250,7 +250,7 @@ auto Parser::consume(Category category) -> std::optional<Token>
 
 auto Parser::consume_word(std::string_view lexeme) -> std::optional<Token>
 {
-    auto token = consume(Category::Word);
+    auto token = consume(Category::word);
     if(!token)
         return std::nullopt;
 
@@ -269,9 +269,9 @@ auto Parser::consume_whitespace() -> std::optional<Token>
     // Consider "IF \n". A diagnostic without the following check
     // would ask for a missing whitespace, when in fact it should
     // be asking for a missing command.
-    if(is_peek(Category::EndOfLine))
+    if(is_peek(Category::end_of_line))
         return *peek();
-    return consume(Category::Whitespace);
+    return consume(Category::whitespace);
 }
 
 auto Parser::consume_command() -> std::optional<Token>
@@ -280,7 +280,7 @@ auto Parser::consume_command() -> std::optional<Token>
     if(!token)
         return std::nullopt;
 
-    if(token->category != Category::Word)
+    if(token->category != Category::word)
     {
         report(*token, Diag::expected_command);
         return std::nullopt;
@@ -295,7 +295,7 @@ void Parser::skip_current_line()
     {
         // The scanner is guaranted to return a new line at some point.
         auto token = this->consume();
-        if(token && token->category == Category::EndOfLine)
+        if(token && token->category == Category::end_of_line)
             break;
     }
 }
@@ -404,12 +404,12 @@ auto Parser::parse_command(bool is_if_line, bool not_flag)
     builder.not_flag(not_flag);
     builder.command(scanner.spelling(*token), token->source);
 
-    while(!is_peek(Category::EndOfLine))
+    while(!is_peek(Category::end_of_line))
     {
-        if(is_if_line && is_peek(Category::Whitespace, 0)
-           && is_peek(Category::Word, "GOTO", 1)
-           && is_peek(Category::Whitespace, 2) && is_peek(Category::Word, 3)
-           && is_peek(Category::EndOfLine, 4))
+        if(is_if_line && is_peek(Category::whitespace, 0)
+           && is_peek(Category::word, "GOTO", 1)
+           && is_peek(Category::whitespace, 2) && is_peek(Category::word, 3)
+           && is_peek(Category::end_of_line, 4))
             break;
 
         if(!consume_whitespace())
@@ -422,7 +422,7 @@ auto Parser::parse_command(bool is_if_line, bool not_flag)
         builder.arg(*arg);
     }
 
-    assert(is_peek(Category::EndOfLine) || is_peek(Category::Whitespace));
+    assert(is_peek(Category::end_of_line) || is_peek(Category::whitespace));
 
     return std::move(builder).build();
 }
@@ -441,14 +441,14 @@ auto Parser::parse_argument()
 
     const auto lexeme = scanner.spelling(*token);
 
-    if(token->category == Category::String)
+    if(token->category == Category::string)
     {
         auto string = lexeme;
         string.remove_prefix(1);
         string.remove_suffix(1);
         return ParserIR::create_string(string, token->source, arena);
     }
-    else if(token->category == Category::Word && is_integer(lexeme))
+    else if(token->category == Category::word && is_integer(lexeme))
     {
         int32_t value{};
 
@@ -463,7 +463,7 @@ auto Parser::parse_argument()
 
         return ParserIR::create_integer(value, token->source, arena);
     }
-    else if(token->category == Category::Word && is_float(lexeme))
+    else if(token->category == Category::word && is_float(lexeme))
     {
         float value{};
 
@@ -478,7 +478,7 @@ auto Parser::parse_argument()
 
         return ParserIR::create_float(value, token->source, arena);
     }
-    else if(token->category == Category::Word && is_identifier(lexeme))
+    else if(token->category == Category::word && is_identifier(lexeme))
     {
         return ParserIR::create_identifier(lexeme, token->source, arena);
     }
@@ -569,7 +569,7 @@ auto Parser::parse_statement(bool allow_special_name)
 
     arena_ptr<const ParserIR::LabelDef> label{};
 
-    if(is_peek(Category::Word) && scanner.spelling(*peek()).back() == ':')
+    if(is_peek(Category::word) && scanner.spelling(*peek()).back() == ':')
     {
         auto label_def = *consume();
         auto label_name = scanner.spelling(label_def);
@@ -581,7 +581,7 @@ auto Parser::parse_statement(bool allow_special_name)
             return std::nullopt;
         }
 
-        if(!is_peek(Category::EndOfLine))
+        if(!is_peek(Category::end_of_line))
         {
             if(!consume_whitespace())
                 return std::nullopt;
@@ -715,14 +715,14 @@ auto Parser::parse_embedded_statement(bool allow_special_name)
     // var_statement := command_var_name command_var_param {command_var_param} eol ;
     //
 
-    if(is_peek(Category::EndOfLine))
+    if(is_peek(Category::end_of_line))
     {
         consume();
         return LinkedIR<ParserIR>();
     }
-    else if(is_peek(Category::Word, COMMAND_GOSUB_FILE)
-            || is_peek(Category::Word, COMMAND_LAUNCH_MISSION)
-            || is_peek(Category::Word, COMMAND_LOAD_AND_LAUNCH_MISSION))
+    else if(is_peek(Category::word, command_gosub_file)
+            || is_peek(Category::word, command_launch_mission)
+            || is_peek(Category::word, command_load_and_launch_mission))
     {
         if(auto require_ir = parse_require_statement())
             return LinkedIR<ParserIR>({*require_ir});
@@ -741,32 +741,32 @@ auto Parser::parse_embedded_statement(bool allow_special_name)
         if(!expr_ir)
             return std::nullopt;
 
-        if(!consume(Category::EndOfLine))
+        if(!consume(Category::end_of_line))
             return std::nullopt;
 
         return expr_ir;
     }
-    else if(is_peek(Category::Word, "{"))
+    else if(is_peek(Category::word, "{"))
     {
         return parse_scope_statement();
     }
-    else if(is_peek(Category::Word, "IF"))
+    else if(is_peek(Category::word, "IF"))
     {
         return parse_if_statement();
     }
-    else if(is_peek(Category::Word, "IFNOT"))
+    else if(is_peek(Category::word, "IFNOT"))
     {
         return parse_ifnot_statement();
     }
-    else if(is_peek(Category::Word, "WHILE"))
+    else if(is_peek(Category::word, "WHILE"))
     {
         return parse_while_statement();
     }
-    else if(is_peek(Category::Word, "WHILENOT"))
+    else if(is_peek(Category::word, "WHILENOT"))
     {
         return parse_whilenot_statement();
     }
-    else if(is_peek(Category::Word, "REPEAT"))
+    else if(is_peek(Category::word, "REPEAT"))
     {
         return parse_repeat_statement();
     }
@@ -788,7 +788,7 @@ auto Parser::parse_embedded_statement(bool allow_special_name)
                 return std::nullopt;
             }
 
-            if(consume(Category::EndOfLine))
+            if(consume(Category::end_of_line))
                 return LinkedIR<ParserIR>({*ir});
         }
         return std::nullopt;
@@ -804,7 +804,7 @@ auto Parser::parse_scope_statement() -> std::optional<LinkedIR<ParserIR>>
     // Constraints:
     // Lexical scopes cannot be nested.
 
-    if(!is_peek(Category::Word, "{"))
+    if(!is_peek(Category::word, "{"))
     {
         consume_word("{"); // produces a diagnostic
         return std::nullopt;
@@ -813,7 +813,7 @@ auto Parser::parse_scope_statement() -> std::optional<LinkedIR<ParserIR>>
     auto open_command = parse_command();
     if(!open_command)
         return std::nullopt;
-    if(!consume(Category::EndOfLine))
+    if(!consume(Category::end_of_line))
         return std::nullopt;
 
     if(this->in_lexical_scope)
@@ -841,7 +841,7 @@ auto Parser::parse_conditional_element(bool is_if_line)
 
     bool not_flag = false;
 
-    if(is_peek(Category::Word, "NOT"))
+    if(is_peek(Category::word, "NOT"))
     {
         if(!consume() || !consume_whitespace())
             return std::nullopt;
@@ -886,7 +886,7 @@ auto Parser::parse_conditional_list()
     auto op_cond0 = parse_conditional_element();
     if(!op_cond0)
         return {std::nullopt, 0};
-    if(!consume(Category::EndOfLine))
+    if(!consume(Category::end_of_line))
         return {std::nullopt, 0};
     return parse_conditional_list(*op_cond0);
 }
@@ -910,13 +910,13 @@ auto Parser::parse_conditional_list(arena_ptr<ParserIR> op_cond0)
     size_t num_conds = 1;
     int32_t andor_count = 0;
 
-    if(is_peek(Category::Word, "AND") || is_peek(Category::Word, "OR"))
+    if(is_peek(Category::word, "AND") || is_peek(Category::word, "OR"))
     {
-        const auto is_and = is_peek(Category::Word, "AND");
+        const auto is_and = is_peek(Category::word, "AND");
         const auto *const andor_prefix = is_and ? "AND" : "OR";
         const auto *const anti_prefix = is_and ? "OR" : "AND";
 
-        while(is_peek(Category::Word, andor_prefix))
+        while(is_peek(Category::word, andor_prefix))
         {
             if(!consume() || !consume_whitespace())
                 return {std::nullopt, 0};
@@ -925,14 +925,14 @@ auto Parser::parse_conditional_list(arena_ptr<ParserIR> op_cond0)
             if(!op_elem)
                 return {std::nullopt, 0};
 
-            if(!consume(Category::EndOfLine))
+            if(!consume(Category::end_of_line))
                 return {std::nullopt, 0};
 
             andor_list.push_back(**op_elem);
             ++num_conds;
         }
 
-        if(is_peek(Category::Word, anti_prefix))
+        if(is_peek(Category::word, anti_prefix))
         {
             report(peek()->source, Diag::cannot_mix_andor);
             return {std::nullopt, 0};
@@ -986,9 +986,9 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
     //                          identifier eol;
     //
 
-    const auto if_command = is_ifnot ? COMMAND_IFNOT : COMMAND_IF;
-    const auto if_true_command = is_ifnot ? COMMAND_GOTO_IF_FALSE
-                                          : COMMAND_GOTO_IF_TRUE;
+    const auto if_command = is_ifnot ? command_ifnot : command_if;
+    const auto if_true_command = is_ifnot ? command_goto_if_false
+                                          : command_goto_if_true;
 
     auto if_token = consume_word(if_command);
     if(!if_token)
@@ -1003,7 +1003,7 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
 
     const auto src_info = if_token->source;
 
-    if(is_peek(Category::Whitespace))
+    if(is_peek(Category::whitespace))
     {
         if(!consume() || !consume_word("GOTO") || !consume_whitespace())
             return std::nullopt;
@@ -1012,12 +1012,12 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
         if(!arg_label)
             return std::nullopt;
 
-        if(!consume(Category::EndOfLine))
+        if(!consume(Category::end_of_line))
             return std::nullopt;
 
         auto linked = LinkedIR<ParserIR>();
         linked.push_back(*ParserIR::Builder(*arena)
-                                  .command(COMMAND_ANDOR, src_info)
+                                  .command(command_andor, src_info)
                                   .arg_int(0, src_info)
                                   .build());
         linked.push_back(**op_cond0);
@@ -1029,7 +1029,7 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
     }
     else
     {
-        if(!consume(Category::EndOfLine))
+        if(!consume(Category::end_of_line))
             return std::nullopt;
 
         auto [andor_list, andor_count] = parse_conditional_list(*op_cond0);
@@ -1041,7 +1041,7 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
             return std::nullopt;
 
         if(const auto *const else_command = body_stms->back().command;
-           else_command->name == COMMAND_ELSE)
+           else_command->name == command_else)
         {
             if(!else_command->args.empty())
             {
@@ -1095,7 +1095,7 @@ auto Parser::parse_while_statement_detail(bool is_whilenot)
     //                       [label_prefix] 'ENDWHILE' eol ;
     //
 
-    const auto while_command = is_whilenot ? COMMAND_WHILENOT : COMMAND_WHILE;
+    const auto while_command = is_whilenot ? command_whilenot : command_while;
 
     auto while_token = consume_word(while_command);
     if(!while_token)
@@ -1139,7 +1139,7 @@ auto Parser::parse_repeat_statement() -> std::optional<LinkedIR<ParserIR>>
     //                     {statement}
     //                     [label_prefix] 'ENDREPEAT' eol ;
 
-    if(!is_peek(Category::Word, "REPEAT"))
+    if(!is_peek(Category::word, "REPEAT"))
     {
         consume_word("REPEAT"); // produces a diagnostic
         return std::nullopt;
@@ -1148,7 +1148,7 @@ auto Parser::parse_repeat_statement() -> std::optional<LinkedIR<ParserIR>>
     auto repeat_command = parse_command();
     if(!repeat_command)
         return std::nullopt;
-    if(!consume(Category::EndOfLine))
+    if(!consume(Category::end_of_line))
         return std::nullopt;
 
     assert(*repeat_command && (*repeat_command)->command != nullptr);
@@ -1197,7 +1197,7 @@ auto Parser::parse_require_statement() -> std::optional<arena_ptr<ParserIR>>
     ParserIR::Builder builder(*arena);
     builder.command(scanner.spelling(*command), command->source);
 
-    if(iequal(scanner.spelling(*command), COMMAND_GOSUB_FILE))
+    if(iequal(scanner.spelling(*command), command_gosub_file))
     {
         if(!consume_whitespace())
             return std::nullopt;
@@ -1208,9 +1208,9 @@ auto Parser::parse_require_statement() -> std::optional<arena_ptr<ParserIR>>
 
         builder.arg(*arg_label);
     }
-    else if(!iequal(scanner.spelling(*command), COMMAND_LAUNCH_MISSION)
+    else if(!iequal(scanner.spelling(*command), command_launch_mission)
             && !iequal(scanner.spelling(*command),
-                       COMMAND_LOAD_AND_LAUNCH_MISSION))
+                       command_load_and_launch_mission))
     {
         report(command->source, Diag::expected_require_command);
         return std::nullopt;
@@ -1223,7 +1223,7 @@ auto Parser::parse_require_statement() -> std::optional<arena_ptr<ParserIR>>
     if(!tok_filename)
         return std::nullopt;
 
-    if(!consume(Category::EndOfLine))
+    if(!consume(Category::end_of_line))
         return std::nullopt;
 
     builder.arg_filename(scanner.spelling(*tok_filename), tok_filename->source);
@@ -1292,12 +1292,12 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
     // of the line. That is what we gonna do, take all the tokens in this line
     // and match them against the production rules.
 
-    while(!is_peek(Category::EndOfLine))
+    while(!is_peek(Category::end_of_line))
     {
-        if(is_if_line && is_peek(Category::Whitespace, 0)
-           && is_peek(Category::Word, "GOTO", 1)
-           && is_peek(Category::Whitespace, 2) && is_peek(Category::Word, 3)
-           && is_peek(Category::EndOfLine, 4))
+        if(is_if_line && is_peek(Category::whitespace, 0)
+           && is_peek(Category::word, "GOTO", 1)
+           && is_peek(Category::whitespace, 2) && is_peek(Category::word, 3)
+           && is_peek(Category::end_of_line, 4))
             break;
 
         // Getting over this number of tokens implies we'll not match
@@ -1316,35 +1316,35 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
 
         switch(peek()->category)
         {
-            case Category::Equal:
-            case Category::EqualHash:
-            case Category::PlusEqual:
-            case Category::MinusEqual:
-            case Category::StarEqual:
-            case Category::SlashEqual:
-            case Category::PlusEqualAt:
-            case Category::MinusEqualAt:
-            case Category::PlusPlus:
-            case Category::MinusMinus:
-            case Category::Less:
-            case Category::LessEqual:
-            case Category::Greater:
-            case Category::GreaterEqual:
-            case Category::Plus:
-            case Category::Minus:
-            case Category::Star:
-            case Category::Slash:
-            case Category::PlusAt:
-            case Category::MinusAt:
+            case Category::equal:
+            case Category::equal_hash:
+            case Category::plus_equal:
+            case Category::minus_equal:
+            case Category::star_equal:
+            case Category::slash_equal:
+            case Category::plus_equal_at:
+            case Category::minus_equal_at:
+            case Category::plus_plus:
+            case Category::minus_minus:
+            case Category::less:
+            case Category::less_equal:
+            case Category::greater:
+            case Category::greater_equal:
+            case Category::plus:
+            case Category::minus:
+            case Category::star:
+            case Category::slash:
+            case Category::plus_at:
+            case Category::minus_at:
             {
                 spans[num_toks] = peek()->source;
                 cats[num_toks++] = consume()->category;
                 break;
             }
-            case Category::Word:
+            case Category::word:
             {
                 spans[num_toks] = peek()->source;
-                cats[num_toks++] = Category::Word;
+                cats[num_toks++] = Category::word;
                 if(auto arg = parse_argument())
                 {
                     args[num_args++] = *arg;
@@ -1356,12 +1356,12 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
                 }
                 break;
             }
-            case Category::Whitespace:
+            case Category::whitespace:
             {
                 consume();
                 break;
             }
-            case Category::String:
+            case Category::string:
             {
                 // needs special care when comparing for name equality.
                 // not implemented yet. TODO
@@ -1402,12 +1402,12 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
 
     // Make sure the left-hand side of a expression is not require commands
     // nor mission directives. This is a constraint of the grammar.
-    if(num_args > 0 && cats[0] == Category::Word && args[0]->as_identifier())
+    if(num_args > 0 && cats[0] == Category::word && args[0]->as_identifier())
     {
         const auto *lhs = args[0]->as_identifier();
-        if(*lhs == COMMAND_GOSUB_FILE || *lhs == COMMAND_LAUNCH_MISSION
-           || *lhs == COMMAND_LOAD_AND_LAUNCH_MISSION
-           || *lhs == COMMAND_MISSION_START || *lhs == COMMAND_MISSION_END)
+        if(*lhs == command_gosub_file || *lhs == command_launch_mission
+           || *lhs == command_load_and_launch_mission
+           || *lhs == command_mission_start || *lhs == command_mission_end)
         {
             report_special_name(args[0]->source);
             return std::nullopt;
@@ -1420,33 +1420,33 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
                                       spans[num_toks - 1].end - spans[0].begin);
 
     if(num_toks == 2
-       && ((cats[0] == Category::Word && cats[1] == Category::PlusPlus)
-           || (cats[0] == Category::PlusPlus && cats[1] == Category::Word)))
+       && ((cats[0] == Category::word && cats[1] == Category::plus_plus)
+           || (cats[0] == Category::plus_plus && cats[1] == Category::word)))
     {
         linked.push_back(*ParserIR::Builder(*arena)
                                   .not_flag(not_flag)
-                                  .command(COMMAND_ADD_THING_TO_THING, src_info)
+                                  .command(command_add_thing_to_thing, src_info)
                                   .arg(args[0])
                                   .arg_int(1, src_info)
                                   .build());
     }
     else if(num_toks == 2
-            && ((cats[0] == Category::Word && cats[1] == Category::MinusMinus)
-                || (cats[0] == Category::MinusMinus
-                    && cats[1] == Category::Word)))
+            && ((cats[0] == Category::word && cats[1] == Category::minus_minus)
+                || (cats[0] == Category::minus_minus
+                    && cats[1] == Category::word)))
     {
         linked.push_back(
                 *ParserIR::Builder(*arena)
                          .not_flag(not_flag)
-                         .command(COMMAND_SUB_THING_FROM_THING, src_info)
+                         .command(command_sub_thing_from_thing, src_info)
                          .arg(args[0])
                          .arg_int(1, src_info)
                          .build());
     }
-    else if(num_toks == 4 && cats[0] == Category::Word
-            && cats[1] == Category::Equal && cats[2] == Category::Word
+    else if(num_toks == 4 && cats[0] == Category::word
+            && cats[1] == Category::equal && cats[2] == Category::word
             && args[1]->as_identifier() && *args[1]->as_identifier() == "ABS"sv
-            && cats[3] == Category::Word)
+            && cats[3] == Category::word)
     {
         const auto a = args[0];
         const auto b = args[2];
@@ -1454,7 +1454,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
         {
             linked.push_back(*ParserIR::Builder(*arena)
                                       .not_flag(not_flag)
-                                      .command(COMMAND_ABS, src_info)
+                                      .command(command_abs, src_info)
                                       .arg(a)
                                       .build());
         }
@@ -1462,44 +1462,44 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
         {
             linked.push_back(*ParserIR::Builder(*arena)
                                       .not_flag(not_flag)
-                                      .command(COMMAND_SET, src_info)
+                                      .command(command_set, src_info)
                                       .arg(a)
                                       .arg(b)
                                       .build());
             linked.push_back(*ParserIR::Builder(*arena)
                                       .not_flag(not_flag)
-                                      .command(COMMAND_ABS, src_info)
+                                      .command(command_abs, src_info)
                                       .arg(a)
                                       .build());
         }
     }
-    else if(num_toks == 3 && cats[0] == Category::Word
-            && cats[1] != Category::Word && cats[2] == Category::Word)
+    else if(num_toks == 3 && cats[0] == Category::word
+            && cats[1] != Category::word && cats[2] == Category::word)
     {
         using LookupItem = std::pair<Category, std::string_view>;
 
         static constexpr LookupItem lookup_assignment[] = {
-                LookupItem{Category::Equal, COMMAND_SET},
-                LookupItem{Category::EqualHash, COMMAND_CSET},
-                LookupItem{Category::PlusEqual, COMMAND_ADD_THING_TO_THING},
-                LookupItem{Category::MinusEqual, COMMAND_SUB_THING_FROM_THING},
-                LookupItem{Category::StarEqual, COMMAND_MULT_THING_BY_THING},
-                LookupItem{Category::SlashEqual, COMMAND_DIV_THING_BY_THING},
-                LookupItem{Category::PlusEqualAt,
-                           COMMAND_ADD_THING_TO_THING_TIMED},
-                LookupItem{Category::MinusEqualAt,
-                           COMMAND_SUB_THING_FROM_THING_TIMED},
+                LookupItem{Category::equal, command_set},
+                LookupItem{Category::equal_hash, command_cset},
+                LookupItem{Category::plus_equal, command_add_thing_to_thing},
+                LookupItem{Category::minus_equal, command_sub_thing_from_thing},
+                LookupItem{Category::star_equal, command_mult_thing_by_thing},
+                LookupItem{Category::slash_equal, command_div_thing_by_thing},
+                LookupItem{Category::plus_equal_at,
+                           command_add_thing_to_thing_timed},
+                LookupItem{Category::minus_equal_at,
+                           command_sub_thing_from_thing_timed},
         };
 
         static constexpr LookupItem lookup_conditional[] = {
-                LookupItem{Category::Equal, COMMAND_IS_THING_EQUAL_TO_THING},
-                LookupItem{Category::Less, COMMAND_IS_THING_GREATER_THAN_THING},
-                LookupItem{Category::LessEqual,
-                           COMMAND_IS_THING_GREATER_OR_EQUAL_TO_THING},
-                LookupItem{Category::Greater,
-                           COMMAND_IS_THING_GREATER_THAN_THING},
-                LookupItem{Category::GreaterEqual,
-                           COMMAND_IS_THING_GREATER_OR_EQUAL_TO_THING},
+                LookupItem{Category::equal, command_is_thing_equal_to_thing},
+                LookupItem{Category::less, command_is_thing_greater_than_thing},
+                LookupItem{Category::less_equal,
+                           command_is_thing_greater_or_equal_to_thing},
+                LookupItem{Category::greater,
+                           command_is_thing_greater_than_thing},
+                LookupItem{Category::greater_equal,
+                           command_is_thing_greater_or_equal_to_thing},
         };
 
         const auto *const it_cond = std::find_if(
@@ -1536,7 +1536,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
             // Less (and less than) uses the greater (and greater than)
             // command to perform its comparision. Swap arguments for this
             // to work properly.
-            if(it->first == Category::Less || it->first == Category::LessEqual)
+            if(it->first == Category::less || it->first == Category::less_equal)
                 std::swap(a, b);
         }
         else
@@ -1559,20 +1559,20 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
                                   .arg(b)
                                   .build());
     }
-    else if(num_toks == 5 && cats[0] == Category::Word
-            && cats[1] == Category::Equal && cats[2] == Category::Word
-            && cats[3] != Category::Word && cats[4] == Category::Word)
+    else if(num_toks == 5 && cats[0] == Category::word
+            && cats[1] == Category::equal && cats[2] == Category::word
+            && cats[3] != Category::word && cats[4] == Category::word)
     {
         using LookupItem = std::pair<Category, std::string_view>;
 
         static constexpr LookupItem lookup_ternary[] = {
-                LookupItem{Category::Plus, COMMAND_ADD_THING_TO_THING},
-                LookupItem{Category::Minus, COMMAND_SUB_THING_FROM_THING},
-                LookupItem{Category::Star, COMMAND_MULT_THING_BY_THING},
-                LookupItem{Category::Slash, COMMAND_DIV_THING_BY_THING},
-                LookupItem{Category::PlusAt, COMMAND_ADD_THING_TO_THING_TIMED},
-                LookupItem{Category::MinusAt,
-                           COMMAND_SUB_THING_FROM_THING_TIMED},
+                LookupItem{Category::plus, command_add_thing_to_thing},
+                LookupItem{Category::minus, command_sub_thing_from_thing},
+                LookupItem{Category::star, command_mult_thing_by_thing},
+                LookupItem{Category::slash, command_div_thing_by_thing},
+                LookupItem{Category::plus_at, command_add_thing_to_thing_timed},
+                LookupItem{Category::minus_at,
+                           command_sub_thing_from_thing_timed},
         };
 
         const auto *it = std::find_if(
@@ -1589,8 +1589,8 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
         const auto b = args[1];
         const auto c = args[2];
 
-        const bool is_associative = (cats[3] == Category::Plus
-                                     || cats[3] == Category::Star);
+        const bool is_associative = (cats[3] == Category::plus
+                                     || cats[3] == Category::star);
 
         if(a->is_same_value(*b))
         {
@@ -1620,7 +1620,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
         else
         {
             linked.push_back(*ParserIR::Builder(*arena)
-                                      .command(COMMAND_SET, src_info)
+                                      .command(command_set, src_info)
                                       .arg(a)
                                       .arg(b)
                                       .build());
@@ -1637,7 +1637,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
         return std::nullopt;
     }
 
-    assert(is_peek(Category::EndOfLine) || is_peek(Category::Whitespace));
+    assert(is_peek(Category::end_of_line) || is_peek(Category::whitespace));
 
     return linked;
 }
@@ -1648,7 +1648,7 @@ auto Parser::ensure_mission_start_at_top_of_file() -> bool
     // file and shall not be preceded by anything but ASCII spaces ( ) and
     // horizontal tabs (\t). Comments instead of whitespaces are disallowed.
 
-    bool has_mission_start = is_peek(Category::Word, "MISSION_START"sv);
+    bool has_mission_start = is_peek(Category::word, "MISSION_START"sv);
 
     auto file_contents = source_file().code_view();
     for(const auto *it = file_contents.begin();

@@ -3,7 +3,7 @@
 #include <doctest/doctest.h>
 #include <gta3sc/syntax/parser.hpp>
 #include <gta3sc/syntax/sema.hpp>
-using namespace gta3sc::test; // NOLINT
+using namespace gta3sc::test;         // NOLINT
 using namespace gta3sc::test::syntax; // NOLINT
 using namespace std::literals::string_view_literals;
 using gta3sc::test::syntax::d;

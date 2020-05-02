@@ -6,37 +6,37 @@ namespace gta3sc::syntax
 /// Lexical category of a token.
 enum class Category : uint8_t
 {
-    Word,
-    String,
-    Whitespace,
-    EndOfLine,
-    Equal,
-    PlusEqual,
-    MinusEqual,
-    StarEqual,
-    SlashEqual,
-    PlusEqualAt,
-    MinusEqualAt,
-    EqualHash,
-    MinusMinus,
-    PlusPlus,
-    Less,
-    LessEqual,
-    Greater,
-    GreaterEqual,
-    Plus,
-    Minus,
-    Star,
-    Slash,
-    PlusAt,
-    MinusAt,
+    word,
+    string,
+    whitespace,
+    end_of_line,
+    equal,
+    plus_equal,
+    minus_equal,
+    star_equal,
+    slash_equal,
+    plus_equal_at,
+    minus_equal_at,
+    equal_hash,
+    minus_minus,
+    plus_plus,
+    less,
+    less_equal,
+    greater,
+    greater_equal,
+    plus,
+    minus,
+    star,
+    slash,
+    plus_at,
+    minus_at
 };
 
 /// Classified lexeme.
 struct Token
 {
-    Category category{Category::EndOfLine}; ///< Category of this token.
-    SourceRange source;                     ///< Origin of this token.
+    Category category{Category::end_of_line}; ///< Category of this token.
+    SourceRange source;                       ///< Origin of this token.
 
     Token() noexcept = default;
 
@@ -84,7 +84,7 @@ public:
     /// A filename must end in `.sc`, otherwise `std::nullopt` gets
     /// returned.
     ///
-    /// The category of a filename is `Category::Word`.
+    /// The category of a filename is `Category::word`.
     ///
     /// If the next token is not a valid filename, an error is reported
     /// to the `DiagnosticManager` and `std::nullopt` is returned.

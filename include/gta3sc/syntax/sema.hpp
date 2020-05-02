@@ -37,7 +37,7 @@ public:
         cmdman(&cmdman),
         modelman(&modelman),
         symrepo(&symrepo),
-        diag_(&diag),
+        diag(&diag),
         arena(&arena)
     {}
 
@@ -228,7 +228,7 @@ private:
 
 private:
     ArenaMemoryResource* arena;
-    DiagnosticHandler* diag_; // Do not use directly. Please call `report`.
+    DiagnosticHandler* diag; // Do not use directly. Please call `report`.
     SymbolRepository* symrepo;
     const CommandManager* cmdman;
     const ModelManager* modelman;

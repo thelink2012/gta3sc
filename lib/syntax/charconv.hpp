@@ -14,12 +14,14 @@ namespace gta3sc::util
 //
 // See https://en.cppreference.com/w/cpp/utility/from_chars for details.
 
+// NOLINTNEXTLINE(readability-identifier-naming): `std::` clone.
 struct from_chars_result
 {
     const char* ptr;
     std::errc ec;
 };
 
+// NOLINTNEXTLINE(readability-identifier-naming): `std::` clone.
 enum class chars_format
 {
     fixed = 1,

@@ -10,8 +10,8 @@ class CodeEmitterFixture
 };
 } // namespace gta3sc::test::codegen::trilogy
 
-using gta3sc::test::codegen::trilogy::CodeEmitterFixture;
 using gta3sc::codegen::trilogy::CodeEmitter;
+using gta3sc::test::codegen::trilogy::CodeEmitterFixture;
 using std::back_inserter;
 
 TEST_CASE_FIXTURE(CodeEmitterFixture, "initial emitter state")

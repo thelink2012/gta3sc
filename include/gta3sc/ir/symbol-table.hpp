@@ -27,10 +27,10 @@ struct SymLabel
 struct SymVariable
 {
     enum class Type : uint8_t
-    {
-        INT,
-        FLOAT,
-        TEXT_LABEL,
+    {               // GTA3script types should be uppercase.
+        INT,        // NOLINT(readability-identifier-naming)
+        FLOAT,      // NOLINT(readability-identifier-naming)
+        TEXT_LABEL, // NOLINT(readability-identifier-naming)
     };
 
     SourceRange source; ///< The location the variable was declared.

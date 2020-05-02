@@ -38,7 +38,7 @@ auto SymbolRepository::lookup_used_object(std::string_view name) const
     return (it == used_objects.end() ? nullptr : it->second);
 }
 
-auto SymbolRepository::insert_var(std::string_view name_, ScopeId scope_id,
+auto SymbolRepository::insert_var(std::string_view name, ScopeId scope_id,
                                   SymVariable::Type type,
                                   std::optional<uint16_t> dim,
                                   SourceRange source)
@@ -46,43 +46,43 @@ auto SymbolRepository::insert_var(std::string_view name_, ScopeId scope_id,
 {
     assert(scope_id < var_tables.size());
 
-    if(const auto *v = lookup_var(name_, scope_id))
+    if(const auto *v = lookup_var(name, scope_id))
         return {v, false};
 
     const auto id = static_cast<uint32_t>(var_tables[scope_id].size());
-    const auto name = util::allocate_string(name_, *arena);
+    const auto a_name = util::allocate_string(name, *arena);
     const auto *const symbol = new(*arena, alignof(SymVariable))
             const SymVariable{source, id, scope_id, type, dim};
-    const auto [iter, _] = var_tables[scope_id].emplace(name, symbol);
+    const auto [iter, _] = var_tables[scope_id].emplace(a_name, symbol);
     return {iter->second, true};
 }
 
-auto SymbolRepository::insert_label(std::string_view name_, ScopeId scope_id,
+auto SymbolRepository::insert_label(std::string_view name, ScopeId scope_id,
                                     SourceRange source)
         -> std::pair<const SymLabel *, bool>
 {
-    if(const auto *l = lookup_label(name_))
+    if(const auto *l = lookup_label(name))
         return {l, false};
 
-    const auto name = util::allocate_string(name_, *arena);
+    const auto a_name = util::allocate_string(name, *arena);
     const auto *const symbol = new(*arena, alignof(SymLabel))
             const SymLabel{source, scope_id};
-    const auto [iter, _] = label_table.emplace(name, symbol);
+    const auto [iter, _] = label_table.emplace(a_name, symbol);
     return {iter->second, true};
 }
 
-auto SymbolRepository::insert_used_object(std::string_view name_,
+auto SymbolRepository::insert_used_object(std::string_view name,
                                           SourceRange source)
         -> std::pair<const SymUsedObject *, bool>
 {
-    if(const auto *uobj = lookup_used_object(name_))
+    if(const auto *uobj = lookup_used_object(name))
         return {uobj, false};
 
     const auto id = static_cast<uint32_t>(used_objects.size());
-    const auto name = util::allocate_string(name_, *arena);
+    const auto a_name = util::allocate_string(name, *arena);
     const auto *const symbol = new(*arena, alignof(SymUsedObject))
             const SymUsedObject{source, id};
-    const auto [iter, _] = used_objects.emplace(name, symbol);
+    const auto [iter, _] = used_objects.emplace(a_name, symbol);
     return {iter->second, true};
 }
 } // namespace gta3sc

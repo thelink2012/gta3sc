@@ -45,10 +45,10 @@ TEST_CASE_FIXTURE(ScannerFixture, "scanner with empty stream")
     build_scanner("");
 
     REQUIRE(!scanner.eof());
-    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::end_of_line);
     REQUIRE(scanner.eof());
     REQUIRE(spelling(*scanner.next()) == "");
-    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::end_of_line);
     REQUIRE(scanner.eof());
 }
 
@@ -56,19 +56,19 @@ TEST_CASE_FIXTURE(ScannerFixture,
                   "scanner with leading and trailing whitespaces")
 {
     build_scanner("  , COMMAND  (\t)  \n");
-    REQUIRE(scanner.next()->category == Category::Word);
-    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::word);
+    REQUIRE(scanner.next()->category == Category::end_of_line);
 }
 
 TEST_CASE_FIXTURE(ScannerFixture, "scanner with whitespaces in the middle")
 {
     build_scanner("  , COMMAND  1,\t,2  (\t)  ");
-    REQUIRE(scanner.next()->category == Category::Word);
-    REQUIRE(scanner.next()->category == Category::Whitespace);
-    REQUIRE(scanner.next()->category == Category::Word);
-    REQUIRE(scanner.next()->category == Category::Whitespace);
-    REQUIRE(scanner.next()->category == Category::Word);
-    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::word);
+    REQUIRE(scanner.next()->category == Category::whitespace);
+    REQUIRE(scanner.next()->category == Category::word);
+    REQUIRE(scanner.next()->category == Category::whitespace);
+    REQUIRE(scanner.next()->category == Category::word);
+    REQUIRE(scanner.next()->category == Category::end_of_line);
 }
 
 TEST_CASE_FIXTURE(ScannerFixture, "scanner with word")
@@ -81,64 +81,64 @@ TEST_CASE_FIXTURE(ScannerFixture, "scanner with word")
     gta3sc::syntax::Token token;
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "1234");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "123a");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "-123a");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "-.abc");
-    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::end_of_line);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "4x4.sc");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == ".sc");
-    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::end_of_line);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "word:");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "word:");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "word");
-    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::end_of_line);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "%$&~");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "AbC");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "{}");
-    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::end_of_line);
 
     REQUIRE(scanner.eof());
 }
@@ -154,32 +154,32 @@ TEST_CASE_FIXTURE(ScannerFixture, "scanner with string literal")
     gta3sc::syntax::Token token;
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::String);
+    REQUIRE(token.category == Category::string);
     REQUIRE(spelling(token) == "\"this\tI$ /* a // \\n (%1teral),\"");
-    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::end_of_line);
 
     REQUIRE(scanner.next() == std::nullopt);
     REQUIRE(consume_diag().message
             == gta3sc::Diag::unterminated_string_literal);
-    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::end_of_line);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::String);
+    REQUIRE(token.category == Category::string);
     REQUIRE(spelling(token) == "\"\"");
-    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::end_of_line);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::String);
+    REQUIRE(token.category == Category::string);
     REQUIRE(spelling(token) == "\"string\"");
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "abc"); // fine at scanning time
-    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::end_of_line);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "not_string");
-    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::end_of_line);
 
     REQUIRE(scanner.eof());
 }
@@ -194,64 +194,64 @@ TEST_CASE_FIXTURE(ScannerFixture, "scanner with filename")
     gta3sc::syntax::Token token;
 
     token = scanner.next_filename().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == ".sc");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next_filename().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "a.SC");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next_filename().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "@.sc");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next_filename().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "1.sc");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     REQUIRE(scanner.next_filename() == std::nullopt); // 1.0sc
     REQUIRE(consume_diag().message == gta3sc::Diag::invalid_filename);
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     REQUIRE(scanner.next_filename() == std::nullopt); // SC
     REQUIRE(consume_diag().message == gta3sc::Diag::invalid_filename);
-    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::end_of_line);
 
     REQUIRE(scanner.next_filename() == std::nullopt); // b
     REQUIRE(consume_diag().message == gta3sc::Diag::invalid_filename);
     token = scanner.next().value();
-    REQUIRE(token.category == Category::String);
+    REQUIRE(token.category == Category::string);
     REQUIRE(spelling(token) == "\"a\"");
     token = scanner.next_filename().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == ".sc");
-    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::end_of_line);
 
     token = scanner.next_filename().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "file-nam+@e.sc");
-    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::end_of_line);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "file");
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Minus);
+    REQUIRE(token.category == Category::minus);
     REQUIRE(spelling(token) == "-");
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "nam");
     token = scanner.next().value();
-    REQUIRE(token.category == Category::PlusAt);
+    REQUIRE(token.category == Category::plus_at);
     REQUIRE(spelling(token) == "+@");
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "e.sc");
-    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::end_of_line);
 
     REQUIRE(scanner.eof());
 }
@@ -271,235 +271,235 @@ TEST_CASE_FIXTURE(ScannerFixture, "scanner with operators")
     gta3sc::syntax::Token token;
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Plus);
+    REQUIRE(token.category == Category::plus);
     REQUIRE(spelling(token) == "+");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Minus);
+    REQUIRE(token.category == Category::minus);
     REQUIRE(spelling(token) == "-");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Star);
+    REQUIRE(token.category == Category::star);
     REQUIRE(spelling(token) == "*");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Slash);
+    REQUIRE(token.category == Category::slash);
     REQUIRE(spelling(token) == "/");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::PlusAt);
+    REQUIRE(token.category == Category::plus_at);
     REQUIRE(spelling(token) == "+@");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::MinusAt);
+    REQUIRE(token.category == Category::minus_at);
     REQUIRE(spelling(token) == "-@");
-    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::end_of_line);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::PlusEqual);
+    REQUIRE(token.category == Category::plus_equal);
     REQUIRE(spelling(token) == "+=");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::MinusEqual);
+    REQUIRE(token.category == Category::minus_equal);
     REQUIRE(spelling(token) == "-=");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::StarEqual);
+    REQUIRE(token.category == Category::star_equal);
     REQUIRE(spelling(token) == "*=");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::SlashEqual);
+    REQUIRE(token.category == Category::slash_equal);
     REQUIRE(spelling(token) == "/=");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::PlusEqualAt);
+    REQUIRE(token.category == Category::plus_equal_at);
     REQUIRE(spelling(token) == "+=@");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::MinusEqualAt);
+    REQUIRE(token.category == Category::minus_equal_at);
     REQUIRE(spelling(token) == "-=@");
-    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::end_of_line);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::LessEqual);
+    REQUIRE(token.category == Category::less_equal);
     REQUIRE(spelling(token) == "<=");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Less);
+    REQUIRE(token.category == Category::less);
     REQUIRE(spelling(token) == "<");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Equal);
+    REQUIRE(token.category == Category::equal);
     REQUIRE(spelling(token) == "=");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::EqualHash);
+    REQUIRE(token.category == Category::equal_hash);
     REQUIRE(spelling(token) == "=#");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Greater);
+    REQUIRE(token.category == Category::greater);
     REQUIRE(spelling(token) == ">");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::GreaterEqual);
+    REQUIRE(token.category == Category::greater_equal);
     REQUIRE(spelling(token) == ">=");
-    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::end_of_line);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::MinusMinus);
+    REQUIRE(token.category == Category::minus_minus);
     REQUIRE(spelling(token) == "--");
     token = scanner.next().value();
-    REQUIRE(token.category == Category::PlusPlus);
+    REQUIRE(token.category == Category::plus_plus);
     REQUIRE(spelling(token) == "++");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Minus);
+    REQUIRE(token.category == Category::minus);
     REQUIRE(spelling(token) == "-");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Minus);
+    REQUIRE(token.category == Category::minus);
     REQUIRE(spelling(token) == "-");
-    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::end_of_line);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Less);
+    REQUIRE(token.category == Category::less);
     REQUIRE(spelling(token) == "<");
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Less);
+    REQUIRE(token.category == Category::less);
     REQUIRE(spelling(token) == "<");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::LessEqual);
+    REQUIRE(token.category == Category::less_equal);
     REQUIRE(spelling(token) == "<=");
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Greater);
+    REQUIRE(token.category == Category::greater);
     REQUIRE(spelling(token) == ">");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Plus);
+    REQUIRE(token.category == Category::plus);
     REQUIRE(spelling(token) == "+");
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Minus);
+    REQUIRE(token.category == Category::minus);
     REQUIRE(spelling(token) == "-");
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Star);
+    REQUIRE(token.category == Category::star);
     REQUIRE(spelling(token) == "*");
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Slash);
+    REQUIRE(token.category == Category::slash);
     REQUIRE(spelling(token) == "/");
     token = scanner.next().value();
-    REQUIRE(token.category == Category::PlusAt);
+    REQUIRE(token.category == Category::plus_at);
     REQUIRE(spelling(token) == "+@");
     token = scanner.next().value();
-    REQUIRE(token.category == Category::MinusAt);
+    REQUIRE(token.category == Category::minus_at);
     REQUIRE(spelling(token) == "-@");
-    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::end_of_line);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "1");
     token = scanner.next().value();
-    REQUIRE(token.category == Category::MinusMinus);
+    REQUIRE(token.category == Category::minus_minus);
     REQUIRE(spelling(token) == "--");
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "1");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "1");
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Minus);
+    REQUIRE(token.category == Category::minus);
     REQUIRE(spelling(token) == "-");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "-1");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Plus);
+    REQUIRE(token.category == Category::plus);
     REQUIRE(spelling(token) == "+");
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "1");
-    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::end_of_line);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "-.");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "-.1");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "-1.0");
-    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::end_of_line);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Plus);
+    REQUIRE(token.category == Category::plus);
     REQUIRE(spelling(token) == "+");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "@");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Minus);
+    REQUIRE(token.category == Category::minus);
     REQUIRE(spelling(token) == "-");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "@");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Equal);
+    REQUIRE(token.category == Category::equal);
     REQUIRE(spelling(token) == "=");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Word);
+    REQUIRE(token.category == Category::word);
     REQUIRE(spelling(token) == "#");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Plus);
+    REQUIRE(token.category == Category::plus);
     REQUIRE(spelling(token) == "+");
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::whitespace);
 
     token = scanner.next().value();
-    REQUIRE(token.category == Category::Equal);
+    REQUIRE(token.category == Category::equal);
     REQUIRE(spelling(token) == "=");
-    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::end_of_line);
 
     REQUIRE(scanner.eof());
 }
@@ -509,17 +509,17 @@ TEST_CASE_FIXTURE(ScannerFixture, "scanner with invalid ASCII")
     build_scanner("HI \x01 BYE\n"
                   "\"HI \x02 BYE\"\n");
 
-    REQUIRE(scanner.next()->category == Category::Word);
-    REQUIRE(scanner.next()->category == Category::Whitespace);
+    REQUIRE(scanner.next()->category == Category::word);
+    REQUIRE(scanner.next()->category == Category::whitespace);
     REQUIRE(scanner.next() == std::nullopt);
     REQUIRE(consume_diag().message == gta3sc::Diag::invalid_char);
-    REQUIRE(scanner.next()->category == Category::Whitespace);
-    REQUIRE(scanner.next()->category == Category::Word);
-    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::whitespace);
+    REQUIRE(scanner.next()->category == Category::word);
+    REQUIRE(scanner.next()->category == Category::end_of_line);
 
     // TODO maybe we should emit an warning for this case
-    REQUIRE(scanner.next()->category == Category::String);
-    REQUIRE(scanner.next()->category == Category::EndOfLine);
+    REQUIRE(scanner.next()->category == Category::string);
+    REQUIRE(scanner.next()->category == Category::end_of_line);
 
     REQUIRE(scanner.eof());
 }

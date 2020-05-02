@@ -45,32 +45,32 @@ public:
     /// See the language specification for details on parameters:
     /// https://gtamodding.github.io/gta3script-specs/core.html#parameters
     enum class ParamType : uint8_t
-    {
-        INT,
-        FLOAT,
+    {          // GTA3script types should be uppercase.
+        INT,   // NOLINT(readability-identifier-naming)
+        FLOAT, // NOLINT(readability-identifier-naming)
 
-        VAR_INT,
-        LVAR_INT,
-        VAR_FLOAT,
-        LVAR_FLOAT,
-        VAR_TEXT_LABEL,
-        LVAR_TEXT_LABEL,
+        VAR_INT,         // NOLINT(readability-identifier-naming)
+        LVAR_INT,        // NOLINT(readability-identifier-naming)
+        VAR_FLOAT,       // NOLINT(readability-identifier-naming)
+        LVAR_FLOAT,      // NOLINT(readability-identifier-naming)
+        VAR_TEXT_LABEL,  // NOLINT(readability-identifier-naming)
+        LVAR_TEXT_LABEL, // NOLINT(readability-identifier-naming)
 
-        INPUT_INT,
-        INPUT_FLOAT,
-        OUTPUT_INT,
-        OUTPUT_FLOAT,
-        LABEL,
-        TEXT_LABEL,
-        STRING,
+        INPUT_INT,    // NOLINT(readability-identifier-naming)
+        INPUT_FLOAT,  // NOLINT(readability-identifier-naming)
+        OUTPUT_INT,   // NOLINT(readability-identifier-naming)
+        OUTPUT_FLOAT, // NOLINT(readability-identifier-naming)
+        LABEL,        // NOLINT(readability-identifier-naming)
+        TEXT_LABEL,   // NOLINT(readability-identifier-naming)
+        STRING,       // NOLINT(readability-identifier-naming)
 
-        VAR_INT_OPT,
-        LVAR_INT_OPT,
-        VAR_FLOAT_OPT,
-        LVAR_FLOAT_OPT,
-        VAR_TEXT_LABEL_OPT,
-        LVAR_TEXT_LABEL_OPT,
-        INPUT_OPT,
+        VAR_INT_OPT,         // NOLINT(readability-identifier-naming)
+        LVAR_INT_OPT,        // NOLINT(readability-identifier-naming)
+        VAR_FLOAT_OPT,       // NOLINT(readability-identifier-naming)
+        LVAR_FLOAT_OPT,      // NOLINT(readability-identifier-naming)
+        VAR_TEXT_LABEL_OPT,  // NOLINT(readability-identifier-naming)
+        LVAR_TEXT_LABEL_OPT, // NOLINT(readability-identifier-naming)
+        INPUT_OPT,           // NOLINT(readability-identifier-naming)
     };
 
     /// Stores information about a parameter.

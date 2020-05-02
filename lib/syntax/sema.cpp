@@ -932,12 +932,12 @@ void Sema::declare_label(const ParserIR::LabelDef& label_def)
     }
 }
 
-void Sema::declare_variable(const ParserIR::Command& command, ScopeId scope_id_,
+void Sema::declare_variable(const ParserIR::Command& command, ScopeId scope_id,
                             SymVariable::Type type)
 {
     for(auto& arg : command.args)
     {
-        ScopeId scope_id = scope_id_;
+        ScopeId var_scope_id = scope_id;
 
         if(!arg->as_identifier())
         {
@@ -960,10 +960,10 @@ void Sema::declare_variable(const ParserIR::Command& command, ScopeId scope_id_,
             subscript->literal = 1; // recover
         }
 
-        if(scope_id == -1)
+        if(var_scope_id == -1)
         {
             report(arg->source, Diag::var_decl_outside_of_scope);
-            scope_id = 0; // recover
+            var_scope_id = 0; // recover
         }
 
         std::optional<int32_t> subscript_literal;
@@ -975,11 +975,11 @@ void Sema::declare_variable(const ParserIR::Command& command, ScopeId scope_id_,
             report(var_source, Diag::duplicate_var_timer);
         }
         else if(auto [var, inserted] = symrepo->insert_var(
-                        var_name, scope_id, type, subscript_literal,
+                        var_name, var_scope_id, type, subscript_literal,
                         arg->source);
                 !inserted)
         {
-            if(scope_id == 0)
+            if(var_scope_id == 0)
                 report(var_source, Diag::duplicate_var_global);
             else
                 report(var_source, Diag::duplicate_var_in_scope);
@@ -990,7 +990,7 @@ void Sema::declare_variable(const ParserIR::Command& command, ScopeId scope_id_,
 auto Sema::report(SourceLocation source, Diag message) -> DiagnosticBuilder
 {
     this->report_count++;
-    return diag_->report(source, message);
+    return diag->report(source, message);
 }
 
 auto Sema::report(SourceRange source, Diag message) -> DiagnosticBuilder

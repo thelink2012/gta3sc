@@ -5,12 +5,12 @@ namespace gta3sc::syntax
 {
 constexpr size_t default_stack_size = 8;
 
-constexpr auto COMMAND_REPEAT = "REPEAT"sv;
-constexpr auto COMMAND_ENDREPEAT = "ENDREPEAT"sv;
-constexpr auto COMMAND_GOTO_IF_FALSE = "GOTO_IF_FALSE"sv;
-constexpr auto COMMAND_SET = "SET"sv;
-constexpr auto COMMAND_ADD_THING_TO_THING = "ADD_THING_TO_THING"sv;
-constexpr auto COMMAND_IS_THING_GREATER_OR_EQUAL_TO_THING
+constexpr auto command_repeat = "REPEAT"sv;
+constexpr auto command_endrepeat = "ENDREPEAT"sv;
+constexpr auto command_goto_if_false = "GOTO_IF_FALSE"sv;
+constexpr auto command_set = "SET"sv;
+constexpr auto command_add_thing_to_thing = "ADD_THING_TO_THING"sv;
+constexpr auto command_is_thing_greater_or_equal_to_thing
         = "IS_THING_GREATER_OR_EQUAL_TO_THING"sv;
 
 RepeatStmtRewriter::RepeatStmtRewriter(gta3sc::util::NameGenerator& namegen,
@@ -22,9 +22,9 @@ auto RepeatStmtRewriter::visit(const ParserIR& line) -> Result
 {
     if(line.command)
     {
-        if(line.command->name == COMMAND_REPEAT)
+        if(line.command->name == command_repeat)
             return visit_repeat(line);
-        else if(line.command->name == COMMAND_ENDREPEAT)
+        else if(line.command->name == command_endrepeat)
             return visit_endrepeat(line);
     }
     return Result{};
@@ -55,7 +55,7 @@ auto RepeatStmtRewriter::visit_repeat(const ParserIR& line) -> Result
     return LinkedIR<ParserIR>(
             {ParserIR::Builder(*arena)
                      .label(line.label)
-                     .command(COMMAND_SET, repeat->source)
+                     .command(command_set, repeat->source)
                      .arg(iter_var)
                      .arg_int(0, repeat->source)
                      .build(),
@@ -84,20 +84,20 @@ auto RepeatStmtRewriter::visit_endrepeat(const ParserIR& line) -> Result
     return LinkedIR<ParserIR>(
             {ParserIR::Builder(*arena)
                      .label(line.label)
-                     .command(COMMAND_ADD_THING_TO_THING, endrepeat->source)
+                     .command(command_add_thing_to_thing, endrepeat->source)
                      .arg(iter_var)
                      .arg_int(1, endrepeat->source)
                      .build(),
 
              ParserIR::Builder(*arena)
-                     .command(COMMAND_IS_THING_GREATER_OR_EQUAL_TO_THING,
+                     .command(command_is_thing_greater_or_equal_to_thing,
                               endrepeat->source)
                      .arg(iter_var)
                      .arg(num_times)
                      .build(),
 
              ParserIR::Builder(*arena)
-                     .command(COMMAND_GOTO_IF_FALSE, endrepeat->source)
+                     .command(command_goto_if_false, endrepeat->source)
                      .arg_ident(loop_label->name, endrepeat->source)
                      .build()});
 }

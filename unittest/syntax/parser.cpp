@@ -108,7 +108,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a label definition")
     parser.skip_current_line(); // lab"el":
     REQUIRE(ir == std::nullopt);
     CHECK(peek_diag().message == gta3sc::Diag::expected_token);
-    CHECK(consume_diag().args.at(0) == d(gta3sc::syntax::Category::Whitespace));
+    CHECK(consume_diag().args.at(0) == d(gta3sc::syntax::Category::whitespace));
 
     ir = parser.parse_statement();
     parser.skip_current_line(); // "label":
@@ -350,7 +350,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing integer argument")
     parser.skip_current_line(); // -432-10
     REQUIRE(ir == std::nullopt);
     CHECK(peek_diag().message == gta3sc::Diag::expected_token);
-    CHECK(consume_diag().args.at(0) == d(gta3sc::syntax::Category::Whitespace));
+    CHECK(consume_diag().args.at(0) == d(gta3sc::syntax::Category::whitespace));
 
     ir = parser.parse_statement();
     parser.skip_current_line(); // 123a
@@ -371,7 +371,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing integer argument")
     parser.skip_current_line(); // 432+10
     REQUIRE(ir == std::nullopt);
     CHECK(peek_diag().message == gta3sc::Diag::expected_token);
-    CHECK(consume_diag().args.at(0) == d(gta3sc::syntax::Category::Whitespace));
+    CHECK(consume_diag().args.at(0) == d(gta3sc::syntax::Category::whitespace));
 
     ir = parser.parse_statement();
     parser.skip_current_line(); // -
@@ -446,7 +446,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing float argument")
     parser.skip_current_line(); // .1-.1
     REQUIRE(ir == std::nullopt);
     CHECK(peek_diag().message == gta3sc::Diag::expected_token);
-    CHECK(consume_diag().args.at(0) == d(gta3sc::syntax::Category::Whitespace));
+    CHECK(consume_diag().args.at(0) == d(gta3sc::syntax::Category::whitespace));
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt); // 9
@@ -524,7 +524,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing string literal argument")
     parser.skip_current_line(); // "string"abc
     REQUIRE(ir == std::nullopt);
     CHECK(peek_diag().message == gta3sc::Diag::expected_token);
-    CHECK(consume_diag().args.at(0) == d(gta3sc::syntax::Category::Whitespace));
+    CHECK(consume_diag().args.at(0) == d(gta3sc::syntax::Category::whitespace));
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt); // 9
@@ -829,16 +829,16 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing permutations of ternary expressions")
                   == gta3sc::Diag::invalid_expression_unassociative);
             if(command_name == "SUB_THING_FROM_THING")
                 CHECK(consume_diag().args.at(0)
-                      == d(gta3sc::syntax::Category::Minus));
+                      == d(gta3sc::syntax::Category::minus));
             else if(command_name == "DIV_THING_BY_THING")
                 CHECK(consume_diag().args.at(0)
-                      == d(gta3sc::syntax::Category::Slash));
+                      == d(gta3sc::syntax::Category::slash));
             else if(command_name == "ADD_THING_TO_THING_TIMED")
                 CHECK(consume_diag().args.at(0)
-                      == d(gta3sc::syntax::Category::PlusAt));
+                      == d(gta3sc::syntax::Category::plus_at));
             else if(command_name == "SUB_THING_FROM_THING_TIMED")
                 CHECK(consume_diag().args.at(0)
-                      == d(gta3sc::syntax::Category::MinusAt));
+                      == d(gta3sc::syntax::Category::minus_at));
             else
                 CHECK(false);
         }
