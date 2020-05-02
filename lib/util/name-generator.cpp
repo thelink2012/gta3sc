@@ -34,12 +34,12 @@ void NameGenerator::generate(std::string& str)
 {
     const auto id = counter.fetch_add(1, std::memory_order_relaxed);
 
-    // NOLINTNEXTLINE(hicpp-vararg): FIXME replace with std::format
+    // NOLINTNEXTLINE: FIXME replace with std::format
     int result_size = snprintf(nullptr, 0, prefix_format.c_str(), id);
     assert(result_size > 0);
 
     str.resize(result_size + 1); // +1 to include null terminator
-    // NOLINTNEXTLINE(hicpp-vararg): FIXME replace with std::format
+    // NOLINTNEXTLINE:  FIXME replace with std::format
     result_size = snprintf(&str[0], str.size(), prefix_format.c_str(), id);
     assert(result_size > 0 && result_size + 1 == str.size());
 

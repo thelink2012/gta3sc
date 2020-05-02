@@ -5,9 +5,9 @@
 
 namespace gta3sc
 {
-bool SourceManager::iequal(std::string_view a, std::string_view b) const
+bool SourceManager::iequal(std::string_view lhs, std::string_view rhs) const
 {
-    return std::equal(a.begin(), a.end(), b.begin(), b.end(),
+    return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(),
                       [](unsigned char ac, unsigned char bc) {
                           if(ac >= 'a' && ac <= 'z')
                               ac -= 32; // transform into upper

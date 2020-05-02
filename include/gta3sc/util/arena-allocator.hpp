@@ -210,19 +210,19 @@ public:
     using value_type = T;
 
     /// This constructor is an implicit conversion from an arena resource.
-    // NOLINTNEXTLINE(google-explicit-constructor)
+    // NOLINTNEXTLINE(google-explicit-constructor, hicpp-explicit-conversions)
     ArenaAllocator(ArenaMemoryResource* arena) : arena(arena)
     {
         assert(arena != nullptr);
     }
 
-    // NOLINTNEXTLINE(google-explicit-constructor)
-    template<typename U>
+    // NOLINTNEXTLINE(google-explicit-constructor, hicpp-explicit-conversions)
+    template<typename U> // NOLINTNEXTLINE
     ArenaAllocator(const ArenaAllocator<U>& rhs) : arena(rhs.arena)
     {}
 
-    // NOLINTNEXTLINE(google-explicit-constructor)
-    template<typename U>
+    // NOLINTNEXTLINE(google-explicit-constructor, hicpp-explicit-conversions)
+    template<typename U> // NOLINTNEXTLINE
     ArenaAllocator(ArenaAllocator<U>&& rhs) : arena(rhs.arena)
     {}
 
@@ -249,11 +249,10 @@ public:
         return !(*this == rhs);
     }
 
-protected:
+private:
     template<typename U>
     friend class ArenaAllocator;
 
-    // NOLINTNEXTLINE(misc-non-private-member-variables-in-classes)
     ArenaMemoryResource* arena;
 };
 } // namespace gta3sc
@@ -282,27 +281,44 @@ inline void* operator new[](std::size_t count,
     return operator new[](count, arena, alignof(std::max_align_t));
 }
 
-inline void operator delete(void*, gta3sc::ArenaMemoryResource&, std::size_t)
+inline void operator delete(void* ptr, gta3sc::ArenaMemoryResource& arena,
+                            std::size_t size)
 {}
 
-inline void operator delete[](void*, gta3sc::ArenaMemoryResource&, std::size_t)
+inline void operator delete[](void* ptr, gta3sc::ArenaMemoryResource& arena,
+                              std::size_t size)
 {}
 
-inline void operator delete(void*, gta3sc::ArenaMemoryResource&)
+inline void operator delete(void* ptr, gta3sc::ArenaMemoryResource& arena)
 {}
 
-inline void operator delete[](void*, gta3sc::ArenaMemoryResource&)
+inline void operator delete[](void* ptr, gta3sc::ArenaMemoryResource& arena)
 {}
 
 namespace gta3sc::util
 {
+namespace detail
+{
+template<typename UnaryOperation>
+inline auto allocate_string(std::string_view from, ArenaMemoryResource& arena,
+                            UnaryOperation transform_op) -> std::string_view
+{
+    const auto result_size = from.size();
+    auto* result_ptr = new(arena, alignof(char)) char[result_size];
+
+    for(size_t i = 0; i < from.size(); ++i)
+        result_ptr[i] = transform_op(from[i]);
+
+    return {result_ptr, result_size};
+}
+} // namespace detail
+
 /// Allocates a string in the arena and returns a view to it.
 inline auto allocate_string(std::string_view from, ArenaMemoryResource& arena)
         -> std::string_view
 {
-    auto* ptr = new(arena, alignof(char)) char[from.size()];
-    std::memcpy(ptr, from.data(), from.size());
-    return {ptr, from.size()};
+    constexpr auto identity = [](char c) { return c; };
+    return detail::allocate_string(from, arena, identity);
 }
 
 /// Allocates a string, converts it to ASCII uppercase, and returns a view to
@@ -311,21 +327,10 @@ inline auto allocate_string_upper(std::string_view from,
                                   ArenaMemoryResource& arena)
         -> std::string_view
 {
-    auto chars = allocate_string(from, arena);
-    for(const auto& c : chars)
-    {
+    return detail::allocate_string(from, arena, [](char c) {
         if(c >= 'a' && c <= 'z')
-        {
-            // The following conversion assumes we are running in a platform
-            // using ASCII as the character set. Make sure this is true.
-            static_assert('a' == 97 && 'z' == 122 && 'A' == 65 && 'Z' == 90);
-            constexpr char ascii_case_bit = 0b0100000;
-
-            // The following const_cast is safe because allocate_string
-            // constructs a mutable character sequence.
-            const_cast<char&>(c) -= ascii_case_bit; // Turn case-bit off
-        }
-    }
-    return chars;
+            c = static_cast<char>(c - 'a' + 'A');
+        return c;
+    });
 }
 } // namespace gta3sc::util

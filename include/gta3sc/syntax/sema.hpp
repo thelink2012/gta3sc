@@ -58,7 +58,8 @@ public:
     /// Gets the entity type of the given variable at the end of the input.
     ///
     /// Must run `validate` beforehand.
-    auto var_entity_type(const SymVariable&) const -> CommandManager::EntityId;
+    auto var_entity_type(const SymVariable& var) const
+            -> CommandManager::EntityId;
 
 private:
     struct VarRef;
@@ -121,13 +122,13 @@ private:
     // require further compiler intervention. They produce diagnostics
     // and return false in case of ill-formed programs.
 
-    bool validate_hardcoded_command(const SemaIR::Command&);
+    bool validate_hardcoded_command(const SemaIR::Command& command);
 
-    bool validate_set(const SemaIR::Command&);
+    bool validate_set(const SemaIR::Command& command);
 
-    bool validate_script_name(const SemaIR::Command&);
+    bool validate_script_name(const SemaIR::Command& command);
 
-    bool validate_start_new_script(const SemaIR::Command&);
+    bool validate_start_new_script(const SemaIR::Command& command);
 
     bool validate_target_scope_vars(const SemaIR::Argument** begin,
                                     const SemaIR::Argument** end,

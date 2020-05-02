@@ -48,7 +48,7 @@ auto size(const gta3sc::LinkedIR<gta3sc::ParserIR>& ir)
 {
     return std::distance(ir.begin(), ir.end());
 }
-}
+} // namespace
 
 TEST_CASE_FIXTURE(ParserFixture, "parsing an empty main script file")
 {

@@ -101,9 +101,9 @@ public:
     constexpr IteratorImpl& operator=(const IteratorImpl&) noexcept = default;
 
     /// Enable conversion from iterator to const_iterator.
-    // NOLINTNEXTLINE(google-explicit-constructor)
     template<bool IsOtherConstIter,
              typename = std::enable_if_t<IsConstIter && !IsOtherConstIter>>
+    // NOLINTNEXTLINE(google-explicit-constructor, hicpp-explicit-conversions)
     constexpr IteratorImpl(const IteratorImpl<IsOtherConstIter>& other) noexcept
         :
         curr(other.curr)

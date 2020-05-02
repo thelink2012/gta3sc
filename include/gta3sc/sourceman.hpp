@@ -167,7 +167,7 @@ public:
     /// continues from the previous method call.
     ///
     /// Returns whether it was possible to scan the given directory.
-    bool scan_directory(const std::filesystem::path&);
+    bool scan_directory(const std::filesystem::path& dir);
 
     /// Loads a source file given its filename.
     ///
@@ -176,7 +176,8 @@ public:
     auto load_file(std::string_view filename) -> std::optional<SourceFile>;
 
     /// Loads a source file given its path.
-    auto load_file(const std::filesystem::path&) -> std::optional<SourceFile>;
+    auto load_file(const std::filesystem::path& path)
+            -> std::optional<SourceFile>;
 
     /// Loads a source file given a null-terminated sequence of characters.
     /// \param data the sequence of null-terminated characters.
@@ -193,7 +194,7 @@ protected:
         /// Path to the source file.
         std::filesystem::path path;
         /// Start of the location range used by this source file.
-        SourceLocation start_loc;
+        SourceLocation start_loc{};
         /// The length of the source file in bytes.
         uint32_t file_length{};
 
@@ -205,15 +206,16 @@ protected:
 
 private:
     /// Checks whether two strings are equal (ignoring casing).
-    bool iequal(std::string_view, std::string_view) const;
+    bool iequal(std::string_view lhs, std::string_view rhs) const;
 
-    auto load_file(const std::filesystem::path&, std::FILE*,
+    auto load_file(const std::filesystem::path& path, std::FILE* stream,
                    size_t hint_size = -1) -> std::optional<SourceFile>;
 
-    auto load_file(const std::filesystem::path&, std::unique_ptr<char[]> data,
-                   size_t size) -> std::optional<SourceFile>;
+    auto load_file(const std::filesystem::path& path,
+                   std::unique_ptr<char[]> data, size_t size)
+            -> std::optional<SourceFile>;
 
-    auto load_file(std::FILE*, size_t hint_size = -1)
+    auto load_file(std::FILE* stream, size_t hint_size = -1)
             -> std::optional<SourceFile>;
 
 private:

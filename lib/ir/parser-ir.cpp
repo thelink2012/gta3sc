@@ -53,15 +53,15 @@ auto ParserIR::create_string(std::string_view string, SourceRange source,
 
 bool operator==(const ParserIR& lhs, const ParserIR& rhs)
 {
-    if(!!rhs.label != !!rhs.label)
+    if(!!lhs.label != !!rhs.label)
         return false;
-    if(!!rhs.command != !!rhs.command)
-        return false;
-
-    if(rhs.label && *rhs.label != *rhs.label)
+    if(!!lhs.command != !!rhs.command)
         return false;
 
-    if(rhs.command && *rhs.command != *rhs.command)
+    if(lhs.label && *lhs.label != *rhs.label)
+        return false;
+
+    if(lhs.command && *lhs.command != *rhs.command)
         return false;
 
     return true;

@@ -103,17 +103,17 @@ public:
     auto diagnostics() const -> DiagnosticHandler&;
 
     /// Returns a view to the characters of a token in the source code.
-    auto spelling(const Token&) const -> std::string_view;
+    auto spelling(const Token& token) const -> std::string_view;
 
 private:
     /// Consumes the next character in the character stream.
     char getc();
 
-    bool is_whitespace(char) const;
-    bool is_newline(char) const;
-    bool is_digit(char) const;
-    bool is_print(char) const;
-    bool is_word_char(char) const;
+    bool is_whitespace(char c) const;
+    bool is_newline(char c) const;
+    bool is_digit(char c) const;
+    bool is_print(char c) const;
+    bool is_word_char(char c) const;
 
 private:
     Preprocessor pp;

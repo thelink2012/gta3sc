@@ -8,7 +8,7 @@
 namespace gta3sc::syntax
 {
 enum class Category : uint8_t;
-}
+} // namespace gta3sc::syntax
 
 namespace gta3sc
 {

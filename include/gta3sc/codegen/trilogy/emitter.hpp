@@ -84,7 +84,7 @@ public:
     ///
     /// In case the given floating-point cannot be represented as an Q11.4
     /// fixed-point number, the nearest representable number is used.
-    auto emit_q11_4(float) -> CodeEmitter&;
+    auto emit_q11_4(float value) -> CodeEmitter&;
 
     /// Emits a global integer/float variable offset (i.e. datatype byte +
     /// 16-bit offset).
@@ -95,25 +95,25 @@ public:
     auto emit_lvar(uint16_t index) -> CodeEmitter&;
 
     /// Emits a 8-bit value with no datatype byte.
-    auto emit_raw_byte(std::byte) -> CodeEmitter&;
+    auto emit_raw_byte(std::byte value) -> CodeEmitter&;
 
     /// Emits a signed 8-bit value with no datatype byte.
-    auto emit_raw_i8(int8_t) -> CodeEmitter&;
+    auto emit_raw_i8(int8_t value) -> CodeEmitter&;
 
     /// Emits an unsigned 8-bit value with no datatype byte.
-    auto emit_raw_u8(uint8_t) -> CodeEmitter&;
+    auto emit_raw_u8(uint8_t value) -> CodeEmitter&;
 
     /// Emits a signed 16-bit value with no datatype byte.
-    auto emit_raw_i16(int16_t) -> CodeEmitter&;
+    auto emit_raw_i16(int16_t value) -> CodeEmitter&;
 
     /// Emits an unsigned 16-bit value with no datatype byte.
-    auto emit_raw_u16(uint16_t) -> CodeEmitter&;
+    auto emit_raw_u16(uint16_t value) -> CodeEmitter&;
 
     /// Emits a signed 32-bit value with no datatype byte.
-    auto emit_raw_i32(int32_t) -> CodeEmitter&;
+    auto emit_raw_i32(int32_t value) -> CodeEmitter&;
 
     /// Emits an unsigned 32-bit value with no datatype byte.
-    auto emit_raw_u32(uint32_t) -> CodeEmitter&;
+    auto emit_raw_u32(uint32_t value) -> CodeEmitter&;
 
     /// Emits the given sequence of bytes, filling a total of `output_size`
     /// bytes in the internal buffer.

@@ -25,7 +25,7 @@ public:
     NameGenerator& operator=(const NameGenerator&) = delete;
 
     NameGenerator(NameGenerator&& rhs) noexcept;
-    NameGenerator& operator=(NameGenerator&&) noexcept;
+    NameGenerator& operator=(NameGenerator&& rhs) noexcept;
 
     ~NameGenerator() noexcept = default;
 

@@ -25,7 +25,7 @@ public:
     ///
     /// The given arena will be used to allocate the IR of replacement
     /// commands.
-    explicit RepeatStmtRewriter(gta3sc::util::NameGenerator&,
+    explicit RepeatStmtRewriter(gta3sc::util::NameGenerator& namegen,
                                 ArenaMemoryResource& arena) noexcept;
 
     RepeatStmtRewriter(const RepeatStmtRewriter&) = delete;
@@ -34,9 +34,9 @@ public:
     RepeatStmtRewriter(RepeatStmtRewriter&&) noexcept = default;
     RepeatStmtRewriter& operator=(RepeatStmtRewriter&&) noexcept = default;
 
-    ~RepeatStmtRewriter() noexcept = default;
+    ~RepeatStmtRewriter() noexcept final = default;
 
-    auto visit(const ParserIR&) -> Result final;
+    auto visit(const ParserIR& line) -> Result final;
 
 private:
     struct RepeatStmt
@@ -46,9 +46,9 @@ private:
         const ParserIR::LabelDef* loop_label;
     };
 
-    auto visit_repeat(const IRType&) -> Result;
-    auto visit_endrepeat(const IRType&) -> Result;
-    auto generate_loop_label(SourceRange) -> const ParserIR::LabelDef*;
+    auto visit_repeat(const IRType& line) -> Result;
+    auto visit_endrepeat(const IRType& line) -> Result;
+    auto generate_loop_label(SourceRange source) -> const ParserIR::LabelDef*;
 
 private:
     ArenaMemoryResource* arena;

@@ -1,7 +1,7 @@
 ---
 
-# As many checks as possible should be enabled. For every disabled check, a
-# reason must be given below.
+# We enable as many checks as possible. For every disabled check, a reason must
+# be given below.
 #
 # A list of checks can be found at
 # https://clang.llvm.org/extra/clang-tidy/checks/list.html
@@ -9,7 +9,7 @@
 # List of disabled checks:
 #
 #   android-cloexec-*
-#       Requires non portable fixes.
+#       Requires non portable code.
 #
 #   fuchsia-*
 #       Too much strict and sometimes conflicts with modernize checks.
@@ -19,13 +19,15 @@
 #
 #   readability-else-after-return
 #       Ends up converting else-if chains into plain ifs in case the previous
-#       body contains ends in a return. This hurts readability more than it
-#       helps. Other than that, the purpose of the check is fair (reduce
-#       identation exit early).
+#       body ends in a return. This hurts readability more than it helps.
+#       Otherwise, the purpose of the check is fair (reduce identation levels).
 #
 #   readability-redundant-access-specifiers
 #       Redundant access specifiers are used to separate member variables from
-#       member functions.
+#       member functions in the coding style of this codebase.
+#
+#   readability-redundant-declaration
+#       Necessary to provide friendship to a function in another namespace.
 #
 #   readability-magic-numbers
 #   cppcoreguidelines-avoid-magic-numbers
@@ -35,24 +37,52 @@
 #       Some member functions are non-static by design.
 #
 #   readability-braces-around-statements
+#   hicpp-braces-around-statements
 #   google-readability-braces-around-statements
-#       TODO
+#       This is a good recommendation, but unfortunately doesn't fit very well
+#       on the coding style (opening brace on a new line) of this codebase.
+#
+#   readability-qualified-auto
+#   llvm-qualified-auto
+#       Would be useful if `std::string_view::iterator` wasn't implemented
+#       as an alias to `const char*` in libstdc++ and libc++.
+#
+#   readability-implicit-bool-conversion
+#       Conflicts with cppcoreguidelines (ES.87) which we choose to follow.
 #
 #   google-runtime-references
-#       This goes against cppcoreguidelines (F.15).
+#       Conflicts with cppcoreguidelines (F.15) which we choose to follow.
 #
 #   google-readability-todo
-#       I really like Google TODOs. Unfortunately, I don't think they fit
-#       too well outside of their environment (how to specify bug id?).
+#       Google TODOs are very nice. Unfortunately, they don't fit
+#       too well outside of their ecosystem (how to specify bug id?).
 #       Maybe this can be revisited in the future.
+#
+#   llvm-header-guard
+#       In `#pragma once` we trust, but we may revisit this in the future.
 #
 #   cppcoreguidelines-pro-bounds-array-to-pointer-decay
 #   hicpp-no-array-decay
-#       Would be useful if didn't flag every assert.
+#       Would be useful if it didn't flag every `assert`.
 #
 #   cppcoreguidelines-pro-bounds-pointer-arithmetic
 #       Would be useful if `std::string_view::iterator` wasn't implemented
-#       as an alias to `const char*` in libstdc++.
+#       as an alias to `const char*` in libstdc++ and libc++.
+#
+#   cppcoreguidelines-avoid-c-arrays
+#   hicpp-avoid-c-arrays
+#   modernize-avoid-c-arrays
+#       Sometimes they are practical without the need of a standard library
+#       header.
+#
+#   cppcoreguidelines-pro-bounds-constant-array-index
+#       The alternative is calling `gsl::at` for every indexing operation.
+#       That doesn't look quite good.
+#
+#   cppcoreguidelines-owning-memory
+#       Would be useful if the owning type could be customized. That is,
+#       instead of looking for `gsl::owner`, it could look for e.g.
+#       `gta3sc::util::ArenaPtr`.
 #
 #
 
@@ -64,23 +94,20 @@ Checks: '
         ,-cppcoreguidelines-avoid-magic-numbers,
         ,-cppcoreguidelines-pro-bounds-pointer-arithmetic,
         ,-cppcoreguidelines-owning-memory,
-        ,-cppcoreguidelines-pro-type-const-cast,
         ,-cppcoreguidelines-avoid-c-arrays,
         ,-cppcoreguidelines-pro-bounds-constant-array-index,
         ,-fuchsia-*,
         ,-google-readability-braces-around-statements,
         ,-google-runtime-references,
         ,-google-readability-todo,
-        ,-google-readability-function-size,
         ,-hicpp-braces-around-statements,
         ,-hicpp-no-array-decay,
         ,-hicpp-avoid-c-arrays,
-        ,-hicpp-function-size,
+        ,-llvm-qualified-auto,
         ,-llvm-header-guard,
         ,-modernize-use-trailing-return-type,
         ,-modernize-use-nodiscard,
         ,-modernize-avoid-c-arrays,
-        ,-readability-named-parameter,
         ,-readability-braces-around-statements,
         ,-readability-redundant-access-specifiers,
         ,-readability-else-after-return,
@@ -88,7 +115,8 @@ Checks: '
         ,-readability-convert-member-functions-to-static,
         ,-readability-implicit-bool-conversion,
         ,-readability-identifier-naming,
-        ,-readability-function-size,
+        ,-readability-redundant-declaration,
+        ,-readability-qualified-auto,
         '
 
 WarningsAsErrors: '*'

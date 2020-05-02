@@ -53,24 +53,26 @@ public:
     ParserIR& operator=(ParserIR&&) noexcept = delete;
 
     // Creates an instruction.
-    static auto create(arena_ptr<const LabelDef>, arena_ptr<const Command>,
-                       ArenaMemoryResource*) -> arena_ptr<ParserIR>;
+    static auto create(arena_ptr<const LabelDef> label,
+                       arena_ptr<const Command> command,
+                       ArenaMemoryResource* arena) -> arena_ptr<ParserIR>;
 
     /// Creates an integer argument.
     static auto create_integer(int32_t value, SourceRange source,
-                               ArenaMemoryResource*)
+                               ArenaMemoryResource* arena)
             -> arena_ptr<const Argument>;
 
     /// Creates a floating-point argument.
     static auto create_float(float value, SourceRange source,
-                             ArenaMemoryResource*) -> arena_ptr<const Argument>;
+                             ArenaMemoryResource* arena)
+            -> arena_ptr<const Argument>;
 
     /// Creates an identifier argument.
     ///
     /// The identifier is automatically converted to uppercase during the
     /// creation of the object.
     static auto create_identifier(std::string_view name, SourceRange source,
-                                  ArenaMemoryResource*)
+                                  ArenaMemoryResource* arena)
             -> arena_ptr<const Argument>;
 
     /// Creates a filename argument.
@@ -78,7 +80,7 @@ public:
     /// The filename is automatically converted to uppercase during the
     /// creation of the object.
     static auto create_filename(std::string_view filename, SourceRange source,
-                                ArenaMemoryResource*)
+                                ArenaMemoryResource* arena)
             -> arena_ptr<const Argument>;
 
     /// Creates a string argument.
@@ -86,12 +88,12 @@ public:
     /// The quotation marks that surrounds the string should not be present
     /// in `string`. The string is not converted to uppercase.
     static auto create_string(std::string_view string, SourceRange source,
-                              ArenaMemoryResource*)
+                              ArenaMemoryResource* arena)
             -> arena_ptr<const Argument>;
 
     /// Compares whether a given IR is equivalent to another IR.
-    friend bool operator==(const ParserIR&, const ParserIR&);
-    friend bool operator!=(const ParserIR&, const ParserIR&);
+    friend bool operator==(const ParserIR& lhs, const ParserIR& rhs);
+    friend bool operator!=(const ParserIR& lhs, const ParserIR& rhs);
 
     struct Command
     {
@@ -113,8 +115,8 @@ public:
         Command& operator=(Command&&) noexcept = delete;
 
         /// Compares whether a given command is equivalent to another command.
-        friend bool operator==(const Command&, const Command&);
-        friend bool operator!=(const Command&, const Command&);
+        friend bool operator==(const Command& lhs, const Command& rhs);
+        friend bool operator!=(const Command& lhs, const Command& rhs);
 
     protected:
         Command(SourceRange source, std::string_view name,
@@ -145,11 +147,12 @@ public:
         ///
         /// The name of the label is automatically made uppercase.
         static auto create(std::string_view name, SourceRange source,
-                           ArenaMemoryResource*) -> arena_ptr<const LabelDef>;
+                           ArenaMemoryResource* arena)
+                -> arena_ptr<const LabelDef>;
 
         /// Compares whether a given label definition is equivalent to another.
-        friend bool operator==(const LabelDef&, const LabelDef&);
-        friend bool operator!=(const LabelDef&, const LabelDef&);
+        friend bool operator==(const LabelDef& lhs, const LabelDef& rhs);
+        friend bool operator!=(const LabelDef& lhs, const LabelDef& rhs);
 
     private:
         explicit LabelDef(SourceRange source, std::string_view name) :
@@ -200,8 +203,8 @@ public:
         bool is_same_value(const Argument& other) const;
 
         /// Compares whether a given argument is equivalent to another.
-        friend bool operator==(const Argument&, const Argument&);
-        friend bool operator!=(const Argument&, const Argument&);
+        friend bool operator==(const Argument& lhs, const Argument& rhs);
+        friend bool operator!=(const Argument& lhs, const Argument& rhs);
 
     protected:
         enum class IdentifierTag
@@ -276,7 +279,7 @@ public:
 
     /// Sets (or unsets) the instruction in construction to define the
     /// specified label.
-    auto label(arena_ptr<const LabelDef>) -> Builder&&;
+    auto label(arena_ptr<const LabelDef> label_ptr) -> Builder&&;
 
     /// Sets the instruction in construction to define a label.
     auto label(std::string_view name, SourceRange source = no_source)
@@ -286,7 +289,7 @@ public:
     ///
     /// No other instruction to construct commands should have been called
     /// before this (i.e. only `Builder::label` could have been called).
-    auto command(arena_ptr<const Command>) -> Builder&&;
+    auto command(arena_ptr<const Command> command_ptr) -> Builder&&;
 
     /// Sets the instruction in construction to be the specified command.
     auto command(std::string_view name, SourceRange source = no_source)

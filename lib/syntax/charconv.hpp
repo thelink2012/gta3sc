@@ -90,4 +90,4 @@ inline auto from_chars(const char* first, const char* last, float& value,
     value = result;
     return from_chars_result{endptr, std::errc()};
 }
-} // namespace gta3sc::utils
+} // namespace gta3sc::util

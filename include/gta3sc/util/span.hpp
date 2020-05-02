@@ -8,4 +8,4 @@ namespace gta3sc::util
 //
 // See https://en.cppreference.com/w/cpp/container/span for details
 using nonstd::span;
-}
+} // namespace gta3sc::util

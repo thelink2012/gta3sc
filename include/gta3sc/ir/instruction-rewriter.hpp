@@ -17,7 +17,7 @@ struct InstructionRewriterResult
 
     InstructionRewriterResult() noexcept = default;
 
-    // NOLINTNEXTLINE(google-explicit-constructor)
+    // NOLINTNEXTLINE: The following is supposed to perform implicit conversion.
     InstructionRewriterResult(LinkedIR<IR> ir) noexcept :
         should_rewrite(true), ir(std::move(ir))
     {}

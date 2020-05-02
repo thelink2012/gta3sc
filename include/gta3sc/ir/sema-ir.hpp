@@ -47,7 +47,7 @@ public:
 
     // Creates an instruction.
     static auto create(const SymLabel* label, arena_ptr<const Command> command,
-                       ArenaMemoryResource*) -> arena_ptr<SemaIR>;
+                       ArenaMemoryResource* arena) -> arena_ptr<SemaIR>;
 
     /// Creates an integer argument.
     static auto create_integer(int32_t value, SourceRange source,
@@ -283,16 +283,16 @@ public:
 
     /// Sets (or unsets if `nullptr`) the instruction in construction to
     /// define the specified label.
-    auto label(const SymLabel*) -> Builder&&;
+    auto label(const SymLabel* label_ptr) -> Builder&&;
 
     /// Sets the instruction in construction to be the specified command.
     ///
     /// No other instruction to construct commands should have been called
     /// before this (i.e. only `Builder::label` could have been called).
-    auto command(arena_ptr<const Command>) -> Builder&&;
+    auto command(arena_ptr<const Command> command_ptr) -> Builder&&;
 
     /// Sets the instruction in construction to be the specified command.
-    auto command(const CommandManager::CommandDef&,
+    auto command(const CommandManager::CommandDef& command_def,
                  SourceRange source = no_source) -> Builder&&;
 
     /// Sets the not flag of the command being constructed.

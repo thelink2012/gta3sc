@@ -8,7 +8,7 @@ namespace gta3sc::test::codegen::trilogy
 class CodeEmitterFixture
 {
 };
-}
+} // namespace gta3sc::test::codegen::trilogy
 
 using gta3sc::test::codegen::trilogy::CodeEmitterFixture;
 using gta3sc::codegen::trilogy::CodeEmitter;

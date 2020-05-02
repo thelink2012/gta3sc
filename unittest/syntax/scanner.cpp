@@ -38,7 +38,7 @@ std::ostream& operator<<(std::ostream& os, const Category& category)
     os << "Category(" << static_cast<uint32_t>(category) << ")";
     return os;
 }
-}
+} // namespace gta3sc::syntax
 
 TEST_CASE_FIXTURE(ScannerFixture, "scanner with empty stream")
 {
@@ -256,6 +256,7 @@ TEST_CASE_FIXTURE(ScannerFixture, "scanner with filename")
     REQUIRE(scanner.eof());
 }
 
+// NOLINTNEXTLINE: FIXME test is too big and needs refactoring
 TEST_CASE_FIXTURE(ScannerFixture, "scanner with operators")
 {
     build_scanner("+ - * / +@ -@        \n"

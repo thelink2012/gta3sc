@@ -79,11 +79,11 @@ public:
     ///
     /// Any parsing error causes the parser to produce a diagnostic
     /// and return `std::nullopt`.
-    auto parse_statement_list(std::initializer_list<std::string_view>)
+    auto parse_statement_list(std::initializer_list<std::string_view> stop_when)
             -> std::optional<LinkedIR<ParserIR>>;
 
     /// Produces the same effect as `parse_statement_list({name})`.
-    auto parse_statement_list(std::string_view)
+    auto parse_statement_list(std::string_view name)
             -> std::optional<LinkedIR<ParserIR>>;
 
 private:
@@ -151,7 +151,7 @@ private:
     ///
     /// If the token category is not the expected ones, a diagnostic is
     /// produced and `std::nullopt` returned.
-    auto consume(Category) -> std::optional<Token>;
+    auto consume(Category category) -> std::optional<Token>;
 
     /// Produces the same effect as `consume(Category::Word)`, but additionally
     /// checks (also producing a diagnostic) whether the lexeme of the word is
@@ -177,7 +177,7 @@ private:
 
     /// Checks whether the specified lexical category is of a relational
     /// comparision operator (i.e. `<=`, `<`, `>`, `>=`).
-    bool is_relational_operator(Category) const;
+    bool is_relational_operator(Category category) const;
 
     /// Produces a diagnostic report associated with a given token.
     auto report(const Token& token, Diag message) -> DiagnosticBuilder;
@@ -260,10 +260,10 @@ private:
                                  bool not_flag)
             -> std::optional<LinkedIR<ParserIR>>;
 
-    bool is_digit(char) const;
-    bool is_integer(std::string_view) const;
-    bool is_float(std::string_view) const;
-    bool is_identifier(std::string_view) const;
+    bool is_digit(char c) const;
+    bool is_integer(std::string_view lexeme) const;
+    bool is_float(std::string_view lexeme) const;
+    bool is_identifier(std::string_view lexeme) const;
 
 private:
     static constexpr size_t num_peek_tokens = 6;

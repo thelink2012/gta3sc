@@ -154,4 +154,4 @@ auto d(T&& value)
 {
     return Diagnostic::Arg(std::forward<T>(value));
 }
-}
+} // namespace gta3sc::test::syntax
