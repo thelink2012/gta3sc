@@ -14,8 +14,8 @@ constexpr auto command_is_thing_greater_or_equal_to_thing
         = "IS_THING_GREATER_OR_EQUAL_TO_THING"sv;
 
 RepeatStmtRewriter::RepeatStmtRewriter(gta3sc::util::NameGenerator& namegen,
-                                       ArenaMemoryResource& arena) noexcept :
-    namegen(&namegen), arena(&arena)
+                                       ArenaAllocator<> allocator) noexcept :
+    namegen(&namegen), allocator(allocator)
 {}
 
 auto RepeatStmtRewriter::visit(const ParserIR& line) -> Result
@@ -53,14 +53,14 @@ auto RepeatStmtRewriter::visit_repeat(const ParserIR& line) -> Result
     repeat_stack.push_back(RepeatStmt{num_times, iter_var, loop_label_def});
 
     return LinkedIR<ParserIR>(
-            {ParserIR::Builder(*arena)
+            {ParserIR::Builder(allocator)
                      .label(line.label)
                      .command(command_set, repeat->source)
                      .arg(iter_var)
                      .arg_int(0, repeat->source)
                      .build(),
 
-             ParserIR::create(loop_label_def, nullptr, arena)});
+             ParserIR::create(loop_label_def, nullptr, allocator)});
 }
 
 auto RepeatStmtRewriter::visit_endrepeat(const ParserIR& line) -> Result
@@ -82,21 +82,21 @@ auto RepeatStmtRewriter::visit_endrepeat(const ParserIR& line) -> Result
     repeat_stack.pop_back();
 
     return LinkedIR<ParserIR>(
-            {ParserIR::Builder(*arena)
+            {ParserIR::Builder(allocator)
                      .label(line.label)
                      .command(command_add_thing_to_thing, endrepeat->source)
                      .arg(iter_var)
                      .arg_int(1, endrepeat->source)
                      .build(),
 
-             ParserIR::Builder(*arena)
+             ParserIR::Builder(allocator)
                      .command(command_is_thing_greater_or_equal_to_thing,
                               endrepeat->source)
                      .arg(iter_var)
                      .arg(num_times)
                      .build(),
 
-             ParserIR::Builder(*arena)
+             ParserIR::Builder(allocator)
                      .command(command_goto_if_false, endrepeat->source)
                      .arg_ident(loop_label->name, endrepeat->source)
                      .build()});
@@ -106,6 +106,6 @@ auto RepeatStmtRewriter::generate_loop_label(SourceRange source)
         -> const ParserIR::LabelDef*
 {
     namegen->generate(namegen_buffer);
-    return ParserIR::LabelDef::create(namegen_buffer, source, arena);
+    return ParserIR::LabelDef::create(namegen_buffer, source, allocator);
 }
 } // namespace gta3sc::syntax

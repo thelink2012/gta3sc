@@ -4,51 +4,51 @@
 
 namespace gta3sc
 {
-auto ParserIR::create(const LabelDef* label,
-                      const Command* command,
-                      ArenaMemoryResource* arena) -> ArenaPtr<ParserIR>
+auto ParserIR::create(const LabelDef* label, const Command* command,
+                      ArenaAllocator<> allocator) -> ArenaPtr<ParserIR>
 {
-    return new(*arena, alignof(ParserIR)) ParserIR(label, command);
+    return allocator.new_object<ParserIR>(private_tag, label, command);
 }
 
 auto ParserIR::create_integer(int32_t value, SourceRange source,
-                              ArenaMemoryResource* arena)
+                              ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
-    return new(*arena, alignof(Argument)) const Argument(value, source);
+    return allocator.new_object<Argument>(private_tag, value, source);
 }
 
 auto ParserIR::create_float(float value, SourceRange source,
-                            ArenaMemoryResource* arena)
+                            ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
-    return new(*arena, alignof(Argument)) const Argument(value, source);
+    return allocator.new_object<Argument>(private_tag, value, source);
 }
 
 auto ParserIR::create_identifier(std::string_view name, SourceRange source,
-                                 ArenaMemoryResource* arena)
+                                 ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
-    return new(*arena, alignof(Argument))
-            const Argument(Argument::IdentifierTag{},
-                           util::allocate_string_upper(name, *arena), source);
+    return allocator.new_object<Argument>(
+            private_tag, Argument::IdentifierTag{},
+            util::allocate_string_upper(name, allocator), source);
 }
 
 auto ParserIR::create_filename(std::string_view name, SourceRange source,
-                               ArenaMemoryResource* arena)
+                               ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
-    return new(*arena, alignof(Argument))
-            const Argument(Argument::FilenameTag{},
-                           util::allocate_string_upper(name, *arena), source);
+    return allocator.new_object<Argument>(
+            private_tag, Argument::FilenameTag{},
+            util::allocate_string_upper(name, allocator), source);
 }
 
 auto ParserIR::create_string(std::string_view string, SourceRange source,
-                             ArenaMemoryResource* arena)
+                             ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
-    return new(*arena, alignof(Argument))
-            const Argument(Argument::StringTag{}, string, source);
+    return allocator.new_object<Argument>(
+            private_tag, Argument::StringTag{},
+            util::allocate_string(string, allocator), source);
 }
 
 auto operator==(const ParserIR& lhs, const ParserIR& rhs) -> bool
@@ -89,11 +89,11 @@ auto operator!=(const ParserIR::Command& lhs, const ParserIR::Command& rhs)
 }
 
 auto ParserIR::LabelDef::create(std::string_view name, SourceRange source,
-                                ArenaMemoryResource* arena)
+                                ArenaAllocator<> allocator)
         -> ArenaPtr<const LabelDef>
 {
-    return new(*arena, alignof(LabelDef))
-            const LabelDef{source, util::allocate_string_upper(name, *arena)};
+    return allocator.new_object<LabelDef>(
+            private_tag, source, util::allocate_string_upper(name, allocator));
 }
 
 auto operator==(const ParserIR::LabelDef& lhs, const ParserIR::LabelDef& rhs)
@@ -165,11 +165,10 @@ auto ParserIR::Builder::label(const LabelDef* label_ptr) -> Builder&&
 auto ParserIR::Builder::label(std::string_view name, SourceRange source)
         -> Builder&&
 {
-    return this->label(LabelDef::create(name, source, arena));
+    return this->label(LabelDef::create(name, source, allocator));
 }
 
-auto ParserIR::Builder::command(const Command* command_ptr)
-        -> Builder&&
+auto ParserIR::Builder::command(const Command* command_ptr) -> Builder&&
 {
     assert(!this->has_not_flag && !this->has_command_name
            && this->args.empty());
@@ -183,7 +182,7 @@ auto ParserIR::Builder::command(std::string_view name, SourceRange source)
     assert(!this->command_ptr && !this->has_command_name);
     this->command_ptr = nullptr;
     this->has_command_name = true;
-    this->command_name = util::allocate_string_upper(name, *arena);
+    this->command_name = util::allocate_string_upper(name, allocator);
     this->command_source = source;
     return std::move(*this);
 }
@@ -202,8 +201,10 @@ auto ParserIR::Builder::arg(const Argument* value) -> Builder&&
     if(this->args.size() >= static_cast<std::ptrdiff_t>(args_capacity))
     {
         const auto new_caps = !args_capacity ? 6 : args_capacity * 2;
-        auto* const new_args = new(*arena) const Argument*[new_caps];
-        std::move(this->args.begin(), this->args.end(), new_args);
+
+        auto* const new_args = allocator.allocate_object<const Argument*>(
+                new_caps);
+        std::uninitialized_move(this->args.begin(), this->args.end(), new_args);
 
         this->args = util::span(new_args, args.size());
         this->args_capacity = new_caps;
@@ -217,30 +218,30 @@ auto ParserIR::Builder::arg(const Argument* value) -> Builder&&
 
 auto ParserIR::Builder::arg_int(int32_t value, SourceRange source) -> Builder&&
 {
-    return arg(ParserIR::create_integer(value, source, arena));
+    return arg(ParserIR::create_integer(value, source, allocator));
 }
 
 auto ParserIR::Builder::arg_float(float value, SourceRange source) -> Builder&&
 {
-    return arg(ParserIR::create_float(value, source, arena));
+    return arg(ParserIR::create_float(value, source, allocator));
 }
 
 auto ParserIR::Builder::arg_ident(std::string_view value, SourceRange source)
         -> Builder&&
 {
-    return arg(ParserIR::create_identifier(value, source, arena));
+    return arg(ParserIR::create_identifier(value, source, allocator));
 }
 
 auto ParserIR::Builder::arg_filename(std::string_view value, SourceRange source)
         -> Builder&&
 {
-    return arg(ParserIR::create_filename(value, source, arena));
+    return arg(ParserIR::create_filename(value, source, allocator));
 }
 
 auto ParserIR::Builder::arg_string(std::string_view value, SourceRange source)
         -> Builder&&
 {
-    return arg(ParserIR::create_string(value, source, arena));
+    return arg(ParserIR::create_string(value, source, allocator));
 }
 
 auto ParserIR::Builder::build() && -> ArenaPtr<ParserIR>
@@ -254,7 +255,7 @@ auto ParserIR::Builder::build() && -> ArenaPtr<ParserIR>
     {
         assert(!this->has_not_flag && this->args.empty());
     }
-    return ParserIR::create(this->label_ptr, this->command_ptr, arena);
+    return ParserIR::create(this->label_ptr, this->command_ptr, allocator);
 }
 
 auto ParserIR::Builder::build_command() && -> ArenaPtr<const ParserIR::Command>
@@ -275,9 +276,9 @@ void ParserIR::Builder::create_command_from_attributes()
 {
     assert(this->has_command_name);
 
-    this->command_ptr = new(*arena, alignof(Command))
-            const Command{this->command_source, this->command_name, this->args,
-                          this->has_not_flag ? this->not_flag_value : false};
+    this->command_ptr = allocator.new_object<Command>(
+            private_tag, this->command_source, this->command_name, this->args,
+            this->has_not_flag ? this->not_flag_value : false);
 
     this->has_command_name = false;
     this->has_not_flag = false;

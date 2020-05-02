@@ -150,7 +150,7 @@ auto Sema::check_semantics_pass() -> std::optional<LinkedIR<SemaIR>>
         this->analyzing_alternative_command = false;
         this->analyzing_repeat_command = false;
 
-        SemaIR::Builder builder(*arena);
+        SemaIR::Builder builder(allocator);
 
         if(line.command)
         {
@@ -248,7 +248,7 @@ auto Sema::validate_command(const ParserIR::Command& command)
         }
     }
 
-    SemaIR::Builder builder(*arena);
+    SemaIR::Builder builder(allocator);
     builder.command(*command_def, command.source);
     builder.not_flag(command.not_flag);
 
@@ -285,8 +285,7 @@ auto Sema::validate_command(const ParserIR::Command& command)
                 .args(expected_args, got_args);
     }
 
-    ArenaPtr<const SemaIR::Command> result
-            = std::move(builder).build_command();
+    ArenaPtr<const SemaIR::Command> result = std::move(builder).build_command();
 
     if(!failed)
     {
@@ -314,7 +313,7 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
                         CommandManager::global_enum, *arg.as_identifier());
                 assert(cdef != nullptr);
 
-                return SemaIR::create_constant(*cdef, arg.source, arena);
+                return SemaIR::create_constant(*cdef, arg.source, allocator);
             }
             return validate_integer_literal(param, arg);
         }
@@ -379,7 +378,7 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
                         *arg.as_identifier());
                 assert(cdef != nullptr);
 
-                return SemaIR::create_constant(*cdef, arg.source, arena);
+                return SemaIR::create_constant(*cdef, arg.source, allocator);
             }
             else if(arg.as_integer())
             {
@@ -393,7 +392,7 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
                     if(const auto* cdef = find_defaultmodel_constant(ident))
                     {
                         return SemaIR::create_constant(*cdef, arg.source,
-                                                       arena);
+                                                       allocator);
                     }
                     else if(const auto* model = modelman->find_model(ident))
                     {
@@ -401,13 +400,14 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
                                 ident, arg.source);
                         assert(uobj != nullptr);
                         return SemaIR::create_used_object(*uobj, arg.source,
-                                                          arena);
+                                                          allocator);
                     }
                 }
                 else if(const auto* cdef = cmdman->find_constant(
                                 param.enum_type, ident))
                 {
-                    return SemaIR::create_constant(*cdef, arg.source, arena);
+                    return SemaIR::create_constant(*cdef, arg.source,
+                                                   allocator);
                 }
                 return validate_var_ref(param, arg);
             }
@@ -448,7 +448,8 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
                 if(const auto* cdef = cmdman->find_constant(
                            CommandManager::global_enum, *arg.as_identifier()))
                 {
-                    return SemaIR::create_constant(*cdef, arg.source, arena);
+                    return SemaIR::create_constant(*cdef, arg.source,
+                                                   allocator);
                 }
                 return validate_var_ref(param, arg);
             }
@@ -490,7 +491,7 @@ auto Sema::validate_integer_literal(const CommandManager::ParamDef& param,
     else
         report(arg.source, Diag::expected_integer);
 
-    return SemaIR::create_integer(value, arg.source, arena);
+    return SemaIR::create_integer(value, arg.source, allocator);
 }
 
 auto Sema::validate_float_literal(const CommandManager::ParamDef& param,
@@ -508,7 +509,7 @@ auto Sema::validate_float_literal(const CommandManager::ParamDef& param,
     else
         report(arg.source, Diag::expected_float);
 
-    return SemaIR::create_float(value, arg.source, arena);
+    return SemaIR::create_float(value, arg.source, allocator);
 }
 
 auto Sema::validate_text_label(const CommandManager::ParamDef& param,
@@ -524,7 +525,7 @@ auto Sema::validate_text_label(const CommandManager::ParamDef& param,
     else
         report(arg.source, Diag::expected_text_label);
 
-    return SemaIR::create_text_label(value, arg.source, arena);
+    return SemaIR::create_text_label(value, arg.source, allocator);
 }
 
 auto Sema::validate_label(const CommandManager::ParamDef& param,
@@ -546,7 +547,7 @@ auto Sema::validate_label(const CommandManager::ParamDef& param,
         return nullptr;
     }
 
-    return SemaIR::create_label(*sym_label, arg.source, arena);
+    return SemaIR::create_label(*sym_label, arg.source, allocator);
 }
 
 auto Sema::validate_string_literal(const CommandManager::ParamDef& param,
@@ -561,7 +562,7 @@ auto Sema::validate_string_literal(const CommandManager::ParamDef& param,
         return nullptr;
     }
 
-    return SemaIR::create_string(*arg.as_string(), arg.source, arena);
+    return SemaIR::create_string(*arg.as_string(), arg.source, allocator);
 }
 
 auto Sema::validate_var_ref(const CommandManager::ParamDef& param,
@@ -708,12 +709,12 @@ auto Sema::validate_var_ref(const CommandManager::ParamDef& param,
         return nullptr;
     else if(sym_subscript)
         return SemaIR::create_variable(*sym_var, *sym_subscript, arg_source,
-                                       arena);
+                                       allocator);
     else if(subscript && subscript->literal)
         return SemaIR::create_variable(*sym_var, *subscript->literal,
-                                       arg_source, arena);
+                                       arg_source, allocator);
     else
-        return SemaIR::create_variable(*sym_var, arg_source, arena);
+        return SemaIR::create_variable(*sym_var, arg_source, allocator);
 }
 
 auto Sema::validate_hardcoded_command(const SemaIR::Command& command) -> bool
@@ -833,8 +834,9 @@ auto Sema::validate_target_scope_vars(const SemaIR::Argument** begin,
     // this function returns, but it's no big deal. It only happens for
     // START_NEW_SCRIPT alike commands and the allocation size is proportional
     // to the number of arguments passed.
-    const auto** target_vars = new(*arena) const SymVariable*[num_target_vars];
-    std::fill(target_vars, target_vars + num_target_vars, nullptr);
+    const auto** target_vars = allocator.allocate_object<const SymVariable*>(
+            num_target_vars);
+    std::uninitialized_fill_n(target_vars, num_target_vars, nullptr);
 
     for(auto& [name, lvar] : symrepo->var_tables[target_scope_id])
     {

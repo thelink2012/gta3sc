@@ -38,6 +38,12 @@ public:
     struct Argument;
     class Builder;
 
+private:
+    struct PrivateTag
+    {
+    };
+    static constexpr PrivateTag private_tag;
+
 public:
     const LabelDef* const label{};
     const Command* const command{};
@@ -54,16 +60,16 @@ public:
 
     // Creates an instruction.
     static auto create(const LabelDef* label, const Command* command,
-                       ArenaMemoryResource* arena) -> ArenaPtr<ParserIR>;
+                       ArenaAllocator<> allocator) -> ArenaPtr<ParserIR>;
 
     /// Creates an integer argument.
     static auto create_integer(int32_t value, SourceRange source,
-                               ArenaMemoryResource* arena)
+                               ArenaAllocator<> allocator)
             -> ArenaPtr<const Argument>;
 
     /// Creates a floating-point argument.
     static auto create_float(float value, SourceRange source,
-                             ArenaMemoryResource* arena)
+                             ArenaAllocator<> allocator)
             -> ArenaPtr<const Argument>;
 
     /// Creates an identifier argument.
@@ -71,7 +77,7 @@ public:
     /// The identifier is automatically converted to uppercase during the
     /// creation of the object.
     static auto create_identifier(std::string_view name, SourceRange source,
-                                  ArenaMemoryResource* arena)
+                                  ArenaAllocator<> allocator)
             -> ArenaPtr<const Argument>;
 
     /// Creates a filename argument.
@@ -79,7 +85,7 @@ public:
     /// The filename is automatically converted to uppercase during the
     /// creation of the object.
     static auto create_filename(std::string_view filename, SourceRange source,
-                                ArenaMemoryResource* arena)
+                                ArenaAllocator<> allocator)
             -> ArenaPtr<const Argument>;
 
     /// Creates a string argument.
@@ -87,7 +93,7 @@ public:
     /// The quotation marks that surrounds the string should not be present
     /// in `string`. The string is not converted to uppercase.
     static auto create_string(std::string_view string, SourceRange source,
-                              ArenaMemoryResource* arena)
+                              ArenaAllocator<> allocator)
             -> ArenaPtr<const Argument>;
 
     /// Compares whether a given IR is equivalent to another IR.
@@ -99,8 +105,7 @@ public:
     public:
         SourceRange source;    ///< Source code location of the argument.
         std::string_view name; ///< The name of this command.
-        util::span<const Argument*>
-                args;          ///< View into the arguments.
+        util::span<const Argument*> args; ///< View into the arguments.
         bool not_flag = false; ///< Whether the result of the command is NOTed.
 
         /// Please use `ParserIR::Builder::build_command`.
@@ -117,13 +122,12 @@ public:
         friend auto operator==(const Command& lhs, const Command& rhs) -> bool;
         friend auto operator!=(const Command& lhs, const Command& rhs) -> bool;
 
-    protected:
-        Command(SourceRange source, std::string_view name,
-                util::span<const Argument*> args, bool not_flag) :
+    public:
+        Command(PrivateTag /*unused*/, SourceRange source,
+                std::string_view name, util::span<const Argument*> args,
+                bool not_flag) :
             source(source), name(name), args(args), not_flag(not_flag)
         {}
-
-        friend class ParserIR::Builder;
     };
 
     struct LabelDef
@@ -146,7 +150,7 @@ public:
         ///
         /// The name of the label is automatically made uppercase.
         static auto create(std::string_view name, SourceRange source,
-                           ArenaMemoryResource* arena)
+                           ArenaAllocator<> allocator)
                 -> ArenaPtr<const LabelDef>;
 
         /// Compares whether a given label definition is equivalent to another.
@@ -155,8 +159,9 @@ public:
         friend auto operator!=(const LabelDef& lhs, const LabelDef& rhs)
                 -> bool;
 
-    private:
-        explicit LabelDef(SourceRange source, std::string_view name) :
+    public:
+        explicit LabelDef(PrivateTag /*unused*/, SourceRange source,
+                          std::string_view name) :
             source(source), name(name)
         {}
     };
@@ -226,13 +231,16 @@ public:
         using Filename = std::pair<FilenameTag, std::string_view>;
         using String = std::pair<StringTag, std::string_view>;
 
+    public:
         template<typename T>
-        explicit Argument(T&& value, SourceRange source) :
+        explicit Argument(PrivateTag /*unused*/, T&& value,
+                          SourceRange source) :
             source(source), value(std::forward<T>(value))
         {}
 
         template<typename Tag>
-        explicit Argument(Tag tag, std::string_view value, SourceRange source) :
+        explicit Argument(PrivateTag /*unused*/, Tag tag,
+                          std::string_view value, SourceRange source) :
             source(source), value(std::pair{tag, value})
         {}
 
@@ -246,8 +254,8 @@ public:
         static_assert(sizeof(value) <= 4 * sizeof(void*));
     };
 
-private:
-    explicit ParserIR(const LabelDef* label,
+public:
+    explicit ParserIR(PrivateTag /*unused*/, const LabelDef* label,
                       const Command* command) :
         label(label), command(command)
     {}
@@ -270,7 +278,8 @@ public:
 
     /// Constructs a builder to create instructions allocating any necessary
     /// data in the given arena.
-    explicit Builder(ArenaMemoryResource& arena) noexcept : arena(&arena) {}
+    explicit Builder(ArenaAllocator<> allocator) noexcept : allocator(allocator)
+    {}
 
     Builder(const Builder&) = delete;
     auto operator=(const Builder&) -> Builder& = delete;
@@ -334,7 +343,7 @@ private:
     void create_command_from_attributes();
 
 private:
-    ArenaMemoryResource* arena;
+    ArenaAllocator<> allocator;
 
     bool has_command_name = false;
     bool has_not_flag = false;

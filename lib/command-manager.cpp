@@ -156,10 +156,6 @@ auto CommandManager::find_entity_type(const EntitiesMap& entities_map,
     return std::nullopt;
 }
 
-CommandManager::Builder::Builder(ArenaMemoryResource& arena) noexcept :
-    arena(&arena)
-{}
-
 auto CommandManager::Builder::build() && -> CommandManager
 {
     return CommandManager(std::move(commands_map), std::move(alternators_map),
@@ -219,8 +215,9 @@ auto CommandManager::Builder::insert_command(std::string_view name)
     if(auto it = commands_map.find(name); it != commands_map.end())
         return {it->second, false};
 
-    auto a_name = util::allocate_string_upper(name, *arena);
-    auto* a_cmd = new(*arena, alignof(CommandDef)) CommandDef{a_name};
+    auto a_name = util::allocate_string_upper(name, allocator);
+    auto* a_cmd = allocator.new_object<CommandDef>();
+    a_cmd->name = a_name;
 
     auto [it, inserted] = commands_map.emplace(a_name, a_cmd);
     assert(inserted);
@@ -233,8 +230,8 @@ auto CommandManager::Builder::insert_alternator(std::string_view name)
     if(auto it = alternators_map.find(name); it != alternators_map.end())
         return {it->second, false};
 
-    auto a_name = util::allocate_string_upper(name, *arena);
-    auto* a_alternator = new(*arena, alignof(AlternatorDef)) AlternatorDef{};
+    auto a_name = util::allocate_string_upper(name, allocator);
+    auto* a_alternator = allocator.new_object<AlternatorDef>();
 
     auto [it, inserted] = alternators_map.emplace(a_name, a_alternator);
     assert(inserted);
@@ -245,8 +242,7 @@ auto CommandManager::Builder::insert_alternative(AlternatorDef& alternator,
                                                  const CommandDef& command)
         -> const AlternativeDef*
 {
-    auto* a_alternative = new(*arena, alignof(AlternativeDef))
-            AlternativeDef(command);
+    auto* a_alternative = allocator.new_object<AlternativeDef>(command);
 
     std::tie(alternator.first, alternator.last) = linear_list::push_back(
             *a_alternative, alternator.first, alternator.last);
@@ -260,7 +256,7 @@ auto CommandManager::Builder::insert_enumeration(std::string_view name)
     if(auto it = enums_map.find(name); it != enums_map.end())
         return {it->second, false};
 
-    auto a_name = util::allocate_string_upper(name, *arena);
+    auto a_name = util::allocate_string_upper(name, allocator);
 
     const auto next_id = static_cast<std::underlying_type_t<EnumId>>(
             enums_map.size() + 1);
@@ -280,9 +276,8 @@ auto CommandManager::Builder::insert_or_assign_constant(EnumId enum_id,
     auto it = constants_map.find(name);
     if(it == constants_map.end())
     {
-        auto a_name = util::allocate_string_upper(name, *arena);
-        auto* cdef = new(*arena, alignof(ConstantDef))
-                ConstantDef{enum_id, value};
+        auto a_name = util::allocate_string_upper(name, allocator);
+        auto* cdef = allocator.new_object<ConstantDef>(enum_id, value);
         auto [_, inserted] = constants_map.emplace(a_name, cdef);
         assert(inserted);
         return {cdef, true};
@@ -301,8 +296,7 @@ auto CommandManager::Builder::insert_or_assign_constant(EnumId enum_id,
             }
         }
 
-        auto* a_constant = new(*arena, alignof(ConstantDef))
-                ConstantDef{enum_id, value};
+        auto* a_constant = allocator.new_object<ConstantDef>(enum_id, value);
 
         linear_list::insert_after(*prev_it, *a_constant);
 
@@ -316,7 +310,7 @@ auto CommandManager::Builder::insert_entity_type(std::string_view name)
     if(auto it = entities_map.find(name); it != entities_map.end())
         return {it->second, false};
 
-    auto a_name = util::allocate_string_upper(name, *arena);
+    auto a_name = util::allocate_string_upper(name, allocator);
 
     const auto next_id = static_cast<std::underlying_type_t<EntityId>>(
             entities_map.size() + 1);

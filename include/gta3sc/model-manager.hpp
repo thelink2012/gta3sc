@@ -60,7 +60,8 @@ public:
     /// Allocation of model definitions will happen in the given arena.
     /// Therefore the arena should live as long as the constructed model
     /// repository.
-    explicit Builder(ArenaMemoryResource& arena) noexcept : arena(&arena) {}
+    explicit Builder(ArenaAllocator<> allocator) noexcept : allocator(allocator)
+    {}
 
     Builder(const Builder&) = delete;
     auto operator=(const Builder&) -> Builder& = delete;
@@ -77,7 +78,7 @@ public:
     auto build() && -> ModelManager;
 
 private:
-    ArenaMemoryResource* arena;
+    ArenaAllocator<> allocator;
     ModelsMap models;
 };
 } // namespace gta3sc

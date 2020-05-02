@@ -93,7 +93,7 @@ public:
 class SymbolRepository
 {
 private:
-    ArenaMemoryResource* arena;
+    ArenaAllocator<> allocator;
 
 public:
     /// The symbol table of labels.
@@ -112,7 +112,7 @@ public:
     std::vector<SymbolTable<const SymVariable>> var_tables; // NOLINT: FIXME
 
 public:
-    explicit SymbolRepository(ArenaMemoryResource& arena);
+    explicit SymbolRepository(ArenaAllocator<> allocator);
 
     SymbolRepository(const SymbolRepository&) = delete;
     auto operator=(const SymbolRepository&) -> SymbolRepository& = delete;

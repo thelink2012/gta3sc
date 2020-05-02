@@ -24,7 +24,7 @@ using ArenaPtr = T*;
 /// released all at once.
 ///
 /// This implementation is based on the `std::pmr::monotonic_buffer_resource`
-/// interface which is not yet available in C++ library implementations.
+/// interface.
 ///
 /// See also:
 ///  + http://eel.is/c++draft/mem.res.monotonic.buffer
@@ -65,15 +65,17 @@ public:
 
     /// Checks whether memory allocated from `rhs` can be deallocated
     /// from `this` and vice-versa.
-    auto operator==(const ArenaMemoryResource& rhs) const -> bool
+    friend auto operator==(const ArenaMemoryResource& lhs,
+                           const ArenaMemoryResource& rhs) noexcept -> bool
     {
-        return this == &rhs;
+        return &lhs == &rhs;
     }
 
-    /// Returns !(*this == rhs).
-    auto operator!=(const ArenaMemoryResource& rhs) const -> bool
+    /// Returns `!(lhs == rhs)`.
+    friend auto operator!=(const ArenaMemoryResource& lhs,
+                           const ArenaMemoryResource& rhs) noexcept -> bool
     {
-        return !(*this == rhs);
+        return !(lhs == rhs);
     }
 
     /// Allocates storage from the arena.
@@ -83,7 +85,7 @@ public:
     ///
     /// Otherwise, allocates another buffer bigger than the current one,
     /// assigns it to the current buffer and allocates a block from this buffer.
-    auto allocate(size_t bytes, size_t alignment) -> void*
+    [[nodiscard]] auto allocate(size_t bytes, size_t alignment) -> void*
     {
         size_t space{};
 
@@ -167,7 +169,7 @@ private:
     char* region_ptr{};      //< The pointer to the current region.
     size_t region_size{};    //< The size of the current region.
     char* free_ptr{};        //< Next free memory in the current region.
-    bool owns_region{false}; //< Whether we we the memory to this region.
+    bool owns_region{false}; //< Whether we own the memory to this region.
                              //< Only the first region may be unowned.
 
     size_t next_region_size{4096}; //< The size of the next memory region.
@@ -201,10 +203,13 @@ private:
 /// default copy constructed polymorphic allocator (i.e. allocates from
 /// new/delete) in `select_on_container_copy_construction`, while this
 /// allocator returns itself (default allocator_traits semantics).
+/// This is because this doesn't handle a polymorphic allocator, like
+/// the standard, and so it is only capable of allocating from
+/// `ArenaMemoryResource`.
 ///
 /// This satisfies the requirements of Allocator.
 /// https://en.cppreference.com/w/cpp/named_req/Allocator
-template<typename T>
+template<typename T = std::byte>
 class ArenaAllocator
 {
 public:
@@ -219,36 +224,90 @@ public:
 
     // NOLINTNEXTLINE(google-explicit-constructor, hicpp-explicit-conversions)
     template<typename U> // NOLINTNEXTLINE
-    ArenaAllocator(const ArenaAllocator<U>& rhs) : arena(rhs.arena)
+    ArenaAllocator(const ArenaAllocator<U>& rhs) noexcept : arena(rhs.arena)
     {}
 
-    // NOLINTNEXTLINE(google-explicit-constructor, hicpp-explicit-conversions)
-    template<typename U> // NOLINTNEXTLINE
-    ArenaAllocator(ArenaAllocator<U>&& rhs) : arena(rhs.arena)
-    {}
-
-    auto allocate(size_t n) -> T*
+    [[nodiscard]] auto resource() const -> ArenaMemoryResource*
     {
-        auto* ptr = arena->allocate(n * sizeof(T), alignof(T));
-        return static_cast<T*>(ptr);
+        return arena;
     }
 
-    void deallocate(T* p, size_t n)
+    [[nodiscard]] auto allocate(size_t n) -> T*
     {
-        arena->deallocate(p, n * sizeof(T), alignof(T));
+        return allocate_object<T>(n);
+    }
+
+    void deallocate(T* p, size_t n) { return deallocate_object<T>(p, n); }
+
+    template<typename U>
+    [[nodiscard]] auto allocate_object(std::size_t n = 1) -> U*
+    {
+        // NOLINTNEXTLINE(bugprone-sizeof-expression): U may be `Aggregate*`.
+        return static_cast<U*>(allocate_bytes(n * sizeof(U), alignof(U)));
     }
 
     template<typename U>
-    auto operator==(const ArenaAllocator<U>& rhs) const -> bool
+    void deallocate_object(U* p, std::size_t n = 1)
     {
-        return *this->arena == *rhs.arena;
+        deallocate_bytes(p, n * sizeof(U), alignof(U));
+    }
+
+    [[nodiscard]] auto
+    allocate_bytes(size_t nbytes, size_t alignment = alignof(std::max_align_t))
+            -> void*
+    {
+        return arena->allocate(nbytes, alignment);
+    }
+
+    void deallocate_bytes(void* p, size_t nbytes,
+                          size_t alignment = alignof(std::max_align_t))
+    {
+        return arena->deallocate(p, nbytes, alignment);
+    }
+
+    template<typename U, typename... CtorArgs>
+    [[nodiscard]] auto new_object(CtorArgs&&... ctor_args) -> U*
+    {
+        U* p = allocate_object<U>();
+        try
+        {
+            construct(p, std::forward<CtorArgs>(ctor_args)...);
+        }
+        catch(...)
+        {
+            deallocate_object(p);
+            throw;
+        }
+        return p;
     }
 
     template<typename U>
-    auto operator!=(const ArenaAllocator<U>& rhs) const -> bool
+    void delete_object(U* p)
     {
-        return !(*this == rhs);
+        destroy(p);
+        deallocate(p);
     }
+
+    template<typename U, typename... Args>
+    void construct(U* p, Args&&... args)
+    {
+        std::uninitialized_construct_using_allocator<U>(
+                p, *this, std::forward<Args>(args)...);
+    }
+
+    template<typename U>
+    void destroy(U* p)
+    {
+        p->~U();
+    }
+
+    template<typename T1, typename T2>
+    friend auto operator==(const ArenaAllocator<T1>& lhs,
+                           const ArenaAllocator<T2>& rhs) noexcept -> bool;
+
+    template<typename T1, typename T2>
+    friend auto operator!=(const ArenaAllocator<T1>& lhs,
+                           const ArenaAllocator<T2>& rhs) noexcept -> bool;
 
 private:
     template<typename U>
@@ -256,57 +315,35 @@ private:
 
     ArenaMemoryResource* arena;
 };
+
+template<typename T1, typename T2>
+inline auto operator==(const ArenaAllocator<T1>& lhs,
+                       const ArenaAllocator<T2>& rhs) noexcept -> bool
+{
+    return *lhs.arena == *rhs.arena;
+}
+
+template<typename T1, typename T2>
+inline auto operator!=(const ArenaAllocator<T1>& lhs,
+                       const ArenaAllocator<T2>& rhs) noexcept -> bool
+{
+    return !(lhs == rhs);
+}
 } // namespace gta3sc
-
-inline auto operator new(std::size_t count, gta3sc::ArenaMemoryResource& arena,
-                         std::size_t align) -> void*
-{
-    return arena.allocate(count, align);
-}
-
-inline auto operator new[](std::size_t count,
-                           gta3sc::ArenaMemoryResource& arena,
-                           std::size_t align) -> void*
-{
-    return arena.allocate(count, align);
-}
-
-inline auto operator new(std::size_t count, gta3sc::ArenaMemoryResource& arena)
-        -> void*
-{
-    return operator new(count, arena, alignof(std::max_align_t));
-}
-
-inline auto operator new[](std::size_t count,
-                           gta3sc::ArenaMemoryResource& arena) -> void*
-{
-    return operator new[](count, arena, alignof(std::max_align_t));
-}
-
-inline void operator delete(void* ptr, gta3sc::ArenaMemoryResource& arena,
-                            std::size_t size)
-{}
-
-inline void operator delete[](void* ptr, gta3sc::ArenaMemoryResource& arena,
-                              std::size_t size)
-{}
-
-inline void operator delete(void* ptr, gta3sc::ArenaMemoryResource& arena)
-{}
-
-inline void operator delete[](void* ptr, gta3sc::ArenaMemoryResource& arena)
-{}
 
 namespace gta3sc::util
 {
 namespace detail
 {
 template<typename UnaryOperation>
-inline auto allocate_string(std::string_view from, ArenaMemoryResource& arena,
+inline auto allocate_string(std::string_view from,
+                            ArenaAllocator<char> allocator,
                             UnaryOperation transform_op) -> std::string_view
 {
     const auto result_size = from.size();
-    auto* result_ptr = new(arena, alignof(char)) char[result_size];
+
+    auto* result_ptr = allocator.allocate(result_size);
+    std::uninitialized_default_construct_n(result_ptr, result_size);
 
     for(size_t i = 0; i < from.size(); ++i)
         result_ptr[i] = transform_op(from[i]);
@@ -316,20 +353,20 @@ inline auto allocate_string(std::string_view from, ArenaMemoryResource& arena,
 } // namespace detail
 
 /// Allocates a string in the arena and returns a view to it.
-inline auto allocate_string(std::string_view from, ArenaMemoryResource& arena)
-        -> std::string_view
+inline auto allocate_string(std::string_view from,
+                            ArenaAllocator<char> allocator) -> std::string_view
 {
     constexpr auto identity = [](char c) { return c; };
-    return detail::allocate_string(from, arena, identity);
+    return detail::allocate_string(from, allocator, identity);
 }
 
 /// Allocates a string, converts it to ASCII uppercase, and returns a view to
 /// it.
 inline auto allocate_string_upper(std::string_view from,
-                                  ArenaMemoryResource& arena)
+                                  ArenaAllocator<char> allocator)
         -> std::string_view
 {
-    return detail::allocate_string(from, arena, [](char c) {
+    return detail::allocate_string(from, allocator, [](char c) {
         if(c >= 'a' && c <= 'z')
             c = static_cast<char>(c - 'a' + 'A');
         return c;

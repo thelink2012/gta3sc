@@ -17,7 +17,7 @@ private:
         using EntityId = gta3sc::CommandManager::EntityId;
         using EnumId = gta3sc::CommandManager::EnumId;
 
-        CommandManager::Builder builder(arena);
+        CommandManager::Builder builder(&arena);
 
         builder.insert_entity_type("CAR");
         builder.insert_entity_type("CHAR");

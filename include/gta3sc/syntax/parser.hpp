@@ -22,8 +22,8 @@ class Parser
 public:
     /// \param scanner the scanner to consume tokens from.
     /// \param arena the arena that should be used to allocate IR in.
-    explicit Parser(Scanner scanner, ArenaMemoryResource& arena) noexcept :
-        scanner(std::move(scanner)), arena(&arena)
+    explicit Parser(Scanner scanner, ArenaAllocator<> allocator) noexcept :
+        scanner(std::move(scanner)), allocator(allocator)
     {}
 
     Parser(const Parser&) = delete;
@@ -272,7 +272,7 @@ private:
     static constexpr size_t num_peek_tokens = 6;
 
     Scanner scanner;
-    ArenaMemoryResource* arena;
+    ArenaAllocator<> allocator;
 
     bool in_lexical_scope = false;
     bool has_peek_token[num_peek_tokens] = {};

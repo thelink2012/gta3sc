@@ -31,6 +31,12 @@ public:
     struct Argument;
     class Builder;
 
+private:
+    struct PrivateTag
+    {
+    };
+    static constexpr PrivateTag private_tag;
+
 public:
     const SymLabel* const label{};
     const Command* const command{};
@@ -47,21 +53,21 @@ public:
 
     // Creates an instruction.
     static auto create(const SymLabel* label, const Command* command,
-                       ArenaMemoryResource* arena) -> ArenaPtr<SemaIR>;
+                       ArenaAllocator<> allocator) -> ArenaPtr<SemaIR>;
 
     /// Creates an integer argument.
     static auto create_integer(int32_t value, SourceRange source,
-                               ArenaMemoryResource* arena)
+                               ArenaAllocator<> allocator)
             -> ArenaPtr<const Argument>;
 
     /// Creates a floating-point argument.
     static auto create_float(float value, SourceRange source,
-                             ArenaMemoryResource* arena)
+                             ArenaAllocator<> allocator)
             -> ArenaPtr<const Argument>;
 
     /// Creates a label argument.
     static auto create_label(const SymLabel& label, SourceRange source,
-                             ArenaMemoryResource* arena)
+                             ArenaAllocator<> allocator)
             -> ArenaPtr<const Argument>;
 
     /// Creates a text label argument.
@@ -69,7 +75,7 @@ public:
     /// The text label value is automatically converted to uppercase during the
     /// creation of the object.
     static auto create_text_label(std::string_view value, SourceRange source,
-                                  ArenaMemoryResource* arena)
+                                  ArenaAllocator<> allocator)
             -> ArenaPtr<const Argument>;
 
     /// Creates a string argument.
@@ -77,36 +83,36 @@ public:
     /// The quotation marks that surrounds the string should not be present
     /// in `string`. The string is not converted to uppercase.
     static auto create_string(std::string_view value, SourceRange source,
-                              ArenaMemoryResource* arena)
+                              ArenaAllocator<> allocator)
             -> ArenaPtr<const Argument>;
 
     /// Creates a variable reference argument.
     static auto create_variable(const SymVariable& var, SourceRange source,
-                                ArenaMemoryResource* arena)
+                                ArenaAllocator<> allocator)
             -> ArenaPtr<const Argument>;
 
     /// Creates an array variable reference argument by using the given integer
     /// index.
     static auto create_variable(const SymVariable& var, int32_t index,
-                                SourceRange source, ArenaMemoryResource* arena)
+                                SourceRange source, ArenaAllocator<> allocator)
             -> ArenaPtr<const Argument>;
 
     /// Creates an array variable reference argument by using the given variable
     /// index.
     static auto create_variable(const SymVariable& var,
                                 const SymVariable& index, SourceRange source,
-                                ArenaMemoryResource* arena)
+                                ArenaAllocator<> allocator)
             -> ArenaPtr<const Argument>;
 
     /// Creates a string constant argument.
     static auto create_constant(const CommandManager::ConstantDef& cdef,
-                                SourceRange source, ArenaMemoryResource* arena)
+                                SourceRange source, ArenaAllocator<> allocator)
             -> ArenaPtr<const Argument>;
 
     /// Creates a used object argument.
     static auto create_used_object(const SymUsedObject& used_object,
                                    SourceRange source,
-                                   ArenaMemoryResource* arena)
+                                   ArenaAllocator<> allocator)
             -> ArenaPtr<const Argument>;
 
     struct Command
@@ -114,8 +120,7 @@ public:
     public:
         SourceRange source; ///< Source code  location of the command.
         const CommandManager::CommandDef& def; ///< The command definition.
-        util::span<const Argument*>
-                args;          ///< View into the arguments.
+        util::span<const Argument*> args;      ///< View into the arguments.
         bool not_flag = false; ///< Whether the result of the command is NOTed.
 
         /// Please use `SemaIR::Builder::build_command`.
@@ -128,8 +133,9 @@ public:
         Command(Command&&) noexcept = delete;
         auto operator=(Command&&) noexcept -> Command& = delete;
 
-    protected:
-        Command(SourceRange source, const CommandManager::CommandDef& def,
+    public:
+        Command(PrivateTag /*unused*/, SourceRange source,
+                const CommandManager::CommandDef& def,
                 util::span<const Argument*> args, bool not_flag) :
             source(source), def(def), args(args), not_flag(not_flag)
         {}
@@ -234,13 +240,16 @@ public:
         using TextLabel = std::pair<TextLabelTag, std::string_view>;
         using String = std::pair<StringTag, std::string_view>;
 
+    public:
         template<typename T>
-        explicit Argument(T&& value, SourceRange source) :
+        explicit Argument(PrivateTag /*unused*/, T&& value,
+                          SourceRange source) :
             source(source), value(std::forward<T>(value))
         {}
 
         template<typename Tag>
-        explicit Argument(Tag tag, std::string_view value, SourceRange source) :
+        explicit Argument(PrivateTag /*unused*/, Tag tag,
+                          std::string_view value, SourceRange source) :
             source(source), value(std::pair{tag, value})
         {}
 
@@ -254,8 +263,9 @@ public:
         static_assert(sizeof(value) <= 4 * sizeof(void*));
     };
 
-private:
-    explicit SemaIR(const SymLabel* label, const Command* command) :
+public:
+    explicit SemaIR(PrivateTag /*unused*/, const SymLabel* label,
+                    const Command* command) :
         label(label), command(command)
     {}
 };
@@ -272,7 +282,8 @@ public:
 
     /// Constructs a builder to create instructions allocating any necessary
     /// data in the given arena.
-    explicit Builder(ArenaMemoryResource& arena) noexcept : arena(&arena) {}
+    explicit Builder(ArenaAllocator<> allocator) noexcept : allocator(allocator)
+    {}
 
     Builder(const Builder&) = delete;
     auto operator=(const Builder&) -> Builder& = delete;
@@ -358,7 +369,7 @@ private:
     void create_command_from_attributes();
 
 private:
-    ArenaMemoryResource* arena;
+    ArenaAllocator<> allocator;
 
     bool has_command_def = false;
     bool has_not_flag = false;

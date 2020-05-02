@@ -3,84 +3,86 @@
 namespace gta3sc
 {
 auto SemaIR::create(const SymLabel* label, const Command* command,
-                    ArenaMemoryResource* arena) -> ArenaPtr<SemaIR>
+                    ArenaAllocator<> allocator) -> ArenaPtr<SemaIR>
 {
-    return new(*arena, alignof(SemaIR)) SemaIR(label, command);
+    return allocator.new_object<SemaIR>(private_tag, label, command);
 }
 
 auto SemaIR::create_integer(int32_t value, SourceRange source,
-                            ArenaMemoryResource* arena)
+                            ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
-    return new(*arena, alignof(Argument)) Argument(value, source);
+    return allocator.new_object<Argument>(private_tag, value, source);
 }
 
 auto SemaIR::create_float(float value, SourceRange source,
-                          ArenaMemoryResource* arena)
+                          ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
-    return new(*arena, alignof(Argument)) Argument(value, source);
+    return allocator.new_object<Argument>(private_tag, value, source);
 }
 
 auto SemaIR::create_text_label(std::string_view value, SourceRange source,
-                               ArenaMemoryResource* arena)
+                               ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
-    return new(*arena, alignof(Argument))
-            const Argument(Argument::TextLabelTag{}, value, source);
+    return allocator.new_object<Argument>(
+            private_tag, Argument::TextLabelTag{},
+            util::allocate_string_upper(value, allocator), source);
 }
 
 auto SemaIR::create_label(const SymLabel& label, SourceRange source,
-                          ArenaMemoryResource* arena)
+                          ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
-    return new(*arena, alignof(Argument)) const Argument(&label, source);
+    return allocator.new_object<Argument>(private_tag, &label, source);
 }
 
 auto SemaIR::create_string(std::string_view value, SourceRange source,
-                           ArenaMemoryResource* arena)
+                           ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
-    return new(*arena, alignof(Argument))
-            const Argument(Argument::StringTag{}, value, source);
+    return allocator.new_object<Argument>(
+            private_tag, Argument::StringTag{},
+            util::allocate_string(value, allocator), source);
 }
 
 auto SemaIR::create_variable(const SymVariable& var, SourceRange source,
-                             ArenaMemoryResource* arena)
+                             ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
-    return new(*arena, alignof(Argument))
-            const Argument(Argument::VarRef{var}, source);
+    return allocator.new_object<Argument>(private_tag, Argument::VarRef{var},
+                                          source);
 }
 
 auto SemaIR::create_variable(const SymVariable& var, int32_t index,
-                             SourceRange source, ArenaMemoryResource* arena)
+                             SourceRange source, ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
-    return new(*arena, alignof(Argument))
-            const Argument(Argument::VarRef{var, index}, source);
+    return allocator.new_object<Argument>(private_tag,
+                                          Argument::VarRef{var, index}, source);
 }
 
 auto SemaIR::create_variable(const SymVariable& var, const SymVariable& index,
-                             SourceRange source, ArenaMemoryResource* arena)
+                             SourceRange source, ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
-    return new(*arena, alignof(Argument))
-            const Argument(Argument::VarRef{var, &index}, source);
+    return allocator.new_object<Argument>(
+            private_tag, Argument::VarRef{var, &index}, source);
 }
 
 auto SemaIR::create_constant(const CommandManager::ConstantDef& cdef,
-                             SourceRange source, ArenaMemoryResource* arena)
+                             SourceRange source, ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
-    return new(*arena, alignof(Argument)) const Argument(&cdef, source);
+    return allocator.new_object<Argument>(private_tag, &cdef, source);
 }
 
 auto SemaIR::create_used_object(const SymUsedObject& used_object,
-                                SourceRange source, ArenaMemoryResource* arena)
+                                SourceRange source, ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
-    return new(*arena, alignof(Argument)) const Argument(&used_object, source);
+    return allocator.new_object<Argument>(private_tag, &used_object, source);
 }
 
 auto SemaIR::Argument::as_integer() const -> const int32_t*
@@ -207,8 +209,10 @@ auto SemaIR::Builder::arg(const Argument* value) -> Builder&&
     if(this->args.size() >= static_cast<std::ptrdiff_t>(args_capacity))
     {
         const auto new_caps = !args_capacity ? 6 : args_capacity * 2;
-        auto* const new_args = new(*arena) const Argument*[new_caps];
-        std::move(this->args.begin(), this->args.end(), new_args);
+
+        auto* const new_args = allocator.allocate_object<const Argument*>(
+                new_caps);
+        std::uninitialized_move(this->args.begin(), this->args.end(), new_args);
 
         this->args = util::span(new_args, args.size());
         this->args_capacity = new_caps;
@@ -222,48 +226,48 @@ auto SemaIR::Builder::arg(const Argument* value) -> Builder&&
 
 auto SemaIR::Builder::arg_int(int32_t value, SourceRange source) -> Builder&&
 {
-    return arg(SemaIR::create_integer(value, source, arena));
+    return arg(SemaIR::create_integer(value, source, allocator));
 }
 
 auto SemaIR::Builder::arg_float(float value, SourceRange source) -> Builder&&
 {
-    return arg(SemaIR::create_float(value, source, arena));
+    return arg(SemaIR::create_float(value, source, allocator));
 }
 
 auto SemaIR::Builder::arg_label(const SymLabel& label, SourceRange source)
         -> Builder&&
 {
-    return arg(SemaIR::create_label(label, source, arena));
+    return arg(SemaIR::create_label(label, source, allocator));
 }
 
 auto SemaIR::Builder::arg_text_label(std::string_view value, SourceRange source)
         -> Builder&&
 {
-    return arg(SemaIR::create_text_label(value, source, arena));
+    return arg(SemaIR::create_text_label(value, source, allocator));
 }
 
 auto SemaIR::Builder::arg_string(std::string_view value, SourceRange source)
         -> Builder&&
 {
-    return arg(SemaIR::create_string(value, source, arena));
+    return arg(SemaIR::create_string(value, source, allocator));
 }
 
 auto SemaIR::Builder::arg_var(const SymVariable& var, SourceRange source)
         -> Builder&&
 {
-    return arg(SemaIR::create_variable(var, source, arena));
+    return arg(SemaIR::create_variable(var, source, allocator));
 }
 
 auto SemaIR::Builder::arg_var(const SymVariable& var, int32_t index,
                               SourceRange source) -> Builder&&
 {
-    return arg(SemaIR::create_variable(var, index, source, arena));
+    return arg(SemaIR::create_variable(var, index, source, allocator));
 }
 
 auto SemaIR::Builder::arg_var(const SymVariable& var, const SymVariable& index,
                               SourceRange source) -> Builder&&
 {
-    return arg(SemaIR::create_variable(var, index, source, arena));
+    return arg(SemaIR::create_variable(var, index, source, allocator));
 }
 
 /// Appends an argument referencing to the given string constant to the
@@ -271,13 +275,13 @@ auto SemaIR::Builder::arg_var(const SymVariable& var, const SymVariable& index,
 auto SemaIR::Builder::arg_const(const CommandManager::ConstantDef& cdef,
                                 SourceRange source) -> Builder&&
 {
-    return arg(SemaIR::create_constant(cdef, source, arena));
+    return arg(SemaIR::create_constant(cdef, source, allocator));
 }
 
 auto SemaIR::Builder::arg_object(const SymUsedObject& used_object,
                                  SourceRange source) -> Builder&&
 {
-    return arg(SemaIR::create_used_object(used_object, source, arena));
+    return arg(SemaIR::create_used_object(used_object, source, allocator));
 }
 
 auto SemaIR::Builder::build() && -> ArenaPtr<SemaIR>
@@ -291,7 +295,7 @@ auto SemaIR::Builder::build() && -> ArenaPtr<SemaIR>
     {
         assert(!this->has_not_flag && this->args.empty());
     }
-    return SemaIR::create(this->label_ptr, this->command_ptr, arena);
+    return SemaIR::create(this->label_ptr, this->command_ptr, allocator);
 }
 
 auto SemaIR::Builder::build_command() && -> ArenaPtr<const SemaIR::Command>
@@ -312,9 +316,9 @@ void SemaIR::Builder::create_command_from_attributes()
 {
     assert(this->has_command_def);
 
-    this->command_ptr = new(*arena, alignof(Command))
-            const Command{this->command_source, *this->command_def, this->args,
-                          this->has_not_flag ? this->not_flag_value : false};
+    this->command_ptr = allocator.new_object<Command>(
+            private_tag, this->command_source, *this->command_def, this->args,
+            this->has_not_flag ? this->not_flag_value : false);
 
     this->has_command_def = false;
     this->has_not_flag = false;

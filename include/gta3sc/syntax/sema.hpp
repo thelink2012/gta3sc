@@ -31,14 +31,14 @@ public:
     /// \param arena the arena that should be used to allocate IR in.
     explicit Sema(LinkedIR<ParserIR> parser_ir, SymbolRepository& symrepo,
                   const CommandManager& cmdman, const ModelManager& modelman,
-                  DiagnosticHandler& diag, ArenaMemoryResource& arena) noexcept
+                  DiagnosticHandler& diag, ArenaAllocator<> allocator) noexcept
         :
         parser_ir(std::move(parser_ir)),
         cmdman(&cmdman),
         modelman(&modelman),
         symrepo(&symrepo),
         diag(&diag),
-        arena(&arena)
+        allocator(allocator)
     {}
 
     Sema(const Sema&) = delete;
@@ -227,7 +227,7 @@ private:
     };
 
 private:
-    ArenaMemoryResource* arena;
+    ArenaAllocator<> allocator;
     DiagnosticHandler* diag; // Do not use directly. Please call `report`.
     SymbolRepository* symrepo;
     const CommandManager* cmdman;

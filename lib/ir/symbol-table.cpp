@@ -2,7 +2,8 @@
 
 namespace gta3sc
 {
-SymbolRepository::SymbolRepository(ArenaMemoryResource &arena) : arena(&arena)
+SymbolRepository::SymbolRepository(ArenaAllocator<> allocator) :
+    allocator(allocator)
 {
     // FIXME defer allocation to later when we make members private
     // Note that this will turn the ctor into noexcept.
@@ -50,9 +51,9 @@ auto SymbolRepository::insert_var(std::string_view name, ScopeId scope_id,
         return {v, false};
 
     const auto id = static_cast<uint32_t>(var_tables[scope_id].size());
-    const auto a_name = util::allocate_string(name, *arena);
-    const auto *const symbol = new(*arena, alignof(SymVariable))
-            const SymVariable{source, id, scope_id, type, dim};
+    const auto a_name = util::allocate_string(name, allocator);
+    const auto *const symbol = allocator.new_object<SymVariable>(
+            SymVariable{source, id, scope_id, type, dim});
     const auto [iter, _] = var_tables[scope_id].emplace(a_name, symbol);
     return {iter->second, true};
 }
@@ -64,9 +65,9 @@ auto SymbolRepository::insert_label(std::string_view name, ScopeId scope_id,
     if(const auto *l = lookup_label(name))
         return {l, false};
 
-    const auto a_name = util::allocate_string(name, *arena);
-    const auto *const symbol = new(*arena, alignof(SymLabel))
-            const SymLabel{source, scope_id};
+    const auto a_name = util::allocate_string(name, allocator);
+    const auto *const symbol = allocator.new_object<SymLabel>(
+            SymLabel{source, scope_id});
     const auto [iter, _] = label_table.emplace(a_name, symbol);
     return {iter->second, true};
 }
@@ -79,9 +80,9 @@ auto SymbolRepository::insert_used_object(std::string_view name,
         return {uobj, false};
 
     const auto id = static_cast<uint32_t>(used_objects.size());
-    const auto a_name = util::allocate_string(name, *arena);
-    const auto *const symbol = new(*arena, alignof(SymUsedObject))
-            const SymUsedObject{source, id};
+    const auto a_name = util::allocate_string(name, allocator);
+    const auto *const symbol = allocator.new_object<SymUsedObject>(
+            SymUsedObject{source, id});
     const auto [iter, _] = used_objects.emplace(a_name, symbol);
     return {iter->second, true};
 }

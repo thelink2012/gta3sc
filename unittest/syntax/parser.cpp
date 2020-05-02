@@ -32,7 +32,7 @@ private:
     {
         auto pp = gta3sc::syntax::Preprocessor(std::move(source), diagman);
         auto scanner = gta3sc::syntax::Scanner(std::move(pp));
-        return gta3sc::syntax::Parser(std::move(scanner), arena);
+        return gta3sc::syntax::Parser(std::move(scanner), &arena);
     }
 
     gta3sc::ArenaMemoryResource arena;

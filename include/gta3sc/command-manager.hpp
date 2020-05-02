@@ -328,7 +328,8 @@ public:
     /// Allocations of command definitions, alternators, constants, and whatnot
     /// will be perfomed in the given arena. Therefore, the arena should be live
     /// as long as the resulting `CommandManager` is alive.
-    explicit Builder(ArenaMemoryResource& arena) noexcept;
+    explicit Builder(ArenaAllocator<> allocator) noexcept : allocator(allocator)
+    {}
 
     Builder(const Builder&) = delete;
     auto operator=(const Builder&) -> Builder& = delete;
@@ -446,8 +447,8 @@ public:
     auto insert_entity_type(std::string_view name) -> std::pair<EntityId, bool>;
 
 private:
-    /// The arena used to allocate definitions.
-    ArenaMemoryResource* arena;
+    /// The allocator used to allocate definitions.
+    ArenaAllocator<> allocator;
 
     // Maps that are going to be moved to `CommandManager`.
     CommandsMap commands_map;
@@ -466,8 +467,7 @@ void CommandManager::Builder::set_command_params(CommandDef& command,
                                                  ForwardIterator params_end,
                                                  size_t params_size)
 {
-    auto* a_params = static_cast<ParamDef*>(
-            arena->allocate(params_size * sizeof(ParamDef), alignof(ParamDef)));
+    auto* a_params = allocator.allocate_object<ParamDef>(params_size);
     std::uninitialized_copy(params_begin, params_end, a_params);
     command.params = util::span(a_params, params_size);
 }

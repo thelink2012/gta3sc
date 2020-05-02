@@ -26,7 +26,7 @@ public:
     /// The given arena will be used to allocate the IR of replacement
     /// commands.
     explicit RepeatStmtRewriter(gta3sc::util::NameGenerator& namegen,
-                                ArenaMemoryResource& arena) noexcept;
+                                ArenaAllocator<> allocator) noexcept;
 
     RepeatStmtRewriter(const RepeatStmtRewriter&) = delete;
     auto operator=(const RepeatStmtRewriter&) -> RepeatStmtRewriter& = delete;
@@ -52,7 +52,7 @@ private:
     auto generate_loop_label(SourceRange source) -> const ParserIR::LabelDef*;
 
 private:
-    ArenaMemoryResource* arena;
+    ArenaAllocator<> allocator;
     gta3sc::util::NameGenerator* namegen;
     std::string namegen_buffer;
     std::vector<RepeatStmt> repeat_stack;

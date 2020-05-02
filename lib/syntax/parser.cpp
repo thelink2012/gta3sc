@@ -400,7 +400,7 @@ auto Parser::parse_command(bool is_if_line, bool not_flag)
     if(!token)
         return std::nullopt;
 
-    ParserIR::Builder builder(*arena);
+    ParserIR::Builder builder(allocator);
     builder.not_flag(not_flag);
     builder.command(scanner.spelling(*token), token->source);
 
@@ -446,7 +446,7 @@ auto Parser::parse_argument()
         auto string = lexeme;
         string.remove_prefix(1);
         string.remove_suffix(1);
-        return ParserIR::create_string(string, token->source, arena);
+        return ParserIR::create_string(string, token->source, allocator);
     }
     else if(token->category == Category::word && is_integer(lexeme))
     {
@@ -461,7 +461,7 @@ auto Parser::parse_argument()
             return std::nullopt;
         }
 
-        return ParserIR::create_integer(value, token->source, arena);
+        return ParserIR::create_integer(value, token->source, allocator);
     }
     else if(token->category == Category::word && is_float(lexeme))
     {
@@ -476,11 +476,11 @@ auto Parser::parse_argument()
             return std::nullopt;
         }
 
-        return ParserIR::create_float(value, token->source, arena);
+        return ParserIR::create_float(value, token->source, allocator);
     }
     else if(token->category == Category::word && is_identifier(lexeme))
     {
-        return ParserIR::create_identifier(lexeme, token->source, arena);
+        return ParserIR::create_identifier(lexeme, token->source, allocator);
     }
     else
     {
@@ -587,7 +587,8 @@ auto Parser::parse_statement(bool allow_special_name)
                 return std::nullopt;
         }
 
-        label = ParserIR::LabelDef::create(label_name, label_def.source, arena);
+        label = ParserIR::LabelDef::create(label_name, label_def.source,
+                                           allocator);
     }
 
     auto linked_stmts = parse_embedded_statement(allow_special_name);
@@ -598,14 +599,15 @@ auto Parser::parse_statement(bool allow_special_name)
     {
         if(linked_stmts->empty())
         {
-            linked_stmts->push_back(*ParserIR::create(label, nullptr, arena));
+            linked_stmts->push_back(
+                    *ParserIR::create(label, nullptr, allocator));
         }
         else
         {
             assert(linked_stmts->front().label == nullptr);
             const auto *const command = linked_stmts->front().command;
             linked_stmts->replace(linked_stmts->begin(),
-                                  *ParserIR::create(label, command, arena));
+                                  *ParserIR::create(label, command, allocator));
         }
     }
 
@@ -891,7 +893,7 @@ auto Parser::parse_conditional_list()
     return parse_conditional_list(*op_cond0);
 }
 
-auto Parser::parse_conditional_list(ParserIR* op_cond0)
+auto Parser::parse_conditional_list(ParserIR *op_cond0)
         -> std::pair<std::optional<LinkedIR<ParserIR>>, int32_t>
 {
     // and_conditional_stmt := 'AND' sep conditional_element eol ;
@@ -1016,12 +1018,12 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
             return std::nullopt;
 
         auto linked = LinkedIR<ParserIR>();
-        linked.push_back(*ParserIR::Builder(*arena)
+        linked.push_back(*ParserIR::Builder(allocator)
                                   .command(command_andor, src_info)
                                   .arg_int(0, src_info)
                                   .build());
         linked.push_back(**op_cond0);
-        linked.push_back(*ParserIR::Builder(*arena)
+        linked.push_back(*ParserIR::Builder(allocator)
                                   .command(if_true_command, src_info)
                                   .arg(*arg_label)
                                   .build());
@@ -1064,7 +1066,7 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
         }
 
         body_stms->splice_front(*std::move(andor_list));
-        body_stms->push_front(*ParserIR::Builder(*arena)
+        body_stms->push_front(*ParserIR::Builder(allocator)
                                        .command(if_command, src_info)
                                        .arg_int(andor_count, src_info)
                                        .build());
@@ -1125,7 +1127,7 @@ auto Parser::parse_while_statement_detail(bool is_whilenot)
 
     body_stms->splice_front(*std::move(andor_list));
 
-    body_stms->push_front(*ParserIR::Builder(*arena)
+    body_stms->push_front(*ParserIR::Builder(allocator)
                                    .command(while_command, src_info)
                                    .arg_int(andor_count, src_info)
                                    .build());
@@ -1194,7 +1196,7 @@ auto Parser::parse_require_statement() -> std::optional<ArenaPtr<ParserIR>>
     if(!command)
         return std::nullopt;
 
-    ParserIR::Builder builder(*arena);
+    ParserIR::Builder builder(allocator);
     builder.command(scanner.spelling(*command), command->source);
 
     if(iequal(scanner.spelling(*command), command_gosub_file))
@@ -1423,7 +1425,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
        && ((cats[0] == Category::word && cats[1] == Category::plus_plus)
            || (cats[0] == Category::plus_plus && cats[1] == Category::word)))
     {
-        linked.push_back(*ParserIR::Builder(*arena)
+        linked.push_back(*ParserIR::Builder(allocator)
                                   .not_flag(not_flag)
                                   .command(command_add_thing_to_thing, src_info)
                                   .arg(args[0])
@@ -1436,7 +1438,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
                     && cats[1] == Category::word)))
     {
         linked.push_back(
-                *ParserIR::Builder(*arena)
+                *ParserIR::Builder(allocator)
                          .not_flag(not_flag)
                          .command(command_sub_thing_from_thing, src_info)
                          .arg(args[0])
@@ -1452,7 +1454,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
         const auto b = args[2];
         if(a->is_same_value(*b))
         {
-            linked.push_back(*ParserIR::Builder(*arena)
+            linked.push_back(*ParserIR::Builder(allocator)
                                       .not_flag(not_flag)
                                       .command(command_abs, src_info)
                                       .arg(a)
@@ -1460,13 +1462,13 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
         }
         else
         {
-            linked.push_back(*ParserIR::Builder(*arena)
+            linked.push_back(*ParserIR::Builder(allocator)
                                       .not_flag(not_flag)
                                       .command(command_set, src_info)
                                       .arg(a)
                                       .arg(b)
                                       .build());
-            linked.push_back(*ParserIR::Builder(*arena)
+            linked.push_back(*ParserIR::Builder(allocator)
                                       .not_flag(not_flag)
                                       .command(command_abs, src_info)
                                       .arg(a)
@@ -1552,7 +1554,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
             command_name = it->second;
         }
 
-        linked.push_back(*ParserIR::Builder(*arena)
+        linked.push_back(*ParserIR::Builder(allocator)
                                   .not_flag(not_flag)
                                   .command(command_name, src_info)
                                   .arg(a)
@@ -1594,7 +1596,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
 
         if(a->is_same_value(*b))
         {
-            linked.push_back(*ParserIR::Builder(*arena)
+            linked.push_back(*ParserIR::Builder(allocator)
                                       .command(it->second, src_info)
                                       .arg(a)
                                       .arg(c)
@@ -1611,7 +1613,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
                 return std::nullopt;
             }
 
-            linked.push_back(*ParserIR::Builder(*arena)
+            linked.push_back(*ParserIR::Builder(allocator)
                                       .command(it->second, src_info)
                                       .arg(a)
                                       .arg(b)
@@ -1619,12 +1621,12 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
         }
         else
         {
-            linked.push_back(*ParserIR::Builder(*arena)
+            linked.push_back(*ParserIR::Builder(allocator)
                                       .command(command_set, src_info)
                                       .arg(a)
                                       .arg(b)
                                       .build());
-            linked.push_back(*ParserIR::Builder(*arena)
+            linked.push_back(*ParserIR::Builder(allocator)
                                       .command(it->second, src_info)
                                       .arg(a)
                                       .arg(c)

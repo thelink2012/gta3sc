@@ -15,9 +15,9 @@ class SemaFixture
     , public CommandManagerFixture
 {
 public:
-    SemaFixture() : sema(default_sema()), symrepo(arena)
+    SemaFixture() : sema(default_sema()), symrepo(&arena)
     {
-        modelman = ModelManager::Builder(arena)
+        modelman = ModelManager::Builder(&arena)
                            .insert_model("CHEETAH")
                            .insert_model("LEVEL_MODEL")
                            .insert_model("OTHER_LEVEL_MODEL")
@@ -31,7 +31,7 @@ public:
         {
             REQUIRE(ir != std::nullopt);
             this->sema = gta3sc::syntax::Sema(std::move(*ir), symrepo, cmdman,
-                                              modelman, diagman, arena);
+                                              modelman, diagman, &arena);
         }
         else
         {
@@ -47,13 +47,13 @@ private:
     {
         auto pp = gta3sc::syntax::Preprocessor(std::move(source), diagman);
         auto scanner = gta3sc::syntax::Scanner(std::move(pp));
-        return gta3sc::syntax::Parser(std::move(scanner), arena);
+        return gta3sc::syntax::Parser(std::move(scanner), &arena);
     }
 
     auto default_sema() -> gta3sc::syntax::Sema
     {
         return gta3sc::syntax::Sema(gta3sc::LinkedIR<gta3sc::ParserIR>(),
-                                    symrepo, cmdman, modelman, diagman, arena);
+                                    symrepo, cmdman, modelman, diagman, &arena);
     }
 
     gta3sc::ArenaMemoryResource arena;
