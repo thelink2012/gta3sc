@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 
+project(gta3sc CXX)
+
 option(GTA3SC_COVERAGE "Enable code coverage measurements with gcov/lcov." OFF)
 option(GTA3SC_ANALYSIS "Enable static analysis and linting with clang-tidy." OFF)
 
@@ -24,15 +26,13 @@ if(GTA3SC_ANALYSIS)
   set(CMAKE_BUILD_TYPE Debug)
   set(CMAKE_VERBOSE_MAKEFILE ON)
   set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-  find_program(CLANG_TIDY NAMES clang-tidy clang-tidy-11 clang-tidy-10 clang-tidy-9)
+  find_program(CLANG_TIDY NAMES clang-tidy-12 clang-tidy-11 clang-tidy-10 clang-tidy)
   if(CLANG_TIDY)
     set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY}")
   else()
     message(SEND_ERROR "GTA3SC_ANALYSIS enabled but no clang-tidy binary found")
   endif()
 endif()
-
-project(gta3sc CXX)
 
 include(CTest)
 

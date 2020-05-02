@@ -163,6 +163,11 @@ private:
                            [](const auto& view) { return view; });
             return vec;
         }
+        else if constexpr(std::is_integral_v<Ty>)
+        {
+            return Diagnostic::Arg(std::in_place_type_t<int64_t>(),
+                                   std::forward<T>(arg));
+        }
         else
         {
             return std::forward<T>(arg);

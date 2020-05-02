@@ -252,8 +252,8 @@ auto Sema::validate_command(const ParserIR::Command& command)
     builder.command(*command_def, command.source);
     builder.not_flag(command.not_flag);
 
-    auto* arg_it = command.args.begin();
-    auto* param_it = command_def->params.begin();
+    auto arg_it = command.args.begin();
+    auto param_it = command_def->params.begin();
 
     while(arg_it != command.args.end() && param_it != command_def->params.end())
     {
