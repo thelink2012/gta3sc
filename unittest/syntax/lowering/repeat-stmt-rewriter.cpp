@@ -147,7 +147,7 @@ TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "rewriting REPEAT")
                         {set_somevar_0, gta3sc::ParserIR::Builder(arena)
                                                 .label("TEST_LABEL_0")
                                                 .build()}));
-        gta3sc::util::unlink_node(*set_somevar_0);
+        gta3sc::util::algorithm::circular_list::erase(*set_somevar_0);
 
         rewrite_result = rewriter.visit(*repeat_10_somevar);
         REQUIRE(rewrite_result);

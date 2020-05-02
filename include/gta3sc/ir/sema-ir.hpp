@@ -1,7 +1,7 @@
 #pragma once
 #include <gta3sc/command-manager.hpp>
 #include <gta3sc/ir/symbol-table.hpp>
-#include <gta3sc/util/intrusive-list-node.hpp>
+#include <gta3sc/util/intrusive-bidirectional-list-node.hpp>
 #include <variant>
 
 namespace gta3sc

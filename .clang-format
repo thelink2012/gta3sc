@@ -52,7 +52,7 @@ Cpp11BracedListStyle: true
 DerivePointerAlignment: true
 DisableFormat: false
 ExperimentalAutoDetectBinPacking: false
-FixNamespaceComments: false
+FixNamespaceComments: true
 ForEachMacros:
 - foreach
 - Q_FOREACH
@@ -75,7 +75,7 @@ Language: Cpp
 MacroBlockBegin: ''
 MacroBlockEnd: ''
 MaxEmptyLinesToKeep: 1
-NamespaceIndentation: Inner
+NamespaceIndentation: None
 ObjCBlockIndentWidth: 0
 ObjCSpaceAfterProperty: true
 ObjCSpaceBeforeProtocolList: true

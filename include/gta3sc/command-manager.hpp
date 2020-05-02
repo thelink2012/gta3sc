@@ -1,7 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <gta3sc/util/arena-allocator.hpp>
-#include <gta3sc/util/intrusive-list-node.hpp>
+#include <gta3sc/util/intrusive-forward-list-node.hpp>
 #include <gta3sc/util/span.hpp>
 #include <optional>
 #include <string_view>
@@ -107,33 +107,6 @@ public:
         bool target_handled = false;
     };
 
-    /// Stores information about a alternator.
-    ///
-    /// See the language specification for details on alternators:
-    /// https://gtamodding.github.io/gta3script-specs/core.html#alternators
-    struct AlternatorDef
-    {
-    public:
-        /// An iterator that iterates on alternative commands.
-        using const_iterator
-                = util::ConstIntrusiveListForwardIterator<AlternativeDef>;
-
-        /// Returns the front iterator for the alternatives in this alternator.
-        auto begin() const -> const_iterator;
-
-        /// Returns the past-the-end iterator for the alternatives in this
-        /// alternator.
-        auto end() const -> const_iterator;
-
-    protected:
-        friend class CommandManager::Builder;
-        void push_back(AlternativeDef& alternative);
-
-    private:
-        arena_ptr<AlternativeDef> first{};
-        arena_ptr<AlternativeDef> last{};
-    };
-
     /// Stores information about an alternative command.
     ///
     /// See `AlternatorDef` for details.
@@ -143,9 +116,29 @@ public:
 
         explicit AlternativeDef(const CommandDef& command) : command(&command)
         {}
+    };
 
-        // Provide the outer class access to the node pointers.
-        friend class CommandManager;
+    /// Stores information about a alternator.
+    ///
+    /// See the language specification for details on alternators:
+    /// https://gtamodding.github.io/gta3script-specs/core.html#alternators
+    struct AlternatorDef
+    {
+    public:
+        /// An iterator that iterates on alternative commands.
+        using const_iterator = typename AlternativeDef::ConstIterator;
+
+        /// Returns the front iterator for the alternatives in this alternator.
+        auto begin() const -> const_iterator;
+
+        /// Returns the past-the-end iterator for the alternatives in this
+        /// alternator.
+        auto end() const -> const_iterator;
+
+    private:
+        friend class CommandManager::Builder;
+        arena_ptr<AlternativeDef> first{};
+        arena_ptr<AlternativeDef> last{};
     };
 
     /// Stores information about a string constant.
@@ -162,9 +155,6 @@ public:
         explicit ConstantDef(EnumId enum_id, int32_t value) :
             enum_id(enum_id), value(value)
         {}
-
-        // Provide the outer class access to the node pointers.
-        friend class CommandManager;
     };
 
     // Those structures will be stored in an arena thus they need to be

@@ -3,17 +3,10 @@
 // FIXME none of the insertion commands here handle the case of the string
 // key being lowercase, which shouldn't reinsert the command.
 
+namespace linear_list = gta3sc::util::algorithm::linear_list;
+
 namespace gta3sc
 {
-// Iterator for the list of string constants stored in the constants map.
-using ConstantListIterator
-        = util::ConstIntrusiveListForwardIterator<CommandManager::ConstantDef>;
-
-// Mutable iterator for the list of string constants stored in the constants
-// map.
-using MutableConstantListIterator
-        = util::IntrusiveListForwardIterator<CommandManager::ConstantDef>;
-
 CommandManager::CommandManager(CommandsMap&& commands_map,
                                AlternatorsMap&& alternators_map,
                                EnumsMap&& enums_map,
@@ -51,21 +44,6 @@ auto CommandManager::AlternatorDef::begin() const -> const_iterator
 auto CommandManager::AlternatorDef::end() const -> const_iterator
 {
     return const_iterator();
-}
-
-void CommandManager::AlternatorDef::push_back(AlternativeDef& alternative)
-{
-    if(this->last)
-    {
-        this->last->next = &alternative;
-    }
-    else
-    {
-        assert(!first);
-        this->first = &alternative;
-    }
-
-    this->last = &alternative;
 }
 
 auto CommandManager::find_command(std::string_view name) const
@@ -139,7 +117,8 @@ auto CommandManager::find_constant(const ConstantsMap& constants_map,
 
     assert(cpair->second != nullptr);
 
-    for(ConstantListIterator it(cpair->second, nullptr), end; it != end; ++it)
+    for(ConstantDef::ConstIterator it(cpair->second, nullptr), end; it != end;
+        ++it)
     {
         if(it->enum_id == enum_id)
             return std::addressof(*it);
@@ -158,7 +137,8 @@ auto CommandManager::find_constant_any_means(const ConstantsMap& constants_map,
 
     assert(cdef->second != nullptr);
 
-    for(ConstantListIterator it(cdef->second, nullptr), end; it != end; ++it)
+    for(ConstantDef::ConstIterator it(cdef->second, nullptr), end; it != end;
+        ++it)
     {
         if(it->enum_id != global_enum)
             return std::addressof(*it);
@@ -195,7 +175,8 @@ auto CommandManager::Builder::find_command(std::string_view name) const
 
 auto CommandManager::Builder::find_command(std::string_view name) -> CommandDef*
 {
-    return const_cast<CommandDef*>(
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast): Safe.
+    return const_cast<CommandDef*>( // NOLINTNEXTLINE
             const_cast<const Builder&>(*this).find_command(name));
 }
 
@@ -208,7 +189,8 @@ auto CommandManager::Builder::find_alternator(std::string_view name) const
 auto CommandManager::Builder::find_alternator(std::string_view name)
         -> AlternatorDef*
 {
-    return const_cast<AlternatorDef*>(
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast): Safe.
+    return const_cast<AlternatorDef*>( // NOLINTNEXTLINE
             const_cast<const Builder&>(*this).find_alternator(name));
 }
 
@@ -266,7 +248,9 @@ auto CommandManager::Builder::insert_alternative(AlternatorDef& alternator,
     auto* a_alternative = new(*arena, alignof(AlternativeDef))
             AlternativeDef(command);
 
-    alternator.push_back(*a_alternative);
+    std::tie(alternator.first, alternator.last) = linear_list::push_back(
+            *a_alternative, alternator.first, alternator.last);
+
     return a_alternative;
 }
 
@@ -305,11 +289,10 @@ auto CommandManager::Builder::insert_or_assign_constant(EnumId enum_id,
     }
     else
     {
-        MutableConstantListIterator prev_it{};
-        MutableConstantListIterator curr_it(it->second, nullptr);
+        ConstantDef::Iterator prev_it{};
+        ConstantDef::Iterator curr_it(it->second, nullptr);
 
-        for(MutableConstantListIterator end{}; curr_it != end;
-            prev_it = curr_it++)
+        for(ConstantDef::Iterator end{}; curr_it != end; prev_it = curr_it++)
         {
             if(curr_it->enum_id == enum_id)
             {
@@ -318,9 +301,12 @@ auto CommandManager::Builder::insert_or_assign_constant(EnumId enum_id,
             }
         }
 
-        prev_it->next = new(*arena, alignof(ConstantDef))
+        auto* a_constant = new(*arena, alignof(ConstantDef))
                 ConstantDef{enum_id, value};
-        return {prev_it->next, true};
+
+        linear_list::insert_after(*prev_it, *a_constant);
+
+        return {a_constant, true};
     }
 }
 

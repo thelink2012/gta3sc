@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <gta3sc/sourceman.hpp>
 #include <gta3sc/util/arena-allocator.hpp>
-#include <gta3sc/util/intrusive-list-node.hpp>
+#include <gta3sc/util/intrusive-bidirectional-list-node.hpp>
 #include <gta3sc/util/span.hpp>
 #include <string_view>
 #include <variant>
