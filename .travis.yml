@@ -27,7 +27,7 @@ matrix:
         - BUILD_TYPE=Debug
         - COVERAGE=0
         - ANALYSIS=1
-    - name: "GCC 10 @ Ubuntu x86_64-linux-gnu"
+    - name: "GCC 10 Coverage @ Ubuntu x86_64-linux-gnu"
       os: linux
       addons:
         apt:

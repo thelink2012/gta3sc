@@ -28,11 +28,12 @@ public:
 
 public:
     LinkedIR() noexcept = default;
+
     LinkedIR(std::initializer_list<pointer> ilist) noexcept : super_type(ilist)
     {}
 
-    LinkedIR(const LinkedIR&) noexcept = delete;
-    auto operator=(const LinkedIR&) noexcept -> LinkedIR& = delete;
+    LinkedIR(const LinkedIR&) = delete;
+    auto operator=(const LinkedIR&) -> LinkedIR& = delete;
 
     LinkedIR(LinkedIR&&) noexcept = default;
     auto operator=(LinkedIR&&) noexcept -> LinkedIR& = default;
@@ -40,13 +41,13 @@ public:
     ~LinkedIR() noexcept = default;
 
     /// Moves the elements of `other` into the front of this.
-    void splice_front(LinkedIR&& other)
+    constexpr void splice_front(LinkedIR&& other) noexcept
     {
         this->splice(this->begin(), std::move(other));
     }
 
     /// Moves the element of `other` into the back of this.
-    void splice_back(LinkedIR&& other)
+    constexpr void splice_back(LinkedIR&& other) noexcept
     {
         this->splice(this->end(), std::move(other));
     }
@@ -54,7 +55,7 @@ public:
     /// Replaces the element at the specified `pos` by `other`.
     //
     /// Returns the iterator to `other`.
-    auto replace(iterator pos, reference other) -> iterator
+    constexpr auto replace(iterator pos, reference other) noexcept -> iterator
     {
         return this->insert(this->erase(pos), other);
     }

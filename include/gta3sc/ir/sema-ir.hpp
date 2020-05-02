@@ -35,7 +35,7 @@ private:
     struct PrivateTag
     {
     };
-    static constexpr PrivateTag private_tag;
+    static constexpr PrivateTag private_tag{};
 
 public:
     const SymLabel* const label{};

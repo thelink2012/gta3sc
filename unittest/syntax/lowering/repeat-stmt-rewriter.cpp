@@ -48,7 +48,7 @@ TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "rewriting REPEAT")
                          .arg_ident("somevar")
                          .build());
         REQUIRE(rewrite_result);
-        REQUIRE(rewrite_result.ir
+        REQUIRE(*rewrite_result
                 == gta3sc::LinkedIR<gta3sc::ParserIR>(
                         {gta3sc::ParserIR::Builder(&arena)
                                  .command("SET")
@@ -91,7 +91,7 @@ TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "rewriting REPEAT")
                          .arg_int(10)
                          .arg_ident("somevar")
                          .build());
-        REQUIRE(rewrite_result.ir
+        REQUIRE(*rewrite_result
                 == gta3sc::LinkedIR<gta3sc::ParserIR>(
                         {gta3sc::ParserIR::Builder(&arena)
                                  .label("MYLABEL")
@@ -113,7 +113,7 @@ TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "rewriting REPEAT")
                          .arg_int(20)
                          .build());
         REQUIRE(rewrite_result);
-        REQUIRE(rewrite_result.ir
+        REQUIRE(*rewrite_result
                 == gta3sc::LinkedIR<gta3sc::ParserIR>(
                         {gta3sc::ParserIR::Builder(&arena)
                                  .command("SET")
@@ -143,7 +143,7 @@ TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "rewriting REPEAT")
 
         rewrite_result = rewriter.visit(*repeat_10_somevar);
         REQUIRE(rewrite_result);
-        REQUIRE(rewrite_result.ir
+        REQUIRE(*rewrite_result
                 == gta3sc::LinkedIR<gta3sc::ParserIR>(
                         {set_somevar_0, gta3sc::ParserIR::Builder(&arena)
                                                 .label("TEST_LABEL_0")
@@ -152,7 +152,7 @@ TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "rewriting REPEAT")
 
         rewrite_result = rewriter.visit(*repeat_10_somevar);
         REQUIRE(rewrite_result);
-        REQUIRE(rewrite_result.ir
+        REQUIRE(*rewrite_result
                 == gta3sc::LinkedIR<gta3sc::ParserIR>(
                         {set_somevar_0, gta3sc::ParserIR::Builder(&arena)
                                                 .label("TEST_LABEL_1")
@@ -177,7 +177,7 @@ TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "rewriting ENDREPEAT")
                                                  .command("ENDREPEAT")
                                                  .build());
         REQUIRE(rewrite_result);
-        REQUIRE(rewrite_result.ir
+        REQUIRE(*rewrite_result
                 == gta3sc::LinkedIR<gta3sc::ParserIR>(
                         {gta3sc::ParserIR::Builder(&arena)
                                  .command("ADD_THING_TO_THING")
@@ -234,7 +234,7 @@ TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "rewriting ENDREPEAT")
                                                  .command("ENDREPEAT")
                                                  .build());
         REQUIRE(rewrite_result);
-        REQUIRE(rewrite_result.ir
+        REQUIRE(*rewrite_result
                 == gta3sc::LinkedIR<gta3sc::ParserIR>(
                         {gta3sc::ParserIR::Builder(&arena)
                                  .label("MYLABEL")
@@ -265,7 +265,7 @@ TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "rewriting ENDREPEAT")
                                                  .command("ENDREPEAT")
                                                  .build());
         REQUIRE(rewrite_result);
-        REQUIRE(rewrite_result.ir
+        REQUIRE(*rewrite_result
                 == gta3sc::LinkedIR<gta3sc::ParserIR>(
                         {gta3sc::ParserIR::Builder(&arena)
                                  .command("ADD_THING_TO_THING")
@@ -295,7 +295,7 @@ TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "rewriting ENDREPEAT")
                                                  .command("ENDREPEAT")
                                                  .build());
         REQUIRE(rewrite_result);
-        REQUIRE(rewrite_result.ir
+        REQUIRE(*rewrite_result
                 == gta3sc::LinkedIR<gta3sc::ParserIR>(
                         {gta3sc::ParserIR::Builder(&arena)
                                  .command("ADD_THING_TO_THING")
@@ -340,7 +340,7 @@ TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "rewriting ENDREPEAT")
                                                  .command("ENDREPEAT")
                                                  .build());
         REQUIRE(rewrite_result);
-        REQUIRE(rewrite_result.ir
+        REQUIRE(*rewrite_result
                 == gta3sc::LinkedIR<gta3sc::ParserIR>(
                         {gta3sc::ParserIR::Builder(&arena)
                                  .command("ADD_THING_TO_THING")
@@ -360,7 +360,7 @@ TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "rewriting ENDREPEAT")
                                                  .command("ENDREPEAT")
                                                  .build());
         REQUIRE(rewrite_result);
-        REQUIRE(rewrite_result.ir
+        REQUIRE(*rewrite_result
                 == gta3sc::LinkedIR<gta3sc::ParserIR>(
                         {gta3sc::ParserIR::Builder(&arena)
                                  .command("ADD_THING_TO_THING")
@@ -381,7 +381,7 @@ TEST_CASE_FIXTURE(RepeatStmtRewriterFixture, "rewriting ENDREPEAT")
                                                  .command("ENDREPEAT")
                                                  .build());
         REQUIRE(rewrite_result);
-        REQUIRE(rewrite_result.ir
+        REQUIRE(*rewrite_result
                 == gta3sc::LinkedIR<gta3sc::ParserIR>(
                         {gta3sc::ParserIR::Builder(&arena)
                                  .command("ADD_THING_TO_THING")
