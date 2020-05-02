@@ -91,29 +91,29 @@ public:
     auto next_filename() -> std::optional<Token>;
 
     /// Checks whether the end of stream has been reached.
-    auto eof() const -> bool;
+    [[nodiscard]] auto eof() const -> bool;
 
     /// Gets the current location in the character stream.
-    auto location() const -> SourceLocation;
+    [[nodiscard]] auto location() const -> SourceLocation;
 
     /// Gets the source file associated with this scanner.
-    auto source_file() const -> const SourceFile&;
+    [[nodiscard]] auto source_file() const -> const SourceFile&;
 
     /// Gets the diagnostic handler associated with this scanner.
-    auto diagnostics() const -> DiagnosticHandler&;
+    [[nodiscard]] auto diagnostics() const -> DiagnosticHandler&;
 
     /// Returns a view to the characters of a token in the source code.
-    auto spelling(const Token& token) const -> std::string_view;
+    [[nodiscard]] auto spelling(const Token& token) const -> std::string_view;
 
 private:
     /// Consumes the next character in the character stream.
     auto getc() -> char;
 
-    auto is_whitespace(char c) const -> bool;
-    auto is_newline(char c) const -> bool;
-    auto is_digit(char c) const -> bool;
-    auto is_print(char c) const -> bool;
-    auto is_word_char(char c) const -> bool;
+    [[nodiscard]] auto is_whitespace(char c) const -> bool;
+    [[nodiscard]] auto is_newline(char c) const -> bool;
+    [[nodiscard]] auto is_digit(char c) const -> bool;
+    [[nodiscard]] auto is_print(char c) const -> bool;
+    [[nodiscard]] auto is_word_char(char c) const -> bool;
 
 private:
     Preprocessor pp;

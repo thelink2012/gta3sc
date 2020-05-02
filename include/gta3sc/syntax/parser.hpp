@@ -35,13 +35,13 @@ public:
     ~Parser() noexcept = default;
 
     /// Gets the source file associated with this parser.
-    auto source_file() const -> const SourceFile&;
+    [[nodiscard]] auto source_file() const -> const SourceFile&;
 
     /// Gets the diagnostic handler associated with this parser.
-    auto diagnostics() const -> DiagnosticHandler&;
+    [[nodiscard]] auto diagnostics() const -> DiagnosticHandler&;
 
     /// Checks whether the end of stream has been reached.
-    auto eof() const -> bool;
+    [[nodiscard]] auto eof() const -> bool;
 
     /// Skips to the next line in the token stream.
     void skip_current_line();
@@ -167,19 +167,20 @@ private:
     auto consume_whitespace() -> std::optional<Token>;
 
     /// Compares two strings for equality in a case-insensitive manner.
-    auto iequal(std::string_view lhs, std::string_view rhs) const -> bool;
+    [[nodiscard]] auto iequal(std::string_view lhs, std::string_view rhs) const
+            -> bool;
 
     /// Checks whether the specified name is a command name used by
     /// the language grammar for special purposes (e.g. 'REPEAT', `VAR_INT`).
-    auto is_special_name(std::string_view name, bool check_var_decl) const
-            -> bool;
+    [[nodiscard]] auto is_special_name(std::string_view name,
+                                       bool check_var_decl) const -> bool;
 
     /// Checks whether the given command name is a variable declaration.
-    auto is_var_decl_command(std::string_view name) const -> bool;
+    [[nodiscard]] auto is_var_decl_command(std::string_view name) const -> bool;
 
     /// Checks whether the specified lexical category is of a relational
     /// comparision operator (i.e. `<=`, `<`, `>`, `>=`).
-    auto is_relational_operator(Category category) const -> bool;
+    [[nodiscard]] auto is_relational_operator(Category category) const -> bool;
 
     /// Produces a diagnostic report associated with a given token.
     auto report(const Token& token, Diag message) -> DiagnosticBuilder;
@@ -262,10 +263,10 @@ private:
                                  bool not_flag)
             -> std::optional<LinkedIR<ParserIR>>;
 
-    auto is_digit(char c) const -> bool;
-    auto is_integer(std::string_view lexeme) const -> bool;
-    auto is_float(std::string_view lexeme) const -> bool;
-    auto is_identifier(std::string_view lexeme) const -> bool;
+    [[nodiscard]] auto is_digit(char c) const -> bool;
+    [[nodiscard]] auto is_integer(std::string_view lexeme) const -> bool;
+    [[nodiscard]] auto is_float(std::string_view lexeme) const -> bool;
+    [[nodiscard]] auto is_identifier(std::string_view lexeme) const -> bool;
 
 private:
     static constexpr size_t num_peek_tokens = 6;

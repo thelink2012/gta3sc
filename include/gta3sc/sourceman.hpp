@@ -99,13 +99,14 @@ struct SourceRange
     {}
 
     /// Returns the number of characters in this range.
-    auto size() const -> size_t { return end - begin; }
+    [[nodiscard]] auto size() const -> size_t { return end - begin; }
 
     /// Returns a subrange of this range.
     ///
     /// \param offset the position to start the new range from this range.
     /// \param count the length of the new range.
-    auto subrange(size_t offset, size_t count = -1) const -> SourceRange
+    [[nodiscard]] auto subrange(size_t offset, size_t count = -1) const
+            -> SourceRange
     {
         offset = std::min(offset, this->size());
         count = std::min(count, this->size() - offset);
@@ -209,7 +210,8 @@ protected:
 
 private:
     /// Checks whether two strings are equal (ignoring casing).
-    auto iequal(std::string_view lhs, std::string_view rhs) const -> bool;
+    [[nodiscard]] auto iequal(std::string_view lhs, std::string_view rhs) const
+            -> bool;
 
     auto load_file(const std::filesystem::path& path, std::FILE* stream,
                    size_t hint_size = -1) -> std::optional<SourceFile>;
@@ -266,13 +268,16 @@ public:
     }
 
     /// Gets the null-terminated sequence of characters of the source file.
-    auto code_data() const -> const char* { return info->data.get(); }
+    [[nodiscard]] auto code_data() const -> const char*
+    {
+        return info->data.get();
+    }
 
     /// Returns the size (in bytes) of the source code.
-    auto code_size() const -> size_t { return info->file_length; }
+    [[nodiscard]] auto code_size() const -> size_t { return info->file_length; }
 
     /// Returns a string view to the source code.
-    auto code_view() const -> std::string_view
+    [[nodiscard]] auto code_view() const -> std::string_view
     {
         return std::string_view(code_data(), code_size());
     }
@@ -284,13 +289,14 @@ public:
     }
 
     /// Gets the source location of a given character view.
-    auto location_of(std::string_view view) const -> SourceLocation
+    [[nodiscard]] auto location_of(std::string_view view) const
+            -> SourceLocation
     {
         return location_of(view.data());
     }
 
     /// Gets a string view to a source range.
-    auto view_of(SourceRange range) const -> std::string_view
+    [[nodiscard]] auto view_of(SourceRange range) const -> std::string_view
     {
         const auto* const begin = code_data() + (range.begin - info->start_loc);
         return std::string_view(begin, range.end - range.begin);

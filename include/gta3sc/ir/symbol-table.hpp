@@ -39,7 +39,7 @@ struct SymVariable
     Type type{};        ///< The type of the variable.
     std::optional<uint16_t> dim; ///< Array dimensions if any.
 
-    auto is_array() const -> bool { return !!dim; }
+    [[nodiscard]] auto is_array() const -> bool { return !!dim; }
 };
 
 /// Represents an used object.

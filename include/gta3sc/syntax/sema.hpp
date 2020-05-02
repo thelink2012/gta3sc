@@ -58,7 +58,7 @@ public:
     /// Gets the entity type of the given variable at the end of the input.
     ///
     /// Must run `validate` beforehand.
-    auto var_entity_type(const SymVariable& var) const
+    [[nodiscard]] auto var_entity_type(const SymVariable& var) const
             -> CommandManager::EntityId;
 
 private:
@@ -166,35 +166,41 @@ private:
 
     /// Lookups a variable in the global scope as well as in
     /// the current local scope.
-    auto lookup_var_lvar(std::string_view name) const -> const SymVariable*;
+    [[nodiscard]] auto lookup_var_lvar(std::string_view name) const
+            -> const SymVariable*;
 
     /// Sets the entity type for `var` in `vars_entity_type`.
     void set_var_entity_type(const SymVariable& var,
                              CommandManager::EntityId entity_type);
 
     /// Finds a constant in the default model enumeration.
-    auto find_defaultmodel_constant(std::string_view name) const
+    [[nodiscard]] auto find_defaultmodel_constant(std::string_view name) const
             -> const CommandManager::ConstantDef*;
 
     /// Checks whether the given parameter has an object string constant
     /// association.
-    auto is_object_param(const CommandManager::ParamDef& param) const -> bool;
+    [[nodiscard]] auto
+    is_object_param(const CommandManager::ParamDef& param) const -> bool;
 
     /// Checks whether a parameter type accepts only global variables.
-    auto is_gvar_param(CommandManager::ParamType param_type) const -> bool;
+    [[nodiscard]] auto is_gvar_param(CommandManager::ParamType param_type) const
+            -> bool;
 
     /// Checks whether a parameter type accepts only local variables.
-    auto is_lvar_param(CommandManager::ParamType param_type) const -> bool;
+    [[nodiscard]] auto is_lvar_param(CommandManager::ParamType param_type) const
+            -> bool;
 
     /// Checks whether the typing of a parameter matches the
     /// typing of a variable.
-    auto matches_var_type(CommandManager::ParamType param_type,
-                          SymVariable::Type var_type) const -> bool;
+    [[nodiscard]] auto matches_var_type(CommandManager::ParamType param_type,
+                                        SymVariable::Type var_type) const
+            -> bool;
 
     /// Checks whether the specified command is an alternative of an certain
     /// alternator.
-    auto is_alternative_command(const CommandManager::CommandDef& command_def,
-                                const CommandManager::AlternatorDef& from) const
+    [[nodiscard]] auto
+    is_alternative_command(const CommandManager::CommandDef& command_def,
+                           const CommandManager::AlternatorDef& from) const
             -> bool;
 
     //// Checks whether the specified actual command/args matches the

@@ -181,28 +181,28 @@ public:
 
         /// Returns the contained integer or `nullptr` if this argument is not
         /// an integer.
-        auto as_integer() const -> const int32_t*;
+        [[nodiscard]] auto as_integer() const -> const int32_t*;
 
         /// Returns the contained float or `nullptr` if this argument is not
         /// an float.
-        auto as_float() const -> const float*;
+        [[nodiscard]] auto as_float() const -> const float*;
 
         /// Returns the contained identifier or `nullptr` if this argument is
         /// not an identifier.
-        auto as_identifier() const -> const std::string_view*;
+        [[nodiscard]] auto as_identifier() const -> const std::string_view*;
 
         /// Returns the contained filename or `nullptr` if this argument is not
         /// an filename.
-        auto as_filename() const -> const std::string_view*;
+        [[nodiscard]] auto as_filename() const -> const std::string_view*;
 
         /// Returns the contained string or `nullptr` if this argument is not
         /// an string.
-        auto as_string() const -> const std::string_view*;
+        [[nodiscard]] auto as_string() const -> const std::string_view*;
 
         /// Returns whether the value of this is equal the value of another
         /// argument (i.e. same as `operator==` without comparing source
         /// location).
-        auto is_same_value(const Argument& other) const -> bool;
+        [[nodiscard]] auto is_same_value(const Argument& other) const -> bool;
 
         /// Compares whether a given argument is equivalent to another.
         friend auto operator==(const Argument& lhs, const Argument& rhs)

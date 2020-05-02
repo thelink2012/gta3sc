@@ -34,16 +34,16 @@ public:
     auto next() -> char;
 
     /// Checks whether the stream reached the end of file.
-    auto eof() const -> bool;
+    [[nodiscard]] auto eof() const -> bool;
 
     /// Gets the current source location.
-    auto location() const -> SourceLocation;
+    [[nodiscard]] auto location() const -> SourceLocation;
 
     /// Gets the source file associated with this preprocessor.
-    auto source_file() const -> const SourceFile&;
+    [[nodiscard]] auto source_file() const -> const SourceFile&;
 
     /// Gets the diagnostic handler associated with this preprocessor.
-    auto diagnostics() const -> DiagnosticHandler&;
+    [[nodiscard]] auto diagnostics() const -> DiagnosticHandler&;
 
 private:
     auto is_whitespace(const char* p) const -> bool;

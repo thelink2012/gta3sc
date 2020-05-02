@@ -21,7 +21,7 @@ protected:
         this->scanner = gta3sc::syntax::Scanner(std::move(pp));
     }
 
-    auto spelling(const Token& token) const -> std::string_view
+    [[nodiscard]] auto spelling(const Token& token) const -> std::string_view
     {
         return scanner.spelling(token);
     }

@@ -160,7 +160,7 @@ public:
     /// This is not a violation of the type system since the construction
     /// of iterator requires a non-constant `T`. Nevertheless, the use of
     /// this method should be limited to containers.
-    constexpr auto unconst() const noexcept -> IteratorImpl<false>
+    [[nodiscard]] constexpr auto unconst() const noexcept -> IteratorImpl<false>
     {
         return IteratorImpl<false>(curr, nullptr);
     }

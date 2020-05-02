@@ -114,35 +114,43 @@ public:
 
     constexpr auto begin() noexcept -> iterator { return std::next(end()); }
 
-    constexpr auto begin() const noexcept -> const_iterator
+    [[nodiscard]] constexpr auto begin() const noexcept -> const_iterator
     {
         return std::next(end());
     }
 
-    constexpr auto cbegin() const noexcept -> const_iterator { return begin(); }
+    [[nodiscard]] constexpr auto cbegin() const noexcept -> const_iterator
+    {
+        return begin();
+    }
 
     constexpr auto end() noexcept -> iterator { return iterator(sentinel); }
 
-    constexpr auto end() const noexcept -> const_iterator
+    [[nodiscard]] constexpr auto end() const noexcept -> const_iterator
     {
         // The following const_cast is hacky, but what else can we do?
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
         return const_iterator(const_cast<node_type&>(sentinel));
     }
 
-    constexpr auto cend() const noexcept -> const_iterator { return end(); }
+    [[nodiscard]] constexpr auto cend() const noexcept -> const_iterator
+    {
+        return end();
+    }
 
     constexpr auto rbegin() noexcept -> reverse_iterator
     {
         return reverse_iterator(end());
     }
 
-    constexpr auto rbegin() const noexcept -> const_reverse_iterator
+    [[nodiscard]] constexpr auto rbegin() const noexcept
+            -> const_reverse_iterator
     {
         return const_reverse_iterator(end());
     }
 
-    constexpr auto crbegin() const noexcept -> const_reverse_iterator
+    [[nodiscard]] constexpr auto crbegin() const noexcept
+            -> const_reverse_iterator
     {
         return rbegin();
     }
@@ -152,12 +160,13 @@ public:
         return reverse_iterator(begin());
     }
 
-    constexpr auto rend() const noexcept -> const_reverse_iterator
+    [[nodiscard]] constexpr auto rend() const noexcept -> const_reverse_iterator
     {
         return const_reverse_iterator(begin());
     }
 
-    constexpr auto crend() const noexcept -> const_reverse_iterator
+    [[nodiscard]] constexpr auto crend() const noexcept
+            -> const_reverse_iterator
     {
         return rend();
     }
@@ -168,17 +177,23 @@ public:
 
     constexpr auto front() -> reference { return *begin(); }
 
-    constexpr auto front() const -> const_reference { return *begin(); }
+    [[nodiscard]] constexpr auto front() const -> const_reference
+    {
+        return *begin();
+    }
 
     constexpr auto back() -> reference { return *std::prev(end()); }
 
-    constexpr auto back() const -> const_reference { return *std::prev(end()); }
+    [[nodiscard]] constexpr auto back() const -> const_reference
+    {
+        return *std::prev(end());
+    }
 
     //
     // Capacity
     //
 
-    constexpr auto empty() const noexcept -> bool
+    [[nodiscard]] constexpr auto empty() const noexcept -> bool
     {
         return algorithm::circular_list::empty(sentinel);
     }

@@ -37,7 +37,7 @@ public:
     ~CodeEmitter() noexcept = default;
 
     /// Returns the number of bytes produced thus far.
-    auto offset() const -> uint32_t;
+    [[nodiscard]] auto offset() const -> uint32_t;
 
     /// Moves the content of the internal buffer into the given output iterator.
     ///
@@ -49,10 +49,10 @@ public:
     void buffer_clear();
 
     /// Returns the size of the internal buffer.
-    auto buffer_size() const -> uint32_t;
+    [[nodiscard]] auto buffer_size() const -> uint32_t;
 
     /// Returns the capacity of the internal buffer.
-    auto buffer_capacity() const -> uint32_t;
+    [[nodiscard]] auto buffer_capacity() const -> uint32_t;
 
     /// Ensures the internal buffer has at least `capacity` bytes of capacity.
     void buffer_reserve(uint32_t capacity);

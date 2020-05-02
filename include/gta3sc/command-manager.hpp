@@ -91,7 +91,7 @@ public:
         {}
 
         /// Checks whether this is an optional parameter.
-        auto is_optional() const -> bool;
+        [[nodiscard]] auto is_optional() const -> bool;
     };
 
     /// Stores information about a command.
@@ -129,11 +129,11 @@ public:
         using const_iterator = typename AlternativeDef::ConstIterator;
 
         /// Returns the front iterator for the alternatives in this alternator.
-        auto begin() const -> const_iterator;
+        [[nodiscard]] auto begin() const -> const_iterator;
 
         /// Returns the past-the-end iterator for the alternatives in this
         /// alternator.
-        auto end() const -> const_iterator;
+        [[nodiscard]] auto end() const -> const_iterator;
 
     private:
         friend class CommandManager::Builder;

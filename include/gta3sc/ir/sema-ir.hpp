@@ -158,46 +158,47 @@ public:
 
         /// Returns the contained integer or `nullptr` if this argument is not
         /// an integer.
-        auto as_integer() const -> const int32_t*;
+        [[nodiscard]] auto as_integer() const -> const int32_t*;
 
         /// Returns the contained float or `nullptr` if this argument is not
         /// a float.
-        auto as_float() const -> const float*;
+        [[nodiscard]] auto as_float() const -> const float*;
 
         /// Returns the contained text label value or `nullptr` if this argument
         /// is not a text label.
-        auto as_text_label() const -> const std::string_view*;
+        [[nodiscard]] auto as_text_label() const -> const std::string_view*;
 
         /// Returns the contained string or `nullptr` if this argument is not
         /// a string.
-        auto as_string() const -> const std::string_view*;
+        [[nodiscard]] auto as_string() const -> const std::string_view*;
 
         /// Returns the contained variable reference or `nullptr` if this
         /// argument is not a variable reference.
-        auto as_var_ref() const -> const VarRef*;
+        [[nodiscard]] auto as_var_ref() const -> const VarRef*;
 
         /// Returns the contained label reference or `nullptr` if this argument
         /// is not a label reference.
-        auto as_label() const -> const SymLabel*;
+        [[nodiscard]] auto as_label() const -> const SymLabel*;
 
         /// Returns the contained string constant or `nullptr` if this argument
         /// is not a string constant.
-        auto as_constant() const -> const CommandManager::ConstantDef*;
+        [[nodiscard]] auto as_constant() const
+                -> const CommandManager::ConstantDef*;
 
         /// Returns the contained used object or `nullptr` if this argument is
         /// not a used object.
-        auto as_used_object() const -> const SymUsedObject*;
+        [[nodiscard]] auto as_used_object() const -> const SymUsedObject*;
 
         /// Type-puns the contained integer or string constant as an integer.
         ///
         /// \note This does not type-pun used objects as there is no guarantee
         /// (speaking formally) that it can actually be represented as an
         /// integer.
-        auto pun_as_integer() const -> std::optional<int32_t>;
+        [[nodiscard]] auto pun_as_integer() const -> std::optional<int32_t>;
 
         /// Type-puns the contained float (or, in the future,
         /// user defined floating-point constant) as a float.
-        auto pun_as_float() const -> std::optional<float>;
+        [[nodiscard]] auto pun_as_float() const -> std::optional<float>;
 
     public:
         struct VarRef
@@ -207,15 +208,15 @@ public:
                     index; ///< The index of an array subscript.
 
             /// Checks whether this variable reference is an array reference.
-            auto has_index() const -> bool;
+            [[nodiscard]] auto has_index() const -> bool;
 
             /// Returns the integer in the array subscript or `nullptr` if
             /// either this is not an array or the index is not an integer.
-            auto index_as_integer() const -> const int32_t*;
+            [[nodiscard]] auto index_as_integer() const -> const int32_t*;
 
             /// Returns the variable in the array subscript or `nullptr` if
             /// either this is not an array or the index is not a variable.
-            auto index_as_variable() const -> const SymVariable*;
+            [[nodiscard]] auto index_as_variable() const -> const SymVariable*;
         };
 
     protected:
