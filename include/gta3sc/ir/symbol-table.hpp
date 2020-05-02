@@ -52,10 +52,10 @@ struct SymUsedObject
 
 /// An unordered associative container mapping names to symbols of type `T`.
 template<typename T>
-class SymbolTable : private std::unordered_map<std::string_view, arena_ptr<T>>
+class SymbolTable : private std::unordered_map<std::string_view, ArenaPtr<T>>
 {
 private:
-    using super_type = std::unordered_map<std::string_view, arena_ptr<T>>;
+    using super_type = std::unordered_map<std::string_view, ArenaPtr<T>>;
 
 protected:
     // We inherit (privately!) from unordered_map and exclude the

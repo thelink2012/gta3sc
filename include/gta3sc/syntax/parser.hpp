@@ -215,9 +215,9 @@ private:
     // returned. Otherwise, a LinkedIR is used.
 
     auto parse_command(bool is_if_line = false, bool not_flag = false)
-            -> std::optional<arena_ptr<ParserIR>>;
+            -> std::optional<ArenaPtr<ParserIR>>;
 
-    auto parse_argument() -> std::optional<arena_ptr<const ParserIR::Argument>>;
+    auto parse_argument() -> std::optional<ArenaPtr<const ParserIR::Argument>>;
 
     auto parse_embedded_statement(bool allow_special_name)
             -> std::optional<LinkedIR<ParserIR>>;
@@ -225,14 +225,14 @@ private:
     auto parse_scope_statement() -> std::optional<LinkedIR<ParserIR>>;
 
     auto parse_conditional_element(bool is_if_line = false)
-            -> std::optional<arena_ptr<ParserIR>>;
+            -> std::optional<ArenaPtr<ParserIR>>;
 
     auto parse_conditional_list()
             -> std::pair<std::optional<LinkedIR<ParserIR>>, int32_t>;
 
     /// Continues parsing a conditional list after parsing the first
     /// conditional element. That is, parses AND/OR conditional lines.
-    auto parse_conditional_list(arena_ptr<ParserIR> op_cond0)
+    auto parse_conditional_list(ParserIR* op_cond0)
             -> std::pair<std::optional<LinkedIR<ParserIR>>, int32_t>;
 
     auto parse_if_statement() -> std::optional<LinkedIR<ParserIR>>;
@@ -251,7 +251,7 @@ private:
 
     auto parse_repeat_statement() -> std::optional<LinkedIR<ParserIR>>;
 
-    auto parse_require_statement() -> std::optional<arena_ptr<ParserIR>>;
+    auto parse_require_statement() -> std::optional<ArenaPtr<ParserIR>>;
 
     auto parse_assignment_expression() -> std::optional<LinkedIR<ParserIR>>;
 

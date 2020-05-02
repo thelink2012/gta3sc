@@ -216,7 +216,7 @@ auto Sema::validate_label_def(const ParserIR::LabelDef& label_def)
 }
 
 auto Sema::validate_command(const ParserIR::Command& command)
-        -> arena_ptr<const SemaIR::Command>
+        -> ArenaPtr<const SemaIR::Command>
 {
     bool failed = false;
     const CommandManager::CommandDef* command_def{};
@@ -285,7 +285,7 @@ auto Sema::validate_command(const ParserIR::Command& command)
                 .args(expected_args, got_args);
     }
 
-    arena_ptr<const SemaIR::Command> result
+    ArenaPtr<const SemaIR::Command> result
             = std::move(builder).build_command();
 
     if(!failed)
@@ -299,7 +299,7 @@ auto Sema::validate_command(const ParserIR::Command& command)
 
 auto Sema::validate_argument(const CommandManager::ParamDef& param,
                              const ParserIR::Argument& arg)
-        -> arena_ptr<const SemaIR::Argument>
+        -> ArenaPtr<const SemaIR::Argument>
 {
     switch(param.type)
     {
@@ -478,7 +478,7 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
 
 auto Sema::validate_integer_literal(const CommandManager::ParamDef& param,
                                     const ParserIR::Argument& arg)
-        -> arena_ptr<const SemaIR::Argument>
+        -> ArenaPtr<const SemaIR::Argument>
 {
     assert(param.type == ParamType::INT || param.type == ParamType::INPUT_INT
            || param.type == ParamType::INPUT_OPT);
@@ -495,7 +495,7 @@ auto Sema::validate_integer_literal(const CommandManager::ParamDef& param,
 
 auto Sema::validate_float_literal(const CommandManager::ParamDef& param,
                                   const ParserIR::Argument& arg)
-        -> arena_ptr<const SemaIR::Argument>
+        -> ArenaPtr<const SemaIR::Argument>
 {
     assert(param.type == ParamType::FLOAT
            || param.type == ParamType::INPUT_FLOAT
@@ -513,7 +513,7 @@ auto Sema::validate_float_literal(const CommandManager::ParamDef& param,
 
 auto Sema::validate_text_label(const CommandManager::ParamDef& param,
                                const ParserIR::Argument& arg)
-        -> arena_ptr<const SemaIR::Argument>
+        -> ArenaPtr<const SemaIR::Argument>
 {
     assert(param.type == ParamType::TEXT_LABEL);
 
@@ -529,7 +529,7 @@ auto Sema::validate_text_label(const CommandManager::ParamDef& param,
 
 auto Sema::validate_label(const CommandManager::ParamDef& param,
                           const ParserIR::Argument& arg)
-        -> arena_ptr<const SemaIR::Argument>
+        -> ArenaPtr<const SemaIR::Argument>
 {
     assert(param.type == ParamType::LABEL);
 
@@ -551,7 +551,7 @@ auto Sema::validate_label(const CommandManager::ParamDef& param,
 
 auto Sema::validate_string_literal(const CommandManager::ParamDef& param,
                                    const ParserIR::Argument& arg)
-        -> arena_ptr<const SemaIR::Argument>
+        -> ArenaPtr<const SemaIR::Argument>
 {
     assert(param.type == ParamType::STRING);
 
@@ -566,7 +566,7 @@ auto Sema::validate_string_literal(const CommandManager::ParamDef& param,
 
 auto Sema::validate_var_ref(const CommandManager::ParamDef& param,
                             const ParserIR::Argument& arg)
-        -> arena_ptr<const SemaIR::Argument>
+        -> ArenaPtr<const SemaIR::Argument>
 {
     bool failed = false;
     const SymVariable* sym_var{};

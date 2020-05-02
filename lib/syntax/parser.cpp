@@ -390,7 +390,7 @@ auto Parser::is_identifier(std::string_view lexeme) const -> bool
 }
 
 auto Parser::parse_command(bool is_if_line, bool not_flag)
-        -> std::optional<arena_ptr<ParserIR>>
+        -> std::optional<ArenaPtr<ParserIR>>
 {
     // command_name := token_char {token_char} ;
     // command := command_name { sep argument } ;
@@ -428,7 +428,7 @@ auto Parser::parse_command(bool is_if_line, bool not_flag)
 }
 
 auto Parser::parse_argument()
-        -> std::optional<arena_ptr<const ParserIR::Argument>>
+        -> std::optional<ArenaPtr<const ParserIR::Argument>>
 {
     // argument := integer
     //             | floating
@@ -567,7 +567,7 @@ auto Parser::parse_statement(bool allow_special_name)
     // empty_statement := eol ;
     //
 
-    arena_ptr<const ParserIR::LabelDef> label{};
+    ArenaPtr<const ParserIR::LabelDef> label{};
 
     if(is_peek(Category::word) && scanner.spelling(*peek()).back() == ':')
     {
@@ -835,7 +835,7 @@ auto Parser::parse_scope_statement() -> std::optional<LinkedIR<ParserIR>>
 }
 
 auto Parser::parse_conditional_element(bool is_if_line)
-        -> std::optional<arena_ptr<ParserIR>>
+        -> std::optional<ArenaPtr<ParserIR>>
 {
     // conditional_element := ['NOT' sep] (command | conditional_expression) ;
 
@@ -848,7 +848,7 @@ auto Parser::parse_conditional_element(bool is_if_line)
         not_flag = true;
     }
 
-    auto ir = std::optional<arena_ptr<ParserIR>>();
+    auto ir = std::optional<ArenaPtr<ParserIR>>();
     if(peek_expression_type())
     {
         if(auto linked = parse_conditional_expression(is_if_line, not_flag))
@@ -891,7 +891,7 @@ auto Parser::parse_conditional_list()
     return parse_conditional_list(*op_cond0);
 }
 
-auto Parser::parse_conditional_list(arena_ptr<ParserIR> op_cond0)
+auto Parser::parse_conditional_list(ParserIR* op_cond0)
         -> std::pair<std::optional<LinkedIR<ParserIR>>, int32_t>
 {
     // and_conditional_stmt := 'AND' sep conditional_element eol ;
@@ -1180,7 +1180,7 @@ auto Parser::parse_repeat_statement() -> std::optional<LinkedIR<ParserIR>>
     return body_stms;
 }
 
-auto Parser::parse_require_statement() -> std::optional<arena_ptr<ParserIR>>
+auto Parser::parse_require_statement() -> std::optional<ArenaPtr<ParserIR>>
 {
     // require_statement := command_gosub_file
     //                    | command_launch_mission
@@ -1279,7 +1279,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
 
     Category cats[6];
     SourceRange spans[6];
-    arena_ptr<const ParserIR::Argument> args[6]{};
+    ArenaPtr<const ParserIR::Argument> args[6]{};
 
     size_t num_toks = 0;
     size_t num_args = 0;

@@ -137,8 +137,8 @@ public:
 
     private:
         friend class CommandManager::Builder;
-        arena_ptr<AlternativeDef> first{};
-        arena_ptr<AlternativeDef> last{};
+        ArenaPtr<AlternativeDef> first{};
+        ArenaPtr<AlternativeDef> last{};
     };
 
     /// Stores information about a string constant.
@@ -251,18 +251,18 @@ public:
 private:
     /// Provides a mapping from a name to a command definition.
     using CommandsMap
-            = std::unordered_map<std::string_view, arena_ptr<CommandDef>>;
+            = std::unordered_map<std::string_view, ArenaPtr<CommandDef>>;
 
     /// Provides a mapping from a name to a alternator definition.
     using AlternatorsMap
-            = std::unordered_map<std::string_view, arena_ptr<AlternatorDef>>;
+            = std::unordered_map<std::string_view, ArenaPtr<AlternatorDef>>;
 
     /// Provides a mapping from a name to an enumeration identifier.
     using EnumsMap = std::unordered_map<std::string_view, EnumId>;
 
     /// Provides a mapping from a name to a list of constant definitions.
     using ConstantsMap
-            = std::unordered_map<std::string_view, arena_ptr<ConstantDef>>;
+            = std::unordered_map<std::string_view, ArenaPtr<ConstantDef>>;
 
     /// Provides a mapping from a name to an entity identifier.
     using EntitiesMap = std::unordered_map<std::string_view, EntityId>;

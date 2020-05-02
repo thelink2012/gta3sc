@@ -4,30 +4,30 @@
 
 namespace gta3sc
 {
-auto ParserIR::create(arena_ptr<const LabelDef> label,
-                      arena_ptr<const Command> command,
-                      ArenaMemoryResource* arena) -> arena_ptr<ParserIR>
+auto ParserIR::create(const LabelDef* label,
+                      const Command* command,
+                      ArenaMemoryResource* arena) -> ArenaPtr<ParserIR>
 {
     return new(*arena, alignof(ParserIR)) ParserIR(label, command);
 }
 
 auto ParserIR::create_integer(int32_t value, SourceRange source,
                               ArenaMemoryResource* arena)
-        -> arena_ptr<const Argument>
+        -> ArenaPtr<const Argument>
 {
     return new(*arena, alignof(Argument)) const Argument(value, source);
 }
 
 auto ParserIR::create_float(float value, SourceRange source,
                             ArenaMemoryResource* arena)
-        -> arena_ptr<const Argument>
+        -> ArenaPtr<const Argument>
 {
     return new(*arena, alignof(Argument)) const Argument(value, source);
 }
 
 auto ParserIR::create_identifier(std::string_view name, SourceRange source,
                                  ArenaMemoryResource* arena)
-        -> arena_ptr<const Argument>
+        -> ArenaPtr<const Argument>
 {
     return new(*arena, alignof(Argument))
             const Argument(Argument::IdentifierTag{},
@@ -36,7 +36,7 @@ auto ParserIR::create_identifier(std::string_view name, SourceRange source,
 
 auto ParserIR::create_filename(std::string_view name, SourceRange source,
                                ArenaMemoryResource* arena)
-        -> arena_ptr<const Argument>
+        -> ArenaPtr<const Argument>
 {
     return new(*arena, alignof(Argument))
             const Argument(Argument::FilenameTag{},
@@ -45,7 +45,7 @@ auto ParserIR::create_filename(std::string_view name, SourceRange source,
 
 auto ParserIR::create_string(std::string_view string, SourceRange source,
                              ArenaMemoryResource* arena)
-        -> arena_ptr<const Argument>
+        -> ArenaPtr<const Argument>
 {
     return new(*arena, alignof(Argument))
             const Argument(Argument::StringTag{}, string, source);
@@ -90,7 +90,7 @@ auto operator!=(const ParserIR::Command& lhs, const ParserIR::Command& rhs)
 
 auto ParserIR::LabelDef::create(std::string_view name, SourceRange source,
                                 ArenaMemoryResource* arena)
-        -> arena_ptr<const LabelDef>
+        -> ArenaPtr<const LabelDef>
 {
     return new(*arena, alignof(LabelDef))
             const LabelDef{source, util::allocate_string_upper(name, *arena)};
@@ -156,7 +156,7 @@ auto operator!=(const ParserIR::Argument& lhs, const ParserIR::Argument& rhs)
     return !(lhs == rhs);
 }
 
-auto ParserIR::Builder::label(arena_ptr<const LabelDef> label_ptr) -> Builder&&
+auto ParserIR::Builder::label(const LabelDef* label_ptr) -> Builder&&
 {
     this->label_ptr = label_ptr;
     return std::move(*this);
@@ -168,7 +168,7 @@ auto ParserIR::Builder::label(std::string_view name, SourceRange source)
     return this->label(LabelDef::create(name, source, arena));
 }
 
-auto ParserIR::Builder::command(arena_ptr<const Command> command_ptr)
+auto ParserIR::Builder::command(const Command* command_ptr)
         -> Builder&&
 {
     assert(!this->has_not_flag && !this->has_command_name
@@ -195,14 +195,14 @@ auto ParserIR::Builder::not_flag(bool not_flag_value) -> Builder&&
     return std::move(*this);
 }
 
-auto ParserIR::Builder::arg(arena_ptr<const Argument> value) -> Builder&&
+auto ParserIR::Builder::arg(const Argument* value) -> Builder&&
 {
     assert(value != nullptr);
 
     if(this->args.size() >= static_cast<std::ptrdiff_t>(args_capacity))
     {
         const auto new_caps = !args_capacity ? 6 : args_capacity * 2;
-        auto* const new_args = new(*arena) arena_ptr<const Argument>[new_caps];
+        auto* const new_args = new(*arena) const Argument*[new_caps];
         std::move(this->args.begin(), this->args.end(), new_args);
 
         this->args = util::span(new_args, args.size());
@@ -243,7 +243,7 @@ auto ParserIR::Builder::arg_string(std::string_view value, SourceRange source)
     return arg(ParserIR::create_string(value, source, arena));
 }
 
-auto ParserIR::Builder::build() && -> arena_ptr<ParserIR>
+auto ParserIR::Builder::build() && -> ArenaPtr<ParserIR>
 {
     if(this->has_command_name)
     {
@@ -257,7 +257,7 @@ auto ParserIR::Builder::build() && -> arena_ptr<ParserIR>
     return ParserIR::create(this->label_ptr, this->command_ptr, arena);
 }
 
-auto ParserIR::Builder::build_command() && -> arena_ptr<const ParserIR::Command>
+auto ParserIR::Builder::build_command() && -> ArenaPtr<const ParserIR::Command>
 {
     if(this->has_command_name)
     {

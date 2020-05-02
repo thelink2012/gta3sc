@@ -44,7 +44,7 @@ public:
     auto find_model(std::string_view name) const -> const ModelDef*;
 
 private:
-    using ModelsMap = std::unordered_map<std::string_view, arena_ptr<ModelDef>>;
+    using ModelsMap = std::unordered_map<std::string_view, ArenaPtr<ModelDef>>;
     ModelsMap models;
 
 protected:

@@ -33,7 +33,7 @@ public:
 
 public:
     const SymLabel* const label{};
-    arena_ptr<const Command> const command{};
+    const Command* const command{};
 
 public:
     SemaIR() noexcept = delete;
@@ -46,23 +46,23 @@ public:
     auto operator=(SemaIR&&) noexcept -> SemaIR& = delete;
 
     // Creates an instruction.
-    static auto create(const SymLabel* label, arena_ptr<const Command> command,
-                       ArenaMemoryResource* arena) -> arena_ptr<SemaIR>;
+    static auto create(const SymLabel* label, const Command* command,
+                       ArenaMemoryResource* arena) -> ArenaPtr<SemaIR>;
 
     /// Creates an integer argument.
     static auto create_integer(int32_t value, SourceRange source,
                                ArenaMemoryResource* arena)
-            -> arena_ptr<const Argument>;
+            -> ArenaPtr<const Argument>;
 
     /// Creates a floating-point argument.
     static auto create_float(float value, SourceRange source,
                              ArenaMemoryResource* arena)
-            -> arena_ptr<const Argument>;
+            -> ArenaPtr<const Argument>;
 
     /// Creates a label argument.
     static auto create_label(const SymLabel& label, SourceRange source,
                              ArenaMemoryResource* arena)
-            -> arena_ptr<const Argument>;
+            -> ArenaPtr<const Argument>;
 
     /// Creates a text label argument.
     ///
@@ -70,7 +70,7 @@ public:
     /// creation of the object.
     static auto create_text_label(std::string_view value, SourceRange source,
                                   ArenaMemoryResource* arena)
-            -> arena_ptr<const Argument>;
+            -> ArenaPtr<const Argument>;
 
     /// Creates a string argument.
     ///
@@ -78,43 +78,43 @@ public:
     /// in `string`. The string is not converted to uppercase.
     static auto create_string(std::string_view value, SourceRange source,
                               ArenaMemoryResource* arena)
-            -> arena_ptr<const Argument>;
+            -> ArenaPtr<const Argument>;
 
     /// Creates a variable reference argument.
     static auto create_variable(const SymVariable& var, SourceRange source,
                                 ArenaMemoryResource* arena)
-            -> arena_ptr<const Argument>;
+            -> ArenaPtr<const Argument>;
 
     /// Creates an array variable reference argument by using the given integer
     /// index.
     static auto create_variable(const SymVariable& var, int32_t index,
                                 SourceRange source, ArenaMemoryResource* arena)
-            -> arena_ptr<const Argument>;
+            -> ArenaPtr<const Argument>;
 
     /// Creates an array variable reference argument by using the given variable
     /// index.
     static auto create_variable(const SymVariable& var,
                                 const SymVariable& index, SourceRange source,
                                 ArenaMemoryResource* arena)
-            -> arena_ptr<const Argument>;
+            -> ArenaPtr<const Argument>;
 
     /// Creates a string constant argument.
     static auto create_constant(const CommandManager::ConstantDef& cdef,
                                 SourceRange source, ArenaMemoryResource* arena)
-            -> arena_ptr<const Argument>;
+            -> ArenaPtr<const Argument>;
 
     /// Creates a used object argument.
     static auto create_used_object(const SymUsedObject& used_object,
                                    SourceRange source,
                                    ArenaMemoryResource* arena)
-            -> arena_ptr<const Argument>;
+            -> ArenaPtr<const Argument>;
 
     struct Command
     {
     public:
         SourceRange source; ///< Source code  location of the command.
         const CommandManager::CommandDef& def; ///< The command definition.
-        util::span<arena_ptr<const Argument>>
+        util::span<const Argument*>
                 args;          ///< View into the arguments.
         bool not_flag = false; ///< Whether the result of the command is NOTed.
 
@@ -130,7 +130,7 @@ public:
 
     protected:
         Command(SourceRange source, const CommandManager::CommandDef& def,
-                util::span<arena_ptr<const Argument>> args, bool not_flag) :
+                util::span<const Argument*> args, bool not_flag) :
             source(source), def(def), args(args), not_flag(not_flag)
         {}
 
@@ -255,7 +255,7 @@ public:
     };
 
 private:
-    explicit SemaIR(const SymLabel* label, arena_ptr<const Command> command) :
+    explicit SemaIR(const SymLabel* label, const Command* command) :
         label(label), command(command)
     {}
 };
@@ -290,7 +290,7 @@ public:
     ///
     /// No other instruction to construct commands should have been called
     /// before this (i.e. only `Builder::label` could have been called).
-    auto command(arena_ptr<const Command> command_ptr) -> Builder&&;
+    auto command(const Command* command_ptr) -> Builder&&;
 
     /// Sets the instruction in construction to be the specified command.
     auto command(const CommandManager::CommandDef& command_def,
@@ -300,7 +300,7 @@ public:
     auto not_flag(bool not_flag_value = true) -> Builder&&;
 
     /// Appends the given argument to the command in construction.
-    auto arg(arena_ptr<const Argument> value) -> Builder&&;
+    auto arg(const Argument* value) -> Builder&&;
 
     /// Appends the given integer argument to the command in construction.
     auto arg_int(int32_t value, SourceRange source = no_source) -> Builder&&;
@@ -347,10 +347,10 @@ public:
                     SourceRange source = no_source) -> Builder&&;
 
     /// Builds an instruction from the attributes in the builder.
-    auto build() && -> arena_ptr<SemaIR>;
+    auto build() && -> ArenaPtr<SemaIR>;
 
     /// Builds a command from the attributes in the builder.
-    auto build_command() && -> arena_ptr<const SemaIR::Command>;
+    auto build_command() && -> ArenaPtr<const SemaIR::Command>;
 
 private:
     /// Consumes some of the attributes in this builder and transforms it
@@ -365,13 +365,13 @@ private:
     bool not_flag_value = false;
 
     const SymLabel* label_ptr{};
-    arena_ptr<const Command> command_ptr{};
+    const Command* command_ptr{};
 
     const CommandManager::CommandDef* command_def{};
     SourceRange command_source;
 
     size_t args_capacity = 0;
-    util::span<arena_ptr<const Argument>> args;
+    util::span<const Argument*> args;
 };
 
 // These resources are stored in a memory arena. Disposing storage

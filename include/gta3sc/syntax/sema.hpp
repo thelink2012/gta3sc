@@ -88,35 +88,35 @@ private:
             -> const SymLabel*;
 
     auto validate_command(const ParserIR::Command& command)
-            -> arena_ptr<const SemaIR::Command>;
+            -> ArenaPtr<const SemaIR::Command>;
 
     auto validate_argument(const CommandManager::ParamDef& param,
                            const ParserIR::Argument& arg)
-            -> arena_ptr<const SemaIR::Argument>;
+            -> ArenaPtr<const SemaIR::Argument>;
 
     auto validate_integer_literal(const CommandManager::ParamDef& param,
                                   const ParserIR::Argument& arg)
-            -> arena_ptr<const SemaIR::Argument>;
+            -> ArenaPtr<const SemaIR::Argument>;
 
     auto validate_float_literal(const CommandManager::ParamDef& param,
                                 const ParserIR::Argument& arg)
-            -> arena_ptr<const SemaIR::Argument>;
+            -> ArenaPtr<const SemaIR::Argument>;
 
     auto validate_text_label(const CommandManager::ParamDef& param,
                              const ParserIR::Argument& arg)
-            -> arena_ptr<const SemaIR::Argument>;
+            -> ArenaPtr<const SemaIR::Argument>;
 
     auto validate_label(const CommandManager::ParamDef& param,
                         const ParserIR::Argument& arg)
-            -> arena_ptr<const SemaIR::Argument>;
+            -> ArenaPtr<const SemaIR::Argument>;
 
     auto validate_string_literal(const CommandManager::ParamDef& param,
                                  const ParserIR::Argument& arg)
-            -> arena_ptr<const SemaIR::Argument>;
+            -> ArenaPtr<const SemaIR::Argument>;
 
     auto validate_var_ref(const CommandManager::ParamDef& param,
                           const ParserIR::Argument& arg)
-            -> arena_ptr<const SemaIR::Argument>;
+            -> ArenaPtr<const SemaIR::Argument>;
 
     // The following functions validates the semantics of commands that
     // require further compiler intervention. They produce diagnostics

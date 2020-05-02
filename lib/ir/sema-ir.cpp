@@ -2,29 +2,29 @@
 
 namespace gta3sc
 {
-auto SemaIR::create(const SymLabel* label, arena_ptr<const Command> command,
-                    ArenaMemoryResource* arena) -> arena_ptr<SemaIR>
+auto SemaIR::create(const SymLabel* label, const Command* command,
+                    ArenaMemoryResource* arena) -> ArenaPtr<SemaIR>
 {
     return new(*arena, alignof(SemaIR)) SemaIR(label, command);
 }
 
 auto SemaIR::create_integer(int32_t value, SourceRange source,
                             ArenaMemoryResource* arena)
-        -> arena_ptr<const Argument>
+        -> ArenaPtr<const Argument>
 {
     return new(*arena, alignof(Argument)) Argument(value, source);
 }
 
 auto SemaIR::create_float(float value, SourceRange source,
                           ArenaMemoryResource* arena)
-        -> arena_ptr<const Argument>
+        -> ArenaPtr<const Argument>
 {
     return new(*arena, alignof(Argument)) Argument(value, source);
 }
 
 auto SemaIR::create_text_label(std::string_view value, SourceRange source,
                                ArenaMemoryResource* arena)
-        -> arena_ptr<const Argument>
+        -> ArenaPtr<const Argument>
 {
     return new(*arena, alignof(Argument))
             const Argument(Argument::TextLabelTag{}, value, source);
@@ -32,14 +32,14 @@ auto SemaIR::create_text_label(std::string_view value, SourceRange source,
 
 auto SemaIR::create_label(const SymLabel& label, SourceRange source,
                           ArenaMemoryResource* arena)
-        -> arena_ptr<const Argument>
+        -> ArenaPtr<const Argument>
 {
     return new(*arena, alignof(Argument)) const Argument(&label, source);
 }
 
 auto SemaIR::create_string(std::string_view value, SourceRange source,
                            ArenaMemoryResource* arena)
-        -> arena_ptr<const Argument>
+        -> ArenaPtr<const Argument>
 {
     return new(*arena, alignof(Argument))
             const Argument(Argument::StringTag{}, value, source);
@@ -47,7 +47,7 @@ auto SemaIR::create_string(std::string_view value, SourceRange source,
 
 auto SemaIR::create_variable(const SymVariable& var, SourceRange source,
                              ArenaMemoryResource* arena)
-        -> arena_ptr<const Argument>
+        -> ArenaPtr<const Argument>
 {
     return new(*arena, alignof(Argument))
             const Argument(Argument::VarRef{var}, source);
@@ -55,7 +55,7 @@ auto SemaIR::create_variable(const SymVariable& var, SourceRange source,
 
 auto SemaIR::create_variable(const SymVariable& var, int32_t index,
                              SourceRange source, ArenaMemoryResource* arena)
-        -> arena_ptr<const Argument>
+        -> ArenaPtr<const Argument>
 {
     return new(*arena, alignof(Argument))
             const Argument(Argument::VarRef{var, index}, source);
@@ -63,7 +63,7 @@ auto SemaIR::create_variable(const SymVariable& var, int32_t index,
 
 auto SemaIR::create_variable(const SymVariable& var, const SymVariable& index,
                              SourceRange source, ArenaMemoryResource* arena)
-        -> arena_ptr<const Argument>
+        -> ArenaPtr<const Argument>
 {
     return new(*arena, alignof(Argument))
             const Argument(Argument::VarRef{var, &index}, source);
@@ -71,14 +71,14 @@ auto SemaIR::create_variable(const SymVariable& var, const SymVariable& index,
 
 auto SemaIR::create_constant(const CommandManager::ConstantDef& cdef,
                              SourceRange source, ArenaMemoryResource* arena)
-        -> arena_ptr<const Argument>
+        -> ArenaPtr<const Argument>
 {
     return new(*arena, alignof(Argument)) const Argument(&cdef, source);
 }
 
 auto SemaIR::create_used_object(const SymUsedObject& used_object,
                                 SourceRange source, ArenaMemoryResource* arena)
-        -> arena_ptr<const Argument>
+        -> ArenaPtr<const Argument>
 {
     return new(*arena, alignof(Argument)) const Argument(&used_object, source);
 }
@@ -175,7 +175,7 @@ auto SemaIR::Builder::label(const SymLabel* label_ptr) -> Builder&&
     return std::move(*this);
 }
 
-auto SemaIR::Builder::command(arena_ptr<const Command> command_ptr) -> Builder&&
+auto SemaIR::Builder::command(const Command* command_ptr) -> Builder&&
 {
     assert(!this->has_not_flag && !this->has_command_def && this->args.empty());
     this->command_ptr = command_ptr;
@@ -200,14 +200,14 @@ auto SemaIR::Builder::not_flag(bool not_flag_value) -> Builder&&
     return std::move(*this);
 }
 
-auto SemaIR::Builder::arg(arena_ptr<const Argument> value) -> Builder&&
+auto SemaIR::Builder::arg(const Argument* value) -> Builder&&
 {
     assert(value != nullptr);
 
     if(this->args.size() >= static_cast<std::ptrdiff_t>(args_capacity))
     {
         const auto new_caps = !args_capacity ? 6 : args_capacity * 2;
-        auto* const new_args = new(*arena) arena_ptr<const Argument>[new_caps];
+        auto* const new_args = new(*arena) const Argument*[new_caps];
         std::move(this->args.begin(), this->args.end(), new_args);
 
         this->args = util::span(new_args, args.size());
@@ -280,7 +280,7 @@ auto SemaIR::Builder::arg_object(const SymUsedObject& used_object,
     return arg(SemaIR::create_used_object(used_object, source, arena));
 }
 
-auto SemaIR::Builder::build() && -> arena_ptr<SemaIR>
+auto SemaIR::Builder::build() && -> ArenaPtr<SemaIR>
 {
     if(this->has_command_def)
     {
@@ -294,7 +294,7 @@ auto SemaIR::Builder::build() && -> arena_ptr<SemaIR>
     return SemaIR::create(this->label_ptr, this->command_ptr, arena);
 }
 
-auto SemaIR::Builder::build_command() && -> arena_ptr<const SemaIR::Command>
+auto SemaIR::Builder::build_command() && -> ArenaPtr<const SemaIR::Command>
 {
     if(this->has_command_def)
     {

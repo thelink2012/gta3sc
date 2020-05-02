@@ -7,14 +7,15 @@
 
 namespace gta3sc
 {
-/// A pointer to a trivially destructible object in an arena.
+/// An owning pointer to a trivially destructible object in an arena.
 ///
 /// An object encapsulated in such a pointer does not need a destructor call
-/// and may be disposed of by simply deallocating their storage.
+/// and may be disposed of by simply deallocating storage.
 template<typename T>
-using arena_ptr = T*; // TODO rename to ArenaPtr
+using ArenaPtr = T*;
 
-// using arena_ptr = std::enable_if_t<std::is_trivially_destructible_v<T>, T*>;
+// template<typename T>
+// using ArenaPtr = std::enable_if_t<std::is_trivially_destructible_v<T>, T*>;
 // The above causes problems when the full class definition is still not known.
 
 /// This is a memory resource that releases the allocated memory only when

@@ -39,8 +39,8 @@ public:
     class Builder;
 
 public:
-    arena_ptr<const LabelDef> const label{};
-    arena_ptr<const Command> const command{};
+    const LabelDef* const label{};
+    const Command* const command{};
 
 public:
     ParserIR() noexcept = delete;
@@ -53,19 +53,18 @@ public:
     auto operator=(ParserIR&&) noexcept -> ParserIR& = delete;
 
     // Creates an instruction.
-    static auto create(arena_ptr<const LabelDef> label,
-                       arena_ptr<const Command> command,
-                       ArenaMemoryResource* arena) -> arena_ptr<ParserIR>;
+    static auto create(const LabelDef* label, const Command* command,
+                       ArenaMemoryResource* arena) -> ArenaPtr<ParserIR>;
 
     /// Creates an integer argument.
     static auto create_integer(int32_t value, SourceRange source,
                                ArenaMemoryResource* arena)
-            -> arena_ptr<const Argument>;
+            -> ArenaPtr<const Argument>;
 
     /// Creates a floating-point argument.
     static auto create_float(float value, SourceRange source,
                              ArenaMemoryResource* arena)
-            -> arena_ptr<const Argument>;
+            -> ArenaPtr<const Argument>;
 
     /// Creates an identifier argument.
     ///
@@ -73,7 +72,7 @@ public:
     /// creation of the object.
     static auto create_identifier(std::string_view name, SourceRange source,
                                   ArenaMemoryResource* arena)
-            -> arena_ptr<const Argument>;
+            -> ArenaPtr<const Argument>;
 
     /// Creates a filename argument.
     ///
@@ -81,7 +80,7 @@ public:
     /// creation of the object.
     static auto create_filename(std::string_view filename, SourceRange source,
                                 ArenaMemoryResource* arena)
-            -> arena_ptr<const Argument>;
+            -> ArenaPtr<const Argument>;
 
     /// Creates a string argument.
     ///
@@ -89,7 +88,7 @@ public:
     /// in `string`. The string is not converted to uppercase.
     static auto create_string(std::string_view string, SourceRange source,
                               ArenaMemoryResource* arena)
-            -> arena_ptr<const Argument>;
+            -> ArenaPtr<const Argument>;
 
     /// Compares whether a given IR is equivalent to another IR.
     friend auto operator==(const ParserIR& lhs, const ParserIR& rhs) -> bool;
@@ -100,7 +99,7 @@ public:
     public:
         SourceRange source;    ///< Source code location of the argument.
         std::string_view name; ///< The name of this command.
-        util::span<arena_ptr<const Argument>>
+        util::span<const Argument*>
                 args;          ///< View into the arguments.
         bool not_flag = false; ///< Whether the result of the command is NOTed.
 
@@ -120,7 +119,7 @@ public:
 
     protected:
         Command(SourceRange source, std::string_view name,
-                util::span<arena_ptr<const Argument>> args, bool not_flag) :
+                util::span<const Argument*> args, bool not_flag) :
             source(source), name(name), args(args), not_flag(not_flag)
         {}
 
@@ -148,7 +147,7 @@ public:
         /// The name of the label is automatically made uppercase.
         static auto create(std::string_view name, SourceRange source,
                            ArenaMemoryResource* arena)
-                -> arena_ptr<const LabelDef>;
+                -> ArenaPtr<const LabelDef>;
 
         /// Compares whether a given label definition is equivalent to another.
         friend auto operator==(const LabelDef& lhs, const LabelDef& rhs)
@@ -248,8 +247,8 @@ public:
     };
 
 private:
-    explicit ParserIR(arena_ptr<const LabelDef> label,
-                      arena_ptr<const Command> command) :
+    explicit ParserIR(const LabelDef* label,
+                      const Command* command) :
         label(label), command(command)
     {}
 };
@@ -283,7 +282,7 @@ public:
 
     /// Sets (or unsets) the instruction in construction to define the
     /// specified label.
-    auto label(arena_ptr<const LabelDef> label_ptr) -> Builder&&;
+    auto label(const LabelDef* label_ptr) -> Builder&&;
 
     /// Sets the instruction in construction to define a label.
     auto label(std::string_view name, SourceRange source = no_source)
@@ -293,7 +292,7 @@ public:
     ///
     /// No other instruction to construct commands should have been called
     /// before this (i.e. only `Builder::label` could have been called).
-    auto command(arena_ptr<const Command> command_ptr) -> Builder&&;
+    auto command(const Command* command_ptr) -> Builder&&;
 
     /// Sets the instruction in construction to be the specified command.
     auto command(std::string_view name, SourceRange source = no_source)
@@ -303,7 +302,7 @@ public:
     auto not_flag(bool not_flag_value = true) -> Builder&&;
 
     /// Appends the given argument to the command in construction.
-    auto arg(arena_ptr<const Argument> value) -> Builder&&;
+    auto arg(const Argument* value) -> Builder&&;
 
     /// Appends the given integer argument to the command in construction.
     auto arg_int(int32_t value, SourceRange source = no_source) -> Builder&&;
@@ -324,10 +323,10 @@ public:
             -> Builder&&;
 
     /// Builds an instruction from the attributes in the builder.
-    auto build() && -> arena_ptr<ParserIR>;
+    auto build() && -> ArenaPtr<ParserIR>;
 
     /// Builds a command from the attributes in the builder.
-    auto build_command() && -> arena_ptr<const ParserIR::Command>;
+    auto build_command() && -> ArenaPtr<const ParserIR::Command>;
 
 private:
     /// Consumes some of the attributes in this builder and transforms it
@@ -341,14 +340,14 @@ private:
     bool has_not_flag = false;
     bool not_flag_value = false;
 
-    arena_ptr<const LabelDef> label_ptr{};
-    arena_ptr<const Command> command_ptr{};
+    const LabelDef* label_ptr{};
+    const Command* command_ptr{};
 
     std::string_view command_name;
     SourceRange command_source;
 
     size_t args_capacity = 0;
-    util::span<arena_ptr<const Argument>> args;
+    util::span<const Argument*> args;
 };
 
 // These resources are stored in a memory arena. Disposing storage
