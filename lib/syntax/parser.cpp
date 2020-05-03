@@ -515,10 +515,10 @@ auto Parser::parse_subscript_file() -> std::optional<LinkedIR<ParserIR>>
     if(!mission_start)
         return std::nullopt;
 
-    if(const auto *const mission_start_command = (*mission_start)->command;
-       !mission_start_command->args.empty())
+    if(const auto &mission_start_command = (*mission_start)->command();
+       mission_start_command.has_args())
     {
-        report(mission_start_command->source, Diag::too_many_arguments);
+        report(mission_start_command.source(), Diag::too_many_arguments);
         return std::nullopt;
     }
 
@@ -526,10 +526,10 @@ auto Parser::parse_subscript_file() -> std::optional<LinkedIR<ParserIR>>
     if(!body_stms)
         return std::nullopt;
 
-    if(const auto *const mission_end_command = body_stms->back().command;
-       !mission_end_command->args.empty())
+    if(const auto &mission_end_command = body_stms->back().command();
+       mission_end_command.has_args())
     {
-        report(mission_end_command->source, Diag::too_many_arguments);
+        report(mission_end_command.source(), Diag::too_many_arguments);
         return std::nullopt;
     }
 
@@ -604,10 +604,11 @@ auto Parser::parse_statement(bool allow_special_name)
         }
         else
         {
-            assert(linked_stmts->front().label == nullptr);
-            const auto *const command = linked_stmts->front().command;
-            linked_stmts->replace(linked_stmts->begin(),
-                                  *ParserIR::create(label, command, allocator));
+            assert(!linked_stmts->front().has_label());
+            const auto &command = linked_stmts->front().command();
+            linked_stmts->replace(
+                    linked_stmts->begin(),
+                    *ParserIR::create(label, &command, allocator));
         }
     }
 
@@ -633,11 +634,13 @@ auto Parser::parse_statement_list(
         if(!stmt_list->empty()
            && std::next(stmt_list->begin()) == stmt_list->end())
         {
-            if(const auto *command = stmt_list->front().command)
+            if(stmt_list->front().has_command())
             {
+                const auto &command = stmt_list->front().command();
+
                 for(const auto &name : stop_when)
                 {
-                    if(command->name == name)
+                    if(command.name() == name)
                     {
                         linked_stms.splice_back(*std::move(stmt_list));
                         return linked_stms;
@@ -647,9 +650,9 @@ auto Parser::parse_statement_list(
                 // Since the special name checking was disabled, we now
                 // have to make sure we do not allow any other special name
                 // other than the ones in `stop_when`.
-                if(is_special_name(command->name, false))
+                if(is_special_name(command.name(), false))
                 {
-                    report_special_name(command->source);
+                    report_special_name(command.source());
                     return std::nullopt;
                 }
             }
@@ -777,16 +780,16 @@ auto Parser::parse_embedded_statement(bool allow_special_name)
         if(auto ir = parse_command())
         {
             if(!allow_special_name
-               && is_special_name((*ir)->command->name, false))
+               && is_special_name((*ir)->command().name(), false))
             {
-                report_special_name((*ir)->command->source);
+                report_special_name((*ir)->command().source());
                 return std::nullopt;
             }
 
-            if(const auto *const command = (*ir)->command;
-               is_var_decl_command(command->name) && command->args.empty())
+            if(const auto &command = (*ir)->command();
+               is_var_decl_command(command.name()) && !command.has_args())
             {
-                report(command->source, Diag::too_few_arguments);
+                report(command.source(), Diag::too_few_arguments);
                 return std::nullopt;
             }
 
@@ -820,7 +823,7 @@ auto Parser::parse_scope_statement() -> std::optional<LinkedIR<ParserIR>>
 
     if(this->in_lexical_scope)
     {
-        report((*open_command)->command->source, Diag::cannot_nest_scopes);
+        report((*open_command)->command().source(), Diag::cannot_nest_scopes);
         return std::nullopt;
     }
 
@@ -869,9 +872,9 @@ auto Parser::parse_conditional_element(bool is_if_line)
     {
         if(ir = parse_command(is_if_line, not_flag); !ir)
             return std::nullopt;
-        if(is_special_name((*ir)->command->name, true))
+        if(is_special_name((*ir)->command().name(), true))
         {
-            report_special_name((*ir)->command->source);
+            report_special_name((*ir)->command().source());
             return std::nullopt;
         }
     }
@@ -904,7 +907,7 @@ auto Parser::parse_conditional_list(ParserIR *op_cond0)
 
     // This method is parsing the AND/OR part of the conditional_list.
 
-    assert(op_cond0 && op_cond0->command);
+    assert(op_cond0 && op_cond0->has_command());
 
     auto andor_list = LinkedIR<ParserIR>();
     andor_list.push_back(*op_cond0);
@@ -949,7 +952,7 @@ auto Parser::parse_conditional_list(ParserIR *op_cond0)
     // this limitation embedded in its first parameter.
     if(num_conds > 6)
     {
-        report(andor_list.back().command->source, Diag::too_many_conditions);
+        report(andor_list.back().command().source(), Diag::too_many_conditions);
         return {std::nullopt, 0};
     }
 
@@ -1042,12 +1045,12 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
         if(!body_stms)
             return std::nullopt;
 
-        if(const auto *const else_command = body_stms->back().command;
-           else_command->name == command_else)
+        if(const auto &else_command = body_stms->back().command();
+           else_command.name() == command_else)
         {
-            if(!else_command->args.empty())
+            if(else_command.has_args())
             {
-                report(else_command->source, Diag::too_many_arguments);
+                report(else_command.source(), Diag::too_many_arguments);
                 return std::nullopt;
             }
 
@@ -1058,10 +1061,10 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
             body_stms->splice_back(*std::move(else_stms));
         }
 
-        if(const auto *const endif_command = body_stms->back().command;
-           !endif_command->args.empty())
+        if(const auto &endif_command = body_stms->back().command();
+           endif_command.has_args())
         {
-            report(endif_command->source, Diag::too_many_arguments);
+            report(endif_command.source(), Diag::too_many_arguments);
             return std::nullopt;
         }
 
@@ -1114,12 +1117,12 @@ auto Parser::parse_while_statement_detail(bool is_whilenot)
     if(!body_stms)
         return std::nullopt;
 
-    assert(!body_stms->empty() && body_stms->back().command);
+    assert(!body_stms->empty() && body_stms->back().has_command());
 
-    if(const auto &endwhile_command = body_stms->back().command;
-       !endwhile_command->args.empty())
+    if(const auto &endwhile_command = body_stms->back().command();
+       endwhile_command.has_args())
     {
-        report(endwhile_command->source, Diag::too_many_arguments);
+        report(endwhile_command.source(), Diag::too_many_arguments);
         return std::nullopt;
     }
 
@@ -1153,16 +1156,16 @@ auto Parser::parse_repeat_statement() -> std::optional<LinkedIR<ParserIR>>
     if(!consume(Category::end_of_line))
         return std::nullopt;
 
-    assert(*repeat_command && (*repeat_command)->command != nullptr);
-    if(const auto repeat_num_args = (*repeat_command)->command->args.size();
+    assert(*repeat_command && (*repeat_command)->has_command());
+    if(const auto repeat_num_args = (*repeat_command)->command().num_args();
        repeat_num_args < 2)
     {
-        report((*repeat_command)->command->source, Diag::too_few_arguments);
+        report((*repeat_command)->command().source(), Diag::too_few_arguments);
         return std::nullopt;
     }
     else if(repeat_num_args > 2)
     {
-        report((*repeat_command)->command->source, Diag::too_many_arguments);
+        report((*repeat_command)->command().source(), Diag::too_many_arguments);
         return std::nullopt;
     }
 
@@ -1170,11 +1173,11 @@ auto Parser::parse_repeat_statement() -> std::optional<LinkedIR<ParserIR>>
     if(!body_stms)
         return std::nullopt;
 
-    assert(!body_stms->empty() && body_stms->back().command != nullptr);
-    if(const auto *const endrepeat_command = body_stms->back().command;
-       !endrepeat_command->args.empty())
+    assert(!body_stms->empty() && body_stms->back().has_command());
+    if(const auto &endrepeat_command = body_stms->back().command();
+       endrepeat_command.has_args())
     {
-        report((*repeat_command)->command->source, Diag::too_many_arguments);
+        report((*repeat_command)->command().source(), Diag::too_many_arguments);
         return std::nullopt;
     }
 
@@ -1411,7 +1414,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
            || *lhs == command_load_and_launch_mission
            || *lhs == command_mission_start || *lhs == command_mission_end)
         {
-            report_special_name(args[0]->source);
+            report_special_name(args[0]->source());
             return std::nullopt;
         }
     }

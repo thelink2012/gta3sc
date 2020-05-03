@@ -110,32 +110,32 @@ inline auto operator<<(std::ostream& os, const ParserIR::Argument& arg)
 inline auto operator<<(std::ostream& os, const ParserIR::LabelDef& label_def)
         -> std::ostream&
 {
-    os << label_def.name << ':';
+    os << label_def.name() << ':';
     return os;
 }
 
 inline auto operator<<(std::ostream& os, const ParserIR::Command& command)
         -> std::ostream&
 {
-    if(command.not_flag)
+    if(command.not_flag())
         os << "NOT ";
-    os << command.name;
-    for(const auto& arg : command.args)
+    os << command.name();
+    for(const auto& arg : command.args())
         os << ' ' << *arg;
     return os;
 }
 
 inline auto operator<<(std::ostream& os, const ParserIR& ir) -> std::ostream&
 {
-    if(ir.label)
+    if(ir.has_label())
     {
-        os << *ir.label;
-        if(ir.command)
+        os << ir.label();
+        if(ir.has_command())
             os << ' ';
     }
 
-    if(ir.command)
-        os << *ir.command;
+    if(ir.has_command())
+        os << ir.command();
 
     return os;
 }

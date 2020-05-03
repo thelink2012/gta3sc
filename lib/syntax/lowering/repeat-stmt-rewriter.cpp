@@ -20,11 +20,11 @@ RepeatStmtRewriter::RepeatStmtRewriter(gta3sc::util::NameGenerator& namegen,
 
 auto RepeatStmtRewriter::visit(const ParserIR& line) -> Result
 {
-    if(line.command)
+    if(line.has_command())
     {
-        if(line.command->name == command_repeat)
+        if(line.command().name() == command_repeat)
             return visit_repeat(line);
-        else if(line.command->name == command_endrepeat)
+        else if(line.command().name() == command_endrepeat)
             return visit_endrepeat(line);
     }
     return Result{};
@@ -38,15 +38,14 @@ auto RepeatStmtRewriter::visit_repeat(const ParserIR& line) -> Result
     //   SET iter_var 0
     //   loop_label:
 
-    const ParserIR::Command* repeat = line.command;
-    assert(repeat != nullptr);
+    const ParserIR::Command& repeat = line.command();
 
-    if(repeat->args.size() != 2)
+    if(repeat.args().size() != 2)
         return Result{};
 
-    const auto* const num_times = repeat->args[0];
-    const auto* const iter_var = repeat->args[1];
-    const auto* const loop_label_def = generate_loop_label(repeat->source);
+    const auto* const num_times = repeat.arg(0);
+    const auto* const iter_var = repeat.arg(1);
+    const auto* const loop_label_def = generate_loop_label(repeat.source());
 
     if(repeat_stack.capacity() == 0)
         repeat_stack.reserve(default_stack_size);
@@ -54,10 +53,10 @@ auto RepeatStmtRewriter::visit_repeat(const ParserIR& line) -> Result
 
     return LinkedIR<ParserIR>(
             {ParserIR::Builder(allocator)
-                     .label(line.label)
-                     .command(command_set, repeat->source)
+                     .label(line.label_or_null())
+                     .command(command_set, repeat.source())
                      .arg(iter_var)
-                     .arg_int(0, repeat->source)
+                     .arg_int(0, repeat.source())
                      .build(),
 
              ParserIR::create(loop_label_def, nullptr, allocator)});
@@ -72,8 +71,7 @@ auto RepeatStmtRewriter::visit_endrepeat(const ParserIR& line) -> Result
     //   IS_THING_GREATER_OR_EQUAL_TO_THING iter_var num_times
     //   GOTO_IF_FALSE loop_label
 
-    const ParserIR::Command* endrepeat = line.command;
-    assert(endrepeat != nullptr);
+    const ParserIR::Command& endrepeat = line.command();
 
     if(repeat_stack.empty())
         return Result{};
@@ -83,22 +81,22 @@ auto RepeatStmtRewriter::visit_endrepeat(const ParserIR& line) -> Result
 
     return LinkedIR<ParserIR>(
             {ParserIR::Builder(allocator)
-                     .label(line.label)
-                     .command(command_add_thing_to_thing, endrepeat->source)
+                     .label(line.label_or_null())
+                     .command(command_add_thing_to_thing, endrepeat.source())
                      .arg(iter_var)
-                     .arg_int(1, endrepeat->source)
+                     .arg_int(1, endrepeat.source())
                      .build(),
 
              ParserIR::Builder(allocator)
                      .command(command_is_thing_greater_or_equal_to_thing,
-                              endrepeat->source)
+                              endrepeat.source())
                      .arg(iter_var)
                      .arg(num_times)
                      .build(),
 
              ParserIR::Builder(allocator)
-                     .command(command_goto_if_false, endrepeat->source)
-                     .arg_ident(loop_label->name, endrepeat->source)
+                     .command(command_goto_if_false, endrepeat.source())
+                     .arg_ident(loop_label->name(), endrepeat.source())
                      .build()});
 }
 

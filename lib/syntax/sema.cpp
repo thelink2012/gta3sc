@@ -31,18 +31,18 @@ auto Sema::discover_declarations_pass() -> bool
 
     for(auto& line : parser_ir)
     {
-        if(line.label)
+        if(line.has_label())
         {
-            declare_label(*line.label);
+            declare_label(line.label());
         }
 
-        if(line.command)
+        if(line.has_command())
         {
-            if(line.command->name == "{"sv)
+            if(line.command().name() == "{"sv)
             {
                 assert(current_scope == -1);
                 this->current_scope = symrepo->allocate_scope();
-                scope_enter_source = line.command->source;
+                scope_enter_source = line.command().source();
 
                 // We need the index of the first local scope in order to
                 // enumerate scopes during `check_semantics_pass`.
@@ -51,7 +51,7 @@ auto Sema::discover_declarations_pass() -> bool
                     this->first_scope = current_scope;
                 }
             }
-            else if(line.command->name == "}"sv)
+            else if(line.command().name() == "}"sv)
             {
                 assert(current_scope != -1);
 
@@ -73,32 +73,32 @@ auto Sema::discover_declarations_pass() -> bool
                 this->current_scope = -1;
                 scope_enter_source = SourceRange{};
             }
-            else if(line.command->name == "VAR_INT"sv)
+            else if(line.command().name() == "VAR_INT"sv)
             {
-                declare_variable(*line.command, 0, SymVariable::Type::INT);
+                declare_variable(line.command(), 0, SymVariable::Type::INT);
             }
-            else if(line.command->name == "LVAR_INT"sv)
+            else if(line.command().name() == "LVAR_INT"sv)
             {
-                declare_variable(*line.command, current_scope,
+                declare_variable(line.command(), current_scope,
                                  SymVariable::Type::INT);
             }
-            else if(line.command->name == "VAR_FLOAT"sv)
+            else if(line.command().name() == "VAR_FLOAT"sv)
             {
-                declare_variable(*line.command, 0, SymVariable::Type::FLOAT);
+                declare_variable(line.command(), 0, SymVariable::Type::FLOAT);
             }
-            else if(line.command->name == "LVAR_FLOAT"sv)
+            else if(line.command().name() == "LVAR_FLOAT"sv)
             {
-                declare_variable(*line.command, current_scope,
+                declare_variable(line.command(), current_scope,
                                  SymVariable::Type::FLOAT);
             }
-            else if(line.command->name == "VAR_TEXT_LABEL"sv)
+            else if(line.command().name() == "VAR_TEXT_LABEL"sv)
             {
-                declare_variable(*line.command, 0,
+                declare_variable(line.command(), 0,
                                  SymVariable::Type::TEXT_LABEL);
             }
-            else if(line.command->name == "LVAR_TEXT_LABEL"sv)
+            else if(line.command().name() == "LVAR_TEXT_LABEL"sv)
             {
-                declare_variable(*line.command, current_scope,
+                declare_variable(line.command(), current_scope,
                                  SymVariable::Type::TEXT_LABEL);
             }
         }
@@ -152,43 +152,43 @@ auto Sema::check_semantics_pass() -> std::optional<LinkedIR<SemaIR>>
 
         SemaIR::Builder builder(allocator);
 
-        if(line.command)
+        if(line.has_command())
         {
-            if(line.command->name == "{"sv)
+            if(line.command().name() == "{"sv)
             {
                 assert(this->current_scope == -1);
                 assert(scope_accum > 0);
                 this->current_scope = scope_accum++;
             }
-            else if(line.command->name == "}"sv)
+            else if(line.command().name() == "}"sv)
             {
                 assert(this->current_scope != -1);
                 this->current_scope = -1;
             }
-            else if(line.command->name == "VAR_INT"sv
-                    || line.command->name == "LVAR_INT"sv
-                    || line.command->name == "VAR_FLOAT"sv
-                    || line.command->name == "LVAR_FLOAT"sv
-                    || line.command->name == "VAR_TEXT_LABEL"sv
-                    || line.command->name == "LVAR_TEXT_LABEL"sv)
+            else if(line.command().name() == "VAR_INT"sv
+                    || line.command().name() == "LVAR_INT"sv
+                    || line.command().name() == "VAR_FLOAT"sv
+                    || line.command().name() == "LVAR_FLOAT"sv
+                    || line.command().name() == "VAR_TEXT_LABEL"sv
+                    || line.command().name() == "LVAR_TEXT_LABEL"sv)
             {
                 this->analyzing_var_decl = true;
             }
-            else if(line.command->name == "REPEAT"sv)
+            else if(line.command().name() == "REPEAT"sv)
             {
                 this->analyzing_repeat_command = true;
             }
         }
 
-        if(line.label)
+        if(line.has_label())
         {
-            const SymLabel* label = validate_label_def(*line.label);
+            const SymLabel* label = validate_label_def(line.label());
             builder.label(label);
         }
 
-        if(line.command)
+        if(line.has_command())
         {
-            const SemaIR::Command* command = validate_command(*line.command);
+            const SemaIR::Command* command = validate_command(line.command());
             builder.command(command);
         }
 
@@ -204,12 +204,12 @@ auto Sema::check_semantics_pass() -> std::optional<LinkedIR<SemaIR>>
 auto Sema::validate_label_def(const ParserIR::LabelDef& label_def)
         -> const SymLabel*
 {
-    const auto* sym_label = symrepo->lookup_label(label_def.name);
+    const auto* sym_label = symrepo->lookup_label(label_def.name());
     if(!sym_label)
     {
         // This is impossible! All the labels in the input IR were previously
         // defined in `discover_declarations_pass`.
-        report(label_def.source, Diag::undefined_label);
+        report(label_def.source(), Diag::undefined_label);
         return nullptr;
     }
     return sym_label;
@@ -221,7 +221,7 @@ auto Sema::validate_command(const ParserIR::Command& command)
     bool failed = false;
     const CommandManager::CommandDef* command_def{};
 
-    if(const auto* const alternator = cmdman->find_alternator(command.name))
+    if(const auto* const alternator = cmdman->find_alternator(command.name()))
     {
         auto it = std::find_if(alternator->begin(), alternator->end(),
                                [&](const auto& alternative) {
@@ -230,7 +230,7 @@ auto Sema::validate_command(const ParserIR::Command& command)
                                });
         if(it == alternator->end())
         {
-            report(command.source, Diag::alternator_mismatch);
+            report(command.source(), Diag::alternator_mismatch);
             return nullptr;
         }
 
@@ -240,22 +240,23 @@ auto Sema::validate_command(const ParserIR::Command& command)
     }
     else
     {
-        command_def = cmdman->find_command(command.name);
+        command_def = cmdman->find_command(command.name());
         if(!command_def)
         {
-            report(command.source, Diag::undefined_command);
+            report(command.source(), Diag::undefined_command);
             return nullptr;
         }
     }
 
     SemaIR::Builder builder(allocator);
-    builder.command(*command_def, command.source);
-    builder.not_flag(command.not_flag);
+    builder.command(*command_def, command.source());
+    builder.not_flag(command.not_flag());
 
-    auto arg_it = command.args.begin();
+    auto arg_it = command.args().begin();
     auto param_it = command_def->params.begin();
 
-    while(arg_it != command.args.end() && param_it != command_def->params.end())
+    while(arg_it != command.args().end()
+          && param_it != command_def->params.end())
     {
         if(const auto* ir_arg = validate_argument(*param_it, **arg_it);
            ir_arg && !failed)
@@ -270,18 +271,18 @@ auto Sema::validate_command(const ParserIR::Command& command)
 
     const auto expected_args = (command_def->params.size()
                                 - param_it->is_optional());
-    const auto got_args = command.args.size();
+    const auto got_args = command.num_args();
 
-    if(arg_it != command.args.end())
+    if(arg_it != command.args().end())
     {
         failed = true;
-        report(command.source, Diag::too_many_arguments)
+        report(command.source(), Diag::too_many_arguments)
                 .args(expected_args, got_args);
     }
     else if(param_it != command_def->params.end() && !param_it->is_optional())
     {
         failed = true;
-        report(command.source, Diag::too_few_arguments)
+        report(command.source(), Diag::too_few_arguments)
                 .args(expected_args, got_args);
     }
 
@@ -313,7 +314,7 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
                         CommandManager::global_enum, *arg.as_identifier());
                 assert(cdef != nullptr);
 
-                return SemaIR::create_constant(*cdef, arg.source, allocator);
+                return SemaIR::create_constant(*cdef, arg.source(), allocator);
             }
             return validate_integer_literal(param, arg);
         }
@@ -325,14 +326,14 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
         {
             if(!arg.as_identifier())
             {
-                report(arg.source, Diag::expected_text_label);
+                report(arg.source(), Diag::expected_text_label);
                 return nullptr;
             }
 
             if(cmdman->find_constant(CommandManager::global_enum,
                                      *arg.as_identifier()))
             {
-                report(arg.source, Diag::cannot_use_string_constant_here);
+                report(arg.source(), Diag::cannot_use_string_constant_here);
                 return nullptr;
             }
 
@@ -378,7 +379,7 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
                         *arg.as_identifier());
                 assert(cdef != nullptr);
 
-                return SemaIR::create_constant(*cdef, arg.source, allocator);
+                return SemaIR::create_constant(*cdef, arg.source(), allocator);
             }
             else if(arg.as_integer())
             {
@@ -391,28 +392,28 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
                 {
                     if(const auto* cdef = find_defaultmodel_constant(ident))
                     {
-                        return SemaIR::create_constant(*cdef, arg.source,
+                        return SemaIR::create_constant(*cdef, arg.source(),
                                                        allocator);
                     }
                     else if(const auto* model = modelman->find_model(ident))
                     {
                         auto [uobj, _] = symrepo->insert_used_object(
-                                ident, arg.source);
+                                ident, arg.source());
                         assert(uobj != nullptr);
-                        return SemaIR::create_used_object(*uobj, arg.source,
+                        return SemaIR::create_used_object(*uobj, arg.source(),
                                                           allocator);
                     }
                 }
                 else if(const auto* cdef = cmdman->find_constant(
                                 param.enum_type, ident))
                 {
-                    return SemaIR::create_constant(*cdef, arg.source,
+                    return SemaIR::create_constant(*cdef, arg.source(),
                                                    allocator);
                 }
                 return validate_var_ref(param, arg);
             }
 
-            report(arg.source, Diag::expected_input_int);
+            report(arg.source(), Diag::expected_input_int);
             return nullptr;
         }
         case ParamType::INPUT_FLOAT:
@@ -424,13 +425,13 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
                 if(cmdman->find_constant(CommandManager::global_enum,
                                          *arg.as_identifier()))
                 {
-                    report(arg.source, Diag::cannot_use_string_constant_here);
+                    report(arg.source(), Diag::cannot_use_string_constant_here);
                     return nullptr;
                 }
                 return validate_var_ref(param, arg);
             }
 
-            report(arg.source, Diag::expected_input_float);
+            report(arg.source(), Diag::expected_input_float);
             return nullptr;
         }
         case ParamType::INPUT_OPT:
@@ -448,13 +449,13 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
                 if(const auto* cdef = cmdman->find_constant(
                            CommandManager::global_enum, *arg.as_identifier()))
                 {
-                    return SemaIR::create_constant(*cdef, arg.source,
+                    return SemaIR::create_constant(*cdef, arg.source(),
                                                    allocator);
                 }
                 return validate_var_ref(param, arg);
             }
 
-            report(arg.source, Diag::expected_input_opt);
+            report(arg.source(), Diag::expected_input_opt);
             return nullptr;
         }
         case ParamType::OUTPUT_INT:
@@ -464,7 +465,7 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
                && cmdman->find_constant(CommandManager::global_enum,
                                         *arg.as_identifier()))
             {
-                report(arg.source, Diag::cannot_use_string_constant_here);
+                report(arg.source(), Diag::cannot_use_string_constant_here);
                 return nullptr;
             }
             return validate_var_ref(param, arg);
@@ -489,9 +490,9 @@ auto Sema::validate_integer_literal(const CommandManager::ParamDef& param,
     if(const auto* const integer = arg.as_integer())
         value = *integer;
     else
-        report(arg.source, Diag::expected_integer);
+        report(arg.source(), Diag::expected_integer);
 
-    return SemaIR::create_integer(value, arg.source, allocator);
+    return SemaIR::create_integer(value, arg.source(), allocator);
 }
 
 auto Sema::validate_float_literal(const CommandManager::ParamDef& param,
@@ -507,9 +508,9 @@ auto Sema::validate_float_literal(const CommandManager::ParamDef& param,
     if(const auto* const floating = arg.as_float())
         value = *floating;
     else
-        report(arg.source, Diag::expected_float);
+        report(arg.source(), Diag::expected_float);
 
-    return SemaIR::create_float(value, arg.source, allocator);
+    return SemaIR::create_float(value, arg.source(), allocator);
 }
 
 auto Sema::validate_text_label(const CommandManager::ParamDef& param,
@@ -523,9 +524,9 @@ auto Sema::validate_text_label(const CommandManager::ParamDef& param,
     if(const auto* const ident = arg.as_identifier())
         value = *ident;
     else
-        report(arg.source, Diag::expected_text_label);
+        report(arg.source(), Diag::expected_text_label);
 
-    return SemaIR::create_text_label(value, arg.source, allocator);
+    return SemaIR::create_text_label(value, arg.source(), allocator);
 }
 
 auto Sema::validate_label(const CommandManager::ParamDef& param,
@@ -536,18 +537,18 @@ auto Sema::validate_label(const CommandManager::ParamDef& param,
 
     if(!arg.as_identifier())
     {
-        report(arg.source, Diag::expected_label);
+        report(arg.source(), Diag::expected_label);
         return nullptr;
     }
 
     const auto* sym_label = symrepo->lookup_label(*arg.as_identifier());
     if(!sym_label)
     {
-        report(arg.source, Diag::undefined_label);
+        report(arg.source(), Diag::undefined_label);
         return nullptr;
     }
 
-    return SemaIR::create_label(*sym_label, arg.source, allocator);
+    return SemaIR::create_label(*sym_label, arg.source(), allocator);
 }
 
 auto Sema::validate_string_literal(const CommandManager::ParamDef& param,
@@ -558,11 +559,11 @@ auto Sema::validate_string_literal(const CommandManager::ParamDef& param,
 
     if(!arg.as_string())
     {
-        report(arg.source, Diag::expected_string);
+        report(arg.source(), Diag::expected_string);
         return nullptr;
     }
 
-    return SemaIR::create_string(*arg.as_string(), arg.source, allocator);
+    return SemaIR::create_string(*arg.as_string(), arg.source(), allocator);
 }
 
 auto Sema::validate_var_ref(const CommandManager::ParamDef& param,
@@ -575,12 +576,12 @@ auto Sema::validate_var_ref(const CommandManager::ParamDef& param,
 
     if(!arg.as_identifier())
     {
-        report(arg.source, Diag::expected_variable);
+        report(arg.source(), Diag::expected_variable);
         return nullptr;
     }
 
     std::string_view arg_ident = *arg.as_identifier();
-    SourceRange arg_source = arg.source;
+    SourceRange arg_source = arg.source();
 
     // For TEXT_LABEL parameters, the identifier begins with a dollar
     // character and its suffix references a variable of text label type.
@@ -590,7 +591,7 @@ auto Sema::validate_var_ref(const CommandManager::ParamDef& param,
 
         if(arg_ident.size() == 1 || arg_ident[1] == '[' || arg_ident[1] == ']')
         {
-            report(arg.source, Diag::expected_varname_after_dollar);
+            report(arg.source(), Diag::expected_varname_after_dollar);
             return nullptr; // cannot recover because of parse_var_ref
         }
 
@@ -926,29 +927,29 @@ auto Sema::validate_target_scope_vars(const SemaIR::Argument** begin,
 void Sema::declare_label(const ParserIR::LabelDef& label_def)
 {
     const auto scope_id = current_scope == -1 ? 0 : current_scope;
-    if(auto [_, inserted] = symrepo->insert_label(label_def.name, scope_id,
-                                                  label_def.source);
+    if(auto [_, inserted] = symrepo->insert_label(label_def.name(), scope_id,
+                                                  label_def.source());
        !inserted)
     {
-        report(label_def.source, Diag::duplicate_label);
+        report(label_def.source(), Diag::duplicate_label);
     }
 }
 
 void Sema::declare_variable(const ParserIR::Command& command, ScopeId scope_id,
                             SymVariable::Type type)
 {
-    for(auto& arg : command.args)
+    for(auto& arg : command.args())
     {
         ScopeId var_scope_id = scope_id;
 
         if(!arg->as_identifier())
         {
-            report(arg->source, Diag::expected_identifier);
+            report(arg->source(), Diag::expected_identifier);
             continue;
         }
 
         auto [var_name, var_source, subscript] = parse_var_ref(
-                *arg->as_identifier(), arg->source);
+                *arg->as_identifier(), arg->source());
 
         if(subscript && !subscript->literal)
         {
@@ -964,7 +965,7 @@ void Sema::declare_variable(const ParserIR::Command& command, ScopeId scope_id,
 
         if(var_scope_id == -1)
         {
-            report(arg->source, Diag::var_decl_outside_of_scope);
+            report(arg->source(), Diag::var_decl_outside_of_scope);
             var_scope_id = 0; // recover
         }
 
@@ -978,7 +979,7 @@ void Sema::declare_variable(const ParserIR::Command& command, ScopeId scope_id,
         }
         else if(auto [var, inserted] = symrepo->insert_var(
                         var_name, var_scope_id, type, subscript_literal,
-                        arg->source);
+                        arg->source());
                 !inserted)
         {
             if(var_scope_id == 0)
@@ -1125,12 +1126,12 @@ auto Sema::is_matching_alternative(
 {
     // Alternators do not admit optional arguments, so it's
     // all good to perform this check beforehand.
-    if(command.args.size() != alternative.params.size())
+    if(command.num_args() != alternative.params.size())
         return false;
 
-    for(size_t i = 0, acount = command.args.size(); i < acount; ++i)
+    for(size_t i = 0, acount = command.num_args(); i < acount; ++i)
     {
-        const auto& arg = *command.args[i];
+        const auto& arg = *command.arg(i);
         const auto& param = alternative.params[i];
 
         // The global string constants have higher precedence when checking for
@@ -1173,7 +1174,7 @@ auto Sema::is_matching_alternative(
 
                 const auto arg_ident = *arg.as_identifier();
                 auto [var_name, var_source, _] = parse_var_ref(arg_ident,
-                                                               arg.source);
+                                                               arg.source());
                 const auto* sym_var = symrepo->lookup_var(var_name);
                 if(!sym_var || !matches_var_type(param.type, sym_var->type))
                     return false;
@@ -1192,7 +1193,7 @@ auto Sema::is_matching_alternative(
 
                 const auto arg_ident = *arg.as_identifier();
                 auto [var_name, var_source, _] = parse_var_ref(arg_ident,
-                                                               arg.source);
+                                                               arg.source());
                 const auto* sym_var = symrepo->lookup_var(var_name,
                                                           current_scope);
                 if(!sym_var || !matches_var_type(param.type, sym_var->type))

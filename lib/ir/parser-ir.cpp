@@ -31,7 +31,7 @@ auto ParserIR::create_identifier(std::string_view name, SourceRange source,
         -> ArenaPtr<const Argument>
 {
     return allocator.new_object<Argument>(
-            private_tag, Argument::IdentifierTag{},
+            private_tag, IdentifierTag{},
             util::allocate_string(name, allocator, util::toupper), source);
 }
 
@@ -40,7 +40,7 @@ auto ParserIR::create_filename(std::string_view name, SourceRange source,
         -> ArenaPtr<const Argument>
 {
     return allocator.new_object<Argument>(
-            private_tag, Argument::FilenameTag{},
+            private_tag, FilenameTag{},
             util::allocate_string(name, allocator, util::toupper), source);
 }
 
@@ -49,43 +49,43 @@ auto ParserIR::create_string(std::string_view string, SourceRange source,
         -> ArenaPtr<const Argument>
 {
     return allocator.new_object<Argument>(
-            private_tag, Argument::StringTag{},
-            util::allocate_string(string, allocator), source);
+            private_tag, StringTag{}, util::allocate_string(string, allocator),
+            source);
 }
 
-auto operator==(const ParserIR& lhs, const ParserIR& rhs) -> bool
+auto operator==(const ParserIR& lhs, const ParserIR& rhs) noexcept -> bool
 {
-    if(!!lhs.label != !!rhs.label)
+    if(!!lhs.m_label != !!rhs.m_label)
         return false;
-    if(!!lhs.command != !!rhs.command)
-        return false;
-
-    if(lhs.label && *lhs.label != *rhs.label)
+    if(!!lhs.m_command != !!rhs.m_command)
         return false;
 
-    if(lhs.command && *lhs.command != *rhs.command)
+    if(lhs.m_label && *lhs.m_label != *rhs.m_label)
+        return false;
+
+    if(lhs.m_command && *lhs.m_command != *rhs.m_command)
         return false;
 
     return true;
 }
 
-auto operator!=(const ParserIR& lhs, const ParserIR& rhs) -> bool
+auto operator!=(const ParserIR& lhs, const ParserIR& rhs) noexcept -> bool
 {
     return !(lhs == rhs);
 }
 
-auto operator==(const ParserIR::Command& lhs, const ParserIR::Command& rhs)
-        -> bool
+auto operator==(const ParserIR::Command& lhs,
+                const ParserIR::Command& rhs) noexcept -> bool
 {
-    return lhs.source == rhs.source && lhs.name == rhs.name
-           && lhs.not_flag == rhs.not_flag
-           && std::equal(lhs.args.begin(), lhs.args.end(), rhs.args.begin(),
-                         rhs.args.end(),
+    return lhs.m_source == rhs.m_source && lhs.m_name == rhs.m_name
+           && lhs.m_not_flag == rhs.m_not_flag
+           && std::equal(lhs.m_args.begin(), lhs.m_args.end(),
+                         rhs.m_args.begin(), rhs.m_args.end(),
                          [](const auto& a, const auto& b) { return *a == *b; });
 }
 
-auto operator!=(const ParserIR::Command& lhs, const ParserIR::Command& rhs)
-        -> bool
+auto operator!=(const ParserIR::Command& lhs,
+                const ParserIR::Command& rhs) noexcept -> bool
 {
     return !(lhs == rhs);
 }
@@ -99,62 +99,64 @@ auto ParserIR::LabelDef::create(std::string_view name, SourceRange source,
             util::allocate_string(name, allocator, util::toupper));
 }
 
-auto operator==(const ParserIR::LabelDef& lhs, const ParserIR::LabelDef& rhs)
-        -> bool
+auto operator==(const ParserIR::LabelDef& lhs,
+                const ParserIR::LabelDef& rhs) noexcept -> bool
 {
-    return lhs.source == rhs.source && lhs.name == rhs.name;
+    return lhs.m_source == rhs.m_source && lhs.m_name == rhs.m_name;
 }
 
-auto operator!=(const ParserIR::LabelDef& lhs, const ParserIR::LabelDef& rhs)
-        -> bool
+auto operator!=(const ParserIR::LabelDef& lhs,
+                const ParserIR::LabelDef& rhs) noexcept -> bool
 {
     return !(lhs == rhs);
 }
 
-auto ParserIR::Argument::as_integer() const -> const int32_t*
+auto ParserIR::Argument::as_integer() const noexcept -> const int32_t*
 {
-    return std::get_if<int32_t>(&this->value);
+    return std::get_if<int32_t>(&this->m_value);
 }
 
-auto ParserIR::Argument::as_float() const -> const float*
+auto ParserIR::Argument::as_float() const noexcept -> const float*
 {
-    return std::get_if<float>(&this->value);
+    return std::get_if<float>(&this->m_value);
 }
 
-auto ParserIR::Argument::as_identifier() const -> const std::string_view*
+auto ParserIR::Argument::as_identifier() const noexcept
+        -> const std::string_view*
 {
-    if(const auto* ident = std::get_if<Identifier>(&this->value))
+    if(const auto* ident = std::get_if<Identifier>(&this->m_value))
         return &ident->second;
     return nullptr;
 }
 
-auto ParserIR::Argument::as_filename() const -> const std::string_view*
+auto ParserIR::Argument::as_filename() const noexcept -> const std::string_view*
 {
-    if(const auto* fi = std::get_if<Filename>(&this->value))
+    if(const auto* fi = std::get_if<Filename>(&this->m_value))
         return &fi->second;
     return nullptr;
 }
 
-auto ParserIR::Argument::as_string() const -> const std::string_view*
+auto ParserIR::Argument::as_string() const noexcept -> const std::string_view*
 {
-    if(const auto* s = std::get_if<String>(&this->value))
+    if(const auto* s = std::get_if<String>(&this->m_value))
         return &s->second;
     return nullptr;
 }
 
-auto ParserIR::Argument::is_same_value(const Argument& other) const -> bool
-{
-    return this->value == other.value;
-}
-
-auto operator==(const ParserIR::Argument& lhs, const ParserIR::Argument& rhs)
+auto ParserIR::Argument::is_same_value(const Argument& other) const noexcept
         -> bool
 {
-    return lhs.source == rhs.source && lhs.is_same_value(rhs);
+    return this->m_value == other.m_value;
 }
 
-auto operator!=(const ParserIR::Argument& lhs, const ParserIR::Argument& rhs)
-        -> bool
+auto operator==(const ParserIR::Argument& lhs,
+                const ParserIR::Argument& rhs) noexcept -> bool
+{
+    return lhs.m_source == rhs.m_source && lhs.is_same_value(rhs);
+}
+
+auto operator!=(const ParserIR::Argument& lhs,
+                const ParserIR::Argument& rhs) noexcept -> bool
 {
     return !(lhs == rhs);
 }

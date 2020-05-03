@@ -29,34 +29,80 @@ namespace gta3sc
 /// such as the location of each of its identifiers.
 ///
 /// [1]: The IR is mostly modelled as an intrusive linked list (see `LinkedIR`)
-/// and the node pointers present in this structure have interior mutability.
+/// and the node pointers present in this structure need to change to manipulate
+/// the list.
 class ParserIR : public util::IntrusiveBidirectionalListNode<ParserIR>
 {
 public:
-    struct LabelDef;
-    struct Command;
-    struct Argument;
+    class LabelDef;
+    class Command;
+    class Argument;
     class Builder;
 
 private:
-    struct PrivateTag
-    {
-    };
-    static constexpr PrivateTag private_tag{};
+    struct PrivateTag;
 
 public:
-    const LabelDef* const label{};
-    const Command* const command{};
-
-public:
-    ParserIR() noexcept = delete;
-    ~ParserIR() noexcept = default;
+    /// Please use `create` instead.
+    ParserIR(PrivateTag /*unused*/, const LabelDef* label,
+             const Command* command) noexcept :
+        m_label(label), m_command(command)
+    {}
 
     ParserIR(const ParserIR&) = delete;
     auto operator=(const ParserIR&) -> ParserIR& = delete;
 
     ParserIR(ParserIR&&) noexcept = delete;
     auto operator=(ParserIR&&) noexcept -> ParserIR& = delete;
+
+    ~ParserIR() noexcept = default;
+
+    /// Checks whether there is a command associated with this instruction.
+    [[nodiscard]] auto has_command() const noexcept -> bool
+    {
+        return m_command != nullptr;
+    }
+
+    /// Checks whether there is a label associated with this instruction.
+    [[nodiscard]] auto has_label() const noexcept -> bool
+    {
+        return m_label != nullptr;
+    }
+
+    /// Returns the label associated with this instruction.
+    [[nodiscard]] auto label() const noexcept -> const LabelDef&
+    {
+        return *m_label;
+    }
+
+    /// Returns the label associated with this instruction or `nullptr` if none.
+    [[nodiscard]] auto label_or_null() const noexcept -> const LabelDef*
+    {
+        return m_label ? m_label : nullptr;
+    }
+
+    /// Returns the command associated with this instruction.
+    [[nodiscard]] auto command() const noexcept -> const Command&
+    {
+        return *m_command;
+    }
+
+    /// Returns the command associated with this instruction or `nullptr` if
+    /// none.
+    [[nodiscard]] auto command_or_null() const noexcept -> const Command*
+    {
+        return m_command ? m_command : nullptr;
+    }
+
+    /// Compares whether a given IR is equivalent to another IR.
+    friend auto operator==(const ParserIR& lhs, const ParserIR& rhs) noexcept
+            -> bool;
+    friend auto operator!=(const ParserIR& lhs, const ParserIR& rhs) noexcept
+            -> bool;
+
+    //
+    // Factory methods
+    //
 
     // Creates an instruction.
     static auto create(const LabelDef* label, const Command* command,
@@ -96,169 +142,223 @@ public:
                               ArenaAllocator<> allocator)
             -> ArenaPtr<const Argument>;
 
-    /// Compares whether a given IR is equivalent to another IR.
-    friend auto operator==(const ParserIR& lhs, const ParserIR& rhs) -> bool;
-    friend auto operator!=(const ParserIR& lhs, const ParserIR& rhs) -> bool;
-
-    struct Command
+private:
+    /// This tag is used to make construction of the IR elements private.
+    struct PrivateTag
     {
-    public:
-        SourceRange source;    ///< Source code location of the argument.
-        std::string_view name; ///< The name of this command.
-        util::span<const Argument*> args; ///< View into the arguments.
-        bool not_flag = false; ///< Whether the result of the command is NOTed.
-
-        /// Please use `ParserIR::Builder::build_command`.
-        Command() noexcept = delete;
-        ~Command() noexcept = default;
-
-        Command(const Command&) = delete;
-        auto operator=(const Command&) -> Command& = delete;
-
-        Command(Command&&) noexcept = delete;
-        auto operator=(Command&&) noexcept -> Command& = delete;
-
-        /// Compares whether a given command is equivalent to another command.
-        friend auto operator==(const Command& lhs, const Command& rhs) -> bool;
-        friend auto operator!=(const Command& lhs, const Command& rhs) -> bool;
-
-    public:
-        Command(PrivateTag /*unused*/, SourceRange source,
-                std::string_view name, util::span<const Argument*> args,
-                bool not_flag) :
-            source(source), name(name), args(args), not_flag(not_flag)
-        {}
     };
 
-    struct LabelDef
+    enum class IdentifierTag
     {
-    public:
-        SourceRange source;
-        std::string_view name;
-
-        /// Please use `LabelDef::create`.
-        LabelDef() noexcept = delete;
-        ~LabelDef() noexcept = default;
-
-        LabelDef(const LabelDef&) = delete;
-        auto operator=(const LabelDef&) -> LabelDef& = delete;
-
-        LabelDef(LabelDef&&) noexcept = delete;
-        auto operator=(LabelDef&&) noexcept -> LabelDef& = delete;
-
-        /// Creates a label definition.
-        ///
-        /// The name of the label is automatically made uppercase.
-        static auto create(std::string_view name, SourceRange source,
-                           ArenaAllocator<> allocator)
-                -> ArenaPtr<const LabelDef>;
-
-        /// Compares whether a given label definition is equivalent to another.
-        friend auto operator==(const LabelDef& lhs, const LabelDef& rhs)
-                -> bool;
-        friend auto operator!=(const LabelDef& lhs, const LabelDef& rhs)
-                -> bool;
-
-    public:
-        explicit LabelDef(PrivateTag /*unused*/, SourceRange source,
-                          std::string_view name) :
-            source(source), name(name)
-        {}
     };
 
-    /// Arguments are immutable and may be shared by multiple commands.
-    struct Argument
+    enum class FilenameTag
     {
-    public:
-        /// Source code location of the argument.
-        SourceRange source; // NOLINT: FIXME
-
-        /// Please use `ParserIR` creation methods.
-        Argument() noexcept = delete;
-        ~Argument() noexcept = default;
-
-        Argument(const Argument&) = delete;
-        auto operator=(const Argument&) -> Argument& = delete;
-
-        Argument(Argument&&) noexcept = delete;
-        auto operator=(Argument&&) noexcept -> Argument& = delete;
-
-        /// Returns the contained integer or `nullptr` if this argument is not
-        /// an integer.
-        [[nodiscard]] auto as_integer() const -> const int32_t*;
-
-        /// Returns the contained float or `nullptr` if this argument is not
-        /// an float.
-        [[nodiscard]] auto as_float() const -> const float*;
-
-        /// Returns the contained identifier or `nullptr` if this argument is
-        /// not an identifier.
-        [[nodiscard]] auto as_identifier() const -> const std::string_view*;
-
-        /// Returns the contained filename or `nullptr` if this argument is not
-        /// an filename.
-        [[nodiscard]] auto as_filename() const -> const std::string_view*;
-
-        /// Returns the contained string or `nullptr` if this argument is not
-        /// an string.
-        [[nodiscard]] auto as_string() const -> const std::string_view*;
-
-        /// Returns whether the value of this is equal the value of another
-        /// argument (i.e. same as `operator==` without comparing source
-        /// location).
-        [[nodiscard]] auto is_same_value(const Argument& other) const -> bool;
-
-        /// Compares whether a given argument is equivalent to another.
-        friend auto operator==(const Argument& lhs, const Argument& rhs)
-                -> bool;
-        friend auto operator!=(const Argument& lhs, const Argument& rhs)
-                -> bool;
-
-    protected:
-        enum class IdentifierTag
-        {
-        };
-        enum class FilenameTag
-        {
-        };
-        enum class StringTag
-        {
-        };
-
-        // Tagging adds one word of overhead to the memory used by an
-        // argument, but is cleaner than a EqualityComparable wrapper.
-        using Identifier = std::pair<IdentifierTag, std::string_view>;
-        using Filename = std::pair<FilenameTag, std::string_view>;
-        using String = std::pair<StringTag, std::string_view>;
-
-    public:
-        template<typename T>
-        explicit Argument(PrivateTag /*unused*/, T&& value,
-                          SourceRange source) :
-            source(source), value(std::forward<T>(value))
-        {}
-
-        template<typename Tag>
-        explicit Argument(PrivateTag /*unused*/, Tag tag,
-                          std::string_view value, SourceRange source) :
-            source(source), value(std::pair{tag, value})
-        {}
-
-        friend class ParserIR;
-
-    private:
-        const std::variant<int32_t, float, Identifier, Filename, String> value;
-
-        // Keep the size of this structure small.
-        // This would improve if we used a strong typedef over std::pair.
-        static_assert(sizeof(value) <= 4 * sizeof(void*));
     };
+
+    enum class StringTag
+    {
+    };
+
+    static constexpr PrivateTag private_tag{};
+
+private:
+    const LabelDef* const m_label{};
+    const Command* const m_command{};
+};
+
+class ParserIR::LabelDef
+{
+public:
+    /// Please ues `create` instead.
+    LabelDef(PrivateTag /*unused*/, SourceRange source,
+             std::string_view name) noexcept :
+        m_source(source), m_name(name)
+    {}
+
+    LabelDef(const LabelDef&) = delete;
+    auto operator=(const LabelDef&) -> LabelDef& = delete;
+
+    LabelDef(LabelDef&&) noexcept = delete;
+    auto operator=(LabelDef&&) noexcept -> LabelDef& = delete;
+
+    ~LabelDef() noexcept = default;
+
+    /// Returns the source code range of this label definition.
+    [[nodiscard]] auto source() const noexcept -> SourceRange
+    {
+        return m_source;
+    }
+
+    /// Returns the name of the label defined by this.
+    [[nodiscard]] auto name() const noexcept -> std::string_view
+    {
+        return m_name;
+    }
+
+    /// Compares whether a given label definition is equivalent to another.
+    friend auto operator==(const LabelDef& lhs, const LabelDef& rhs) noexcept
+            -> bool;
+    friend auto operator!=(const LabelDef& lhs, const LabelDef& rhs) noexcept
+            -> bool;
+
+    /// Creates a label definition.
+    ///
+    /// The name of the label is automatically made uppercase.
+    static auto create(std::string_view name, SourceRange source,
+                       ArenaAllocator<> allocator) -> ArenaPtr<const LabelDef>;
+
+private:
+    SourceRange m_source;
+    std::string_view m_name;
+};
+
+class ParserIR::Command
+{
+public:
+    /// Please use `ParserIR::Builder::build_command`.
+    Command(PrivateTag /*unused*/, SourceRange source, std::string_view name,
+            util::span<const Argument*> args, bool not_flag) noexcept :
+        m_source(source), m_name(name), m_args(args), m_not_flag(not_flag)
+    {}
+
+    Command(const Command&) = delete;
+    auto operator=(const Command&) -> Command& = delete;
+
+    Command(Command&&) noexcept = delete;
+    auto operator=(Command&&) noexcept -> Command& = delete;
+
+    ~Command() noexcept = default;
+
+    /// Checks whether the not flag of this command is active.
+    [[nodiscard]] auto not_flag() const noexcept -> bool { return m_not_flag; }
+
+    /// Returns the source code range of this command.
+    [[nodiscard]] auto source() const noexcept -> SourceRange
+    {
+        return m_source;
+    }
+
+    /// Returns the name of the command.
+    [[nodiscard]] auto name() const noexcept -> std::string_view
+    {
+        return m_name;
+    }
+
+    /// Checks whether th ecommand has at least one argument.
+    [[nodiscard]] auto has_args() const noexcept -> bool
+    {
+        return !m_args.empty();
+    }
+
+    /// Returns the number of arguments of this command.
+    [[nodiscard]] auto num_args() const noexcept -> size_t
+    {
+        return m_args.size();
+    }
+
+    /// Returns a view to the arguments of the command.
+    [[nodiscard]] auto args() const noexcept -> util::span<const Argument*>
+    {
+        return m_args;
+    }
+
+    /// Returns the i-th argument of this command.
+    [[nodiscard]] auto arg(size_t i) const noexcept -> const Argument*
+    {
+        return m_args[i];
+    }
+
+    /// Compares whether a given command is equivalent to another command.
+    friend auto operator==(const Command& lhs, const Command& rhs) noexcept
+            -> bool;
+    friend auto operator!=(const Command& lhs, const Command& rhs) noexcept
+            -> bool;
+
+private:
+    SourceRange m_source;
+    std::string_view m_name;
+    util::span<const Argument*> m_args;
+    bool m_not_flag = false;
+};
+
+class ParserIR::Argument
+{
+private:
+    // Tagging adds one word of overhead to the memory used by an
+    // argument, but is cleaner than a EqualityComparable wrapper.
+    using Identifier = std::pair<IdentifierTag, std::string_view>;
+    using Filename = std::pair<FilenameTag, std::string_view>;
+    using String = std::pair<StringTag, std::string_view>;
 
 public:
-    explicit ParserIR(PrivateTag /*unused*/, const LabelDef* label,
-                      const Command* command) :
-        label(label), command(command)
+    /// Please use `ParserIR` creation methods.
+    template<typename T>
+    Argument(PrivateTag /*unused*/, T&& value, SourceRange source) noexcept :
+        m_source(source), m_value(std::forward<T>(value))
     {}
+
+    /// Please use `ParserIR` creation methods.
+    template<typename Tag>
+    Argument(PrivateTag /*unused*/, Tag tag, std::string_view value,
+             SourceRange source) noexcept :
+        m_source(source), m_value(std::pair{tag, value})
+    {}
+
+    ~Argument() noexcept = default;
+
+    Argument(const Argument&) = delete;
+    auto operator=(const Argument&) -> Argument& = delete;
+
+    Argument(Argument&&) noexcept = delete;
+    auto operator=(Argument&&) noexcept -> Argument& = delete;
+
+    /// Returns the source code range of this argument.
+    [[nodiscard]] auto source() const noexcept -> SourceRange
+    {
+        return m_source;
+    }
+
+    /// Returns the contained integer or `nullptr` if this argument is not
+    /// an integer.
+    [[nodiscard]] auto as_integer() const noexcept -> const int32_t*;
+
+    /// Returns the contained float or `nullptr` if this argument is not
+    /// an float.
+    [[nodiscard]] auto as_float() const noexcept -> const float*;
+
+    /// Returns the contained identifier or `nullptr` if this argument is
+    /// not an identifier.
+    [[nodiscard]] auto as_identifier() const noexcept
+            -> const std::string_view*;
+
+    /// Returns the contained filename or `nullptr` if this argument is not
+    /// an filename.
+    [[nodiscard]] auto as_filename() const noexcept -> const std::string_view*;
+
+    /// Returns the contained string or `nullptr` if this argument is not
+    /// an string.
+    [[nodiscard]] auto as_string() const noexcept -> const std::string_view*;
+
+    /// Returns whether the value of this is equal the value of another
+    /// argument (i.e. same as `operator==` without comparing source
+    /// location).
+    [[nodiscard]] auto is_same_value(const Argument& other) const noexcept
+            -> bool;
+
+    /// Compares whether a given argument is equivalent to another.
+    friend auto operator==(const Argument& lhs, const Argument& rhs) noexcept
+            -> bool;
+    friend auto operator!=(const Argument& lhs, const Argument& rhs) noexcept
+            -> bool;
+
+private:
+    SourceRange m_source;
+    const std::variant<int32_t, float, Identifier, Filename, String> m_value;
+
+    // Keep the size of this structure small.
+    // This would improve if we used a strong typedef over std::pair.
+    static_assert(sizeof(m_value) <= 4 * sizeof(void*));
 };
 
 /// This is a builder capable of constructing a ParserIR instruction.
