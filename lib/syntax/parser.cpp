@@ -461,7 +461,7 @@ auto Parser::parse_argument()
             return std::nullopt;
         }
 
-        return ParserIR::create_integer(value, token->source, allocator);
+        return ParserIR::create_int(value, token->source, allocator);
     }
     else if(token->category == Category::word && is_float(lexeme))
     {
@@ -1409,7 +1409,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
     // nor mission directives. This is a constraint of the grammar.
     if(num_args > 0 && cats[0] == Category::word && args[0]->as_identifier())
     {
-        const auto *lhs = args[0]->as_identifier();
+        const auto lhs = args[0]->as_identifier();
         if(*lhs == command_gosub_file || *lhs == command_launch_mission
            || *lhs == command_load_and_launch_mission
            || *lhs == command_mission_start || *lhs == command_mission_end)

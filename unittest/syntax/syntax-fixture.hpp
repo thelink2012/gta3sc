@@ -92,18 +92,15 @@ namespace gta3sc
 inline auto operator<<(std::ostream& os, const ParserIR::Argument& arg)
         -> std::ostream&
 {
-    if(const int* value = arg.as_integer())
-        os << *value;
-    else if(const float* value = arg.as_float())
-        os << *value;
-    else if(const auto* value = arg.as_identifier())
-        os << *value;
-    else if(const auto* value = arg.as_filename())
-        os << *value;
-    else if(const auto* value = arg.as_string())
-        os << std::quoted(*value);
-    else
-        assert(false);
+    auto visitor = [&os](const auto& value) {
+        if constexpr(std::is_same_v<std::decay_t<decltype(value)>,
+                                    ParserIR::String>)
+            os << std::quoted(std::string_view(value));
+        else
+            os << value;
+    };
+
+    visit(visitor, arg);
     return os;
 }
 

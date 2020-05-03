@@ -305,7 +305,8 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
     {
         case ParamType::INT:
         {
-            if(analyzing_alternative_command && arg.as_identifier())
+            if(analyzing_alternative_command
+               && arg.type() == ParserIR::Argument::Type::IDENTIFIER)
             {
                 // This command has been matched during alternation in a
                 // command selector. Thus, if this is an identifier, it
@@ -324,20 +325,21 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
         }
         case ParamType::TEXT_LABEL:
         {
-            if(!arg.as_identifier())
+            if(arg.type() != ParserIR::Argument::Type::IDENTIFIER)
             {
                 report(arg.source(), Diag::expected_text_label);
                 return nullptr;
             }
 
-            if(cmdman->find_constant(CommandManager::global_enum,
-                                     *arg.as_identifier()))
+            std::string_view identifier = *arg.as_identifier();
+
+            if(cmdman->find_constant(CommandManager::global_enum, identifier))
             {
                 report(arg.source(), Diag::cannot_use_string_constant_here);
                 return nullptr;
             }
 
-            if(arg.as_identifier()->front() == '$')
+            if(identifier.front() == '$')
                 return validate_var_ref(param, arg);
             else
                 return validate_text_label(param, arg);
@@ -374,94 +376,114 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
                 // matching rules, an INPUT_INT parameter has an argument
                 // that corresponds to a string constant from any enumeration.
 
-                assert(arg.as_identifier());
+                assert(arg.type() == ParserIR::Argument::Type::IDENTIFIER);
                 const auto* cdef = cmdman->find_constant_any_means(
                         *arg.as_identifier());
                 assert(cdef != nullptr);
 
                 return SemaIR::create_constant(*cdef, arg.source(), allocator);
             }
-            else if(arg.as_integer())
+
+            switch(arg.type())
             {
-                return validate_integer_literal(param, arg);
-            }
-            else if(arg.as_identifier())
-            {
-                std::string_view ident = *arg.as_identifier();
-                if(is_object_param(param))
+                case ParserIR::Argument::Type::INT:
                 {
-                    if(const auto* cdef = find_defaultmodel_constant(ident))
+                    return validate_integer_literal(param, arg);
+                }
+                case ParserIR::Argument::Type::IDENTIFIER:
+                {
+                    std::string_view ident = *arg.as_identifier();
+                    if(is_object_param(param))
+                    {
+                        if(const auto* cdef = find_defaultmodel_constant(ident))
+                        {
+                            return SemaIR::create_constant(*cdef, arg.source(),
+                                                           allocator);
+                        }
+                        else if(const auto* model = modelman->find_model(ident))
+                        {
+                            auto [uobj, _] = symrepo->insert_used_object(
+                                    ident, arg.source());
+                            assert(uobj != nullptr);
+                            return SemaIR::create_used_object(
+                                    *uobj, arg.source(), allocator);
+                        }
+                    }
+                    else if(const auto* cdef = cmdman->find_constant(
+                                    param.enum_type, ident))
                     {
                         return SemaIR::create_constant(*cdef, arg.source(),
                                                        allocator);
                     }
-                    else if(const auto* model = modelman->find_model(ident))
-                    {
-                        auto [uobj, _] = symrepo->insert_used_object(
-                                ident, arg.source());
-                        assert(uobj != nullptr);
-                        return SemaIR::create_used_object(*uobj, arg.source(),
-                                                          allocator);
-                    }
+                    return validate_var_ref(param, arg);
                 }
-                else if(const auto* cdef = cmdman->find_constant(
-                                param.enum_type, ident))
+                default:
                 {
-                    return SemaIR::create_constant(*cdef, arg.source(),
-                                                   allocator);
+                    report(arg.source(), Diag::expected_input_int);
+                    return nullptr;
                 }
-                return validate_var_ref(param, arg);
             }
-
-            report(arg.source(), Diag::expected_input_int);
-            return nullptr;
         }
         case ParamType::INPUT_FLOAT:
         {
-            if(arg.as_float())
-                return validate_float_literal(param, arg);
-            else if(arg.as_identifier())
+            switch(arg.type())
             {
-                if(cmdman->find_constant(CommandManager::global_enum,
-                                         *arg.as_identifier()))
+                case ParserIR::Argument::Type::FLOAT:
                 {
-                    report(arg.source(), Diag::cannot_use_string_constant_here);
+                    return validate_float_literal(param, arg);
+                }
+                case ParserIR::Argument::Type::IDENTIFIER:
+                {
+                    if(cmdman->find_constant(CommandManager::global_enum,
+                                             *arg.as_identifier()))
+                    {
+                        report(arg.source(),
+                               Diag::cannot_use_string_constant_here);
+                        return nullptr;
+                    }
+                    return validate_var_ref(param, arg);
+                }
+                default:
+                {
+                    report(arg.source(), Diag::expected_input_float);
                     return nullptr;
                 }
-                return validate_var_ref(param, arg);
             }
-
-            report(arg.source(), Diag::expected_input_float);
-            return nullptr;
         }
         case ParamType::INPUT_OPT:
         {
-            if(arg.as_integer())
+            switch(arg.type())
             {
-                return validate_integer_literal(param, arg);
-            }
-            else if(arg.as_float())
-            {
-                return validate_float_literal(param, arg);
-            }
-            else if(arg.as_identifier())
-            {
-                if(const auto* cdef = cmdman->find_constant(
-                           CommandManager::global_enum, *arg.as_identifier()))
+                case ParserIR::Argument::Type::INT:
                 {
-                    return SemaIR::create_constant(*cdef, arg.source(),
-                                                   allocator);
+                    return validate_integer_literal(param, arg);
                 }
-                return validate_var_ref(param, arg);
+                case ParserIR::Argument::Type::FLOAT:
+                {
+                    return validate_float_literal(param, arg);
+                }
+                case ParserIR::Argument::Type::IDENTIFIER:
+                {
+                    if(const auto* cdef = cmdman->find_constant(
+                               CommandManager::global_enum,
+                               *arg.as_identifier()))
+                    {
+                        return SemaIR::create_constant(*cdef, arg.source(),
+                                                       allocator);
+                    }
+                    return validate_var_ref(param, arg);
+                }
+                default:
+                {
+                    report(arg.source(), Diag::expected_input_opt);
+                    return nullptr;
+                }
             }
-
-            report(arg.source(), Diag::expected_input_opt);
-            return nullptr;
         }
         case ParamType::OUTPUT_INT:
         case ParamType::OUTPUT_FLOAT:
         {
-            if(arg.as_identifier()
+            if(arg.type() == ParserIR::Argument::Type::IDENTIFIER
                && cmdman->find_constant(CommandManager::global_enum,
                                         *arg.as_identifier()))
             {
@@ -487,7 +509,7 @@ auto Sema::validate_integer_literal(const CommandManager::ParamDef& param,
 
     int32_t value = 0; // always recovers to this value
 
-    if(const auto* const integer = arg.as_integer())
+    if(const auto integer = arg.as_int())
         value = *integer;
     else
         report(arg.source(), Diag::expected_integer);
@@ -505,7 +527,7 @@ auto Sema::validate_float_literal(const CommandManager::ParamDef& param,
 
     float value = 0.0F; // always recovers to this value
 
-    if(const auto* const floating = arg.as_float())
+    if(const auto floating = arg.as_float())
         value = *floating;
     else
         report(arg.source(), Diag::expected_float);
@@ -521,7 +543,7 @@ auto Sema::validate_text_label(const CommandManager::ParamDef& param,
 
     std::string_view value{"DUMMY"sv}; // always recovers to this value
 
-    if(const auto* const ident = arg.as_identifier())
+    if(const auto ident = arg.as_identifier())
         value = *ident;
     else
         report(arg.source(), Diag::expected_text_label);
@@ -535,7 +557,7 @@ auto Sema::validate_label(const CommandManager::ParamDef& param,
 {
     assert(param.type == ParamType::LABEL);
 
-    if(!arg.as_identifier())
+    if(arg.type() != ParserIR::Argument::Type::IDENTIFIER)
     {
         report(arg.source(), Diag::expected_label);
         return nullptr;
@@ -557,7 +579,7 @@ auto Sema::validate_string_literal(const CommandManager::ParamDef& param,
 {
     assert(param.type == ParamType::STRING);
 
-    if(!arg.as_string())
+    if(arg.type() != ParserIR::Argument::Type::STRING)
     {
         report(arg.source(), Diag::expected_string);
         return nullptr;
@@ -574,7 +596,7 @@ auto Sema::validate_var_ref(const CommandManager::ParamDef& param,
     const SymVariable* sym_var{};
     const SymVariable* sym_subscript{};
 
-    if(!arg.as_identifier())
+    if(arg.type() != ParserIR::Argument::Type::IDENTIFIER)
     {
         report(arg.source(), Diag::expected_variable);
         return nullptr;
@@ -942,7 +964,7 @@ void Sema::declare_variable(const ParserIR::Command& command, ScopeId scope_id,
     {
         ScopeId var_scope_id = scope_id;
 
-        if(!arg->as_identifier())
+        if(arg->type() != ParserIR::Argument::Type::IDENTIFIER)
         {
             report(arg->source(), Diag::expected_identifier);
             continue;
@@ -1136,7 +1158,8 @@ auto Sema::is_matching_alternative(
 
         // The global string constants have higher precedence when checking for
         // anything that is an identifier, and that shall only match with INTs.
-        if(param.type != ParamType::INT && arg.as_identifier()
+        if(param.type != ParamType::INT
+           && arg.type() == ParserIR::Argument::Type::IDENTIFIER
            && cmdman->find_constant(CommandManager::global_enum,
                                     *arg.as_identifier()))
         {
@@ -1147,13 +1170,13 @@ auto Sema::is_matching_alternative(
         {
             case ParamType::INT:
             {
-                if(arg.as_identifier())
+                if(arg.type() == ParserIR::Argument::Type::IDENTIFIER)
                 {
                     if(!cmdman->find_constant(CommandManager::global_enum,
                                               *arg.as_identifier()))
                         return false;
                 }
-                else if(!arg.as_integer())
+                else if(arg.type() != ParserIR::Argument::Type::INT)
                 {
                     return false;
                 }
@@ -1161,7 +1184,7 @@ auto Sema::is_matching_alternative(
             }
             case ParamType::FLOAT:
             {
-                if(!arg.as_float())
+                if(arg.type() != ParserIR::Argument::Type::FLOAT)
                     return false;
                 break;
             }
@@ -1169,7 +1192,7 @@ auto Sema::is_matching_alternative(
             case ParamType::VAR_FLOAT:
             case ParamType::VAR_TEXT_LABEL:
             {
-                if(!arg.as_identifier())
+                if(arg.type() != ParserIR::Argument::Type::IDENTIFIER)
                     return false;
 
                 const auto arg_ident = *arg.as_identifier();
@@ -1188,7 +1211,7 @@ auto Sema::is_matching_alternative(
                 if(current_scope == -1)
                     return false;
 
-                if(!arg.as_identifier())
+                if(arg.type() != ParserIR::Argument::Type::IDENTIFIER)
                     return false;
 
                 const auto arg_ident = *arg.as_identifier();
@@ -1203,7 +1226,7 @@ auto Sema::is_matching_alternative(
             }
             case ParamType::INPUT_INT:
             {
-                if(!arg.as_identifier())
+                if(arg.type() != ParserIR::Argument::Type::IDENTIFIER)
                     return false;
 
                 const auto arg_ident = *arg.as_identifier();
@@ -1214,7 +1237,7 @@ auto Sema::is_matching_alternative(
             }
             case ParamType::TEXT_LABEL:
             {
-                if(!arg.as_identifier())
+                if(arg.type() != ParserIR::Argument::Type::IDENTIFIER)
                     return false;
                 break;
             }

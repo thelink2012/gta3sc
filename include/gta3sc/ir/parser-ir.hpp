@@ -4,6 +4,7 @@
 #include <gta3sc/util/arena-allocator.hpp>
 #include <gta3sc/util/intrusive-bidirectional-list-node.hpp>
 #include <gta3sc/util/span.hpp>
+#include <gta3sc/util/string-vieweable.hpp>
 #include <string_view>
 #include <variant>
 
@@ -33,14 +34,23 @@ namespace gta3sc
 /// the list.
 class ParserIR : public util::IntrusiveBidirectionalListNode<ParserIR>
 {
+private:
+    /// This tag is used to make construction of the IR elements private.
+    struct PrivateTag
+    {
+    };
+
 public:
     class LabelDef;
     class Command;
     class Argument;
     class Builder;
 
-private:
-    struct PrivateTag;
+    struct Identifier;
+    struct Filename;
+    struct String;
+
+    static constexpr PrivateTag private_tag{};
 
 public:
     /// Please use `create` instead.
@@ -109,8 +119,8 @@ public:
                        ArenaAllocator<> allocator) -> ArenaPtr<ParserIR>;
 
     /// Creates an integer argument.
-    static auto create_integer(int32_t value, SourceRange source,
-                               ArenaAllocator<> allocator)
+    static auto create_int(int32_t value, SourceRange source,
+                           ArenaAllocator<> allocator)
             -> ArenaPtr<const Argument>;
 
     /// Creates a floating-point argument.
@@ -143,28 +153,64 @@ public:
             -> ArenaPtr<const Argument>;
 
 private:
-    /// This tag is used to make construction of the IR elements private.
-    struct PrivateTag
+    struct IdentifierTag
     {
     };
 
-    enum class IdentifierTag
+    struct FilenameTag
     {
     };
 
-    enum class FilenameTag
+    struct StringTag
     {
     };
 
-    enum class StringTag
+    /// Same as `util::WeakStringVieweable` but with private construction.
+    template<typename Tag>
+    struct WeakStringVieweable : util::WeakStringVieweable<Tag>
     {
+        constexpr WeakStringVieweable(PrivateTag /*unused*/,
+                                      std::string_view value) noexcept :
+            util::WeakStringVieweable<Tag>(value)
+        {}
     };
-
-    static constexpr PrivateTag private_tag{};
 
 private:
     const LabelDef* const m_label{};
     const Command* const m_command{};
+};
+
+/// Represents an identifier argument.
+///
+/// \note This is nothing but a view to a sequence of characters, hence
+/// it should live at most as long as the IR is alive.
+///
+/// Implicitly convertible to `std::string_view`.
+struct ParserIR::Identifier : WeakStringVieweable<IdentifierTag>
+{
+    using WeakStringVieweable::WeakStringVieweable;
+};
+
+/// Represents a filename argument.
+///
+/// \note This is nothing but a view to a sequence of characters, hence
+/// it should live at most as long as the IR is alive.
+///
+/// Implicitly convertible to `std::string_view`.
+struct ParserIR::Filename : WeakStringVieweable<FilenameTag>
+{
+    using WeakStringVieweable::WeakStringVieweable;
+};
+
+/// Represents a string argument.
+///
+/// \note This is nothing but a view to a sequence of characters, hence
+/// it should live at most as long as the IR is alive.
+///
+/// Implicitly convertible to `std::string_view`.
+struct ParserIR::String : WeakStringVieweable<StringTag>
+{
+    using WeakStringVieweable::WeakStringVieweable;
 };
 
 class ParserIR::LabelDef
@@ -284,25 +330,21 @@ private:
 
 class ParserIR::Argument
 {
-private:
-    // Tagging adds one word of overhead to the memory used by an
-    // argument, but is cleaner than a EqualityComparable wrapper.
-    using Identifier = std::pair<IdentifierTag, std::string_view>;
-    using Filename = std::pair<FilenameTag, std::string_view>;
-    using String = std::pair<StringTag, std::string_view>;
+public:
+    enum class Type
+    {               // GTA3script types should be uppercase.
+        INT,        // NOLINT(readability-identifier-naming)
+        FLOAT,      // NOLINT(readability-identifier-naming)
+        IDENTIFIER, // NOLINT(readability-identifier-naming)
+        FILENAME,   // NOLINT(readability-identifier-naming)
+        STRING      // NOLINT(readability-identifier-naming)
+    };
 
 public:
     /// Please use `ParserIR` creation methods.
     template<typename T>
     Argument(PrivateTag /*unused*/, T&& value, SourceRange source) noexcept :
         m_source(source), m_value(std::forward<T>(value))
-    {}
-
-    /// Please use `ParserIR` creation methods.
-    template<typename Tag>
-    Argument(PrivateTag /*unused*/, Tag tag, std::string_view value,
-             SourceRange source) noexcept :
-        m_source(source), m_value(std::pair{tag, value})
     {}
 
     ~Argument() noexcept = default;
@@ -319,26 +361,32 @@ public:
         return m_source;
     }
 
-    /// Returns the contained integer or `nullptr` if this argument is not
+    /// Returns the type of this argument.
+    [[nodiscard]] auto type() const noexcept -> Type
+    {
+        return static_cast<Type>(m_value.index());
+    }
+
+    /// Returns the contained integer or `std::nullopt` if this argument is not
     /// an integer.
-    [[nodiscard]] auto as_integer() const noexcept -> const int32_t*;
+    [[nodiscard]] auto as_int() const noexcept -> std::optional<int32_t>;
 
-    /// Returns the contained float or `nullptr` if this argument is not
+    /// Returns the contained float or `std::nullopt` if this argument is not
     /// an float.
-    [[nodiscard]] auto as_float() const noexcept -> const float*;
+    [[nodiscard]] auto as_float() const noexcept -> std::optional<float>;
 
-    /// Returns the contained identifier or `nullptr` if this argument is
+    /// Returns the contained identifier or `std::nullopt` if this argument is
     /// not an identifier.
     [[nodiscard]] auto as_identifier() const noexcept
-            -> const std::string_view*;
+            -> std::optional<Identifier>;
 
-    /// Returns the contained filename or `nullptr` if this argument is not
-    /// an filename.
-    [[nodiscard]] auto as_filename() const noexcept -> const std::string_view*;
+    /// Returns the contained filename or `std::nullopt` if this argument is not
+    /// a filename.
+    [[nodiscard]] auto as_filename() const noexcept -> std::optional<Filename>;
 
-    /// Returns the contained string or `nullptr` if this argument is not
-    /// an string.
-    [[nodiscard]] auto as_string() const noexcept -> const std::string_view*;
+    /// Returns the contained string or `std::nullopt` if this argument is not
+    /// a string.
+    [[nodiscard]] auto as_string() const noexcept -> std::optional<String>;
 
     /// Returns whether the value of this is equal the value of another
     /// argument (i.e. same as `operator==` without comparing source
@@ -355,6 +403,7 @@ public:
 private:
     SourceRange m_source;
     const std::variant<int32_t, float, Identifier, Filename, String> m_value;
+    // FIXME cannot change the order of the variant or type() will break.
 
     // Keep the size of this structure small.
     // This would improve if we used a strong typedef over std::pair.
@@ -459,6 +508,59 @@ private:
     util::span<const Argument*> args;
 };
 
+namespace detail
+{
+template<typename Visitor>
+[[nodiscard]] constexpr auto visit_parser_ir(Visitor&& vis)
+{
+    return (std::forward<Visitor>(vis))();
+}
+
+template<typename Visitor, typename... OtherArgs>
+[[nodiscard]] constexpr auto visit_parser_ir(Visitor&& vis,
+                                             const ParserIR::Argument& arg,
+                                             OtherArgs&&... other_args)
+{
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage):
+#define GTA3SC_PARSERIR_VISIT_NEXT(this_val)                                   \
+    visit_parser_ir(                                                           \
+            [&arg, vis = std::forward<Visitor>(vis)](auto&&... other_vals) {   \
+                return vis(this_val,                                           \
+                           std::forward<decltype(other_vals)>(other_vals)...); \
+            },                                                                 \
+            std::forward<OtherArgs>(other_args)...);
+    switch(arg.type())
+    {
+        using Type = ParserIR::Argument::Type;
+        case Type::INT:
+            return GTA3SC_PARSERIR_VISIT_NEXT(*arg.as_int());
+        case Type::FLOAT:
+            return GTA3SC_PARSERIR_VISIT_NEXT(*arg.as_float());
+        case Type::IDENTIFIER:
+            return GTA3SC_PARSERIR_VISIT_NEXT(*arg.as_identifier());
+        case Type::FILENAME:
+            return GTA3SC_PARSERIR_VISIT_NEXT(*arg.as_filename());
+        case Type::STRING:
+            return GTA3SC_PARSERIR_VISIT_NEXT(*arg.as_string());
+        default:
+            assert(false);
+    }
+#undef GTA3SC_PARSERIR_VISIT_NEXT
+}
+} // namespace detail
+
+/// Applies the visitor `vis` to the arguments `arg, other_args...`.
+///
+///  This is equivalent to `vis(arg.as_TYPE(), *other_args.as_TYPEN()...)` where
+///  `TYPE` is the underlying type of the argument.
+template<typename Visitor, typename... OtherArgs>
+[[nodiscard]] inline auto visit(Visitor&& vis, const ParserIR::Argument& arg,
+                                OtherArgs&&... other_args)
+{
+    return detail::visit_parser_ir(std::forward<Visitor>(vis), arg,
+                                   std::forward<OtherArgs>(other_args)...);
+}
+
 // These resources are stored in a memory arena. Disposing storage
 // **must** be enough for destruction of these objects.
 static_assert(std::is_trivially_destructible_v<ParserIR>);
@@ -466,5 +568,3 @@ static_assert(std::is_trivially_destructible_v<ParserIR::Command>);
 static_assert(std::is_trivially_destructible_v<ParserIR::LabelDef>);
 static_assert(std::is_trivially_destructible_v<ParserIR::Argument>);
 } // namespace gta3sc
-
-// TODO use some kind of strong_typedef instead of std::pair in Argument

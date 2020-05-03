@@ -12,8 +12,8 @@ auto ParserIR::create(const LabelDef* label, const Command* command,
     return allocator.new_object<ParserIR>(private_tag, label, command);
 }
 
-auto ParserIR::create_integer(int32_t value, SourceRange source,
-                              ArenaAllocator<> allocator)
+auto ParserIR::create_int(int32_t value, SourceRange source,
+                          ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
     return allocator.new_object<Argument>(private_tag, value, source);
@@ -30,27 +30,30 @@ auto ParserIR::create_identifier(std::string_view name, SourceRange source,
                                  ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
-    return allocator.new_object<Argument>(
-            private_tag, IdentifierTag{},
-            util::allocate_string(name, allocator, util::toupper), source);
+    auto identifier_obj = Identifier(
+            private_tag, util::allocate_string(name, allocator, util::toupper));
+
+    return allocator.new_object<Argument>(private_tag, identifier_obj, source);
 }
 
 auto ParserIR::create_filename(std::string_view name, SourceRange source,
                                ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
-    return allocator.new_object<Argument>(
-            private_tag, FilenameTag{},
-            util::allocate_string(name, allocator, util::toupper), source);
+    auto filename_obj = Filename(
+            private_tag, util::allocate_string(name, allocator, util::toupper));
+
+    return allocator.new_object<Argument>(private_tag, filename_obj, source);
 }
 
 auto ParserIR::create_string(std::string_view string, SourceRange source,
                              ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
-    return allocator.new_object<Argument>(
-            private_tag, StringTag{}, util::allocate_string(string, allocator),
-            source);
+    auto string_obj = String(private_tag,
+                             util::allocate_string(string, allocator));
+
+    return allocator.new_object<Argument>(private_tag, string_obj, source);
 }
 
 auto operator==(const ParserIR& lhs, const ParserIR& rhs) noexcept -> bool
@@ -111,42 +114,58 @@ auto operator!=(const ParserIR::LabelDef& lhs,
     return !(lhs == rhs);
 }
 
-auto ParserIR::Argument::as_integer() const noexcept -> const int32_t*
+auto ParserIR::Argument::as_int() const noexcept -> std::optional<int32_t>
 {
-    return std::get_if<int32_t>(&this->m_value);
+    if(const auto* value = std::get_if<int32_t>(&this->m_value))
+        return *value;
+    return std::nullopt;
 }
 
-auto ParserIR::Argument::as_float() const noexcept -> const float*
+auto ParserIR::Argument::as_float() const noexcept -> std::optional<float>
 {
-    return std::get_if<float>(&this->m_value);
+    if(const auto* value = std::get_if<float>(&this->m_value))
+        return *value;
+    return std::nullopt;
 }
 
 auto ParserIR::Argument::as_identifier() const noexcept
-        -> const std::string_view*
+        -> std::optional<Identifier>
 {
-    if(const auto* ident = std::get_if<Identifier>(&this->m_value))
-        return &ident->second;
-    return nullptr;
+    if(const auto* value = std::get_if<Identifier>(&this->m_value))
+        return *value;
+    return std::nullopt;
 }
 
-auto ParserIR::Argument::as_filename() const noexcept -> const std::string_view*
+auto ParserIR::Argument::as_filename() const noexcept -> std::optional<Filename>
 {
-    if(const auto* fi = std::get_if<Filename>(&this->m_value))
-        return &fi->second;
-    return nullptr;
+    if(const auto* value = std::get_if<Filename>(&this->m_value))
+        return *value;
+    return std::nullopt;
 }
 
-auto ParserIR::Argument::as_string() const noexcept -> const std::string_view*
+auto ParserIR::Argument::as_string() const noexcept -> std::optional<String>
 {
-    if(const auto* s = std::get_if<String>(&this->m_value))
-        return &s->second;
-    return nullptr;
+    if(const auto* value = std::get_if<String>(&this->m_value))
+        return *value;
+    return std::nullopt;
 }
 
 auto ParserIR::Argument::is_same_value(const Argument& other) const noexcept
         -> bool
 {
-    return this->m_value == other.m_value;
+    if(this->type() != other.type())
+        return false;
+
+    constexpr auto visitor = [](const auto& this_val, const auto& other_val) {
+        using T1 = std::decay_t<decltype(this_val)>;
+        using T2 = std::decay_t<decltype(other_val)>;
+        if constexpr(std::is_same_v<T1, T2>)
+            return this_val == other_val;
+        else
+            return false;
+    };
+
+    return visit(visitor, *this, other);
 }
 
 auto operator==(const ParserIR::Argument& lhs,
@@ -223,7 +242,7 @@ auto ParserIR::Builder::arg(const Argument* value) -> Builder&&
 
 auto ParserIR::Builder::arg_int(int32_t value, SourceRange source) -> Builder&&
 {
-    return arg(ParserIR::create_integer(value, source, allocator));
+    return arg(ParserIR::create_int(value, source, allocator));
 }
 
 auto ParserIR::Builder::arg_float(float value, SourceRange source) -> Builder&&
@@ -289,3 +308,5 @@ void ParserIR::Builder::create_command_from_attributes()
     this->has_not_flag = false;
 }
 } // namespace gta3sc
+
+// TODO efficient memory usage by not using a variant but internal inheritance
