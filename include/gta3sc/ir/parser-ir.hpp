@@ -5,6 +5,7 @@
 #include <gta3sc/util/intrusive-bidirectional-list-node.hpp>
 #include <gta3sc/util/span.hpp>
 #include <gta3sc/util/string-vieweable.hpp>
+#include <gta3sc/util/visit.hpp>
 #include <string_view>
 #include <variant>
 
@@ -508,57 +509,50 @@ private:
     util::span<const Argument*> args;
 };
 
-namespace detail
-{
-template<typename Visitor>
-[[nodiscard]] constexpr auto visit_parser_ir(Visitor&& vis)
-{
-    return (std::forward<Visitor>(vis))();
-}
-
+/// Applies the visitor `vis` to the arguments `arg, other_args...`.
+///
+/// This is equivalent to `vis(*arg.as_TYPE(), *other_args.as_TYPEN()...)` where
+/// `TYPE` is the underlying type of the argument.
 template<typename Visitor, typename... OtherArgs>
-[[nodiscard]] constexpr auto visit_parser_ir(Visitor&& vis,
-                                             const ParserIR::Argument& arg,
-                                             OtherArgs&&... other_args)
+inline auto visit(Visitor&& vis, const ParserIR::Argument& arg,
+                  OtherArgs&&... other_args)
 {
-// NOLINTNEXTLINE(cppcoreguidelines-macro-usage):
-#define GTA3SC_PARSERIR_VISIT_NEXT(this_val)                                   \
-    visit_parser_ir(                                                           \
-            [&arg, vis = std::forward<Visitor>(vis)](auto&&... other_vals) {   \
-                return vis(this_val,                                           \
-                           std::forward<decltype(other_vals)>(other_vals)...); \
-            },                                                                 \
-            std::forward<OtherArgs>(other_args)...);
     switch(arg.type())
     {
         using Type = ParserIR::Argument::Type;
         case Type::INT:
-            return GTA3SC_PARSERIR_VISIT_NEXT(*arg.as_int());
+        {
+            return util::visit(std::forward<Visitor>(vis), util::visit_expand,
+                               *arg.as_int(),
+                               std::forward<OtherArgs>(other_args)...);
+        }
         case Type::FLOAT:
-            return GTA3SC_PARSERIR_VISIT_NEXT(*arg.as_float());
+        {
+            return util::visit(std::forward<Visitor>(vis), util::visit_expand,
+                               *arg.as_float(),
+                               std::forward<OtherArgs>(other_args)...);
+        }
         case Type::IDENTIFIER:
-            return GTA3SC_PARSERIR_VISIT_NEXT(*arg.as_identifier());
+        {
+            return util::visit(std::forward<Visitor>(vis), util::visit_expand,
+                               *arg.as_identifier(),
+                               std::forward<OtherArgs>(other_args)...);
+        }
         case Type::FILENAME:
-            return GTA3SC_PARSERIR_VISIT_NEXT(*arg.as_filename());
+        {
+            return util::visit(std::forward<Visitor>(vis), util::visit_expand,
+                               *arg.as_filename(),
+                               std::forward<OtherArgs>(other_args)...);
+        }
         case Type::STRING:
-            return GTA3SC_PARSERIR_VISIT_NEXT(*arg.as_string());
+        {
+            return util::visit(std::forward<Visitor>(vis), util::visit_expand,
+                               *arg.as_string(),
+                               std::forward<OtherArgs>(other_args)...);
+        }
         default:
             assert(false);
     }
-#undef GTA3SC_PARSERIR_VISIT_NEXT
-}
-} // namespace detail
-
-/// Applies the visitor `vis` to the arguments `arg, other_args...`.
-///
-///  This is equivalent to `vis(arg.as_TYPE(), *other_args.as_TYPEN()...)` where
-///  `TYPE` is the underlying type of the argument.
-template<typename Visitor, typename... OtherArgs>
-[[nodiscard]] inline auto visit(Visitor&& vis, const ParserIR::Argument& arg,
-                                OtherArgs&&... other_args)
-{
-    return detail::visit_parser_ir(std::forward<Visitor>(vis), arg,
-                                   std::forward<OtherArgs>(other_args)...);
 }
 
 // These resources are stored in a memory arena. Disposing storage
