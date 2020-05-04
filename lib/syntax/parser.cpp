@@ -396,6 +396,8 @@ auto Parser::parse_command(bool is_if_line, bool not_flag)
     // command := command_name { sep argument } ;
     // FOLLOW(command) = {eol, sep 'GOTO'}
 
+    constexpr auto default_temp_args_capacity = 32;
+
     auto token = consume_command();
     if(!token)
         return std::nullopt;
@@ -403,6 +405,9 @@ auto Parser::parse_command(bool is_if_line, bool not_flag)
     ParserIR::Builder builder(allocator);
     builder.not_flag(not_flag);
     builder.command(scanner.spelling(*token), token->source);
+
+    temp_args.clear();
+    temp_args.reserve(default_temp_args_capacity);
 
     while(!is_peek(Category::end_of_line))
     {
@@ -419,8 +424,10 @@ auto Parser::parse_command(bool is_if_line, bool not_flag)
         if(!arg)
             return std::nullopt;
 
-        builder.arg(*arg);
+        temp_args.push_back(*arg);
     }
+
+    builder.with_args(temp_args.begin(), temp_args.end());
 
     assert(is_peek(Category::end_of_line) || is_peek(Category::whitespace));
 
@@ -1023,11 +1030,13 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
         auto linked = LinkedIR<ParserIR>();
         linked.push_back(*ParserIR::Builder(allocator)
                                   .command(command_andor, src_info)
+                                  .with_num_args(1)
                                   .arg_int(0, src_info)
                                   .build());
         linked.push_back(**op_cond0);
         linked.push_back(*ParserIR::Builder(allocator)
                                   .command(if_true_command, src_info)
+                                  .with_num_args(1)
                                   .arg(*arg_label)
                                   .build());
         return linked;
@@ -1071,6 +1080,7 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
         body_stms->splice_front(*std::move(andor_list));
         body_stms->push_front(*ParserIR::Builder(allocator)
                                        .command(if_command, src_info)
+                                       .with_num_args(1)
                                        .arg_int(andor_count, src_info)
                                        .build());
 
@@ -1132,6 +1142,7 @@ auto Parser::parse_while_statement_detail(bool is_whilenot)
 
     body_stms->push_front(*ParserIR::Builder(allocator)
                                    .command(while_command, src_info)
+                                   .with_num_args(1)
                                    .arg_int(andor_count, src_info)
                                    .build());
 
@@ -1211,11 +1222,16 @@ auto Parser::parse_require_statement() -> std::optional<ArenaPtr<ParserIR>>
         if(!arg_label)
             return std::nullopt;
 
+        builder.with_num_args(2);
         builder.arg(*arg_label);
     }
-    else if(!iequal(scanner.spelling(*command), command_launch_mission)
-            && !iequal(scanner.spelling(*command),
+    else if(iequal(scanner.spelling(*command), command_launch_mission)
+            || iequal(scanner.spelling(*command),
                        command_load_and_launch_mission))
+    {
+        builder.with_num_args(1);
+    }
+    else
     {
         report(command->source, Diag::expected_require_command);
         return std::nullopt;
@@ -1431,6 +1447,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
         linked.push_back(*ParserIR::Builder(allocator)
                                   .not_flag(not_flag)
                                   .command(command_add_thing_to_thing, src_info)
+                                  .with_num_args(2)
                                   .arg(args[0])
                                   .arg_int(1, src_info)
                                   .build());
@@ -1444,6 +1461,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
                 *ParserIR::Builder(allocator)
                          .not_flag(not_flag)
                          .command(command_sub_thing_from_thing, src_info)
+                         .with_num_args(2)
                          .arg(args[0])
                          .arg_int(1, src_info)
                          .build());
@@ -1460,6 +1478,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
             linked.push_back(*ParserIR::Builder(allocator)
                                       .not_flag(not_flag)
                                       .command(command_abs, src_info)
+                                      .with_num_args(1)
                                       .arg(a)
                                       .build());
         }
@@ -1468,12 +1487,14 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
             linked.push_back(*ParserIR::Builder(allocator)
                                       .not_flag(not_flag)
                                       .command(command_set, src_info)
+                                      .with_num_args(2)
                                       .arg(a)
                                       .arg(b)
                                       .build());
             linked.push_back(*ParserIR::Builder(allocator)
                                       .not_flag(not_flag)
                                       .command(command_abs, src_info)
+                                      .with_num_args(1)
                                       .arg(a)
                                       .build());
         }
@@ -1560,6 +1581,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
         linked.push_back(*ParserIR::Builder(allocator)
                                   .not_flag(not_flag)
                                   .command(command_name, src_info)
+                                  .with_num_args(2)
                                   .arg(a)
                                   .arg(b)
                                   .build());
@@ -1601,6 +1623,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
         {
             linked.push_back(*ParserIR::Builder(allocator)
                                       .command(it->second, src_info)
+                                      .with_num_args(2)
                                       .arg(a)
                                       .arg(c)
                                       .build());
@@ -1618,6 +1641,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
 
             linked.push_back(*ParserIR::Builder(allocator)
                                       .command(it->second, src_info)
+                                      .with_num_args(2)
                                       .arg(a)
                                       .arg(b)
                                       .build());
@@ -1626,11 +1650,13 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
         {
             linked.push_back(*ParserIR::Builder(allocator)
                                       .command(command_set, src_info)
+                                      .with_num_args(2)
                                       .arg(a)
                                       .arg(b)
                                       .build());
             linked.push_back(*ParserIR::Builder(allocator)
                                       .command(it->second, src_info)
+                                      .with_num_args(2)
                                       .arg(a)
                                       .arg(c)
                                       .build());

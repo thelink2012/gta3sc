@@ -277,5 +277,7 @@ private:
     bool in_lexical_scope = false;
     bool has_peek_token[num_peek_tokens] = {};
     std::optional<Token> peek_tokens[num_peek_tokens];
+
+    std::vector<const ParserIR::Argument*> temp_args;
 };
 } // namespace gta3sc::syntax

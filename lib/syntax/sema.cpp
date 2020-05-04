@@ -251,6 +251,7 @@ auto Sema::validate_command(const ParserIR::Command& command)
     SemaIR::Builder builder(allocator);
     builder.command(*command_def, command.source());
     builder.not_flag(command.not_flag());
+    builder.with_num_args(command.num_args());
 
     auto arg_it = command.args().begin();
     auto param_it = command_def->params.begin();

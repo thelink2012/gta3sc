@@ -204,24 +204,22 @@ auto SemaIR::Builder::not_flag(bool not_flag_value) -> Builder&&
     return std::move(*this);
 }
 
+auto SemaIR::Builder::with_num_args(size_t num_args) -> Builder&&
+{
+    assert(args_hint == -1 && args_capacity == 0);
+    this->args_hint = num_args;
+    return std::move(*this);
+}
+
 auto SemaIR::Builder::arg(const Argument* value) -> Builder&&
 {
+    const size_t default_args_capacity = args_hint != -1 ? args_hint : 6;
+
     assert(value != nullptr);
 
-    if(this->args.size() >= static_cast<std::ptrdiff_t>(args_capacity))
-    {
-        const auto new_caps = !args_capacity ? 6 : args_capacity * 2;
-
-        auto* const new_args = allocator.allocate_object<const Argument*>(
-                new_caps);
-        std::uninitialized_move(this->args.begin(), this->args.end(), new_args);
-
-        this->args = util::span(new_args, args.size());
-        this->args_capacity = new_caps;
-    }
-
-    this->args = util::span(this->args.data(), this->args.size() + 1);
-    *(this->args.rbegin()) = value;
+    std::tie(args, args_capacity) = util::allocate_array_element(
+            value, this->args, this->args_capacity, default_args_capacity,
+            allocator);
 
     return std::move(*this);
 }
@@ -317,6 +315,12 @@ auto SemaIR::Builder::build_command() && -> ArenaPtr<const SemaIR::Command>
 void SemaIR::Builder::create_command_from_attributes()
 {
     assert(this->has_command_def);
+
+    if(this->args_hint != -1)
+    {
+        assert(args_capacity == 0 || args_capacity == args_hint);
+        assert(args.size() <= args_hint);
+    }
 
     this->command_ptr = allocator.new_object<Command>(
             private_tag, this->command_source, *this->command_def, this->args,

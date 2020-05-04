@@ -481,6 +481,21 @@ public:
     auto arg_string(std::string_view value, SourceRange source = no_source)
             -> Builder&&;
 
+    /// Tells the builder the amount of arguments that follows.
+    ///
+    /// This is helpful (but not necessary) to pre-allocate the necessary
+    /// storage for the argument table.
+    ///
+    /// \note must be called before any of the `arg` methods.
+    /// \note `num_args` must be greater or equal to the number of `arg` method
+    /// calls.
+    auto with_num_args(size_t num_args) -> Builder&&;
+
+    /// Equivalent to calling `with_num_args(distance(begin, end))` followed by
+    /// `arg(a)` for each element in the sequence described by `begin`...`end`.
+    template<typename InputIterator>
+    auto with_args(InputIterator begin, InputIterator end) -> Builder&&;
+ 
     /// Builds an instruction from the attributes in the builder.
     auto build() && -> ArenaPtr<ParserIR>;
 
@@ -505,9 +520,20 @@ private:
     std::string_view command_name;
     SourceRange command_source;
 
+    size_t args_hint = -1;
     size_t args_capacity = 0;
     util::span<const Argument*> args;
 };
+
+template<typename InputIterator>
+auto ParserIR::Builder::with_args(InputIterator begin, InputIterator end)
+        -> Builder&&
+{
+    with_num_args(std::distance(begin, end));
+    for(auto it = begin; it != end; ++it)
+        arg(*it);
+    return std::move(*this);
+}
 
 /// Applies the visitor `vis` to the arguments `arg, other_args...`.
 ///
