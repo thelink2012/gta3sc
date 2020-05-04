@@ -43,19 +43,19 @@ auto RepeatStmtRewriter::visit_repeat(const ParserIR& line) -> Result
     if(repeat.args().size() != 2)
         return Result{};
 
-    const auto* const num_times = repeat.arg(0);
-    const auto* const iter_var = repeat.arg(1);
+    const auto& num_times = repeat.arg(0);
+    const auto& iter_var = repeat.arg(1);
     const auto* const loop_label_def = generate_loop_label(repeat.source());
 
     if(repeat_stack.capacity() == 0)
         repeat_stack.reserve(default_stack_size);
-    repeat_stack.push_back(RepeatStmt{num_times, iter_var, loop_label_def});
+    repeat_stack.push_back(RepeatStmt{&num_times, &iter_var, loop_label_def});
 
     return LinkedIR<ParserIR>(
             {ParserIR::Builder(allocator)
                      .label(line.label_or_null())
                      .command(command_set, repeat.source())
-                     .arg(iter_var)
+                     .arg(&iter_var)
                      .arg_int(0, repeat.source())
                      .build(),
 

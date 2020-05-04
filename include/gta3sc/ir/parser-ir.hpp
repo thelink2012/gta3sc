@@ -40,6 +40,7 @@ private:
     struct PrivateTag
     {
     };
+    static constexpr PrivateTag private_tag{};
 
 public:
     class LabelDef;
@@ -50,8 +51,6 @@ public:
     struct Identifier;
     struct Filename;
     struct String;
-
-    static constexpr PrivateTag private_tag{};
 
 public:
     /// Please use `create` instead.
@@ -105,7 +104,7 @@ public:
         return m_command ? m_command : nullptr;
     }
 
-    /// Compares whether a given IR is equivalent to another IR.
+    /// Checks whether a given IR is equivalent to another IR.
     friend auto operator==(const ParserIR& lhs, const ParserIR& rhs) noexcept
             -> bool;
     friend auto operator!=(const ParserIR& lhs, const ParserIR& rhs) noexcept
@@ -311,9 +310,9 @@ public:
     }
 
     /// Returns the i-th argument of this command.
-    [[nodiscard]] auto arg(size_t i) const noexcept -> const Argument*
+    [[nodiscard]] auto arg(size_t i) const noexcept -> const Argument&
     {
-        return m_args[i];
+        return *m_args[i];
     }
 
     /// Compares whether a given command is equivalent to another command.
@@ -326,7 +325,7 @@ private:
     SourceRange m_source;
     std::string_view m_name;
     util::span<const Argument*> m_args;
-    bool m_not_flag = false;
+    bool m_not_flag{};
 };
 
 class ParserIR::Argument
@@ -492,10 +491,10 @@ public:
     auto with_num_args(size_t num_args) -> Builder&&;
 
     /// Equivalent to calling `with_num_args(distance(begin, end))` followed by
-    /// `arg(a)` for each element in the sequence described by `begin`...`end`.
+    /// `arg(a)` for each element in the sequence described by `begin...end`.
     template<typename InputIterator>
     auto with_args(InputIterator begin, InputIterator end) -> Builder&&;
- 
+
     /// Builds an instruction from the attributes in the builder.
     auto build() && -> ArenaPtr<ParserIR>;
 

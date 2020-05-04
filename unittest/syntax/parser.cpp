@@ -333,17 +333,17 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing integer argument")
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front().command().name() == "WAIT");
     REQUIRE(ir->front().command().num_args() == 3);
-    REQUIRE(*ir->front().command().arg(0)->as_int() == 123);
-    REQUIRE(*ir->front().command().arg(1)->as_int() == 10);
-    REQUIRE(*ir->front().command().arg(2)->as_int() == -39);
+    REQUIRE(*ir->front().command().arg(0).as_int() == 123);
+    REQUIRE(*ir->front().command().arg(1).as_int() == 10);
+    REQUIRE(*ir->front().command().arg(2).as_int() == -39);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front().command().name() == "WAIT");
     REQUIRE(ir->front().command().num_args() == 2);
-    REQUIRE(*ir->front().command().arg(0)->as_int()
+    REQUIRE(*ir->front().command().arg(0).as_int()
             == std::numeric_limits<int32_t>::max());
-    REQUIRE(*ir->front().command().arg(1)->as_int()
+    REQUIRE(*ir->front().command().arg(1).as_int()
             == std::numeric_limits<int32_t>::min());
 
     ir = parser.parse_statement();
@@ -402,25 +402,25 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing float argument")
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front().command().name() == "WAIT");
     REQUIRE(ir->front().command().num_args() == 7);
-    REQUIRE(*ir->front().command().arg(0)->as_float() == 0.1F);
-    REQUIRE(*ir->front().command().arg(1)->as_float() == -0.1F);
-    REQUIRE(*ir->front().command().arg(2)->as_float() == 0.1F);
-    REQUIRE(*ir->front().command().arg(3)->as_float() == 0.1F);
-    REQUIRE(*ir->front().command().arg(4)->as_float() == 0.15F);
-    REQUIRE(*ir->front().command().arg(5)->as_float() == 0.1F);
-    REQUIRE(*ir->front().command().arg(6)->as_float() == -0.1F);
+    REQUIRE(*ir->front().command().arg(0).as_float() == 0.1F);
+    REQUIRE(*ir->front().command().arg(1).as_float() == -0.1F);
+    REQUIRE(*ir->front().command().arg(2).as_float() == 0.1F);
+    REQUIRE(*ir->front().command().arg(3).as_float() == 0.1F);
+    REQUIRE(*ir->front().command().arg(4).as_float() == 0.15F);
+    REQUIRE(*ir->front().command().arg(5).as_float() == 0.1F);
+    REQUIRE(*ir->front().command().arg(6).as_float() == -0.1F);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front().command().name() == "WAIT");
     REQUIRE(ir->front().command().num_args() == 7);
-    REQUIRE(*ir->front().command().arg(0)->as_float() == 1.0F);
-    REQUIRE(*ir->front().command().arg(1)->as_float() == -1.0F);
-    REQUIRE(*ir->front().command().arg(2)->as_float() == 1.0F);
-    REQUIRE(*ir->front().command().arg(3)->as_float() == 1.1F);
-    REQUIRE(*ir->front().command().arg(4)->as_float() == 1.0F);
-    REQUIRE(*ir->front().command().arg(5)->as_float() == 1.0F);
-    REQUIRE(*ir->front().command().arg(6)->as_float() == -1.0F);
+    REQUIRE(*ir->front().command().arg(0).as_float() == 1.0F);
+    REQUIRE(*ir->front().command().arg(1).as_float() == -1.0F);
+    REQUIRE(*ir->front().command().arg(2).as_float() == 1.0F);
+    REQUIRE(*ir->front().command().arg(3).as_float() == 1.1F);
+    REQUIRE(*ir->front().command().arg(4).as_float() == 1.0F);
+    REQUIRE(*ir->front().command().arg(5).as_float() == 1.0F);
+    REQUIRE(*ir->front().command().arg(6).as_float() == -1.0F);
 
     ir = parser.parse_statement();
     parser.skip_current_line(); // .1a
@@ -465,10 +465,10 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing identifier argument")
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front().command().name() == "WAIT");
     REQUIRE(ir->front().command().num_args() == 4);
-    REQUIRE_EQ(*ir->front().command().arg(0)->as_identifier(), "$ABC"sv);
-    REQUIRE_EQ(*ir->front().command().arg(1)->as_identifier(), "ABC"sv);
-    REQUIRE_EQ(*ir->front().command().arg(2)->as_identifier(), "ABC"sv);
-    REQUIRE_EQ(*ir->front().command().arg(3)->as_identifier(), "A@_1$"sv);
+    REQUIRE_EQ(*ir->front().command().arg(0).as_identifier(), "$ABC"sv);
+    REQUIRE_EQ(*ir->front().command().arg(1).as_identifier(), "ABC"sv);
+    REQUIRE_EQ(*ir->front().command().arg(2).as_identifier(), "ABC"sv);
+    REQUIRE_EQ(*ir->front().command().arg(3).as_identifier(), "A@_1$"sv);
 
     ir = parser.parse_statement();
     parser.skip_current_line(); // _abc
@@ -506,14 +506,14 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing string literal argument")
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front().command().name() == "WAIT");
     REQUIRE(ir->front().command().num_args() == 1);
-    REQUIRE_EQ(*ir->front().command().arg(0)->as_string(),
+    REQUIRE_EQ(*ir->front().command().arg(0).as_string(),
                "this\tI$ /* a // \\n (%1teral),"sv);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front().command().name() == "WAIT");
     REQUIRE(ir->front().command().num_args() == 1);
-    REQUIRE_EQ(*ir->front().command().arg(0)->as_string(), ""sv);
+    REQUIRE_EQ(*ir->front().command().arg(0).as_string(), ""sv);
 
     ir = parser.parse_statement();
     parser.skip_current_line(); // "
@@ -549,13 +549,13 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing filename argument")
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front().command().name() == "LAUNCH_MISSION");
     REQUIRE(ir->front().command().num_args() == 1);
-    REQUIRE_EQ(*ir->front().command().arg(0)->as_filename(), ".SC"sv);
+    REQUIRE_EQ(*ir->front().command().arg(0).as_filename(), ".SC"sv);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front().command().name() == "LAUNCH_MISSION");
     REQUIRE(ir->front().command().num_args() == 1);
-    REQUIRE_EQ(*ir->front().command().arg(0)->as_filename(), "A.SC"sv);
+    REQUIRE_EQ(*ir->front().command().arg(0).as_filename(), "A.SC"sv);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt); // WAIT a.SC
@@ -569,13 +569,13 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing filename argument")
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front().command().name() == "LAUNCH_MISSION");
     REQUIRE(ir->front().command().num_args() == 1);
-    REQUIRE_EQ(*ir->front().command().arg(0)->as_filename(), "@.SC"sv);
+    REQUIRE_EQ(*ir->front().command().arg(0).as_filename(), "@.SC"sv);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front().command().name() == "LAUNCH_MISSION");
     REQUIRE(ir->front().command().num_args() == 1);
-    REQUIRE_EQ(*ir->front().command().arg(0)->as_filename(), "1.SC"sv);
+    REQUIRE_EQ(*ir->front().command().arg(0).as_filename(), "1.SC"sv);
 
     ir = parser.parse_statement();
     parser.skip_current_line(); // 1.0sc
@@ -600,13 +600,13 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing filename argument")
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt); // LOAD_AND_LAUNCH_MISSION
     REQUIRE(ir->front().command().num_args() == 1);
-    REQUIRE_EQ(*ir->front().command().arg(0)->as_filename(), "FILE-NAME.SC"sv);
+    REQUIRE_EQ(*ir->front().command().arg(0).as_filename(), "FILE-NAME.SC"sv);
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt); // GOSUB_FILE
     REQUIRE(ir->front().command().num_args() == 2);
-    REQUIRE_EQ(*ir->front().command().arg(0)->as_identifier(), "LABEL"sv);
-    REQUIRE_EQ(*ir->front().command().arg(1)->as_filename(), "FILE-NAME.SC"sv);
+    REQUIRE_EQ(*ir->front().command().arg(0).as_identifier(), "LABEL"sv);
+    REQUIRE_EQ(*ir->front().command().arg(1).as_filename(), "FILE-NAME.SC"sv);
 }
 
 TEST_CASE_FIXTURE(ParserFixture, "parsing permutations of absolute expressions")
@@ -620,19 +620,19 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing permutations of absolute expressions")
     auto it = ir->begin();
     REQUIRE(it->command().name() == "SET");
     REQUIRE(it->command().num_args() == 2);
-    REQUIRE_EQ(*it->command().arg(0)->as_identifier(), "X"sv);
-    REQUIRE_EQ(*it->command().arg(1)->as_identifier(), "Y"sv);
+    REQUIRE_EQ(*it->command().arg(0).as_identifier(), "X"sv);
+    REQUIRE_EQ(*it->command().arg(1).as_identifier(), "Y"sv);
     ++it;
     REQUIRE(it->command().name() == "ABS");
     REQUIRE(it->command().num_args() == 1);
-    REQUIRE_EQ(*it->command().arg(0)->as_identifier(), "X"sv);
+    REQUIRE_EQ(*it->command().arg(0).as_identifier(), "X"sv);
     REQUIRE(++it == ir->end());
 
     ir = parser.parse_statement();
     REQUIRE(ir != std::nullopt);
     REQUIRE(ir->front().command().name() == "ABS");
     REQUIRE(ir->front().command().num_args() == 1);
-    REQUIRE_EQ(*ir->front().command().arg(0)->as_identifier(), "X"sv);
+    REQUIRE_EQ(*ir->front().command().arg(0).as_identifier(), "X"sv);
     REQUIRE(size(*ir) == 1);
 }
 
@@ -656,8 +656,8 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing permutations of unary expressions")
         REQUIRE(ir != std::nullopt);
         REQUIRE(ir->front().command().name() == command_name);
         REQUIRE(ir->front().command().num_args() == 2);
-        REQUIRE_EQ(*ir->front().command().arg(0)->as_identifier(), "X"sv);
-        REQUIRE_EQ(*ir->front().command().arg(1)->as_int(), 1);
+        REQUIRE_EQ(*ir->front().command().arg(0).as_identifier(), "X"sv);
+        REQUIRE_EQ(*ir->front().command().arg(1).as_int(), 1);
         REQUIRE(size(*ir) == 1);
     }
 }
@@ -698,16 +698,16 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing permutations of binary expressions")
         REQUIRE(ir != std::nullopt);
         REQUIRE(ir->front().command().name() == command_name);
         REQUIRE(ir->front().command().num_args() == 2);
-        REQUIRE_EQ(*ir->front().command().arg(0)->as_identifier(), "X"sv);
-        REQUIRE_EQ(*ir->front().command().arg(1)->as_identifier(), "Y"sv);
+        REQUIRE_EQ(*ir->front().command().arg(0).as_identifier(), "X"sv);
+        REQUIRE_EQ(*ir->front().command().arg(1).as_identifier(), "Y"sv);
         REQUIRE(size(*ir) == 1);
 
         ir = parser.parse_statement();
         REQUIRE(ir != std::nullopt);
         REQUIRE(ir->front().command().name() == command_name);
         REQUIRE(ir->front().command().num_args() == 2);
-        REQUIRE_EQ(*ir->front().command().arg(0)->as_identifier(), "X"sv);
-        REQUIRE_EQ(*ir->front().command().arg(1)->as_identifier(), "X"sv);
+        REQUIRE_EQ(*ir->front().command().arg(0).as_identifier(), "X"sv);
+        REQUIRE_EQ(*ir->front().command().arg(1).as_identifier(), "X"sv);
         REQUIRE(size(*ir) == 1);
     }
 }
@@ -749,8 +749,8 @@ TEST_CASE_FIXTURE(ParserFixture,
         REQUIRE(ir != std::nullopt);
         REQUIRE(ir->front().command().name() == command_name);
         REQUIRE(ir->front().command().num_args() == 2);
-        REQUIRE_EQ(*ir->front().command().arg(0)->as_identifier(), a);
-        REQUIRE_EQ(*ir->front().command().arg(1)->as_identifier(), b);
+        REQUIRE_EQ(*ir->front().command().arg(0).as_identifier(), a);
+        REQUIRE_EQ(*ir->front().command().arg(1).as_identifier(), b);
         REQUIRE(size(*ir) == 1);
     }
 }
@@ -795,8 +795,8 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing permutations of ternary expressions")
         REQUIRE(ir != std::nullopt);
         REQUIRE(ir->front().command().name() == command_name);
         REQUIRE(ir->front().command().num_args() == 2);
-        REQUIRE_EQ(*ir->front().command().arg(0)->as_identifier(), "X"sv);
-        REQUIRE_EQ(*ir->front().command().arg(1)->as_identifier(), "X"sv);
+        REQUIRE_EQ(*ir->front().command().arg(0).as_identifier(), "X"sv);
+        REQUIRE_EQ(*ir->front().command().arg(1).as_identifier(), "X"sv);
         REQUIRE(size(*ir) == 1);
 
         // x = x + y
@@ -804,8 +804,8 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing permutations of ternary expressions")
         REQUIRE(ir != std::nullopt);
         REQUIRE(ir->front().command().name() == command_name);
         REQUIRE(ir->front().command().num_args() == 2);
-        REQUIRE_EQ(*ir->front().command().arg(0)->as_identifier(), "X"sv);
-        REQUIRE_EQ(*ir->front().command().arg(1)->as_identifier(), "Y"sv);
+        REQUIRE_EQ(*ir->front().command().arg(0).as_identifier(), "X"sv);
+        REQUIRE_EQ(*ir->front().command().arg(1).as_identifier(), "Y"sv);
         REQUIRE(size(*ir) == 1);
 
         // x = y + x
@@ -816,8 +816,8 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing permutations of ternary expressions")
             REQUIRE(ir != std::nullopt);
             REQUIRE(ir->front().command().name() == command_name);
             REQUIRE(ir->front().command().num_args() == 2);
-            REQUIRE_EQ(*ir->front().command().arg(0)->as_identifier(), "X"sv);
-            REQUIRE_EQ(*ir->front().command().arg(1)->as_identifier(), "Y"sv);
+            REQUIRE_EQ(*ir->front().command().arg(0).as_identifier(), "X"sv);
+            REQUIRE_EQ(*ir->front().command().arg(1).as_identifier(), "Y"sv);
             REQUIRE(size(*ir) == 1);
         }
         else
@@ -849,12 +849,12 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing permutations of ternary expressions")
         auto it = ir->begin();
         REQUIRE(it->command().name() == "SET");
         REQUIRE(it->command().num_args() == 2);
-        REQUIRE_EQ(*it->command().arg(0)->as_identifier(), "X"sv);
-        REQUIRE_EQ(*it->command().arg(1)->as_identifier(), "Y"sv);
+        REQUIRE_EQ(*it->command().arg(0).as_identifier(), "X"sv);
+        REQUIRE_EQ(*it->command().arg(1).as_identifier(), "Y"sv);
         REQUIRE((++it)->command().name() == command_name);
         REQUIRE(it->command().num_args() == 2);
-        REQUIRE_EQ(*it->command().arg(0)->as_identifier(), "X"sv);
-        REQUIRE_EQ(*it->command().arg(1)->as_identifier(), "Z"sv);
+        REQUIRE_EQ(*it->command().arg(0).as_identifier(), "X"sv);
+        REQUIRE_EQ(*it->command().arg(1).as_identifier(), "Z"sv);
         REQUIRE(++it == ir->end());
     }
 }
@@ -1057,12 +1057,12 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a valid IF...GOTO statement")
 
     auto it = ir->begin();
     REQUIRE(it->command().name() == "ANDOR");
-    REQUIRE(*it->command().arg(0)->as_int() == 0);
+    REQUIRE(*it->command().arg(0).as_int() == 0);
     REQUIRE(it->command().num_args() == 1);
     REQUIRE((++it)->command().name() == "SOMETHING");
     REQUIRE((++it)->command().name() == "GOTO_IF_TRUE");
     REQUIRE(it->command().num_args() == 1);
-    REQUIRE_EQ(*it->command().arg(0)->as_identifier(), "ELSEWHERE"sv);
+    REQUIRE_EQ(*it->command().arg(0).as_identifier(), "ELSEWHERE"sv);
     REQUIRE(++it == ir->end());
 }
 
@@ -1075,12 +1075,12 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a valid IFNOT...GOTO statement")
 
     auto it = ir->begin();
     REQUIRE(it->command().name() == "ANDOR");
-    REQUIRE(*it->command().arg(0)->as_int() == 0);
+    REQUIRE(*it->command().arg(0).as_int() == 0);
     REQUIRE(it->command().num_args() == 1);
     REQUIRE((++it)->command().name() == "SOMETHING");
     REQUIRE((++it)->command().name() == "GOTO_IF_FALSE");
     REQUIRE(it->command().num_args() == 1);
-    REQUIRE_EQ(*it->command().arg(0)->as_identifier(), "ELSEWHERE"sv);
+    REQUIRE_EQ(*it->command().arg(0).as_identifier(), "ELSEWHERE"sv);
     REQUIRE(++it == ir->end());
 }
 
@@ -1094,12 +1094,12 @@ TEST_CASE_FIXTURE(ParserFixture,
 
     auto it = ir->begin();
     REQUIRE(it->command().name() == "ANDOR");
-    REQUIRE(*it->command().arg(0)->as_int() == 0);
+    REQUIRE(*it->command().arg(0).as_int() == 0);
     REQUIRE(it->command().num_args() == 1);
     REQUIRE((++it)->command().name() == "IS_THING_EQUAL_TO_THING");
     REQUIRE((++it)->command().name() == "GOTO_IF_TRUE");
     REQUIRE(it->command().num_args() == 1);
-    REQUIRE(*it->command().arg(0)->as_identifier() == "ELSEWHERE"sv);
+    REQUIRE(*it->command().arg(0).as_identifier() == "ELSEWHERE"sv);
     REQUIRE(++it == ir->end());
 }
 
@@ -1137,7 +1137,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a valid IF...ENDIF block")
 
     auto it = ir->begin();
     REQUIRE(it->command().name() == "IF");
-    REQUIRE(*it->command().arg(0)->as_int() == 0);
+    REQUIRE(*it->command().arg(0).as_int() == 0);
     REQUIRE(it->command().num_args() == 1);
     REQUIRE((++it)->command().name() == "SOMETHING");
     REQUIRE((++it)->command().name() == "DO_1");
@@ -1161,7 +1161,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a valid IF...ELSE...ENDIF block")
 
     auto it = ir->begin();
     REQUIRE(it->command().name() == "IF");
-    REQUIRE(*it->command().arg(0)->as_int() == 0);
+    REQUIRE(*it->command().arg(0).as_int() == 0);
     REQUIRE(it->command().num_args() == 1);
     REQUIRE((++it)->command().name() == "SOMETHING");
     REQUIRE((++it)->command().name() == "DO_1");
@@ -1185,7 +1185,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a valid IFNOT...ENDIF block")
 
     auto it = ir->begin();
     REQUIRE(it->command().name() == "IFNOT");
-    REQUIRE(*it->command().arg(0)->as_int() == 0);
+    REQUIRE(*it->command().arg(0).as_int() == 0);
     REQUIRE(it->command().num_args() == 1);
     REQUIRE((++it)->command().name() == "SOMETHING");
     REQUIRE((++it)->command().name() == "DO_1");
@@ -1208,7 +1208,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a valid NOT")
 
     auto it = ir->begin();
     REQUIRE(it->command().name() == "IF");
-    REQUIRE(*it->command().arg(0)->as_int() == 22);
+    REQUIRE(*it->command().arg(0).as_int() == 22);
     REQUIRE(it->command().num_args() == 1);
     REQUIRE((++it)->command().name() == "SOMETHING");
     REQUIRE(it->command().not_flag() == true);
@@ -1298,7 +1298,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a valid AND list")
 
     auto it = ir->begin();
     REQUIRE(it->command().name() == "IF");
-    REQUIRE(*it->command().arg(0)->as_int() == 5);
+    REQUIRE(*it->command().arg(0).as_int() == 5);
     REQUIRE(it->command().num_args() == 1);
     REQUIRE((++it)->command().name() == "SOMETHING");
     REQUIRE((++it)->command().name() == "OTHER_THING");
@@ -1329,7 +1329,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a valid OR list")
 
     auto it = ir->begin();
     REQUIRE(it->command().name() == "IF");
-    REQUIRE(*it->command().arg(0)->as_int() == 25);
+    REQUIRE(*it->command().arg(0).as_int() == 25);
     REQUIRE(it->command().num_args() == 1);
     REQUIRE((++it)->command().name() == "SOMETHING");
     REQUIRE((++it)->command().name() == "OTHER_THING");
@@ -1423,7 +1423,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a valid WHILE...ENDWHILE")
 
     auto it = ir->begin();
     REQUIRE(it->command().name() == "WHILE");
-    REQUIRE(*it->command().arg(0)->as_int() == 0);
+    REQUIRE(*it->command().arg(0).as_int() == 0);
     REQUIRE(it->command().num_args() == 1);
     REQUIRE((++it)->command().name() == "SOMETHING");
     REQUIRE((++it)->command().name() == "DO_1");
@@ -1444,7 +1444,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a valid WHILENOT...ENDWHILE")
 
     auto it = ir->begin();
     REQUIRE(it->command().name() == "WHILENOT");
-    REQUIRE(*it->command().arg(0)->as_int() == 0);
+    REQUIRE(*it->command().arg(0).as_int() == 0);
     REQUIRE(it->command().num_args() == 1);
     REQUIRE((++it)->command().name() == "SOMETHING");
     REQUIRE((++it)->command().name() == "DO_1");
@@ -1469,7 +1469,7 @@ TEST_CASE_FIXTURE(ParserFixture,
     auto it = ir->begin();
     REQUIRE(it->command().name() == "WHILE");
     REQUIRE(it->command().not_flag() == false);
-    REQUIRE(*it->command().arg(0)->as_int() == 2);
+    REQUIRE(*it->command().arg(0).as_int() == 2);
     REQUIRE(it->command().num_args() == 1);
     REQUIRE((++it)->command().name() == "SOMETHING");
     REQUIRE(it->command().not_flag() == false);
@@ -1532,8 +1532,8 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing valid REPEAT...ENDREPEAT")
     auto it = ir->begin();
     REQUIRE(it->command().name() == "REPEAT");
     REQUIRE(it->command().num_args() == 2);
-    REQUIRE(*it->command().arg(0)->as_int() == 5);
-    REQUIRE_EQ(*it->command().arg(1)->as_identifier(), "VAR"sv);
+    REQUIRE(*it->command().arg(0).as_int() == 5);
+    REQUIRE_EQ(*it->command().arg(1).as_identifier(), "VAR"sv);
     REQUIRE((++it)->command().name() == "DO_1");
     REQUIRE((++it)->command().name() == "DO_2");
     REQUIRE((++it)->command().name() == "ENDREPEAT");
@@ -1573,9 +1573,9 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing valid var declaration commands")
     REQUIRE(size(*ir) == 1);
     REQUIRE(ir->front().command().name() == "LVAR_FLOAT");
     REQUIRE(ir->front().command().num_args() == 3);
-    REQUIRE_EQ(*ir->front().command().arg(0)->as_identifier(), "X"sv);
-    REQUIRE_EQ(*ir->front().command().arg(1)->as_identifier(), "Y"sv);
-    REQUIRE_EQ(*ir->front().command().arg(2)->as_identifier(), "Z"sv);
+    REQUIRE_EQ(*ir->front().command().arg(0).as_identifier(), "X"sv);
+    REQUIRE_EQ(*ir->front().command().arg(1).as_identifier(), "Y"sv);
+    REQUIRE_EQ(*ir->front().command().arg(2).as_identifier(), "Z"sv);
 }
 
 TEST_CASE_FIXTURE(ParserFixture, "parsing invalid use of special names")

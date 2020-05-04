@@ -10,9 +10,8 @@ auto SemaIR::create(const SymLabel* label, const Command* command,
     return allocator.new_object<SemaIR>(private_tag, label, command);
 }
 
-auto SemaIR::create_integer(int32_t value, SourceRange source,
-                            ArenaAllocator<> allocator)
-        -> ArenaPtr<const Argument>
+auto SemaIR::create_int(int32_t value, SourceRange source,
+                        ArenaAllocator<> allocator) -> ArenaPtr<const Argument>
 {
     return allocator.new_object<Argument>(private_tag, value, source);
 }
@@ -28,9 +27,11 @@ auto SemaIR::create_text_label(std::string_view value, SourceRange source,
                                ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
-    return allocator.new_object<Argument>(
-            private_tag, Argument::TextLabelTag{},
-            util::allocate_string(value, allocator, util::toupper), source);
+    auto text_label_obj = TextLabel(
+            private_tag,
+            util::allocate_string(value, allocator, util::toupper));
+
+    return allocator.new_object<Argument>(private_tag, text_label_obj, source);
 }
 
 auto SemaIR::create_label(const SymLabel& label, SourceRange source,
@@ -44,33 +45,34 @@ auto SemaIR::create_string(std::string_view value, SourceRange source,
                            ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
-    return allocator.new_object<Argument>(
-            private_tag, Argument::StringTag{},
-            util::allocate_string(value, allocator), source);
+    auto string_obj = String(private_tag,
+                             util::allocate_string(value, allocator));
+
+    return allocator.new_object<Argument>(private_tag, string_obj, source);
 }
 
 auto SemaIR::create_variable(const SymVariable& var, SourceRange source,
                              ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
-    return allocator.new_object<Argument>(private_tag, Argument::VarRef{var},
-                                          source);
+    auto var_obj = VarRef(private_tag, var);
+    return allocator.new_object<Argument>(private_tag, var_obj, source);
 }
 
 auto SemaIR::create_variable(const SymVariable& var, int32_t index,
                              SourceRange source, ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
-    return allocator.new_object<Argument>(private_tag,
-                                          Argument::VarRef{var, index}, source);
+    auto var_obj = VarRef(private_tag, var, index);
+    return allocator.new_object<Argument>(private_tag, var_obj, source);
 }
 
 auto SemaIR::create_variable(const SymVariable& var, const SymVariable& index,
                              SourceRange source, ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
-    return allocator.new_object<Argument>(
-            private_tag, Argument::VarRef{var, &index}, source);
+    auto var_obj = VarRef(private_tag, var, index);
+    return allocator.new_object<Argument>(private_tag, var_obj, source);
 }
 
 auto SemaIR::create_constant(const CommandManager::ConstantDef& cdef,
@@ -87,60 +89,104 @@ auto SemaIR::create_used_object(const SymUsedObject& used_object,
     return allocator.new_object<Argument>(private_tag, &used_object, source);
 }
 
-auto SemaIR::Argument::as_integer() const -> const int32_t*
+auto operator==(const SemaIR& lhs, const SemaIR& rhs) noexcept -> bool
 {
-    return std::get_if<int32_t>(&this->value);
+    if(lhs.has_label() != rhs.has_label()
+       || lhs.has_command() != rhs.has_command())
+        return false;
+
+    if(lhs.has_label() && lhs.m_label != rhs.m_label)
+        return false;
+
+    if(lhs.has_command() && *lhs.m_command != *rhs.m_command)
+        return false;
+
+    return true;
 }
 
-auto SemaIR::Argument::as_float() const -> const float*
+auto operator!=(const SemaIR& lhs, const SemaIR& rhs) noexcept -> bool
 {
-    return std::get_if<float>(&this->value);
+    return !(lhs == rhs);
 }
 
-auto SemaIR::Argument::as_text_label() const -> const std::string_view*
+auto operator==(const SemaIR::Command& lhs, const SemaIR::Command& rhs) noexcept
+        -> bool
 {
-    if(const auto* text_label = std::get_if<TextLabel>(&this->value))
-        return &text_label->second;
-    return nullptr;
+    return lhs.m_source == rhs.m_source && lhs.m_def == rhs.m_def
+           && lhs.m_not_flag == rhs.m_not_flag
+           && std::equal(lhs.m_args.begin(), lhs.m_args.end(),
+                         rhs.m_args.begin(), rhs.m_args.end(),
+                         [](const auto& a, const auto& b) { return *a == *b; });
 }
 
-auto SemaIR::Argument::as_string() const -> const std::string_view*
+auto operator!=(const SemaIR::Command& lhs, const SemaIR::Command& rhs) noexcept
+        -> bool
 {
-    if(const auto* string = std::get_if<String>(&this->value))
-        return &string->second;
-    return nullptr;
+    return !(lhs == rhs);
 }
 
-auto SemaIR::Argument::as_var_ref() const -> const VarRef*
+auto SemaIR::Argument::as_int() const noexcept -> std::optional<int32_t>
 {
-    return std::get_if<VarRef>(&this->value);
+    if(const auto* value = std::get_if<int32_t>(&this->m_value))
+        return *value;
+    return std::nullopt;
 }
 
-auto SemaIR::Argument::as_label() const -> const SymLabel*
+auto SemaIR::Argument::as_float() const noexcept -> std::optional<float>
 {
-    if(const auto* label = std::get_if<const SymLabel*>(&this->value))
+    if(const auto* value = std::get_if<float>(&this->m_value))
+        return *value;
+    return std::nullopt;
+}
+
+auto SemaIR::Argument::as_text_label() const noexcept
+        -> std::optional<TextLabel>
+{
+    if(const auto* text_label = std::get_if<TextLabel>(&this->m_value))
+        return *text_label;
+    return std::nullopt;
+}
+
+auto SemaIR::Argument::as_string() const noexcept -> std::optional<String>
+{
+    if(const auto* string = std::get_if<String>(&this->m_value))
+        return *string;
+    return std::nullopt;
+}
+
+auto SemaIR::Argument::as_var_ref() const noexcept -> std::optional<VarRef>
+{
+    if(const auto* var_ref = std::get_if<VarRef>(&this->m_value))
+        return *var_ref;
+    return std::nullopt;
+}
+
+auto SemaIR::Argument::as_label() const noexcept -> const SymLabel*
+{
+    if(const auto* label = std::get_if<const SymLabel*>(&this->m_value))
         return *label;
     return nullptr;
 }
 
-auto SemaIR::Argument::as_constant() const -> const CommandManager::ConstantDef*
+auto SemaIR::Argument::as_constant() const noexcept
+        -> const CommandManager::ConstantDef*
 {
     if(const auto* sconst = std::get_if<const CommandManager::ConstantDef*>(
-               &this->value))
+               &this->m_value))
         return *sconst;
     return nullptr;
 }
 
-auto SemaIR::Argument::as_used_object() const -> const SymUsedObject*
+auto SemaIR::Argument::as_used_object() const noexcept -> const SymUsedObject*
 {
-    if(const auto* uobj = std::get_if<const SymUsedObject*>(&this->value))
+    if(const auto* uobj = std::get_if<const SymUsedObject*>(&this->m_value))
         return *uobj;
     return nullptr;
 }
 
-auto SemaIR::Argument::pun_as_integer() const -> std::optional<int32_t>
+auto SemaIR::Argument::pun_as_int() const noexcept -> std::optional<int32_t>
 {
-    if(const auto* value = as_integer())
+    if(const auto value = as_int())
         return *value;
     else if(const auto* sconst = as_constant())
         return sconst->value;
@@ -148,29 +194,60 @@ auto SemaIR::Argument::pun_as_integer() const -> std::optional<int32_t>
         return std::nullopt;
 }
 
-auto SemaIR::Argument::pun_as_float() const -> std::optional<float>
+auto SemaIR::Argument::pun_as_float() const noexcept -> std::optional<float>
 {
-    if(const auto* value = as_float())
+    if(const auto value = as_float())
         return *value;
     else
         return std::nullopt;
 }
 
-auto SemaIR::Argument::VarRef::has_index() const -> bool
+auto operator==(const SemaIR::Argument& lhs,
+                const SemaIR::Argument& rhs) noexcept -> bool
 {
-    return !std::holds_alternative<std::monostate>(index);
+    return lhs.m_source == rhs.m_source && lhs.m_value == rhs.m_value;
 }
 
-auto SemaIR::Argument::VarRef::index_as_integer() const -> const int32_t*
+auto operator!=(const SemaIR::Argument& lhs,
+                const SemaIR::Argument& rhs) noexcept -> bool
 {
-    return std::get_if<int32_t>(&this->index);
+    return !(lhs == rhs);
 }
 
-auto SemaIR::Argument::VarRef::index_as_variable() const -> const SymVariable*
+auto SemaIR::VarRef::def() const noexcept -> const SymVariable&
 {
-    if(const auto* var = std::get_if<const SymVariable*>(&this->index))
+    return *m_def;
+}
+
+auto SemaIR::VarRef::has_index() const noexcept -> bool
+{
+    return !std::holds_alternative<std::monostate>(m_index);
+}
+
+auto SemaIR::VarRef::index_as_int() const noexcept -> std::optional<int32_t>
+{
+    if(const auto value = std::get_if<int32_t>(&this->m_index))
+        return *value;
+    return std::nullopt;
+}
+
+auto SemaIR::VarRef::index_as_variable() const noexcept -> const SymVariable*
+{
+    if(const auto* var = std::get_if<const SymVariable*>(&this->m_index))
         return *var;
     return nullptr;
+}
+
+auto operator==(const SemaIR::VarRef& lhs, const SemaIR::VarRef& rhs) noexcept
+        -> bool
+{
+    return lhs.m_def == rhs.m_def && lhs.m_index == rhs.m_index;
+}
+
+auto operator!=(const SemaIR::VarRef& lhs, const SemaIR::VarRef& rhs) noexcept
+        -> bool
+{
+    return !(lhs == rhs);
 }
 
 auto SemaIR::Builder::label(const SymLabel* label_ptr) -> Builder&&
@@ -226,7 +303,7 @@ auto SemaIR::Builder::arg(const Argument* value) -> Builder&&
 
 auto SemaIR::Builder::arg_int(int32_t value, SourceRange source) -> Builder&&
 {
-    return arg(SemaIR::create_integer(value, source, allocator));
+    return arg(SemaIR::create_int(value, source, allocator));
 }
 
 auto SemaIR::Builder::arg_float(float value, SourceRange source) -> Builder&&
@@ -330,3 +407,5 @@ void SemaIR::Builder::create_command_from_attributes()
     this->has_not_flag = false;
 }
 } // namespace gta3sc
+
+// TODO efficient memory usage by not using a variant but internal inheritance

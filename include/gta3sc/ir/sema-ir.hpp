@@ -2,6 +2,8 @@
 #include <gta3sc/command-manager.hpp>
 #include <gta3sc/ir/symbol-table.hpp>
 #include <gta3sc/util/intrusive-bidirectional-list-node.hpp>
+#include <gta3sc/util/string-vieweable.hpp>
+#include <gta3sc/util/visit.hpp>
 #include <variant>
 
 namespace gta3sc
@@ -23,27 +25,32 @@ namespace gta3sc
 /// such as the location of each of its arguments.
 ///
 /// [1]: The IR is mostly modelled as an intrusive linked list (see `LinkedIR`)
-/// and the node pointers present in this structure have interior mutability.
+/// and the node pointers present in this structure need to change to manipulate
+/// the list.
 class SemaIR : public util::IntrusiveBidirectionalListNode<SemaIR>
 {
-public:
-    struct Command;
-    struct Argument;
-    class Builder;
-
 private:
+    /// This tag is used to make construction of the IR elements private.
     struct PrivateTag
     {
     };
     static constexpr PrivateTag private_tag{};
 
 public:
-    const SymLabel* const label{};
-    const Command* const command{};
+    class Command;
+    class Argument;
+    class Builder;
+
+    struct TextLabel;
+    struct String;
+    struct VarRef;
 
 public:
-    SemaIR() noexcept = delete;
-    ~SemaIR() noexcept = default;
+    /// Please use `create` instead.
+    SemaIR(PrivateTag /*unused*/, const SymLabel* label,
+           const Command* command) noexcept :
+        m_label(label), m_command(command)
+    {}
 
     SemaIR(const SemaIR&) = delete;
     auto operator=(const SemaIR&) -> SemaIR& = delete;
@@ -51,13 +58,62 @@ public:
     SemaIR(SemaIR&&) noexcept = delete;
     auto operator=(SemaIR&&) noexcept -> SemaIR& = delete;
 
+    ~SemaIR() noexcept = default;
+
+    /// Checks whether there is a command associated with this instruction.
+    [[nodiscard]] auto has_command() const noexcept -> bool
+    {
+        return m_command != nullptr;
+    }
+
+    /// Checks whether there is a label associated with this instruction.
+    [[nodiscard]] auto has_label() const noexcept -> bool
+    {
+        return m_label != nullptr;
+    }
+
+    /// Returns the label associated with this instruction.
+    [[nodiscard]] auto label() const noexcept -> const SymLabel&
+    {
+        return *m_label;
+    }
+
+    /// Returns the label associated with this instruction or `nullptr` if none.
+    [[nodiscard]] auto label_or_null() const noexcept -> const SymLabel*
+    {
+        return m_label ? m_label : nullptr;
+    }
+
+    /// Returns the command associated with this instruction.
+    [[nodiscard]] auto command() const noexcept -> const Command&
+    {
+        return *m_command;
+    }
+
+    /// Returns the command associated with this instruction or `nullptr` if
+    /// none.
+    [[nodiscard]] auto command_or_null() const noexcept -> const Command*
+    {
+        return m_command ? m_command : nullptr;
+    }
+
+    /// Checks whether a given IR is equivalent to another IR.
+    friend auto operator==(const SemaIR& lhs, const SemaIR& rhs) noexcept
+            -> bool;
+    friend auto operator!=(const SemaIR& lhs, const SemaIR& rhs) noexcept
+            -> bool;
+
+    //
+    // Factory methods
+    //
+
     // Creates an instruction.
     static auto create(const SymLabel* label, const Command* command,
                        ArenaAllocator<> allocator) -> ArenaPtr<SemaIR>;
 
     /// Creates an integer argument.
-    static auto create_integer(int32_t value, SourceRange source,
-                               ArenaAllocator<> allocator)
+    static auto create_int(int32_t value, SourceRange source,
+                           ArenaAllocator<> allocator)
             -> ArenaPtr<const Argument>;
 
     /// Creates a floating-point argument.
@@ -115,159 +171,264 @@ public:
                                    ArenaAllocator<> allocator)
             -> ArenaPtr<const Argument>;
 
-    struct Command
+private:
+    enum class TextLabelTag
     {
-    public:
-        SourceRange source; ///< Source code  location of the command.
-        const CommandManager::CommandDef& def; ///< The command definition.
-        util::span<const Argument*> args;      ///< View into the arguments.
-        bool not_flag = false; ///< Whether the result of the command is NOTed.
-
-        /// Please use `SemaIR::Builder::build_command`.
-        Command() noexcept = delete;
-        ~Command() noexcept = default;
-
-        Command(const Command&) = delete;
-        auto operator=(const Command&) -> Command& = delete;
-
-        Command(Command&&) noexcept = delete;
-        auto operator=(Command&&) noexcept -> Command& = delete;
-
-    public:
-        Command(PrivateTag /*unused*/, SourceRange source,
-                const CommandManager::CommandDef& def,
-                util::span<const Argument*> args, bool not_flag) :
-            source(source), def(def), args(args), not_flag(not_flag)
-        {}
-
-        friend class Builder;
+    };
+    enum class StringTag
+    {
     };
 
-    /// Arguments are immutable and may be shared by multiple commands.
-    struct Argument
+    /// Same as `util::WeakStringVieweable` but with private construction.
+    template<typename Tag>
+    struct WeakStringVieweable : util::WeakStringVieweable<Tag>
     {
-    public:
-        struct VarRef;
-
-    public:
-        SourceRange source; // NOLINT: FIXME
-
-        /// Please use `SemaIR` creation methods.
-        Argument() noexcept = delete;
-        ~Argument() noexcept = default;
-
-        Argument(const Argument&) = delete;
-        auto operator=(const Argument&) -> Argument& = delete;
-
-        Argument(Argument&&) noexcept = delete;
-        auto operator=(Argument&&) noexcept -> Argument& = delete;
-
-        /// Returns the contained integer or `nullptr` if this argument is not
-        /// an integer.
-        [[nodiscard]] auto as_integer() const -> const int32_t*;
-
-        /// Returns the contained float or `nullptr` if this argument is not
-        /// a float.
-        [[nodiscard]] auto as_float() const -> const float*;
-
-        /// Returns the contained text label value or `nullptr` if this argument
-        /// is not a text label.
-        [[nodiscard]] auto as_text_label() const -> const std::string_view*;
-
-        /// Returns the contained string or `nullptr` if this argument is not
-        /// a string.
-        [[nodiscard]] auto as_string() const -> const std::string_view*;
-
-        /// Returns the contained variable reference or `nullptr` if this
-        /// argument is not a variable reference.
-        [[nodiscard]] auto as_var_ref() const -> const VarRef*;
-
-        /// Returns the contained label reference or `nullptr` if this argument
-        /// is not a label reference.
-        [[nodiscard]] auto as_label() const -> const SymLabel*;
-
-        /// Returns the contained string constant or `nullptr` if this argument
-        /// is not a string constant.
-        [[nodiscard]] auto as_constant() const
-                -> const CommandManager::ConstantDef*;
-
-        /// Returns the contained used object or `nullptr` if this argument is
-        /// not a used object.
-        [[nodiscard]] auto as_used_object() const -> const SymUsedObject*;
-
-        /// Type-puns the contained integer or string constant as an integer.
-        ///
-        /// \note This does not type-pun used objects as there is no guarantee
-        /// (speaking formally) that it can actually be represented as an
-        /// integer.
-        [[nodiscard]] auto pun_as_integer() const -> std::optional<int32_t>;
-
-        /// Type-puns the contained float (or, in the future,
-        /// user defined floating-point constant) as a float.
-        [[nodiscard]] auto pun_as_float() const -> std::optional<float>;
-
-    public:
-        struct VarRef
-        {
-            const SymVariable& def; ///< The variable being referenced.
-            std::variant<std::monostate, int32_t, const SymVariable*>
-                    index; ///< The index of an array subscript.
-
-            /// Checks whether this variable reference is an array reference.
-            [[nodiscard]] auto has_index() const -> bool;
-
-            /// Returns the integer in the array subscript or `nullptr` if
-            /// either this is not an array or the index is not an integer.
-            [[nodiscard]] auto index_as_integer() const -> const int32_t*;
-
-            /// Returns the variable in the array subscript or `nullptr` if
-            /// either this is not an array or the index is not a variable.
-            [[nodiscard]] auto index_as_variable() const -> const SymVariable*;
-        };
-
-    protected:
-        friend class SemaIR;
-
-        enum class TextLabelTag
-        {
-        };
-        enum class StringTag
-        {
-        };
-
-        // Tagging adds one word of overhead to the memory used by an
-        // argument, but is cleaner than a EqualityComparable wrapper.
-        using TextLabel = std::pair<TextLabelTag, std::string_view>;
-        using String = std::pair<StringTag, std::string_view>;
-
-    public:
-        template<typename T>
-        explicit Argument(PrivateTag /*unused*/, T&& value,
-                          SourceRange source) :
-            source(source), value(std::forward<T>(value))
+        constexpr WeakStringVieweable(PrivateTag /*unused*/,
+                                      std::string_view value) noexcept :
+            util::WeakStringVieweable<Tag>(value)
         {}
+    };
 
-        template<typename Tag>
-        explicit Argument(PrivateTag /*unused*/, Tag tag,
-                          std::string_view value, SourceRange source) :
-            source(source), value(std::pair{tag, value})
-        {}
+private:
+    const SymLabel* const m_label{};
+    const Command* const m_command{};
+};
 
-    private:
-        const std::variant<int32_t, float, TextLabel, String, VarRef,
-                           const SymLabel*, const SymUsedObject*,
-                           const CommandManager::ConstantDef*>
-                value;
+/// Represents an text label argument.
+///
+/// \note This is nothing but a view to a sequence of characters, hence
+/// it should live at most as long as the IR is alive.
+///
+/// Implicitly convertible to `std::string_view`.
+struct SemaIR::TextLabel : WeakStringVieweable<TextLabelTag>
+{
+    using WeakStringVieweable::WeakStringVieweable;
+};
 
-        // Keep the size of this structure small.
-        static_assert(sizeof(value) <= 4 * sizeof(void*));
+/// Represents a string argument.
+///
+/// \note This is nothing but a view to a sequence of characters, hence
+/// it should live at most as long as the IR is alive.
+///
+/// Implicitly convertible to `std::string_view`.
+struct SemaIR::String : WeakStringVieweable<StringTag>
+{
+    using WeakStringVieweable::WeakStringVieweable;
+};
+
+/// Represents a variable reference.
+class SemaIR::VarRef
+{
+public:
+    VarRef(PrivateTag /*unused*/, const SymVariable& def) : m_def(&def) {}
+
+    VarRef(PrivateTag /*unused*/, const SymVariable& def, int32_t index) :
+        m_def(&def), m_index(index)
+    {}
+
+    VarRef(PrivateTag /*unused*/, const SymVariable& def,
+           const SymVariable& index) :
+        m_def(&def), m_index(&index)
+    {}
+
+    /// Returns the variable referenced by this.
+    [[nodiscard]] auto def() const noexcept -> const SymVariable&;
+
+    /// Checks whether this variable reference is an array reference.
+    [[nodiscard]] auto has_index() const noexcept -> bool;
+
+    /// Returns the integer in the array subscript or `std::nullopt` if
+    /// either this is not an array or the index is not an integer.
+    [[nodiscard]] auto index_as_int() const noexcept -> std::optional<int32_t>;
+
+    /// Returns the variable in the array subscript or `nullptr` if
+    /// either this is not an array or the index is not a variable.
+    [[nodiscard]] auto index_as_variable() const noexcept -> const SymVariable*;
+
+    /// Compares whether two variable references are equal.
+    friend auto operator==(const VarRef& lhs, const VarRef& rhs) noexcept
+            -> bool;
+    friend auto operator!=(const VarRef& lhs, const VarRef& rhs) noexcept
+            -> bool;
+
+private:
+    const SymVariable* m_def;
+    std::variant<std::monostate, int32_t, const SymVariable*> m_index;
+};
+
+class SemaIR::Command
+{
+public:
+    /// Please use `SemaIR::Builder::build_command`.
+    Command(PrivateTag /*unused*/, SourceRange source,
+            const CommandManager::CommandDef& def,
+            util::span<const Argument*> args, bool not_flag) noexcept :
+        m_source(source), m_def(&def), m_args(args), m_not_flag(not_flag)
+    {}
+
+    Command(const Command&) = delete;
+    auto operator=(const Command&) -> Command& = delete;
+
+    Command(Command&&) noexcept = delete;
+    auto operator=(Command&&) noexcept -> Command& = delete;
+
+    ~Command() noexcept = default;
+
+    /// Checks whether the not flag of this command is active.
+    [[nodiscard]] auto not_flag() const noexcept -> bool { return m_not_flag; }
+
+    /// Returns the source code range of this command.
+    [[nodiscard]] auto source() const noexcept -> SourceRange
+    {
+        return m_source;
+    }
+
+    /// Returns the definition of this command.
+    [[nodiscard]] auto def() const noexcept -> const CommandManager::CommandDef&
+    {
+        return *m_def;
+    }
+
+    /// Checks whether th ecommand has at least one argument.
+    [[nodiscard]] auto has_args() const noexcept -> bool
+    {
+        return !m_args.empty();
+    }
+
+    /// Returns the number of arguments of this command.
+    [[nodiscard]] auto num_args() const noexcept -> size_t
+    {
+        return m_args.size();
+    }
+
+    /// Returns a view to the arguments of the command.
+    [[nodiscard]] auto args() const noexcept -> util::span<const Argument*>
+    {
+        return m_args;
+    }
+
+    /// Returns the i-th argument of this command.
+    [[nodiscard]] auto arg(size_t i) const noexcept -> const Argument&
+    {
+        return *m_args[i];
+    }
+
+    /// Checks whether a given command is equivalent to another command.
+    friend auto operator==(const Command& lhs, const Command& rhs) noexcept
+            -> bool;
+    friend auto operator!=(const Command& lhs, const Command& rhs) noexcept
+            -> bool;
+
+private:
+    SourceRange m_source;
+    const CommandManager::CommandDef* m_def;
+    util::span<const Argument*> m_args;
+    bool m_not_flag{};
+};
+
+class SemaIR::Argument
+{
+public:
+    enum class Type
+    {                // GTA3script types should be uppercase.
+        INT,         // NOLINT(readability-identifier-naming)
+        FLOAT,       // NOLINT(readability-identifier-naming)
+        TEXT_LABEL,  // NOLINT(readability-identifier-naming)
+        STRING,      // NOLINT(readability-identifier-naming)
+        VARIABLE,    // NOLINT(readability-identifier-naming)
+        LABEL,       // NOLINT(readability-identifier-naming)
+        USED_OBJECT, // NOLINT(readability-identifier-naming)
+        CONSTANT,    // NOLINT(readability-identifier-naming)
     };
 
 public:
-    explicit SemaIR(PrivateTag /*unused*/, const SymLabel* label,
-                    const Command* command) :
-        label(label), command(command)
+    /// Please use `SemaIR` creation methods.
+    template<typename T>
+    explicit Argument(PrivateTag /*unused*/, T&& value, SourceRange source) :
+        m_source(source), m_value(std::forward<T>(value))
     {}
+
+    Argument(const Argument&) = delete;
+    auto operator=(const Argument&) -> Argument& = delete;
+
+    Argument(Argument&&) noexcept = delete;
+    auto operator=(Argument&&) noexcept -> Argument& = delete;
+
+    ~Argument() noexcept = default;
+
+    /// Returns the source code range of this argument.
+    [[nodiscard]] auto source() const noexcept -> SourceRange
+    {
+        return m_source;
+    }
+
+    /// Returns the type of this argument.
+    [[nodiscard]] auto type() const noexcept -> Type
+    {
+        return static_cast<Type>(m_value.index());
+    }
+
+    /// Returns the contained integer or `std::nullopt` if this argument is not
+    /// an integer.
+    [[nodiscard]] auto as_int() const noexcept -> std::optional<int32_t>;
+
+    /// Returns the contained float or `std::nullopt` if this argument is not
+    /// a float.
+    [[nodiscard]] auto as_float() const noexcept -> std::optional<float>;
+
+    /// Returns the contained text label value or `nullptr` if this argument
+    /// is not a text label.
+    [[nodiscard]] auto as_text_label() const noexcept
+            -> std::optional<TextLabel>;
+
+    /// Returns the contained string or `nullptr` if this argument is not
+    /// a string.
+    [[nodiscard]] auto as_string() const noexcept -> std::optional<String>;
+
+    /// Returns the contained variable reference or `nullptr` if this
+    /// argument is not a variable reference.
+    [[nodiscard]] auto as_var_ref() const noexcept -> std::optional<VarRef>;
+
+    /// Returns the contained label reference or `nullptr` if this argument
+    /// is not a label reference.
+    [[nodiscard]] auto as_label() const noexcept -> const SymLabel*;
+
+    /// Returns the contained string constant or `nullptr` if this argument
+    /// is not a string constant.
+    [[nodiscard]] auto as_constant() const noexcept
+            -> const CommandManager::ConstantDef*;
+
+    /// Returns the contained used object or `nullptr` if this argument is
+    /// not a used object.
+    [[nodiscard]] auto as_used_object() const noexcept -> const SymUsedObject*;
+
+    /// Type-puns the contained integer or string constant as an integer.
+    ///
+    /// \note This does not type-pun used objects as there is no guarantee
+    /// (speaking formally) that it can actually be represented as an
+    /// integer.
+    [[nodiscard]] auto pun_as_int() const noexcept -> std::optional<int32_t>;
+
+    /// Type-puns the contained float (or, in the future,
+    /// user defined floating-point constant) as a float.
+    [[nodiscard]] auto pun_as_float() const noexcept -> std::optional<float>;
+
+    /// Checks whether a given argument is equivalent to another argument.
+    friend auto operator==(const Argument& lhs, const Argument& rhs) noexcept
+            -> bool;
+    friend auto operator!=(const Argument& lhs, const Argument& rhs) noexcept
+            -> bool;
+
+private:
+    SourceRange m_source;
+    const std::variant<int32_t, float, TextLabel, String, VarRef,
+                       const SymLabel*, const SymUsedObject*,
+                       const CommandManager::ConstantDef*>
+            m_value;
+    // FIXME cannot change the order of the variant or type() will break.
+
+    // Keep the size of this structure small.
+    static_assert(sizeof(m_value) <= 4 * sizeof(void*));
 };
 
 /// This is a builder capable of constructing a SemaIR instruction.
@@ -275,6 +436,11 @@ public:
 /// The purpose of this builder is to make the construction of SemaIR
 /// instructions as little verbose as possible. It's simply an wrapper
 /// around the create methods of `SemaIR`.
+///
+/// This builder allocates memory on the arena in most method calls,
+/// therefore it is discouraged, and in some cases disallowed, to
+/// replace attributes to avoid users inadvertently allocating more
+/// memory than necessary.
 class SemaIR::Builder
 {
 public:
@@ -368,7 +534,7 @@ public:
     auto with_num_args(size_t num_args) -> Builder&&;
 
     /// Equivalent to calling `with_num_args(distance(begin, end))` followed by
-    /// `arg(a)` for each element in the sequence described by `begin`...`end`.
+    /// `arg(a)` for each element in the sequence described by `begin...end`.
     template<typename InputIterator>
     auto with_args(InputIterator begin, InputIterator end) -> Builder&&;
 
@@ -411,6 +577,70 @@ auto SemaIR::Builder::with_args(InputIterator begin, InputIterator end)
     return std::move(*this);
 }
 
+/// Applies the visitor `vis` to the arguments `arg, other_args...`.
+///
+/// This is equivalent to `vis(*arg.as_TYPE(), *other_args.as_TYPEN()...)` where
+/// `TYPE` is the underlying type of the argument.
+template<typename Visitor, typename... OtherArgs>
+inline auto visit(Visitor&& vis, const SemaIR::Argument& arg,
+                  OtherArgs&&... other_args)
+{
+    switch(arg.type())
+    {
+        using Type = SemaIR::Argument::Type;
+        case Type::INT:
+        {
+            return util::visit(std::forward<Visitor>(vis), util::visit_expand,
+                               *arg.as_int(),
+                               std::forward<OtherArgs>(other_args)...);
+        }
+        case Type::FLOAT:
+        {
+            return util::visit(std::forward<Visitor>(vis), util::visit_expand,
+                               *arg.as_float(),
+                               std::forward<OtherArgs>(other_args)...);
+        }
+        case Type::TEXT_LABEL:
+        {
+            return util::visit(std::forward<Visitor>(vis), util::visit_expand,
+                               *arg.as_text_label(),
+                               std::forward<OtherArgs>(other_args)...);
+        }
+        case Type::STRING:
+        {
+            return util::visit(std::forward<Visitor>(vis), util::visit_expand,
+                               *arg.as_string(),
+                               std::forward<OtherArgs>(other_args)...);
+        }
+        case Type::VARIABLE:
+        {
+            return util::visit(std::forward<Visitor>(vis), util::visit_expand,
+                               *arg.as_var_ref(),
+                               std::forward<OtherArgs>(other_args)...);
+        }
+        case Type::LABEL:
+        {
+            return util::visit(std::forward<Visitor>(vis), util::visit_expand,
+                               *arg.as_label(),
+                               std::forward<OtherArgs>(other_args)...);
+        }
+        case Type::USED_OBJECT:
+        {
+            return util::visit(std::forward<Visitor>(vis), util::visit_expand,
+                               *arg.as_used_object(),
+                               std::forward<OtherArgs>(other_args)...);
+        }
+        case Type::CONSTANT:
+        {
+            return util::visit(std::forward<Visitor>(vis), util::visit_expand,
+                               *arg.as_constant(),
+                               std::forward<OtherArgs>(other_args)...);
+        }
+        default:
+            assert(false);
+    }
+}
+
 // These resources are stored in a memory arena. Disposing storage
 // **must** be enough for destruction of these objects.
 static_assert(std::is_trivially_destructible_v<SemaIR>);
@@ -418,7 +648,5 @@ static_assert(std::is_trivially_destructible_v<SemaIR::Command>);
 static_assert(std::is_trivially_destructible_v<SemaIR::Argument>);
 } // namespace gta3sc
 
-// TODO replace arena* with arena& (in parserir too)
 // TODO the builder should probably not be returning an rvalue to itself unless
 // && is specified in the method specification (in parserir too).
-// TODO use some kind of strong_typedef instead of std::pair in Argument

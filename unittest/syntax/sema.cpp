@@ -375,19 +375,19 @@ TEST_CASE_FIXTURE(SemaFixture, "sema valid command")
     REQUIRE(ir != std::nullopt);
     REQUIRE(size(*ir) == 2);
 
-    REQUIRE(ir->front().label == nullptr);
-    REQUIRE(ir->front().command != nullptr);
-    REQUIRE(ir->front().command->not_flag == false);
-    REQUIRE(&ir->front().command->def == cmdman.find_command("WAIT"));
-    REQUIRE(ir->front().command->args.size() == 1);
-    REQUIRE(*ir->front().command->args[0]->as_integer() == 98);
+    REQUIRE(!ir->front().has_label());
+    REQUIRE(ir->front().has_command());
+    REQUIRE(ir->front().command().not_flag() == false);
+    REQUIRE(&ir->front().command().def() == cmdman.find_command("WAIT"));
+    REQUIRE(ir->front().command().args().size() == 1);
+    REQUIRE(*ir->front().command().arg(0).as_int() == 98);
 
-    REQUIRE(ir->back().label == symrepo.lookup_label("SOME_LABEL"));
-    REQUIRE(ir->back().command != nullptr);
-    REQUIRE(ir->front().command->not_flag == false);
-    REQUIRE(&ir->back().command->def == cmdman.find_command("PRINT_HELP"));
-    REQUIRE(ir->back().command->args.size() == 1);
-    REQUIRE(*ir->back().command->args[0]->as_text_label() == "HELLO"sv);
+    REQUIRE(&ir->back().label() == symrepo.lookup_label("SOME_LABEL"));
+    REQUIRE(ir->back().has_command());
+    REQUIRE(ir->front().command().not_flag() == false);
+    REQUIRE(&ir->back().command().def() == cmdman.find_command("PRINT_HELP"));
+    REQUIRE(ir->back().command().args().size() == 1);
+    REQUIRE(*ir->back().command().arg(0).as_text_label() == "HELLO"sv);
 }
 
 TEST_CASE_FIXTURE(SemaFixture, "sema valid NOTed command")
@@ -398,10 +398,10 @@ TEST_CASE_FIXTURE(SemaFixture, "sema valid NOTed command")
     REQUIRE(size(*ir) == 3);
 
     const auto& wait = *std::next(ir->begin());
-    REQUIRE(wait.label == nullptr);
-    REQUIRE(wait.command != nullptr);
-    REQUIRE(wait.command->not_flag == true);
-    REQUIRE(&wait.command->def == cmdman.find_command("WAIT"));
+    REQUIRE(!wait.has_label());
+    REQUIRE(wait.has_command());
+    REQUIRE(wait.command().not_flag() == true);
+    REQUIRE(&wait.command().def() == cmdman.find_command("WAIT"));
 }
 
 TEST_CASE_FIXTURE(SemaFixture, "sema INT parameter")
@@ -413,9 +413,9 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INT parameter")
         REQUIRE(ir != std::nullopt);
         REQUIRE(size(*ir) == 2);
 
-        const auto& command_1 = *std::next(ir->begin(), 1)->command;
-        REQUIRE(command_1.args.size() == 2);
-        REQUIRE(*command_1.args[1]->as_integer() == 100);
+        const auto& command_1 = std::next(ir->begin(), 1)->command();
+        REQUIRE(command_1.args().size() == 2);
+        REQUIRE(*command_1.arg(1).as_int() == 100);
     }
 
     SUBCASE("invalid INT param - not integer")
@@ -443,8 +443,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema FLOAT parameter")
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
         REQUIRE(size(*ir) == 2);
-        REQUIRE(ir->back().command->args.size() == 2);
-        REQUIRE(*ir->back().command->args[1]->as_float() == 1.0);
+        REQUIRE(ir->back().command().args().size() == 2);
+        REQUIRE(*ir->back().command().arg(1).as_float() == 1.0);
     }
 
     SUBCASE("invalid FLOAT param - not float")
@@ -480,16 +480,16 @@ TEST_CASE_FIXTURE(SemaFixture, "sema TEXT_LABEL parameter")
         const auto& third = *std::prev(ir->end(), 2);
         const auto& fourth = *std::prev(ir->end(), 1);
 
-        REQUIRE(*second.command->args[0]->as_text_label() == "SOMEHELP"sv);
-        REQUIRE(second.command->args[0]->as_var_ref() == nullptr);
+        REQUIRE(*second.command().arg(0).as_text_label() == "SOMEHELP"sv);
+        REQUIRE(second.command().arg(0).as_var_ref() == std::nullopt);
 
-        REQUIRE(std::addressof(third.command->args[0]->as_var_ref()->def)
+        REQUIRE(std::addressof(third.command().arg(0).as_var_ref()->def())
                 == symrepo.lookup_var("SOMEHELP"));
-        REQUIRE(third.command->args[0]->as_text_label() == nullptr);
+        REQUIRE(third.command().arg(0).as_text_label() == std::nullopt);
 
-        REQUIRE(std::addressof(fourth.command->args[0]->as_var_ref()->def)
+        REQUIRE(std::addressof(fourth.command().arg(0).as_var_ref()->def())
                 == symrepo.lookup_var("$X"));
-        REQUIRE(fourth.command->args[0]->as_text_label() == nullptr);
+        REQUIRE(fourth.command().arg(0).as_text_label() == std::nullopt);
     }
 
     SUBCASE("invalid TEXT_LABEL param - not identifier")
@@ -528,7 +528,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema TEXT_LABEL parameter")
         build_sema("PRINT_HELP MEDIC");
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(*ir->front().command->args[0]->as_text_label() == "MEDIC"sv);
+        REQUIRE(*ir->front().command().arg(0).as_text_label() == "MEDIC"sv);
     }
 }
 
@@ -540,9 +540,10 @@ TEST_CASE_FIXTURE(SemaFixture, "sema LABEL parameter")
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
         REQUIRE(size(*ir) == 1);
-        REQUIRE(ir->front().label == symrepo.lookup_label("LABEL1"));
-        REQUIRE(ir->front().command != nullptr);
-        REQUIRE(ir->front().command->args[0]->as_label() == ir->front().label);
+        REQUIRE(&ir->front().label() == symrepo.lookup_label("LABEL1"));
+        REQUIRE(ir->front().has_command());
+        REQUIRE(ir->front().command().arg(0).as_label()
+                == &ir->front().label());
     }
 
     SUBCASE("valid LABEL param - does not collide with string constants")
@@ -551,9 +552,10 @@ TEST_CASE_FIXTURE(SemaFixture, "sema LABEL parameter")
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
         REQUIRE(size(*ir) == 1);
-        REQUIRE(ir->front().label == symrepo.lookup_label("ON"));
-        REQUIRE(ir->front().command != nullptr);
-        REQUIRE(ir->front().command->args[0]->as_label() == ir->front().label);
+        REQUIRE(&ir->front().label() == symrepo.lookup_label("ON"));
+        REQUIRE(ir->front().has_command());
+        REQUIRE(ir->front().command().arg(0).as_label()
+                == &ir->front().label());
     }
 
     SUBCASE("invalid LABEL param - does not exist")
@@ -579,9 +581,10 @@ TEST_CASE_FIXTURE(SemaFixture, "sema STRING parameter")
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
         REQUIRE(size(*ir) == 1);
-        REQUIRE(ir->front().command != nullptr);
-        REQUIRE(ir->front().command->args.size() == 1);
-        REQUIRE(*ir->front().command->args[0]->as_string() == "Hello World"sv);
+        REQUIRE(ir->front().has_command());
+        REQUIRE(ir->front().command().args().size() == 1);
+        REQUIRE(ir->front().command().arg(0).as_string() != std::nullopt);
+        REQUIRE(*ir->front().command().arg(0).as_string() == "Hello World"sv);
     }
 
     SUBCASE("invalid STRING param - not string")
@@ -604,13 +607,13 @@ TEST_CASE_FIXTURE(SemaFixture, "sema VAR_INT parameter")
         REQUIRE(size(*ir) == 5);
         const auto& set_var_int_1 = *std::prev(ir->end(), 3);
         const auto& set_var_int_2 = *std::prev(ir->end(), 2);
-        REQUIRE(set_var_int_1.command->args.size() == 2);
+        REQUIRE(set_var_int_1.command().args().size() == 2);
         REQUIRE(std::addressof(
-                        set_var_int_1.command->args[0]->as_var_ref()->def)
+                        set_var_int_1.command().arg(0).as_var_ref()->def())
                 == symrepo.lookup_var("$G2"));
-        REQUIRE(set_var_int_2.command->args.size() == 2);
+        REQUIRE(set_var_int_2.command().args().size() == 2);
         REQUIRE(std::addressof(
-                        set_var_int_2.command->args[0]->as_var_ref()->def)
+                        set_var_int_2.command().arg(0).as_var_ref()->def())
                 == symrepo.lookup_var("G1"));
     }
 
@@ -654,13 +657,13 @@ TEST_CASE_FIXTURE(SemaFixture, "sema LVAR_INT parameter")
         REQUIRE(size(*ir) == 5);
         const auto& set_lvar_int_1 = *std::prev(ir->end(), 3);
         const auto& set_lvar_int_2 = *std::prev(ir->end(), 2);
-        REQUIRE(set_lvar_int_1.command->args.size() == 2);
+        REQUIRE(set_lvar_int_1.command().args().size() == 2);
         REQUIRE(std::addressof(
-                        set_lvar_int_1.command->args[0]->as_var_ref()->def)
+                        set_lvar_int_1.command().arg(0).as_var_ref()->def())
                 == symrepo.lookup_var("$L2", 1));
-        REQUIRE(set_lvar_int_2.command->args.size() == 2);
+        REQUIRE(set_lvar_int_2.command().args().size() == 2);
         REQUIRE(std::addressof(
-                        set_lvar_int_2.command->args[0]->as_var_ref()->def)
+                        set_lvar_int_2.command().arg(0).as_var_ref()->def())
                 == symrepo.lookup_var("L1", 1));
     }
 
@@ -704,13 +707,13 @@ TEST_CASE_FIXTURE(SemaFixture, "sema VAR_FLOAT parameter")
         REQUIRE(size(*ir) == 5);
         const auto& set_var_flt_1 = *std::prev(ir->end(), 3);
         const auto& set_var_flt_2 = *std::prev(ir->end(), 2);
-        REQUIRE(set_var_flt_1.command->args.size() == 2);
+        REQUIRE(set_var_flt_1.command().args().size() == 2);
         REQUIRE(std::addressof(
-                        set_var_flt_1.command->args[0]->as_var_ref()->def)
+                        set_var_flt_1.command().arg(0).as_var_ref()->def())
                 == symrepo.lookup_var("$G2"));
-        REQUIRE(set_var_flt_2.command->args.size() == 2);
+        REQUIRE(set_var_flt_2.command().args().size() == 2);
         REQUIRE(std::addressof(
-                        set_var_flt_2.command->args[0]->as_var_ref()->def)
+                        set_var_flt_2.command().arg(0).as_var_ref()->def())
                 == symrepo.lookup_var("G1"));
     }
 
@@ -754,13 +757,13 @@ TEST_CASE_FIXTURE(SemaFixture, "sema LVAR_FLOAT parameter")
         REQUIRE(size(*ir) == 5);
         const auto& set_lvar_flt_1 = *std::prev(ir->end(), 3);
         const auto& set_lvar_flt_2 = *std::prev(ir->end(), 2);
-        REQUIRE(set_lvar_flt_1.command->args.size() == 2);
+        REQUIRE(set_lvar_flt_1.command().args().size() == 2);
         REQUIRE(std::addressof(
-                        set_lvar_flt_1.command->args[0]->as_var_ref()->def)
+                        set_lvar_flt_1.command().arg(0).as_var_ref()->def())
                 == symrepo.lookup_var("$L2", 1));
-        REQUIRE(set_lvar_flt_2.command->args.size() == 2);
+        REQUIRE(set_lvar_flt_2.command().args().size() == 2);
         REQUIRE(std::addressof(
-                        set_lvar_flt_2.command->args[0]->as_var_ref()->def)
+                        set_lvar_flt_2.command().arg(0).as_var_ref()->def())
                 == symrepo.lookup_var("L1", 1));
     }
 
@@ -804,11 +807,11 @@ TEST_CASE_FIXTURE(SemaFixture, "sema VAR_TEXT_LABEL parameter")
         REQUIRE(size(*ir) == 5);
         const auto& set_var_1 = *std::prev(ir->end(), 3);
         const auto& set_var_2 = *std::prev(ir->end(), 2);
-        REQUIRE(set_var_1.command->args.size() == 2);
-        REQUIRE(std::addressof(set_var_1.command->args[0]->as_var_ref()->def)
+        REQUIRE(set_var_1.command().args().size() == 2);
+        REQUIRE(std::addressof(set_var_1.command().arg(0).as_var_ref()->def())
                 == symrepo.lookup_var("$G2"));
-        REQUIRE(set_var_2.command->args.size() == 2);
-        REQUIRE(std::addressof(set_var_2.command->args[0]->as_var_ref()->def)
+        REQUIRE(set_var_2.command().args().size() == 2);
+        REQUIRE(std::addressof(set_var_2.command().arg(0).as_var_ref()->def())
                 == symrepo.lookup_var("G1"));
     }
 
@@ -852,11 +855,11 @@ TEST_CASE_FIXTURE(SemaFixture, "sema LVAR_TEXT_LABEL parameter")
         REQUIRE(size(*ir) == 5);
         const auto& set_lvar_1 = *std::prev(ir->end(), 3);
         const auto& set_lvar_2 = *std::prev(ir->end(), 2);
-        REQUIRE(set_lvar_1.command->args.size() == 2);
-        REQUIRE(std::addressof(set_lvar_1.command->args[0]->as_var_ref()->def)
+        REQUIRE(set_lvar_1.command().args().size() == 2);
+        REQUIRE(std::addressof(set_lvar_1.command().arg(0).as_var_ref()->def())
                 == symrepo.lookup_var("$L2", 1));
-        REQUIRE(set_lvar_2.command->args.size() == 2);
-        REQUIRE(std::addressof(set_lvar_2.command->args[0]->as_var_ref()->def)
+        REQUIRE(set_lvar_2.command().args().size() == 2);
+        REQUIRE(std::addressof(set_lvar_2.command().arg(0).as_var_ref()->def())
                 == symrepo.lookup_var("L1", 1));
     }
 
@@ -901,12 +904,12 @@ TEST_CASE_FIXTURE(SemaFixture, "sema OUTPUT_INT parameter")
 
         REQUIRE(size(*ir) == 6);
 
-        const auto* arg1 = std::prev(ir->end(), 3)->command->args[2];
-        const auto* arg2 = std::prev(ir->end(), 2)->command->args[2];
+        const auto& arg1 = std::prev(ir->end(), 3)->command().arg(2);
+        const auto& arg2 = std::prev(ir->end(), 2)->command().arg(2);
 
-        REQUIRE(std::addressof(arg1->as_var_ref()->def)
+        REQUIRE(std::addressof(arg1.as_var_ref()->def())
                 == symrepo.lookup_var("X", 0));
-        REQUIRE(std::addressof(arg2->as_var_ref()->def)
+        REQUIRE(std::addressof(arg2.as_var_ref()->def())
                 == symrepo.lookup_var("Y", 1));
     }
 
@@ -952,12 +955,12 @@ TEST_CASE_FIXTURE(SemaFixture, "sema OUTPUT_FLOAT parameter")
 
         REQUIRE(size(*ir) == 6);
 
-        const auto* arg1 = std::prev(ir->end(), 3)->command->args[2];
-        const auto* arg2 = std::prev(ir->end(), 2)->command->args[2];
+        const auto& arg1 = std::prev(ir->end(), 3)->command().arg(2);
+        const auto& arg2 = std::prev(ir->end(), 2)->command().arg(2);
 
-        REQUIRE(std::addressof(arg1->as_var_ref()->def)
+        REQUIRE(std::addressof(arg1.as_var_ref()->def())
                 == symrepo.lookup_var("X", 0));
-        REQUIRE(std::addressof(arg2->as_var_ref()->def)
+        REQUIRE(std::addressof(arg2.as_var_ref()->def())
                 == symrepo.lookup_var("Y", 1));
     }
 
@@ -1000,24 +1003,25 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_INT parameter")
         REQUIRE(ir != std::nullopt);
         REQUIRE(size(*ir) == 7);
 
-        const auto* arg_1 = std::next(ir->begin(), 3)->command->args[0];
-        const auto* arg_2 = std::next(ir->begin(), 4)->command->args[0];
-        const auto* arg_3 = std::next(ir->begin(), 5)->command->args[0];
+        const auto& arg_1 = std::next(ir->begin(), 3)->command().arg(0);
+        const auto& arg_2 = std::next(ir->begin(), 4)->command().arg(0);
+        const auto& arg_3 = std::next(ir->begin(), 5)->command().arg(0);
 
-        REQUIRE(arg_1->as_integer() == nullptr);
-        REQUIRE(arg_1->as_float() == nullptr);
-        REQUIRE(std::addressof(arg_1->as_var_ref()->def)
+        REQUIRE(arg_1.as_int() == std::nullopt);
+        REQUIRE(arg_1.as_float() == std::nullopt);
+        REQUIRE(arg_1.as_var_ref() != std::nullopt);
+        REQUIRE(std::addressof(arg_1.as_var_ref()->def())
                 == symrepo.lookup_var("X", 0));
 
-        REQUIRE(arg_2->as_integer() == nullptr);
-        REQUIRE(arg_2->as_float() == nullptr);
-        REQUIRE(std::addressof(arg_2->as_var_ref()->def)
+        REQUIRE(arg_2.as_int() == std::nullopt);
+        REQUIRE(arg_2.as_float() == std::nullopt);
+        REQUIRE(std::addressof(arg_2.as_var_ref()->def())
                 == symrepo.lookup_var("Y", 1));
 
-        REQUIRE(arg_3->as_integer() != nullptr);
-        REQUIRE(*arg_3->as_integer() == 8);
-        REQUIRE(arg_3->as_float() == nullptr);
-        REQUIRE(arg_3->as_var_ref() == nullptr);
+        REQUIRE(arg_3.as_int() != std::nullopt);
+        REQUIRE(*arg_3.as_int() == 8);
+        REQUIRE(arg_3.as_float() == std::nullopt);
+        REQUIRE(arg_3.as_var_ref() == std::nullopt);
     }
 
     SUBCASE("valid INPUT_INT param with string constants")
@@ -1032,34 +1036,34 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_INT parameter")
         REQUIRE(ir != std::nullopt);
         REQUIRE(size(*ir) == 8);
 
-        const auto& wait_off = *std::next(ir->begin(), 2)->command;
-        const auto& wait_on = *std::next(ir->begin(), 3)->command;
-        const auto& create_char_male = *std::next(ir->begin(), 4)->command;
-        const auto& create_char_medic = *std::next(ir->begin(), 5)->command;
-        const auto& create_char_on = *std::next(ir->begin(), 6)->command;
+        const auto& wait_off = std::next(ir->begin(), 2)->command();
+        const auto& wait_on = std::next(ir->begin(), 3)->command();
+        const auto& create_char_male = std::next(ir->begin(), 4)->command();
+        const auto& create_char_medic = std::next(ir->begin(), 5)->command();
+        const auto& create_char_on = std::next(ir->begin(), 6)->command();
 
-        REQUIRE(wait_off.args[0]->as_constant()->value == 0);
-        REQUIRE(wait_on.args[0]->as_constant()->value == 1);
+        REQUIRE(wait_off.arg(0).as_constant()->value == 0);
+        REQUIRE(wait_on.arg(0).as_constant()->value == 1);
 
-        REQUIRE(create_char_male.args[0]->as_constant()->enum_id
+        REQUIRE(create_char_male.arg(0).as_constant()->enum_id
                 == *cmdman.find_enumeration("PEDTYPE"));
-        REQUIRE(create_char_male.args[0]->as_constant()->value == 4);
-        REQUIRE(create_char_male.args[1]->as_constant()->enum_id
+        REQUIRE(create_char_male.arg(0).as_constant()->value == 4);
+        REQUIRE(create_char_male.arg(1).as_constant()->enum_id
                 == *cmdman.find_enumeration("DEFAULTMODEL"));
-        REQUIRE(create_char_male.args[1]->as_constant()->value == 5);
+        REQUIRE(create_char_male.arg(1).as_constant()->value == 5);
 
-        REQUIRE(create_char_medic.args[0]->as_constant()->enum_id
+        REQUIRE(create_char_medic.arg(0).as_constant()->enum_id
                 == *cmdman.find_enumeration("PEDTYPE"));
-        REQUIRE(create_char_medic.args[0]->as_constant()->value == 16);
-        REQUIRE(create_char_medic.args[1]->as_constant()->enum_id
+        REQUIRE(create_char_medic.arg(0).as_constant()->value == 16);
+        REQUIRE(create_char_medic.arg(1).as_constant()->enum_id
                 == *cmdman.find_enumeration("DEFAULTMODEL"));
-        REQUIRE(create_char_medic.args[1]->as_constant()->value == 5);
+        REQUIRE(create_char_medic.arg(1).as_constant()->value == 5);
 
-        REQUIRE(std::addressof(create_char_on.args[0]->as_var_ref()->def)
+        REQUIRE(std::addressof(create_char_on.arg(0).as_var_ref()->def())
                 == symrepo.lookup_var("ON"));
-        REQUIRE(create_char_on.args[1]->as_constant()->enum_id
+        REQUIRE(create_char_on.arg(1).as_constant()->enum_id
                 == *cmdman.find_enumeration("DEFAULTMODEL"));
-        REQUIRE(create_char_on.args[1]->as_constant()->value == 5);
+        REQUIRE(create_char_on.arg(1).as_constant()->value == 5);
     }
 
     SUBCASE("invalid INPUT_INT param - float literal")
@@ -1119,24 +1123,24 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_FLOAT parameter")
         REQUIRE(ir != std::nullopt);
         REQUIRE(size(*ir) == 6);
 
-        const auto* arg_1 = std::next(ir->begin(), 3)->command->args[0];
-        const auto* arg_2 = std::next(ir->begin(), 3)->command->args[1];
-        const auto* arg_3 = std::next(ir->begin(), 4)->command->args[1];
+        const auto& arg_1 = std::next(ir->begin(), 3)->command().arg(0);
+        const auto& arg_2 = std::next(ir->begin(), 3)->command().arg(1);
+        const auto& arg_3 = std::next(ir->begin(), 4)->command().arg(1);
 
-        REQUIRE(arg_1->as_integer() == nullptr);
-        REQUIRE(arg_1->as_float() == nullptr);
-        REQUIRE(std::addressof(arg_1->as_var_ref()->def)
+        REQUIRE(arg_1.as_int() == std::nullopt);
+        REQUIRE(arg_1.as_float() == std::nullopt);
+        REQUIRE(std::addressof(arg_1.as_var_ref()->def())
                 == symrepo.lookup_var("X", 0));
 
-        REQUIRE(arg_2->as_integer() == nullptr);
-        REQUIRE(arg_2->as_float() == nullptr);
-        REQUIRE(std::addressof(arg_2->as_var_ref()->def)
+        REQUIRE(arg_2.as_int() == std::nullopt);
+        REQUIRE(arg_2.as_float() == std::nullopt);
+        REQUIRE(std::addressof(arg_2.as_var_ref()->def())
                 == symrepo.lookup_var("Y", 1));
 
-        REQUIRE(arg_3->as_integer() == nullptr);
-        REQUIRE(arg_3->as_float() != nullptr);
-        REQUIRE(*arg_3->as_float() == 2.0F);
-        REQUIRE(arg_3->as_var_ref() == nullptr);
+        REQUIRE(arg_3.as_int() == std::nullopt);
+        REQUIRE(arg_3.as_float() != std::nullopt);
+        REQUIRE(*arg_3.as_float() == 2.0F);
+        REQUIRE(arg_3.as_var_ref() == std::nullopt);
     }
 
     SUBCASE("invalid INPUT_FLOAT param - integer literal")
@@ -1192,59 +1196,59 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_OPT parameter")
         REQUIRE(ir != std::nullopt);
         REQUIRE(size(*ir) == 13);
 
-        const auto* cmd = std::prev(ir->end(), 2)->command;
-        REQUIRE(cmd->args.size() == 8);
+        const auto& cmd = std::prev(ir->end(), 2)->command();
+        REQUIRE(cmd.args().size() == 8);
 
-        const auto* arg_1 = cmd->args[1];
-        const auto* arg_2 = cmd->args[2];
-        const auto* arg_3 = cmd->args[3];
-        const auto* arg_4 = cmd->args[4];
-        const auto* arg_5 = cmd->args[5];
-        const auto* arg_6 = cmd->args[6];
-        const auto* arg_7 = cmd->args[7];
+        const auto& arg_1 = cmd.arg(1);
+        const auto& arg_2 = cmd.arg(2);
+        const auto& arg_3 = cmd.arg(3);
+        const auto& arg_4 = cmd.arg(4);
+        const auto& arg_5 = cmd.arg(5);
+        const auto& arg_6 = cmd.arg(6);
+        const auto& arg_7 = cmd.arg(7);
 
-        REQUIRE(arg_1->as_integer() == nullptr);
-        REQUIRE(arg_1->as_float() == nullptr);
-        REQUIRE(std::addressof(arg_1->as_var_ref()->def)
+        REQUIRE(arg_1.as_int() == std::nullopt);
+        REQUIRE(arg_1.as_float() == std::nullopt);
+        REQUIRE(std::addressof(arg_1.as_var_ref()->def())
                 == symrepo.lookup_var("GI", 0));
-        REQUIRE(arg_1->as_constant() == nullptr);
+        REQUIRE(arg_1.as_constant() == nullptr);
 
-        REQUIRE(arg_2->as_integer() == nullptr);
-        REQUIRE(arg_2->as_float() == nullptr);
-        REQUIRE(std::addressof(arg_2->as_var_ref()->def)
+        REQUIRE(arg_2.as_int() == std::nullopt);
+        REQUIRE(arg_2.as_float() == std::nullopt);
+        REQUIRE(std::addressof(arg_2.as_var_ref()->def())
                 == symrepo.lookup_var("GF", 0));
-        REQUIRE(arg_2->as_constant() == nullptr);
+        REQUIRE(arg_2.as_constant() == nullptr);
 
-        REQUIRE(arg_3->as_integer() == nullptr);
-        REQUIRE(arg_3->as_float() == nullptr);
-        REQUIRE(std::addressof(arg_3->as_var_ref()->def)
+        REQUIRE(arg_3.as_int() == std::nullopt);
+        REQUIRE(arg_3.as_float() == std::nullopt);
+        REQUIRE(std::addressof(arg_3.as_var_ref()->def())
                 == symrepo.lookup_var("LI", 1));
-        REQUIRE(arg_3->as_constant() == nullptr);
+        REQUIRE(arg_3.as_constant() == nullptr);
 
-        REQUIRE(arg_4->as_integer() == nullptr);
-        REQUIRE(arg_4->as_float() == nullptr);
-        REQUIRE(std::addressof(arg_4->as_var_ref()->def)
+        REQUIRE(arg_4.as_int() == std::nullopt);
+        REQUIRE(arg_4.as_float() == std::nullopt);
+        REQUIRE(std::addressof(arg_4.as_var_ref()->def())
                 == symrepo.lookup_var("LF", 1));
-        REQUIRE(arg_4->as_constant() == nullptr);
+        REQUIRE(arg_4.as_constant() == nullptr);
 
-        REQUIRE(arg_5->as_integer() != nullptr);
-        REQUIRE(*arg_5->as_integer() == 123);
-        REQUIRE(arg_5->as_float() == nullptr);
-        REQUIRE(arg_5->as_var_ref() == nullptr);
-        REQUIRE(arg_5->as_constant() == nullptr);
+        REQUIRE(arg_5.as_int() != std::nullopt);
+        REQUIRE(*arg_5.as_int() == 123);
+        REQUIRE(arg_5.as_float() == std::nullopt);
+        REQUIRE(arg_5.as_var_ref() == std::nullopt);
+        REQUIRE(arg_5.as_constant() == nullptr);
 
-        REQUIRE(arg_6->as_integer() == nullptr);
-        REQUIRE(arg_6->as_float() != nullptr);
-        REQUIRE(*arg_6->as_float() == 1.0F);
-        REQUIRE(arg_6->as_var_ref() == nullptr);
-        REQUIRE(arg_6->as_constant() == nullptr);
+        REQUIRE(arg_6.as_int() == std::nullopt);
+        REQUIRE(arg_6.as_float() != std::nullopt);
+        REQUIRE(*arg_6.as_float() == 1.0F);
+        REQUIRE(arg_6.as_var_ref() == std::nullopt);
+        REQUIRE(arg_6.as_constant() == nullptr);
 
-        REQUIRE(arg_7->as_integer() == nullptr);
-        REQUIRE(arg_7->as_float() == nullptr);
-        REQUIRE(arg_7->as_var_ref() == nullptr);
-        REQUIRE(arg_7->as_constant() != nullptr);
-        REQUIRE(arg_7->as_constant()->enum_id == cmdman.global_enum);
-        REQUIRE(arg_7->as_constant()->value == 1);
+        REQUIRE(arg_7.as_int() == std::nullopt);
+        REQUIRE(arg_7.as_float() == std::nullopt);
+        REQUIRE(arg_7.as_var_ref() == std::nullopt);
+        REQUIRE(arg_7.as_constant() != nullptr);
+        REQUIRE(arg_7.as_constant()->enum_id == cmdman.global_enum);
+        REQUIRE(arg_7.as_constant()->value == 1);
     }
 
     SUBCASE("invalid INPUT_OPT param - string literal")
@@ -1289,37 +1293,37 @@ TEST_CASE_FIXTURE(SemaFixture, "sema validate subscript")
         REQUIRE(ir != std::nullopt);
         REQUIRE(size(*ir) == 5);
 
-        const auto* var_ref_1
-                = std::prev(ir->end(), 4)->command->args[0]->as_var_ref();
-        const auto* var_ref_2
-                = std::prev(ir->end(), 3)->command->args[0]->as_var_ref();
-        const auto* var_ref_3
-                = std::prev(ir->end(), 2)->command->args[0]->as_var_ref();
-        const auto* var_ref_4
-                = std::prev(ir->end(), 1)->command->args[0]->as_var_ref();
+        const auto var_ref_1
+                = std::prev(ir->end(), 4)->command().arg(0).as_var_ref();
+        const auto var_ref_2
+                = std::prev(ir->end(), 3)->command().arg(0).as_var_ref();
+        const auto var_ref_3
+                = std::prev(ir->end(), 2)->command().arg(0).as_var_ref();
+        const auto var_ref_4
+                = std::prev(ir->end(), 1)->command().arg(0).as_var_ref();
 
-        REQUIRE(var_ref_1 != nullptr);
-        REQUIRE(std::addressof(var_ref_1->def) == symrepo.lookup_var("X"));
+        REQUIRE(var_ref_1 != std::nullopt);
+        REQUIRE(std::addressof(var_ref_1->def()) == symrepo.lookup_var("X"));
         REQUIRE(var_ref_1->has_index());
-        REQUIRE(*var_ref_1->index_as_integer() == 9);
+        REQUIRE(*var_ref_1->index_as_int() == 9);
         REQUIRE(var_ref_1->index_as_variable() == nullptr);
 
-        REQUIRE(var_ref_2 != nullptr);
-        REQUIRE(std::addressof(var_ref_2->def) == symrepo.lookup_var("X"));
+        REQUIRE(var_ref_2 != std::nullopt);
+        REQUIRE(std::addressof(var_ref_2->def()) == symrepo.lookup_var("X"));
         REQUIRE(var_ref_2->has_index());
-        REQUIRE(var_ref_2->index_as_integer() == nullptr);
+        REQUIRE(var_ref_2->index_as_int() == std::nullopt);
         REQUIRE(var_ref_2->index_as_variable() == symrepo.lookup_var("Y"));
 
-        REQUIRE(var_ref_3 != nullptr);
-        REQUIRE(std::addressof(var_ref_3->def) == symrepo.lookup_var("X"));
+        REQUIRE(var_ref_3 != std::nullopt);
+        REQUIRE(std::addressof(var_ref_3->def()) == symrepo.lookup_var("X"));
         REQUIRE(var_ref_3->has_index());
-        REQUIRE(*var_ref_3->index_as_integer() == 0);
+        REQUIRE(*var_ref_3->index_as_int() == 0);
         REQUIRE(var_ref_3->index_as_variable() == nullptr);
 
-        REQUIRE(var_ref_4 != nullptr);
-        REQUIRE(std::addressof(var_ref_4->def) == symrepo.lookup_var("Y"));
+        REQUIRE(var_ref_4 != std::nullopt);
+        REQUIRE(std::addressof(var_ref_4->def()) == symrepo.lookup_var("Y"));
         REQUIRE(!var_ref_4->has_index());
-        REQUIRE(var_ref_4->index_as_integer() == nullptr);
+        REQUIRE(var_ref_4->index_as_int() == std::nullopt);
         REQUIRE(var_ref_4->index_as_variable() == nullptr);
     }
 
@@ -1451,21 +1455,21 @@ TEST_CASE_FIXTURE(SemaFixture, "sema alternators")
                    "SET lf gf\n}");
         auto ir = sema.validate();
         REQUIRE(ir != std::nullopt);
-        REQUIRE(&std::next(ir->begin(), 5)->command->def
+        REQUIRE(&std::next(ir->begin(), 5)->command().def()
                 == cmdman.find_command("ABS_VAR_INT"));
-        REQUIRE(&std::next(ir->begin(), 6)->command->def
+        REQUIRE(&std::next(ir->begin(), 6)->command().def()
                 == cmdman.find_command("ABS_LVAR_INT"));
-        REQUIRE(&std::next(ir->begin(), 7)->command->def
+        REQUIRE(&std::next(ir->begin(), 7)->command().def()
                 == cmdman.find_command("ABS_VAR_FLOAT"));
-        REQUIRE(&std::next(ir->begin(), 8)->command->def
+        REQUIRE(&std::next(ir->begin(), 8)->command().def()
                 == cmdman.find_command("ABS_LVAR_FLOAT"));
-        REQUIRE(&std::next(ir->begin(), 9)->command->def
+        REQUIRE(&std::next(ir->begin(), 9)->command().def()
                 == cmdman.find_command("SET_VAR_INT"));
-        REQUIRE(&std::next(ir->begin(), 10)->command->def
+        REQUIRE(&std::next(ir->begin(), 10)->command().def()
                 == cmdman.find_command("SET_VAR_FLOAT"));
-        REQUIRE(&std::next(ir->begin(), 11)->command->def
+        REQUIRE(&std::next(ir->begin(), 11)->command().def()
                 == cmdman.find_command("SET_VAR_INT_TO_LVAR_INT"));
-        REQUIRE(&std::next(ir->begin(), 12)->command->def
+        REQUIRE(&std::next(ir->begin(), 12)->command().def()
                 == cmdman.find_command("SET_LVAR_FLOAT_TO_VAR_FLOAT"));
     }
 
@@ -1476,18 +1480,18 @@ TEST_CASE_FIXTURE(SemaFixture, "sema alternators")
         REQUIRE(ir != std::nullopt);
         REQUIRE(size(*ir) == 3);
 
-        const auto& command_1 = *std::next(ir->begin(), 1)->command;
-        const auto& command_2 = *std::next(ir->begin(), 2)->command;
+        const auto& command_1 = std::next(ir->begin(), 1)->command();
+        const auto& command_2 = std::next(ir->begin(), 2)->command();
 
-        REQUIRE(&command_1.def == cmdman.find_command("SET_VAR_TEXT_LABEL"));
-        REQUIRE(std::addressof(command_1.args[0]->as_var_ref()->def)
+        REQUIRE(&command_1.def() == cmdman.find_command("SET_VAR_TEXT_LABEL"));
+        REQUIRE(std::addressof(command_1.arg(0).as_var_ref()->def())
                 == symrepo.lookup_var("X"));
-        REQUIRE(*command_1.args[1]->as_text_label() == "Y"sv);
+        REQUIRE(*command_1.arg(1).as_text_label() == "Y"sv);
 
-        REQUIRE(&command_2.def == cmdman.find_command("SET_VAR_TEXT_LABEL"));
-        REQUIRE(std::addressof(command_2.args[0]->as_var_ref()->def)
+        REQUIRE(&command_2.def() == cmdman.find_command("SET_VAR_TEXT_LABEL"));
+        REQUIRE(std::addressof(command_2.arg(0).as_var_ref()->def())
                 == symrepo.lookup_var("X"));
-        REQUIRE(std::addressof(command_2.args[1]->as_var_ref()->def)
+        REQUIRE(std::addressof(command_2.arg(1).as_var_ref()->def())
                 == symrepo.lookup_var("X"));
     }
 
@@ -1498,19 +1502,19 @@ TEST_CASE_FIXTURE(SemaFixture, "sema alternators")
         REQUIRE(ir != std::nullopt);
         REQUIRE(size(*ir) == 3);
 
-        const auto& command_1 = *std::next(ir->begin(), 1)->command;
-        const auto& command_2 = *std::next(ir->begin(), 2)->command;
+        const auto& command_1 = std::next(ir->begin(), 1)->command();
+        const auto& command_2 = std::next(ir->begin(), 2)->command();
 
-        REQUIRE(&command_1.def == cmdman.find_command("SET_VAR_INT"));
-        REQUIRE(std::addressof(command_1.args[0]->as_var_ref()->def)
+        REQUIRE(&command_1.def() == cmdman.find_command("SET_VAR_INT"));
+        REQUIRE(std::addressof(command_1.arg(0).as_var_ref()->def())
                 == symrepo.lookup_var("X"));
-        REQUIRE(command_1.args[1]->as_constant()->value == 1);
+        REQUIRE(command_1.arg(1).as_constant()->value == 1);
 
-        REQUIRE(&command_2.def
+        REQUIRE(&command_2.def()
                 == cmdman.find_command("SET_VAR_INT_TO_CONSTANT"));
-        REQUIRE(std::addressof(command_2.args[0]->as_var_ref()->def)
+        REQUIRE(std::addressof(command_2.arg(0).as_var_ref()->def())
                 == symrepo.lookup_var("X"));
-        REQUIRE(command_2.args[1]->as_constant()->value == 145);
+        REQUIRE(command_2.arg(1).as_constant()->value == 145);
     }
 
     SUBCASE("no alternative match - string constants")
@@ -1924,13 +1928,13 @@ TEST_CASE_FIXTURE(SemaFixture, "sema used objects")
         CHECK(cmdman.find_constant(defaultmodel_enum, "CHEETAH"));
         CHECK(modelman.find_model("CHEETAH") != nullptr);
 
-        REQUIRE(ir->back().command);
-        REQUIRE(ir->back().command->args.size() == 5);
-        REQUIRE(!ir->back().command->args[0]->as_used_object());
-        REQUIRE(ir->back().command->args[0]->as_constant());
-        REQUIRE(ir->back().command->args[0]->as_constant()->enum_id
+        REQUIRE(ir->back().has_command());
+        REQUIRE(ir->back().command().args().size() == 5);
+        REQUIRE(!ir->back().command().arg(0).as_used_object());
+        REQUIRE(ir->back().command().arg(0).as_constant());
+        REQUIRE(ir->back().command().arg(0).as_constant()->enum_id
                 == defaultmodel_enum);
-        REQUIRE(ir->back().command->args[0]->as_constant()->value
+        REQUIRE(ir->back().command().arg(0).as_constant()->value
                 == cmdman.find_constant(defaultmodel_enum, "CHEETAH")->value);
 
         REQUIRE(!symrepo.lookup_used_object("CHEETAH"));
@@ -1947,11 +1951,11 @@ TEST_CASE_FIXTURE(SemaFixture, "sema used objects")
 
         CHECK(modelman.find_model("LEVEL_MODEL") != nullptr);
 
-        REQUIRE(ir->back().command);
-        REQUIRE(ir->back().command->args.size() == 5);
-        REQUIRE(!ir->back().command->args[0]->as_constant());
-        REQUIRE(ir->back().command->args[0]->as_used_object());
-        REQUIRE(ir->back().command->args[0]->as_used_object()
+        REQUIRE(ir->back().has_command());
+        REQUIRE(ir->back().command().args().size() == 5);
+        REQUIRE(!ir->back().command().arg(0).as_constant());
+        REQUIRE(ir->back().command().arg(0).as_used_object());
+        REQUIRE(ir->back().command().arg(0).as_used_object()
                 == symrepo.lookup_used_object("LEVEL_MODEL"));
 
         REQUIRE(symrepo.lookup_used_object("LEVEL_MODEL")->id == 0);
@@ -1968,10 +1972,10 @@ TEST_CASE_FIXTURE(SemaFixture, "sema used objects")
 
         CHECK(modelman.find_model("X") == nullptr);
 
-        REQUIRE(ir->back().command);
-        REQUIRE(ir->back().command->args.size() == 5);
-        REQUIRE(ir->back().command->args[0]->as_var_ref());
-        REQUIRE(std::addressof(ir->back().command->args[0]->as_var_ref()->def)
+        REQUIRE(ir->back().has_command());
+        REQUIRE(ir->back().command().args().size() == 5);
+        REQUIRE(ir->back().command().arg(0).as_var_ref());
+        REQUIRE(std::addressof(ir->back().command().arg(0).as_var_ref()->def())
                 == symrepo.lookup_var("X"));
 
         REQUIRE(symrepo.lookup_used_object("X") == nullptr);
@@ -2008,14 +2012,14 @@ TEST_CASE_FIXTURE(SemaFixture, "sema used objects")
         REQUIRE(ir != std::nullopt);
         REQUIRE(size(*ir) == 3);
 
-        REQUIRE(std::next(ir->begin(), 1)->command);
-        REQUIRE(std::next(ir->begin(), 1)->command->args.size() == 5);
-        REQUIRE(std::next(ir->begin(), 1)->command->args[0]->as_used_object()
+        REQUIRE(std::next(ir->begin(), 1)->has_command());
+        REQUIRE(std::next(ir->begin(), 1)->command().args().size() == 5);
+        REQUIRE(std::next(ir->begin(), 1)->command().arg(0).as_used_object()
                 == symrepo.lookup_used_object("LEVEL_MODEL"));
 
-        REQUIRE(std::next(ir->begin(), 2)->command);
-        REQUIRE(std::next(ir->begin(), 2)->command->args.size() == 5);
-        REQUIRE(std::next(ir->begin(), 2)->command->args[0]->as_used_object()
+        REQUIRE(std::next(ir->begin(), 2)->has_command());
+        REQUIRE(std::next(ir->begin(), 2)->command().args().size() == 5);
+        REQUIRE(std::next(ir->begin(), 2)->command().arg(0).as_used_object()
                 == symrepo.lookup_used_object("OTHER_LEVEL_MODEL"));
 
         REQUIRE(symrepo.lookup_used_object("LEVEL_MODEL"));
@@ -2033,14 +2037,14 @@ TEST_CASE_FIXTURE(SemaFixture, "sema used objects")
         REQUIRE(ir != std::nullopt);
         REQUIRE(size(*ir) == 3);
 
-        REQUIRE(std::next(ir->begin(), 1)->command);
-        REQUIRE(std::next(ir->begin(), 1)->command->args.size() == 5);
-        REQUIRE(std::next(ir->begin(), 1)->command->args[0]->as_used_object()
+        REQUIRE(std::next(ir->begin(), 1)->has_command());
+        REQUIRE(std::next(ir->begin(), 1)->command().args().size() == 5);
+        REQUIRE(std::next(ir->begin(), 1)->command().arg(0).as_used_object()
                 == symrepo.lookup_used_object("OTHER_LEVEL_MODEL"));
 
-        REQUIRE(std::next(ir->begin(), 2)->command);
-        REQUIRE(std::next(ir->begin(), 2)->command->args.size() == 5);
-        REQUIRE(std::next(ir->begin(), 2)->command->args[0]->as_used_object()
+        REQUIRE(std::next(ir->begin(), 2)->has_command());
+        REQUIRE(std::next(ir->begin(), 2)->command().args().size() == 5);
+        REQUIRE(std::next(ir->begin(), 2)->command().arg(0).as_used_object()
                 == symrepo.lookup_used_object("LEVEL_MODEL"));
 
         REQUIRE(symrepo.lookup_used_object("OTHER_LEVEL_MODEL"));
@@ -2059,14 +2063,14 @@ TEST_CASE_FIXTURE(SemaFixture, "sema used objects")
         REQUIRE(ir != std::nullopt);
         REQUIRE(size(*ir) == 3);
 
-        REQUIRE(std::next(ir->begin(), 1)->command);
-        REQUIRE(std::next(ir->begin(), 1)->command->args.size() == 5);
-        REQUIRE(std::next(ir->begin(), 1)->command->args[0]->as_used_object()
+        REQUIRE(std::next(ir->begin(), 1)->has_command());
+        REQUIRE(std::next(ir->begin(), 1)->command().args().size() == 5);
+        REQUIRE(std::next(ir->begin(), 1)->command().arg(0).as_used_object()
                 == symrepo.lookup_used_object("LEVEL_MODEL"));
 
-        REQUIRE(std::next(ir->begin(), 2)->command);
-        REQUIRE(std::next(ir->begin(), 2)->command->args.size() == 5);
-        REQUIRE(std::next(ir->begin(), 2)->command->args[0]->as_used_object()
+        REQUIRE(std::next(ir->begin(), 2)->has_command());
+        REQUIRE(std::next(ir->begin(), 2)->command().args().size() == 5);
+        REQUIRE(std::next(ir->begin(), 2)->command().arg(0).as_used_object()
                 == symrepo.lookup_used_object("LEVEL_MODEL"));
 
         REQUIRE(symrepo.lookup_used_object("LEVEL_MODEL"));

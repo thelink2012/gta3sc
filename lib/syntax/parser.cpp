@@ -1227,7 +1227,7 @@ auto Parser::parse_require_statement() -> std::optional<ArenaPtr<ParserIR>>
     }
     else if(iequal(scanner.spelling(*command), command_launch_mission)
             || iequal(scanner.spelling(*command),
-                       command_load_and_launch_mission))
+                      command_load_and_launch_mission))
     {
         builder.with_num_args(1);
     }

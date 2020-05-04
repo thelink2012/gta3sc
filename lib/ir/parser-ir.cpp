@@ -62,10 +62,10 @@ auto operator==(const ParserIR& lhs, const ParserIR& rhs) noexcept -> bool
        || lhs.has_command() != rhs.has_command())
         return false;
 
-    if(lhs.has_label() && lhs.label() != rhs.label())
+    if(lhs.has_label() && *lhs.m_label != *rhs.m_label)
         return false;
 
-    if(lhs.has_command() && lhs.command() != rhs.command())
+    if(lhs.has_command() && *lhs.m_command != *rhs.m_command)
         return false;
 
     return true;

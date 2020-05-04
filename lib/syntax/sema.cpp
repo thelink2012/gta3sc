@@ -515,7 +515,7 @@ auto Sema::validate_integer_literal(const CommandManager::ParamDef& param,
     else
         report(arg.source(), Diag::expected_integer);
 
-    return SemaIR::create_integer(value, arg.source(), allocator);
+    return SemaIR::create_int(value, arg.source(), allocator);
 }
 
 auto Sema::validate_float_literal(const CommandManager::ParamDef& param,
@@ -743,12 +743,12 @@ auto Sema::validate_var_ref(const CommandManager::ParamDef& param,
 
 auto Sema::validate_hardcoded_command(const SemaIR::Command& command) -> bool
 {
-    if(&command.def == command_script_name)
+    if(&command.def() == command_script_name)
         return validate_script_name(command);
-    if(&command.def == command_start_new_script)
+    if(&command.def() == command_start_new_script)
         return validate_start_new_script(command);
     else if(alternator_set
-            && is_alternative_command(command.def, *alternator_set))
+            && is_alternative_command(command.def(), *alternator_set))
         return validate_set(command);
     else
         return true;
@@ -756,25 +756,25 @@ auto Sema::validate_hardcoded_command(const SemaIR::Command& command) -> bool
 
 auto Sema::validate_set(const SemaIR::Command& command) -> bool
 {
-    assert(is_alternative_command(command.def, *alternator_set));
+    assert(is_alternative_command(command.def(), *alternator_set));
 
-    if(command.args.size() == 2)
+    if(command.args().size() == 2)
     {
-        const auto* lhs = command.args[0]->as_var_ref();
-        const auto* rhs = command.args[1]->as_var_ref();
+        const auto lhs = command.arg(0).as_var_ref();
+        const auto rhs = command.arg(1).as_var_ref();
         if(lhs && rhs)
         {
-            const auto lhs_entity_type = var_entity_type(lhs->def);
-            const auto rhs_entity_type = var_entity_type(rhs->def);
+            const auto lhs_entity_type = var_entity_type(lhs->def());
+            const auto rhs_entity_type = var_entity_type(rhs->def());
             if(lhs_entity_type == EntityId{0} && rhs_entity_type != EntityId{0})
             {
-                set_var_entity_type(lhs->def, rhs_entity_type);
+                set_var_entity_type(lhs->def(), rhs_entity_type);
             }
             else if(lhs_entity_type != rhs_entity_type)
             {
-                report(command.source, Diag::var_entity_type_mismatch)
-                        .range(command.args[0]->source)
-                        .range(command.args[1]->source);
+                report(command.source(), Diag::var_entity_type_mismatch)
+                        .range(command.arg(0).source())
+                        .range(command.arg(1).source());
                 return false;
             }
         }
@@ -785,17 +785,17 @@ auto Sema::validate_set(const SemaIR::Command& command) -> bool
 
 auto Sema::validate_script_name(const SemaIR::Command& command) -> bool
 {
-    assert(&command.def == command_script_name);
+    assert(&command.def() == command_script_name);
 
-    if(command.args.size() == 1)
+    if(command.args().size() == 1)
     {
-        if(const auto* const name = command.args[0]->as_text_label())
+        if(const auto name = command.arg(0).as_text_label())
         {
             auto it = std::find(seen_script_names.begin(),
                                 seen_script_names.end(), *name);
             if(it != seen_script_names.end())
             {
-                report(command.args[0]->source, Diag::duplicate_script_name);
+                report(command.arg(0).source(), Diag::duplicate_script_name);
                 return false;
             }
             else
@@ -811,22 +811,22 @@ auto Sema::validate_script_name(const SemaIR::Command& command) -> bool
 
 auto Sema::validate_start_new_script(const SemaIR::Command& command) -> bool
 {
-    assert(&command.def == command_start_new_script);
+    assert(&command.def() == command_start_new_script);
 
-    if(!command.args.empty())
+    if(!command.args().empty())
     {
-        if(const auto* target_label = command.args[0]->as_label())
+        if(const auto* target_label = command.arg(0).as_label())
         {
             if(target_label->scope == 0)
             {
-                report(command.args[0]->source,
+                report(command.arg(0).source(),
                        Diag::target_label_not_within_scope);
                 return false;
             }
 
-            if(!validate_target_scope_vars(command.args.data() + 1,
-                                           command.args.data()
-                                                   + command.args.size(),
+            if(!validate_target_scope_vars(command.args().data() + 1,
+                                           command.args().data()
+                                                   + command.args().size(),
                                            target_label->scope))
             {
                 return false;
@@ -880,7 +880,7 @@ auto Sema::validate_target_scope_vars(const SemaIR::Argument** begin,
         if(target_var == nullptr)
         {
             failed = true;
-            report(arg.source, Diag::target_scope_not_enough_vars);
+            report(arg.source(), Diag::target_scope_not_enough_vars);
         }
         else
         {
@@ -891,12 +891,12 @@ auto Sema::validate_target_scope_vars(const SemaIR::Argument** begin,
             // care of validating that for us, so for sure the argument
             // is one of these. We'll support additionally text labels,
             // but anything else is a logic error in the compiler.
-            if(arg.pun_as_integer())
+            if(arg.pun_as_int())
             {
                 if(target_vars[i]->type != SymVariable::Type::INT)
                 {
                     failed = true;
-                    report(arg.source, Diag::target_var_type_mismatch);
+                    report(arg.source(), Diag::target_var_type_mismatch);
                 }
             }
             else if(arg.pun_as_float())
@@ -904,7 +904,7 @@ auto Sema::validate_target_scope_vars(const SemaIR::Argument** begin,
                 if(target_vars[i]->type != SymVariable::Type::FLOAT)
                 {
                     failed = true;
-                    report(arg.source, Diag::target_var_type_mismatch);
+                    report(arg.source(), Diag::target_var_type_mismatch);
                 }
             }
             else if(arg.as_text_label())
@@ -912,16 +912,16 @@ auto Sema::validate_target_scope_vars(const SemaIR::Argument** begin,
                 if(target_vars[i]->type != SymVariable::Type::TEXT_LABEL)
                 {
                     failed = true;
-                    report(arg.source, Diag::target_var_type_mismatch);
+                    report(arg.source(), Diag::target_var_type_mismatch);
                 }
             }
-            else if(const auto* var_ref = arg.as_var_ref())
+            else if(const auto var_ref = arg.as_var_ref())
             {
-                const auto& source_var = var_ref->def;
+                const auto& source_var = var_ref->def();
                 if(target_vars[i]->type != source_var.type)
                 {
                     failed = true;
-                    report(arg.source, Diag::target_var_type_mismatch);
+                    report(arg.source(), Diag::target_var_type_mismatch);
                 }
                 else if(var_entity_type(*target_vars[i]) == EntityId{0}
                         && var_entity_type(source_var) != EntityId{0})
@@ -933,13 +933,13 @@ auto Sema::validate_target_scope_vars(const SemaIR::Argument** begin,
                         != var_entity_type(source_var))
                 {
                     failed = true;
-                    report(arg.source, Diag::target_var_entity_type_mismatch);
+                    report(arg.source(), Diag::target_var_entity_type_mismatch);
                 }
             }
             else
             {
                 failed = true;
-                report(arg.source, Diag::internal_compiler_error);
+                report(arg.source(), Diag::internal_compiler_error);
             }
         }
     }
@@ -1154,7 +1154,7 @@ auto Sema::is_matching_alternative(
 
     for(size_t i = 0, acount = command.num_args(); i < acount; ++i)
     {
-        const auto& arg = *command.arg(i);
+        const auto& arg = command.arg(i);
         const auto& param = alternative.params[i];
 
         // The global string constants have higher precedence when checking for
