@@ -259,7 +259,7 @@ auto Sema::validate_command(const ParserIR::Command& command)
     while(arg_it != command.args().end()
           && param_it != command_def->params.end())
     {
-        if(const auto* ir_arg = validate_argument(*param_it, **arg_it);
+        if(const auto* ir_arg = validate_argument(*param_it, *arg_it);
            ir_arg && !failed)
             builder.arg(ir_arg);
         else
@@ -824,9 +824,8 @@ auto Sema::validate_start_new_script(const SemaIR::Command& command) -> bool
                 return false;
             }
 
-            if(!validate_target_scope_vars(command.args().data() + 1,
-                                           command.args().data()
-                                                   + command.args().size(),
+            if(!validate_target_scope_vars(command.args().begin(),
+                                           command.args().end(),
                                            target_label->scope))
             {
                 return false;
@@ -837,8 +836,8 @@ auto Sema::validate_start_new_script(const SemaIR::Command& command) -> bool
     return true;
 }
 
-auto Sema::validate_target_scope_vars(const SemaIR::Argument** begin,
-                                      const SemaIR::Argument** end,
+auto Sema::validate_target_scope_vars(SemaIR::ArgumentView::iterator begin,
+                                      SemaIR::ArgumentView::iterator end,
                                       ScopeId target_scope_id) -> bool
 {
     assert(target_scope_id != 0);
@@ -874,7 +873,7 @@ auto Sema::validate_target_scope_vars(const SemaIR::Argument** begin,
 
     for(size_t i = 0; i < num_target_vars; ++i)
     {
-        const auto& arg = **(begin + i);
+        const auto& arg = begin[i];
         const SymVariable* target_var = target_vars[i];
 
         if(target_var == nullptr)
@@ -965,14 +964,14 @@ void Sema::declare_variable(const ParserIR::Command& command, ScopeId scope_id,
     {
         ScopeId var_scope_id = scope_id;
 
-        if(arg->type() != ParserIR::Argument::Type::IDENTIFIER)
+        if(arg.type() != ParserIR::Argument::Type::IDENTIFIER)
         {
-            report(arg->source(), Diag::expected_identifier);
+            report(arg.source(), Diag::expected_identifier);
             continue;
         }
 
         auto [var_name, var_source, subscript] = parse_var_ref(
-                *arg->as_identifier(), arg->source());
+                *arg.as_identifier(), arg.source());
 
         if(subscript && !subscript->literal)
         {
@@ -988,7 +987,7 @@ void Sema::declare_variable(const ParserIR::Command& command, ScopeId scope_id,
 
         if(var_scope_id == -1)
         {
-            report(arg->source(), Diag::var_decl_outside_of_scope);
+            report(arg.source(), Diag::var_decl_outside_of_scope);
             var_scope_id = 0; // recover
         }
 
@@ -1002,7 +1001,7 @@ void Sema::declare_variable(const ParserIR::Command& command, ScopeId scope_id,
         }
         else if(auto [var, inserted] = symrepo->insert_var(
                         var_name, var_scope_id, type, subscript_literal,
-                        arg->source());
+                        arg.source());
                 !inserted)
         {
             if(var_scope_id == 0)

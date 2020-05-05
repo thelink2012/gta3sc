@@ -130,8 +130,8 @@ private:
 
     auto validate_start_new_script(const SemaIR::Command& command) -> bool;
 
-    auto validate_target_scope_vars(const SemaIR::Argument** begin,
-                                    const SemaIR::Argument** end,
+    auto validate_target_scope_vars(SemaIR::ArgumentView::iterator begin,
+                                    SemaIR::ArgumentView::iterator end,
                                     ScopeId target_scope_id) -> bool;
 
     // The following functions validates declarations and inserts their

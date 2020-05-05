@@ -118,7 +118,7 @@ inline auto operator<<(std::ostream& os, const ParserIR::Command& command)
         os << "NOT ";
     os << command.name();
     for(const auto& arg : command.args())
-        os << ' ' << *arg;
+        os << ' ' << arg;
     return os;
 }
 

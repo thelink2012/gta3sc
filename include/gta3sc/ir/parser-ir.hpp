@@ -3,6 +3,7 @@
 #include <gta3sc/sourceman.hpp>
 #include <gta3sc/util/arena-allocator.hpp>
 #include <gta3sc/util/intrusive-bidirectional-list-node.hpp>
+#include <gta3sc/util/random-access-view.hpp>
 #include <gta3sc/util/span.hpp>
 #include <gta3sc/util/string-vieweable.hpp>
 #include <gta3sc/util/visit.hpp>
@@ -46,6 +47,7 @@ public:
     class LabelDef;
     class Command;
     class Argument;
+    class ArgumentView;
     class Builder;
 
     struct Identifier;
@@ -213,6 +215,21 @@ struct ParserIR::String : WeakStringVieweable<StringTag>
     using WeakStringVieweable::WeakStringVieweable;
 };
 
+/// Represents a view to a sequence of arguments.
+class ParserIR::ArgumentView
+    : public util::RandomAccessView<const Argument*,
+                                    util::iterator_adaptor::DereferenceAdaptor>
+{
+private:
+    using super_type = util::RandomAccessView<
+            const Argument*, util::iterator_adaptor::DereferenceAdaptor>;
+
+public:
+    ArgumentView(PrivateTag /*unused*/, const Argument** begin, size_t count) :
+        super_type(begin, count)
+    {}
+};
+
 class ParserIR::LabelDef
 {
 public:
@@ -304,9 +321,9 @@ public:
     }
 
     /// Returns a view to the arguments of the command.
-    [[nodiscard]] auto args() const noexcept -> util::span<const Argument*>
+    [[nodiscard]] auto args() const noexcept -> ArgumentView
     {
-        return m_args;
+        return ArgumentView(private_tag, m_args.data(), m_args.size());
     }
 
     /// Returns the i-th argument of this command.

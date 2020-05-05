@@ -2,6 +2,7 @@
 #include <gta3sc/command-manager.hpp>
 #include <gta3sc/ir/symbol-table.hpp>
 #include <gta3sc/util/intrusive-bidirectional-list-node.hpp>
+#include <gta3sc/util/random-access-view.hpp>
 #include <gta3sc/util/string-vieweable.hpp>
 #include <gta3sc/util/visit.hpp>
 #include <variant>
@@ -39,11 +40,12 @@ private:
 public:
     class Command;
     class Argument;
+    class ArgumentView;
     class Builder;
 
     struct TextLabel;
     struct String;
-    struct VarRef;
+    class VarRef;
 
 public:
     /// Please use `create` instead.
@@ -256,6 +258,21 @@ private:
     std::variant<std::monostate, int32_t, const SymVariable*> m_index;
 };
 
+/// Represents a view to a sequence of arguments.
+class SemaIR::ArgumentView
+    : public util::RandomAccessView<const Argument*,
+                                    util::iterator_adaptor::DereferenceAdaptor>
+{
+private:
+    using super_type = util::RandomAccessView<
+            const Argument*, util::iterator_adaptor::DereferenceAdaptor>;
+
+public:
+    ArgumentView(PrivateTag /*unused*/, const Argument** begin, size_t count) :
+        super_type(begin, count)
+    {}
+};
+
 class SemaIR::Command
 {
 public:
@@ -302,9 +319,9 @@ public:
     }
 
     /// Returns a view to the arguments of the command.
-    [[nodiscard]] auto args() const noexcept -> util::span<const Argument*>
+    [[nodiscard]] auto args() const noexcept -> ArgumentView
     {
-        return m_args;
+        return ArgumentView(private_tag, m_args.data(), m_args.size());
     }
 
     /// Returns the i-th argument of this command.

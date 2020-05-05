@@ -58,6 +58,7 @@ inline auto allocate_array_element(U&& value, util::span<T> current_array,
                                    ArenaAllocator<> allocator)
         -> std::pair<util::span<T>, size_t>
 {
+    assert(default_capacity != 0);
     assert(current_array.size() <= current_capacity);
 
     if(current_array.size() == current_capacity)
