@@ -267,6 +267,3 @@ private:
     std::vector<std::vector<CommandManager::EntityId>> vars_entity_type;
 };
 } // namespace gta3sc::syntax
-
-// TODO should vars_entity_type (and similar) be stored in Sema or
-// SymbolTable?

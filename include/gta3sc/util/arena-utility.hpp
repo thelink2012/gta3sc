@@ -11,12 +11,12 @@ namespace gta3sc::util
 /// Returns an immutable view to the allocated string.
 template<typename UnaryOperation>
 inline auto allocate_string(std::string_view copy_from,
-                            ArenaAllocator<char> allocator,
+                            ArenaAllocator<> allocator,
                             UnaryOperation transform_op) -> std::string_view
 {
     const auto result_size = copy_from.size();
 
-    auto* result_ptr = allocator.allocate(result_size);
+    auto* result_ptr = allocator.allocate_object<char>(result_size);
     std::uninitialized_default_construct_n(result_ptr, result_size);
 
     for(size_t i = 0; i < copy_from.size(); ++i)
@@ -29,7 +29,7 @@ inline auto allocate_string(std::string_view copy_from,
 ///
 /// Returns an immutable view to the allocated string.
 inline auto allocate_string(std::string_view copy_from,
-                            ArenaAllocator<char> allocator) -> std::string_view
+                            ArenaAllocator<> allocator) -> std::string_view
 {
     constexpr auto identity = [](char c) { return c; };
     return allocate_string(copy_from, allocator, identity);

@@ -98,7 +98,7 @@ struct Diagnostic
     std::vector<SourceRange> ranges; ///< Locations related to the diagnostic.
     std::vector<Arg> args;           ///< Arguments for formatting the message.
 
-    explicit Diagnostic(SourceLocation location, Diag message) :
+    explicit Diagnostic(SourceLocation location, Diag message) noexcept :
         location(location), message(message)
     {}
 };

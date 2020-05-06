@@ -269,14 +269,14 @@ private:
     [[nodiscard]] auto is_identifier(std::string_view lexeme) const -> bool;
 
 private:
-    static constexpr size_t num_peek_tokens = 6;
+    static constexpr size_t max_peek_tokens = 6;
 
     Scanner scanner;
     ArenaAllocator<> allocator;
 
     bool in_lexical_scope = false;
-    bool has_peek_token[num_peek_tokens] = {};
-    std::optional<Token> peek_tokens[num_peek_tokens];
+    bool has_peek_token[max_peek_tokens] = {};
+    std::optional<Token> peek_tokens[max_peek_tokens];
 
     std::vector<const ParserIR::Argument*> temp_args;
 };

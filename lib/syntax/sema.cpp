@@ -9,8 +9,8 @@ namespace gta3sc::syntax
 using ParamType = CommandManager::ParamType;
 using EntityId = CommandManager::EntityId;
 
-static constexpr std::string_view varname_timera = "TIMERA";
-static constexpr std::string_view varname_timerb = "TIMERB";
+static constexpr auto varname_timera = "TIMERA"sv;
+static constexpr auto varname_timerb = "TIMERB"sv;
 
 auto Sema::validate() -> std::optional<LinkedIR<SemaIR>>
 {

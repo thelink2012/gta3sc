@@ -1,5 +1,7 @@
 #include "charconv.hpp"
 #include <gta3sc/syntax/parser.hpp>
+#include <gta3sc/util/ctype.hpp>
+#include <gta3sc/util/string.hpp>
 using namespace std::literals::string_view_literals;
 
 // grammar from https://git.io/fNxZP f1f8a9096cb7a861e410d3f208f2589737220327
@@ -111,14 +113,7 @@ auto Parser::is_var_decl_command(std::string_view name) const -> bool
 
 auto Parser::iequal(std::string_view lhs, std::string_view rhs) const -> bool
 {
-    return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(),
-                      [](unsigned char ac, unsigned char bc) {
-                          if(ac >= 'a' && ac <= 'z')
-                              ac -= 32; // transform into upper
-                          if(bc >= 'a' && bc <= 'z')
-                              bc -= 32;
-                          return ac == bc;
-                      });
+    return util::insensitive_equal(lhs, rhs);
 }
 
 auto Parser::is_relational_operator(Category category) const -> bool
@@ -303,7 +298,7 @@ void Parser::skip_current_line()
 auto Parser::is_digit(char c) const -> bool
 {
     // digit := '0'..'9' ;
-    return c >= '0' && c <= '9';
+    return util::isdigit(c);
 }
 
 auto Parser::is_integer(std::string_view lexeme) const -> bool
@@ -313,7 +308,7 @@ auto Parser::is_integer(std::string_view lexeme) const -> bool
     size_t num_digits = 0;
     size_t char_pos = 0;
 
-    for(auto c : lexeme)
+    for(const auto c : lexeme)
     {
         ++char_pos;
         if(c == '-' && char_pos == 1)
@@ -361,7 +356,7 @@ auto Parser::is_float(std::string_view lexeme) const -> bool
 
     // Skip the final, common part: {digit | '.' | 'F'}
     it = std::find_if_not(it, lexeme.end(), [this](char c) {
-        return (c == '.' || c == 'f' || c == 'F' || is_digit(c));
+        return (c == '.' || util::toupper(c) == 'F' || is_digit(c));
     });
 
     return it == lexeme.end();
@@ -379,8 +374,7 @@ auto Parser::is_identifier(std::string_view lexeme) const -> bool
         const auto front = lexeme.front();
         const auto back = lexeme.back();
 
-        if(front == '$' || (front >= 'A' && front <= 'Z')
-           || (front >= 'a' && front <= 'z'))
+        if(front == '$' || util::isalpha(front))
         {
             return back != ':';
         }

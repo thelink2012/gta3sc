@@ -1,5 +1,6 @@
 #include <cassert>
 #include <gta3sc/syntax/scanner.hpp>
+#include <gta3sc/util/ctype.hpp>
 
 namespace gta3sc::syntax
 {
@@ -50,12 +51,12 @@ auto Scanner::is_newline(char c) const -> bool
 
 auto Scanner::is_digit(char c) const -> bool
 {
-    return c >= '0' && c <= '9';
+    return util::isdigit(c);
 }
 
 auto Scanner::is_print(char c) const -> bool
 {
-    return c >= 32 && c <= 126; // printable ASCII
+    return util::isprint(c);
 }
 
 auto Scanner::is_word_char(char c) const -> bool
@@ -78,7 +79,7 @@ auto Scanner::next_filename() -> std::optional<Token>
     while(is_print(peek_char) && peek_char != '"' && !is_whitespace(peek_char))
         this->getc();
 
-    auto token = Token(Category::word, start_pos, location());
+    auto token = Token{Category::word, {start_pos, location()}};
     auto spell = this->spelling(token);
     if(spell.size() >= 3)
     {
@@ -86,7 +87,7 @@ auto Scanner::next_filename() -> std::optional<Token>
         auto c2 = *it++;
         auto c1 = *it++;
         auto c0 = *it++;
-        if(c0 == '.' && (c1 == 's' || c1 == 'S') && (c2 == 'c' || c2 == 'C'))
+        if(c0 == '.' && util::toupper(c1) == 'S' && util::toupper(c2) == 'C')
         {
             return token;
         }
@@ -112,7 +113,7 @@ auto Scanner::next() -> std::optional<Token>
         newline: case '\r': case '\n': case '\0':
             if(peek_char == '\r') getc();
             if(peek_char == '\n') getc();
-            return Token(Category::end_of_line, start_pos, location());
+            return Token{Category::end_of_line, {start_pos, location()}};
 
         case ' ': case '\t': case '(': case ')': case ',':
             this->getc();
@@ -123,7 +124,7 @@ auto Scanner::next() -> std::optional<Token>
             if(is_newline(peek_char))
                 goto newline; // NOLINT: modelling a finite state machine
 
-            return Token(Category::whitespace, start_pos, location());
+            return Token{Category::whitespace, {start_pos, location()}};
 
         case '-':
             this->getc();
@@ -137,26 +138,26 @@ auto Scanner::next() -> std::optional<Token>
                 if(peek_char == '@')
                 {
                     this->getc();
-                    return Token(Category::minus_equal_at, start_pos, location());
+                    return Token{Category::minus_equal_at, {start_pos, location()}};
                 }
                 else
                 {
-                    return Token(Category::minus_equal, start_pos, location());
+                    return Token{Category::minus_equal, {start_pos, location()}};
                 }
             }
             else if(peek_char == '-')
             {
                 this->getc();
-                return Token(Category::minus_minus, start_pos, location());
+                return Token{Category::minus_minus, {start_pos, location()}};
             }
             else if(peek_char == '@')
             {
                 this->getc();
-                return Token(Category::minus_at, start_pos, location());
+                return Token{Category::minus_at, {start_pos, location()}};
             }
             else
             {
-                return Token(Category::minus, start_pos, location());
+                return Token{Category::minus, {start_pos, location()}};
             }
 
         case '+':
@@ -167,26 +168,26 @@ auto Scanner::next() -> std::optional<Token>
                 if(peek_char == '@')
                 {
                     this->getc();
-                    return Token(Category::plus_equal_at, start_pos, location());
+                    return Token{Category::plus_equal_at, {start_pos, location()}};
                 }
                 else
                 {
-                    return Token(Category::plus_equal, start_pos, location());
+                    return Token{Category::plus_equal, {start_pos, location()}};
                 }
             }
             else if(peek_char == '+')
             {
                 this->getc();
-                return Token(Category::plus_plus, start_pos, location());
+                return Token{Category::plus_plus, {start_pos, location()}};
             }
             else if(peek_char == '@')
             {
                 this->getc();
-                return Token(Category::plus_at, start_pos, location());
+                return Token{Category::plus_at, {start_pos, location()}};
             }
             else
             {
-                return Token(Category::plus, start_pos, location());
+                return Token{Category::plus, {start_pos, location()}};
             }
 
         case '*':
@@ -194,11 +195,11 @@ auto Scanner::next() -> std::optional<Token>
             if(peek_char == '=')
             {
                 this->getc();
-                return Token(Category::star_equal, start_pos, location());
+                return Token{Category::star_equal, {start_pos, location()}};
             }
             else
             {
-                return Token(Category::star, start_pos, location());
+                return Token{Category::star, {start_pos, location()}};
             }
 
         case '/':
@@ -206,11 +207,11 @@ auto Scanner::next() -> std::optional<Token>
             if(peek_char == '=')
             {
                 this->getc();
-                return Token(Category::slash_equal, start_pos, location());
+                return Token{Category::slash_equal, {start_pos, location()}};
             }
             else
             {
-                return Token(Category::slash, start_pos, location());
+                return Token{Category::slash, {start_pos, location()}};
             }
 
         case '=':
@@ -218,11 +219,11 @@ auto Scanner::next() -> std::optional<Token>
             if(peek_char == '#')
             {
                 this->getc();
-                return Token(Category::equal_hash, start_pos, location());
+                return Token{Category::equal_hash, {start_pos, location()}};
             }
             else
             {
-                return Token(Category::equal, start_pos, location());
+                return Token{Category::equal, {start_pos, location()}};
             }
 
         case '<':
@@ -230,11 +231,11 @@ auto Scanner::next() -> std::optional<Token>
             if(peek_char == '=')
             {
                 this->getc();
-                return Token(Category::less_equal, start_pos, location());
+                return Token{Category::less_equal, {start_pos, location()}};
             }
             else
             {
-                return Token(Category::less, start_pos, location());
+                return Token{Category::less, {start_pos, location()}};
             }
 
         case '>':
@@ -242,11 +243,11 @@ auto Scanner::next() -> std::optional<Token>
             if(peek_char == '=')
             {
                 this->getc();
-                return Token(Category::greater_equal, start_pos, location());
+                return Token{Category::greater_equal, {start_pos, location()}};
             }
             else
             {
-                return Token(Category::greater, start_pos, location());
+                return Token{Category::greater, {start_pos, location()}};
             }
         
         case '"':
@@ -263,7 +264,7 @@ auto Scanner::next() -> std::optional<Token>
             assert(peek_char == '"');
             this->getc();
 
-            return Token(Category::string, start_pos, location());
+            return Token{Category::string, {start_pos, location()}};
 
         word_token: default:
             if(!is_word_char(peek_char))
@@ -277,7 +278,7 @@ auto Scanner::next() -> std::optional<Token>
             while(is_word_char(peek_char))
                 this->getc();
 
-            return Token(Category::word, start_pos, location());
+            return Token{Category::word, {start_pos, location()}};
     }
     // clang-format on
 }

@@ -2,7 +2,6 @@
 #include <cassert>
 #include <cstdint>
 #include <gta3sc/util/bit_cast.hpp>
-#include <string_view>
 #include <vector>
 
 namespace gta3sc::codegen::trilogy
@@ -118,23 +117,25 @@ public:
     /// Emits the given sequence of bytes, filling a total of `output_size`
     /// bytes in the internal buffer.
     ///
-    /// The amount of input bytes (i.e. `data_size`) must be less or equal
-    /// than `output_size`. The difference `output_size - data_size` is filled
-    /// with null bytes.
-    template<typename T>
-    auto emit_raw_bytes(const T* data, size_t data_size, size_t output_size)
-            -> CodeEmitter&;
+    /// The amount of input bytes (i.e. `distance(begin, end)`) must be less or
+    /// equal than `output_size`. The difference `output_size - data.size()` is
+    /// filled with null bytes.
+    template<typename InputIterator>
+    auto emit_raw_bytes(InputIterator begin, InputIterator end,
+                        size_t output_size) -> CodeEmitter&;
 
-    /// Same as `emit_raw_bytes(data, data_size, data_size)`.
-    template<typename T>
-    auto emit_raw_bytes(const T* data, size_t data_size) -> CodeEmitter&;
+    /// Same as `emit_raw_bytes(data.begin(), data.end(), distance(begin,
+    /// end))`.
+    template<typename RandomAccessIterator>
+    auto emit_raw_bytes(RandomAccessIterator begin, RandomAccessIterator end)
+            -> CodeEmitter&;
 
 private:
     /// Converts a floating-point into an Q11.4 fixed-point.
     ///
     /// In case the given floating-point is NaN, infinite, or bigger than
     /// what can be stored in Q11.4, the nearest representable is returned.
-    auto float_to_q11_4(float value) -> int16_t;
+    [[nodiscard]] auto float_to_q11_4(float value) const -> int16_t;
 
 private:
     std::vector<std::byte> buffer;
@@ -151,14 +152,14 @@ inline auto CodeEmitter::drain(OutputIterator output_iter) -> OutputIterator
     return output_iter;
 }
 
-template<typename T>
-inline auto CodeEmitter::emit_raw_bytes(const T* data, size_t data_size,
+template<typename InputIterator>
+inline auto CodeEmitter::emit_raw_bytes(InputIterator begin, InputIterator end,
                                         size_t output_size) -> CodeEmitter&
 {
     using util::bit_cast;
-    static_assert(sizeof(T) == sizeof(std::byte));
-
-    assert(data_size <= output_size);
+    static_assert(
+            sizeof(typename std::iterator_traits<InputIterator>::value_type)
+            == sizeof(std::byte));
 
     const auto buffer_pos = this->buffer.size();
     this->buffer.resize(buffer_pos + output_size);
@@ -166,8 +167,11 @@ inline auto CodeEmitter::emit_raw_bytes(const T* data, size_t data_size,
 
     size_t i = 0;
 
-    for(; i < data_size && i < output_size; ++i)
-        buffer[buffer_pos + i] = bit_cast<std::byte>(data[i]);
+    for(; begin != end && i < output_size; ++i, ++begin)
+        buffer[buffer_pos + i] = bit_cast<std::byte>(*begin);
+
+    // Ensure distance(begin, end) <= output_size
+    assert(i != output_size || begin == end);
 
     for(; i < output_size; ++i)
         buffer[buffer_pos + i] = std::byte{0};
@@ -175,10 +179,11 @@ inline auto CodeEmitter::emit_raw_bytes(const T* data, size_t data_size,
     return *this;
 }
 
-template<typename T>
-inline auto CodeEmitter::emit_raw_bytes(const T* data, size_t data_size)
+template<typename RandomAccessIterator>
+inline auto CodeEmitter::emit_raw_bytes(RandomAccessIterator begin,
+                                        RandomAccessIterator end)
         -> CodeEmitter&
 {
-    return emit_raw_bytes(data, data_size, data_size);
+    return emit_raw_bytes(begin, end, distance(begin, end));
 }
 } // namespace gta3sc::codegen::trilogy

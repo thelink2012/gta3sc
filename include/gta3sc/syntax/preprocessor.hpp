@@ -46,8 +46,8 @@ public:
     [[nodiscard]] auto diagnostics() const -> DiagnosticHandler&;
 
 private:
-    auto is_whitespace(const char* p) const -> bool;
-    auto is_newline(const char* p) const -> bool;
+    [[nodiscard]] auto is_whitespace(const char* p) const -> bool;
+    [[nodiscard]] auto is_newline(const char* p) const -> bool;
 
 private:
     SourceFile source;

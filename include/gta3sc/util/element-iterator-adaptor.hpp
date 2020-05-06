@@ -68,12 +68,14 @@ struct ElementAdaptor
         [[nodiscard]] constexpr auto dereference(const Iter& it) const
                 -> reference
         {
+            using std::get; // FIXME required due to a GCC 10 bug?
             return get<I>(*it);
         }
 
         [[nodiscard]] constexpr decltype(auto)
         at(const Iter& it, difference_type n) const /* -> unspecified */
         {
+            using std::get; // FIXME required due to a GCC 10 bug?
             return get<I>(*it[n]);
         }
     };

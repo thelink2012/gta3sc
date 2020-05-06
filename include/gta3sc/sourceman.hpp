@@ -91,13 +91,13 @@ struct SourceRange
     {}
 
     /// Returns the number of characters in this range.
-    [[nodiscard]] auto size() const -> size_t { return end - begin; }
+    [[nodiscard]] auto size() const noexcept -> size_t { return end - begin; }
 
     /// Returns a subrange of this range.
     ///
     /// \param offset the position to start the new range from this range.
     /// \param count the length of the new range.
-    [[nodiscard]] auto subrange(size_t offset, size_t count = -1) const
+    [[nodiscard]] auto subrange(size_t offset, size_t count = -1) const noexcept
             -> SourceRange
     {
         offset = std::min(offset, this->size());
@@ -105,14 +105,16 @@ struct SourceRange
         return SourceRange(this->begin + offset, count);
     }
 
-    auto operator==(const SourceRange& rhs) const -> bool
+    friend auto operator==(const SourceRange& lhs,
+                           const SourceRange& rhs) noexcept -> bool
     {
-        return begin == rhs.begin && end == rhs.end;
+        return lhs.begin == rhs.begin && lhs.end == rhs.end;
     }
 
-    auto operator!=(const SourceRange& rhs) const -> bool
+    friend auto operator!=(const SourceRange& lhs,
+                           const SourceRange& rhs) noexcept -> bool
     {
-        return !(*this == rhs);
+        return !(lhs == rhs);
     }
 };
 

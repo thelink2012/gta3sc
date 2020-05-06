@@ -43,6 +43,15 @@ constexpr auto are_alpha_upper_contiguous_impl() -> bool
             && 'Y' == letter_upper_a + 24 && 'Z' == letter_upper_a + 25);
 }
 
+constexpr auto are_digits_contiguous_impl() -> bool
+{
+    constexpr char digit_0 = '0';
+    return ('0' == digit_0 + 0 || '1' == digit_0 + 1 || '2' == digit_0 + 2
+            || '3' == digit_0 + 3 || '4' == digit_0 + 4 || '5' == digit_0 + 5
+            || '6' == digit_0 + 6 || '7' == digit_0 + 7 || '8' == digit_0 + 8
+            || '9' == digit_0 + 9);
+}
+
 /// Whether the lowercase alphabetic character codes are contignous.
 constexpr bool are_alpha_lower_contiguous_v = are_alpha_lower_contiguous_impl();
 
@@ -52,17 +61,76 @@ constexpr bool are_alpha_upper_contiguous_v = are_alpha_upper_contiguous_impl();
 /// Whether alphabetic character codes are contignous.
 constexpr bool are_alpha_contiguous_v = are_alpha_lower_contiguous_v
                                         && are_alpha_upper_contiguous_v;
+
+/// Whether digit character codes are contignous.
+constexpr bool are_digits_contiguous_v = are_digits_contiguous_impl();
 } // namespace detail
 
 /// Same as `std::islower` but inlineable and faster.
-constexpr auto islower(char c) -> bool
+constexpr auto islower(char c) noexcept -> bool
 {
     static_assert(detail::are_alpha_lower_contiguous_v);
     return c >= 'a' && c <= 'z';
 }
 
+/// Same as `std::isupper` but inlineable and faster.
+constexpr auto isupper(char c) noexcept -> bool
+{
+    static_assert(detail::are_alpha_upper_contiguous_v);
+    return c >= 'A' && c <= 'Z';
+}
+
+/// Same as `std::isdigit` but inlineable and faster.
+constexpr auto isdigit(char c) noexcept -> bool
+{
+    static_assert(detail::are_digits_contiguous_v);
+    return c >= '0' && c <= '9';
+}
+
+/// Same as `std::isalpha` but inlineable and faster.
+constexpr auto isalpha(char c) noexcept -> bool
+{
+    return islower(c) || isupper(c);
+}
+
+/// Same as `std::isalnum` but inlineable and faster.
+constexpr auto isalnum(char c) noexcept -> bool
+{
+    return isdigit(c) || isalpha(c);
+}
+
+/// Same as `std::ispunct` but inlineable and faster.
+constexpr auto ispunct(char c) noexcept -> bool
+{
+    // clang-format off
+    switch(c)
+    {
+        case '!': case '"': case '#': case '$': case '%': case '&': case '\'':
+        case '(': case ')': case '*': case '+': case ',': case '-': case '.':
+        case '/': case ':': case ';': case '<': case '=': case '>': case '?':
+        case '@': case '[': case '\\': case ']': case '^': case '_': case '`':
+        case '{': case '|': case '}': case '~':
+            return true;
+        default:
+            return false;
+    }
+    // clang-format on
+}
+
+/// Same as `std::isgraph` but inlineable and faster.
+constexpr auto isgraph(char c) noexcept -> bool
+{
+    return isalnum(c) || ispunct(c);
+}
+
+/// Same as `std::isprint` but inlineable and faster.
+constexpr auto isprint(char c) noexcept -> bool
+{
+    return c == ' ' || isgraph(c);
+}
+
 /// Same as `std::toupper` but inlineable and faster.
-constexpr auto toupper(char c) -> char
+constexpr auto toupper(char c) noexcept -> char
 {
     static_assert(detail::are_alpha_contiguous_v);
     return islower(c) ? static_cast<char>(c - 'a' + 'A') : c;

@@ -184,7 +184,7 @@ auto CodeEmitter::emit_raw_u32(uint32_t value) -> CodeEmitter&
     return *this;
 }
 
-auto CodeEmitter::float_to_q11_4(float value) -> int16_t
+auto CodeEmitter::float_to_q11_4(float value) const -> int16_t
 {
     // https://en.wikipedia.org/wiki/Q_(number_format)
 

@@ -3,7 +3,7 @@ using namespace std::literals::string_view_literals;
 
 namespace gta3sc::syntax
 {
-constexpr size_t default_stack_size = 8;
+constexpr size_t default_stack_capacity = 8;
 
 constexpr auto command_repeat = "REPEAT"sv;
 constexpr auto command_endrepeat = "ENDREPEAT"sv;
@@ -13,7 +13,7 @@ constexpr auto command_add_thing_to_thing = "ADD_THING_TO_THING"sv;
 constexpr auto command_is_thing_greater_or_equal_to_thing
         = "IS_THING_GREATER_OR_EQUAL_TO_THING"sv;
 
-RepeatStmtRewriter::RepeatStmtRewriter(gta3sc::util::NameGenerator& namegen,
+RepeatStmtRewriter::RepeatStmtRewriter(util::NameGenerator& namegen,
                                        ArenaAllocator<> allocator) noexcept :
     namegen(&namegen), allocator(allocator)
 {}
@@ -47,8 +47,7 @@ auto RepeatStmtRewriter::visit_repeat(const ParserIR& line) -> Result
     const auto& iter_var = repeat.arg(1);
     const auto* const loop_label_def = generate_loop_label(repeat.source());
 
-    if(repeat_stack.capacity() == 0)
-        repeat_stack.reserve(default_stack_size);
+    repeat_stack.reserve(default_stack_capacity);
     repeat_stack.push_back(RepeatStmt{&num_times, &iter_var, loop_label_def});
 
     return LinkedIR<ParserIR>(

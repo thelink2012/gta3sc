@@ -737,7 +737,7 @@ TEST_CASE_FIXTURE(CodeEmitterFixture, "emit raw bytes")
     std::vector raw_seq{std::byte{0x01}, std::byte{0x02}, std::byte{0x03}};
     CodeEmitter emitter;
 
-    SUBCASE("produces null bytes when output_size is different from data_size")
+    SUBCASE("produces null bytes when output_size is different from data size")
     {
         constexpr size_t num_null_bytes = 3;
 
@@ -746,23 +746,23 @@ TEST_CASE_FIXTURE(CodeEmitterFixture, "emit raw bytes")
         std::vector<std::byte> expected(raw_seq);
         expected.resize(expected.size() + num_null_bytes, std::byte{0});
 
-        emitter.emit_raw_bytes(raw_seq.data(), raw_seq.size(),
+        emitter.emit_raw_bytes(raw_seq.begin(), raw_seq.end(),
                                raw_seq.size() + num_null_bytes)
                 .drain(back_inserter(output));
 
         REQUIRE(output == expected);
     }
 
-    SUBCASE("produces no null bytes when output_size is the same as data_size")
+    SUBCASE("produces no null bytes when output_size is the same as data size")
     {
         std::vector<std::byte> output;
 
-        emitter.emit_raw_bytes(raw_seq.data(), raw_seq.size(), raw_seq.size())
+        emitter.emit_raw_bytes(raw_seq.begin(), raw_seq.end(), raw_seq.size())
                 .drain(back_inserter(output));
         REQUIRE(output == raw_seq);
 
         output.clear();
-        emitter.emit_raw_bytes(raw_seq.data(), raw_seq.size())
+        emitter.emit_raw_bytes(raw_seq.begin(), raw_seq.end())
                 .drain(back_inserter(output));
         REQUIRE(output == raw_seq);
     }
@@ -772,10 +772,10 @@ TEST_CASE_FIXTURE(CodeEmitterFixture, "emit raw bytes")
         std::vector<std::byte> output1;
         std::vector<std::byte> output2;
 
-        emitter.emit_raw_bytes(raw_seq.data(), raw_seq.size(), raw_seq.size())
+        emitter.emit_raw_bytes(raw_seq.begin(), raw_seq.end(), raw_seq.size())
                 .drain(back_inserter(output1));
 
-        emitter.emit_raw_bytes(raw_seq.data(), raw_seq.size())
+        emitter.emit_raw_bytes(raw_seq.begin(), raw_seq.end())
                 .drain(back_inserter(output2));
 
         REQUIRE(output1 == output2);
@@ -783,7 +783,7 @@ TEST_CASE_FIXTURE(CodeEmitterFixture, "emit raw bytes")
 
     SUBCASE("increases offset by output_size")
     {
-        emitter.emit_raw_bytes(raw_seq.data(), raw_seq.size(), 100);
+        emitter.emit_raw_bytes(raw_seq.begin(), raw_seq.end(), 100);
         CHECK(raw_seq.size() != 100);
         REQUIRE(emitter.offset() == 100);
     }

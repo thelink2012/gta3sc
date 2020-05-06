@@ -37,13 +37,6 @@ struct Token
 {
     Category category{Category::end_of_line}; ///< Category of this token.
     SourceRange source;                       ///< Origin of this token.
-
-    Token() noexcept = default;
-
-    Token(Category category, SourceLocation begin, SourceLocation end) noexcept
-        :
-        category(category), source(begin, end)
-    {}
 };
 
 /// The scanner transforms a stream of characters into a stream of tokens.

@@ -2,20 +2,15 @@
 #include <cassert>
 #include <cstring>
 #include <gta3sc/sourceman.hpp>
+#include <gta3sc/util/ctype.hpp>
+#include <gta3sc/util/string.hpp>
 
 namespace gta3sc
 {
 auto SourceManager::iequal(std::string_view lhs, std::string_view rhs) const
         -> bool
 {
-    return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(),
-                      [](unsigned char ac, unsigned char bc) {
-                          if(ac >= 'a' && ac <= 'z')
-                              ac -= 32; // transform into upper
-                          if(bc >= 'a' && bc <= 'z')
-                              bc -= 32;
-                          return ac == bc;
-                      });
+    return util::insensitive_equal(lhs, rhs);
 }
 
 auto SourceManager::scan_directory(const std::filesystem::path& dir) -> bool
@@ -33,8 +28,8 @@ auto SourceManager::scan_directory(const std::filesystem::path& dir) -> bool
         const auto& path = entry.path();
         const auto extension = path.extension().u8string();
         if(extension.size() == 3 && extension[0] == '.'
-           && (extension[1] == 's' || extension[1] == 'S')
-           && (extension[2] == 'c' || extension[2] == 'C'))
+           && (util::toupper(extension[1]) == 'S')
+           && (util::toupper(extension[2]) == 'C'))
         {
             this->filename_to_path.emplace_back(
                     FilenamePathPair{path.filename().generic_string(), path});

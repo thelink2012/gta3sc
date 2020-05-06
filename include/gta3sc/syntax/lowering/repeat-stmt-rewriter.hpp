@@ -25,7 +25,7 @@ public:
     ///
     /// The given arena will be used to allocate the IR of replacement
     /// commands.
-    explicit RepeatStmtRewriter(gta3sc::util::NameGenerator& namegen,
+    explicit RepeatStmtRewriter(util::NameGenerator& namegen,
                                 ArenaAllocator<> allocator) noexcept;
 
     RepeatStmtRewriter(const RepeatStmtRewriter&) = delete;
