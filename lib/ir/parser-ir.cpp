@@ -31,7 +31,7 @@ auto ParserIR::create_identifier(std::string_view name, SourceRange source,
         -> ArenaPtr<const Argument>
 {
     auto identifier_obj = Identifier(
-            private_tag, util::allocate_string(name, allocator, util::toupper));
+            private_tag, util::new_string(name, allocator, util::toupper));
 
     return allocator.new_object<Argument>(private_tag, identifier_obj, source);
 }
@@ -41,7 +41,7 @@ auto ParserIR::create_filename(std::string_view name, SourceRange source,
         -> ArenaPtr<const Argument>
 {
     auto filename_obj = Filename(
-            private_tag, util::allocate_string(name, allocator, util::toupper));
+            private_tag, util::new_string(name, allocator, util::toupper));
 
     return allocator.new_object<Argument>(private_tag, filename_obj, source);
 }
@@ -50,8 +50,7 @@ auto ParserIR::create_string(std::string_view string, SourceRange source,
                              ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
-    auto string_obj = String(private_tag,
-                             util::allocate_string(string, allocator));
+    auto string_obj = String(private_tag, util::new_string(string, allocator));
 
     return allocator.new_object<Argument>(private_tag, string_obj, source);
 }
@@ -98,7 +97,7 @@ auto ParserIR::LabelDef::create(std::string_view name, SourceRange source,
 {
     return allocator.new_object<LabelDef>(
             private_tag, source,
-            util::allocate_string(name, allocator, util::toupper));
+            util::new_string(name, allocator, util::toupper));
 }
 
 auto operator==(const ParserIR::LabelDef& lhs,
@@ -205,7 +204,7 @@ auto ParserIR::Builder::command(std::string_view name, SourceRange source)
     assert(!this->command_ptr && !this->has_command_name);
     this->command_ptr = nullptr;
     this->has_command_name = true;
-    this->command_name = util::allocate_string(name, allocator, util::toupper);
+    this->command_name = util::new_string(name, allocator, util::toupper);
     this->command_source = source;
     return std::move(*this);
 }
@@ -230,7 +229,7 @@ auto ParserIR::Builder::arg(const Argument* value) -> Builder&&
 
     assert(value != nullptr);
 
-    std::tie(args, args_capacity) = util::allocate_array_element(
+    std::tie(args, args_capacity) = util::new_array_element(
             value, this->args, this->args_capacity, default_args_capacity,
             allocator);
 

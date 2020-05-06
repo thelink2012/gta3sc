@@ -16,6 +16,25 @@ using ArenaPtr = T*;
 // using ArenaPtr = std::enable_if_t<std::is_trivially_destructible_v<T>, T*>;
 // The above causes problems when the full class definition is still not known.
 
+/// Helper base class for arena objects.
+///
+/// It's not necessary to inherit from this to have an object allocated in the
+/// arena. This is simply a helper class to delete copy/move construction and
+/// assignment from deriveds, which is necessary if the object isn't intended
+/// to have value semantics and can only live allocated in an arena.
+struct ArenaObj
+{
+    ArenaObj() noexcept = default;
+
+    ArenaObj(const ArenaObj&) = delete;
+    auto operator=(const ArenaObj&) -> ArenaObj& = delete;
+
+    ArenaObj(ArenaObj&&) noexcept = delete;
+    auto operator=(ArenaObj&&) noexcept -> ArenaObj& = delete;
+
+    ~ArenaObj() = default;
+};
+
 /// This is a memory resource that releases the allocated memory only when
 /// the resource is destroyed. It is intended for very fast memory allocations
 /// in situations where memory is used to build up a few objects and then is
@@ -36,22 +55,11 @@ public:
     /// Sets the current buffer to buffer and the next buffer size to
     /// buffer_size (but not less than 1). Then increase the next buffer
     /// size by an growth factor.
-    ArenaMemoryResource(void* buffer, size_t buffer_size) :
-        region_ptr(static_cast<char*>(buffer)),
-        region_size(buffer_size),
-        free_ptr(static_cast<char*>(buffer)),
-        next_region_size(buffer_size * 2)
-    {
-        assert(buffer_size > 0);
-    }
+    ArenaMemoryResource(void* buffer, size_t buffer_size);
 
     /// Sets the current buffer to null and the next buffer size to
     /// a size no smaller than initial_size.
-    explicit ArenaMemoryResource(size_t initial_size) : ArenaMemoryResource()
-    {
-        assert(initial_size > 0);
-        this->next_region_size = initial_size;
-    }
+    explicit ArenaMemoryResource(size_t initial_size);
 
     ArenaMemoryResource(ArenaMemoryResource&&) = delete;
     ArenaMemoryResource(const ArenaMemoryResource&) = delete;
@@ -62,7 +70,7 @@ public:
     ~ArenaMemoryResource() { this->release(); }
 
     /// Checks whether memory allocated from `rhs` can be deallocated
-    /// from `this` and vice-versa.
+    /// from `lhs` and vice-versa.
     friend auto operator==(const ArenaMemoryResource& lhs,
                            const ArenaMemoryResource& rhs) noexcept -> bool
     {
@@ -83,57 +91,7 @@ public:
     ///
     /// Otherwise, allocates another buffer bigger than the current one,
     /// assigns it to the current buffer and allocates a block from this buffer.
-    [[nodiscard]] auto allocate(size_t bytes, size_t alignment) -> void*
-    {
-        size_t space{};
-
-        if(region_ptr)
-        {
-            space = (region_ptr + region_size) - free_ptr;
-            if(align(alignment, bytes, free_ptr, space))
-            {
-                auto* result = free_ptr;
-                this->free_ptr += bytes;
-                return result;
-            }
-        }
-
-        // Either we don't have a region allocated or there's not enough
-        // space in the current region. Allocate another region.
-
-        // The next region must have space for the header and the requested
-        // bytes. In the worst case, it also needs all the alignment bytes.
-        const auto requires_size = sizeof(OwnedHeader) + alignment + bytes;
-        if(next_region_size < requires_size)
-            next_region_size = requires_size;
-
-        auto* next_region_ptr = static_cast<char*>(operator new(
-                next_region_size));
-        if(next_region_ptr)
-        {
-            auto* next_region_header = new(next_region_ptr) OwnedHeader;
-            next_region_header->prev_region_ptr = region_ptr;
-            next_region_header->prev_region_size = region_size;
-            next_region_header->owns_prev_region = owns_region;
-
-            this->owns_region = true;
-            this->region_ptr = next_region_ptr;
-            this->region_size = next_region_size;
-            this->free_ptr = next_region_ptr + sizeof(OwnedHeader);
-            this->next_region_size *= 2;
-            assert(next_region_size != 0);
-            assert(free_ptr <= region_ptr + region_size);
-
-            space = (region_ptr + region_size) - free_ptr;
-            auto* result = align(alignment, bytes, free_ptr, space);
-            assert(result != nullptr);
-
-            this->free_ptr += bytes;
-            return result;
-        }
-
-        return nullptr;
-    }
+    [[nodiscard]] auto allocate(size_t bytes, size_t alignment) -> void*;
 
     /// Does nothing. Memory used by this resource increases monotonically
     /// until its destruction.
@@ -145,23 +103,7 @@ public:
     /// given in the constructor.
     ///
     /// This does not reset the size of the next region to be allocated.
-    void release()
-    {
-        // Walks backward in the list of regions until we either find the
-        // initial buffer we don't own, or we don't have any more buffers.
-        while(owns_region && region_ptr)
-        {
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-            auto header = *reinterpret_cast<OwnedHeader*>(region_ptr);
-            operator delete(region_ptr);
-            this->region_ptr = header.prev_region_ptr;
-            this->region_size = header.prev_region_size;
-            this->owns_region = header.owns_prev_region;
-        }
-
-        assert(owns_region == false);
-        this->free_ptr = region_ptr;
-    }
+    void release();
 
 private:
     char* region_ptr{};      //< The pointer to the current region.
@@ -182,16 +124,7 @@ private:
     };
 
     static auto align(size_t alignment, size_t bytes, char*& ptr, size_t& space)
-            -> char*
-    {
-        void* void_ptr = ptr;
-        if(std::align(alignment, bytes, void_ptr, space))
-        {
-            ptr = static_cast<char*>(void_ptr);
-            return ptr;
-        }
-        return nullptr;
-    }
+            -> char*;
 };
 
 /// An allocator encapsulating an arena memory resource.

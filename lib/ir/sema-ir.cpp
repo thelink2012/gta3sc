@@ -28,8 +28,7 @@ auto SemaIR::create_text_label(std::string_view value, SourceRange source,
         -> ArenaPtr<const Argument>
 {
     auto text_label_obj = TextLabel(
-            private_tag,
-            util::allocate_string(value, allocator, util::toupper));
+            private_tag, util::new_string(value, allocator, util::toupper));
 
     return allocator.new_object<Argument>(private_tag, text_label_obj, source);
 }
@@ -45,8 +44,7 @@ auto SemaIR::create_string(std::string_view value, SourceRange source,
                            ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
-    auto string_obj = String(private_tag,
-                             util::allocate_string(value, allocator));
+    auto string_obj = String(private_tag, util::new_string(value, allocator));
 
     return allocator.new_object<Argument>(private_tag, string_obj, source);
 }
@@ -300,7 +298,7 @@ auto SemaIR::Builder::arg(const Argument* value) -> Builder&&
 
     assert(value != nullptr);
 
-    std::tie(args, args_capacity) = util::allocate_array_element(
+    std::tie(args, args_capacity) = util::new_array_element(
             value, this->args, this->args_capacity, default_args_capacity,
             allocator);
 

@@ -5,7 +5,7 @@
 
 namespace gta3sc::util
 {
-/// Checks whether two strings are equal ignoring any difference of casing.
+/// Checks whether two strings are equal ignoring any casing difference.
 constexpr auto insensitive_equal(std::string_view lhs,
                                  std::string_view rhs) noexcept -> bool
 {

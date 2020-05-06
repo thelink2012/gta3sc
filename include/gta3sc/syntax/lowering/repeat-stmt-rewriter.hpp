@@ -1,7 +1,7 @@
 #pragma once
 #include <gta3sc/ir/instruction-rewriter.hpp>
 #include <gta3sc/ir/parser-ir.hpp>
-#include <gta3sc/util/arena-allocator.hpp>
+#include <gta3sc/util/arena.hpp>
 #include <gta3sc/util/name-generator.hpp>
 #include <string>
 #include <vector>

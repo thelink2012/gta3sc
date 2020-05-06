@@ -1,6 +1,6 @@
 #pragma once
 #include <algorithm>
-#include <gta3sc/util/arena-allocator.hpp>
+#include <gta3sc/util/arena.hpp>
 #include <gta3sc/util/intrusive-forward-list-node.hpp>
 #include <gta3sc/util/span.hpp>
 #include <optional>

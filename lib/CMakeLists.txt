@@ -6,6 +6,7 @@ add_library(gta3sc
   ir/parser-ir.cpp
   ir/sema-ir.cpp
   ir/symbol-table.cpp
+  util/arena.cpp
   util/name-generator.cpp
   syntax/preprocessor.cpp
   syntax/scanner.cpp

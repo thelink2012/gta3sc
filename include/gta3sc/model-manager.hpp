@@ -1,6 +1,6 @@
 #pragma once
 #include <functional>
-#include <gta3sc/util/arena-allocator.hpp>
+#include <gta3sc/util/arena.hpp>
 #include <unordered_set>
 
 namespace gta3sc

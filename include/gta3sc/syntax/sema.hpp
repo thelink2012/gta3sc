@@ -6,7 +6,7 @@
 #include <gta3sc/ir/sema-ir.hpp>
 #include <gta3sc/ir/symbol-table.hpp>
 #include <gta3sc/model-manager.hpp>
-#include <gta3sc/util/arena-allocator.hpp>
+#include <gta3sc/util/arena.hpp>
 
 namespace gta3sc::syntax
 {

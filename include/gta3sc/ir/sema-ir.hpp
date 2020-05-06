@@ -28,7 +28,9 @@ namespace gta3sc
 /// [1]: The IR is mostly modelled as an intrusive linked list (see `LinkedIR`)
 /// and the node pointers present in this structure need to change to manipulate
 /// the list.
-class SemaIR : public util::IntrusiveBidirectionalListNode<SemaIR>
+class SemaIR
+    : public util::IntrusiveBidirectionalListNode<SemaIR>
+    , public ArenaObj
 {
 private:
     /// This tag is used to make construction of the IR elements private.
@@ -53,14 +55,6 @@ public:
            const Command* command) noexcept :
         m_label(label), m_command(command)
     {}
-
-    SemaIR(const SemaIR&) = delete;
-    auto operator=(const SemaIR&) -> SemaIR& = delete;
-
-    SemaIR(SemaIR&&) noexcept = delete;
-    auto operator=(SemaIR&&) noexcept -> SemaIR& = delete;
-
-    ~SemaIR() noexcept = default;
 
     /// Checks whether there is a command associated with this instruction.
     [[nodiscard]] auto has_command() const noexcept -> bool
@@ -276,7 +270,7 @@ public:
     {}
 };
 
-class SemaIR::Command
+class SemaIR::Command : public ArenaObj
 {
 public:
     /// Please use `SemaIR::Builder::build_command`.
@@ -285,14 +279,6 @@ public:
             util::span<const Argument*> args, bool not_flag) noexcept :
         m_source(source), m_def(&def), m_args(args), m_not_flag(not_flag)
     {}
-
-    Command(const Command&) = delete;
-    auto operator=(const Command&) -> Command& = delete;
-
-    Command(Command&&) noexcept = delete;
-    auto operator=(Command&&) noexcept -> Command& = delete;
-
-    ~Command() noexcept = default;
 
     /// Checks whether the not flag of this command is active.
     [[nodiscard]] auto not_flag() const noexcept -> bool { return m_not_flag; }
@@ -346,7 +332,7 @@ private:
     bool m_not_flag{};
 };
 
-class SemaIR::Argument
+class SemaIR::Argument : public ArenaObj
 {
 public:
     enum class Type
@@ -367,14 +353,6 @@ public:
     explicit Argument(PrivateTag /*unused*/, T&& value, SourceRange source) :
         m_source(source), m_value(std::forward<T>(value))
     {}
-
-    Argument(const Argument&) = delete;
-    auto operator=(const Argument&) -> Argument& = delete;
-
-    Argument(Argument&&) noexcept = delete;
-    auto operator=(Argument&&) noexcept -> Argument& = delete;
-
-    ~Argument() noexcept = default;
 
     /// Returns the source code range of this argument.
     [[nodiscard]] auto source() const noexcept -> SourceRange

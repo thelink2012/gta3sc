@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <gta3sc/sourceman.hpp>
-#include <gta3sc/util/arena-allocator.hpp>
+#include <gta3sc/util/arena.hpp>
 #include <gta3sc/util/container-view.hpp>
 #include <gta3sc/util/element-iterator-adaptor.hpp>
 #include <optional>
@@ -191,7 +191,7 @@ public:
 };
 
 /// Represents a declared label.
-class SymbolTable::Label
+class SymbolTable::Label : public ArenaObj
 {
 public:
     /// Please use `SymbolTable::insert_label` to create one.
@@ -199,14 +199,6 @@ public:
           SymbolId id, ScopeId scope) noexcept :
         m_name(name), m_source(source), m_id(id), m_scope(scope)
     {}
-
-    Label(const Label&) = delete;
-    auto operator=(const Label&) const -> Label& = delete;
-
-    Label(Label&&) noexcept = delete;
-    auto operator=(Label&&) const noexcept -> Label& = delete;
-
-    ~Label() noexcept = default;
 
     /// Returns the name of the label.
     [[nodiscard]] auto name() const noexcept -> std::string_view
@@ -234,7 +226,7 @@ private:
 };
 
 /// Represents a declared variable.
-class SymbolTable::Variable
+class SymbolTable::Variable : public ArenaObj
 {
 public:
     /// The type of the variable.
@@ -251,14 +243,6 @@ public:
         m_type(type),
         m_dim(dimensions)
     {}
-
-    Variable(const Variable&) = delete;
-    auto operator=(const Variable&) const -> Variable& = delete;
-
-    Variable(Variable&&) noexcept = delete;
-    auto operator=(Variable&&) const noexcept -> Variable& = delete;
-
-    ~Variable() noexcept = default;
 
     /// Returns the name of the variable.
     [[nodiscard]] auto name() const noexcept -> std::string_view
@@ -304,7 +288,7 @@ private:
 };
 
 /// Represents an used object.
-class SymbolTable::UsedObject
+class SymbolTable::UsedObject : public ArenaObj
 {
 public:
     /// Please use `SymbolTable::insert_used_object` to create one.
@@ -312,14 +296,6 @@ public:
                SymbolId id) noexcept :
         m_name(name), m_source(source), m_id(id)
     {}
-
-    UsedObject(const UsedObject&) = delete;
-    auto operator=(const UsedObject&) const -> UsedObject& = delete;
-
-    UsedObject(UsedObject&&) noexcept = delete;
-    auto operator=(UsedObject&&) const noexcept -> UsedObject& = delete;
-
-    ~UsedObject() noexcept = default;
 
     /// Returns the name of the used object.
     [[nodiscard]] auto name() const noexcept -> std::string_view

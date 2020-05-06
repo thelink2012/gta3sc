@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <gta3sc/sourceman.hpp>
-#include <gta3sc/util/arena-allocator.hpp>
+#include <gta3sc/util/arena.hpp>
 #include <gta3sc/util/intrusive-bidirectional-list-node.hpp>
 #include <gta3sc/util/random-access-view.hpp>
 #include <gta3sc/util/span.hpp>
@@ -34,7 +34,9 @@ namespace gta3sc
 /// [1]: The IR is mostly modelled as an intrusive linked list (see `LinkedIR`)
 /// and the node pointers present in this structure need to change to manipulate
 /// the list.
-class ParserIR : public util::IntrusiveBidirectionalListNode<ParserIR>
+class ParserIR
+    : public util::IntrusiveBidirectionalListNode<ParserIR>
+    , public ArenaObj
 {
 private:
     /// This tag is used to make construction of the IR elements private.
@@ -60,14 +62,6 @@ public:
              const Command* command) noexcept :
         m_label(label), m_command(command)
     {}
-
-    ParserIR(const ParserIR&) = delete;
-    auto operator=(const ParserIR&) -> ParserIR& = delete;
-
-    ParserIR(ParserIR&&) noexcept = delete;
-    auto operator=(ParserIR&&) noexcept -> ParserIR& = delete;
-
-    ~ParserIR() noexcept = default;
 
     /// Checks whether there is a command associated with this instruction.
     [[nodiscard]] auto has_command() const noexcept -> bool
@@ -228,7 +222,7 @@ public:
     {}
 };
 
-class ParserIR::LabelDef
+class ParserIR::LabelDef : public ArenaObj
 {
 public:
     /// Please ues `create` instead.
@@ -236,14 +230,6 @@ public:
              std::string_view name) noexcept :
         m_source(source), m_name(name)
     {}
-
-    LabelDef(const LabelDef&) = delete;
-    auto operator=(const LabelDef&) -> LabelDef& = delete;
-
-    LabelDef(LabelDef&&) noexcept = delete;
-    auto operator=(LabelDef&&) noexcept -> LabelDef& = delete;
-
-    ~LabelDef() noexcept = default;
 
     /// Returns the source code range of this label definition.
     [[nodiscard]] auto source() const noexcept -> SourceRange
@@ -274,7 +260,7 @@ private:
     std::string_view m_name;
 };
 
-class ParserIR::Command
+class ParserIR::Command : public ArenaObj
 {
 public:
     /// Please use `ParserIR::Builder::build_command`.
@@ -282,14 +268,6 @@ public:
             util::span<const Argument*> args, bool not_flag) noexcept :
         m_source(source), m_name(name), m_args(args), m_not_flag(not_flag)
     {}
-
-    Command(const Command&) = delete;
-    auto operator=(const Command&) -> Command& = delete;
-
-    Command(Command&&) noexcept = delete;
-    auto operator=(Command&&) noexcept -> Command& = delete;
-
-    ~Command() noexcept = default;
 
     /// Checks whether the not flag of this command is active.
     [[nodiscard]] auto not_flag() const noexcept -> bool { return m_not_flag; }
@@ -343,7 +321,7 @@ private:
     bool m_not_flag{};
 };
 
-class ParserIR::Argument
+class ParserIR::Argument : public ArenaObj
 {
 public:
     enum class Type
@@ -361,14 +339,6 @@ public:
     Argument(PrivateTag /*unused*/, T&& value, SourceRange source) noexcept :
         m_source(source), m_value(std::forward<T>(value))
     {}
-
-    ~Argument() noexcept = default;
-
-    Argument(const Argument&) = delete;
-    auto operator=(const Argument&) -> Argument& = delete;
-
-    Argument(Argument&&) noexcept = delete;
-    auto operator=(Argument&&) noexcept -> Argument& = delete;
 
     /// Returns the source code range of this argument.
     [[nodiscard]] auto source() const noexcept -> SourceRange

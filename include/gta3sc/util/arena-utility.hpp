@@ -1,5 +1,5 @@
 #pragma once
-#include <gta3sc/util/arena-allocator.hpp>
+#include <gta3sc/util/arena.hpp>
 #include <gta3sc/util/span.hpp>
 #include <string_view>
 
@@ -10,9 +10,8 @@ namespace gta3sc::util
 ///
 /// Returns an immutable view to the allocated string.
 template<typename UnaryOperation>
-inline auto allocate_string(std::string_view copy_from,
-                            ArenaAllocator<> allocator,
-                            UnaryOperation transform_op) -> std::string_view
+inline auto new_string(std::string_view copy_from, ArenaAllocator<> allocator,
+                       UnaryOperation transform_op) -> std::string_view
 {
     const auto result_size = copy_from.size();
 
@@ -28,11 +27,11 @@ inline auto allocate_string(std::string_view copy_from,
 /// Allocates a copy of the string `copy_from` in an arena.
 ///
 /// Returns an immutable view to the allocated string.
-inline auto allocate_string(std::string_view copy_from,
-                            ArenaAllocator<> allocator) -> std::string_view
+inline auto new_string(std::string_view copy_from, ArenaAllocator<> allocator)
+        -> std::string_view
 {
     constexpr auto identity = [](char c) { return c; };
-    return allocate_string(copy_from, allocator, identity);
+    return new_string(copy_from, allocator, identity);
 }
 
 /// Allocates a new position in `current_array` and constructs `value` in it.
@@ -52,10 +51,9 @@ inline auto allocate_string(std::string_view copy_from,
 ///
 /// Returns the new array and the new capacity.
 template<typename T, typename U>
-inline auto allocate_array_element(U&& value, util::span<T> current_array,
-                                   size_t current_capacity,
-                                   size_t default_capacity,
-                                   ArenaAllocator<> allocator)
+inline auto new_array_element(U&& value, util::span<T> current_array,
+                              size_t current_capacity, size_t default_capacity,
+                              ArenaAllocator<> allocator)
         -> std::pair<util::span<T>, size_t>
 {
     assert(default_capacity != 0);
