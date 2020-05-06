@@ -4,7 +4,7 @@
 
 namespace gta3sc
 {
-auto SemaIR::create(const SymLabel* label, const Command* command,
+auto SemaIR::create(const SymbolTable::Label* label, const Command* command,
                     ArenaAllocator<> allocator) -> ArenaPtr<SemaIR>
 {
     return allocator.new_object<SemaIR>(private_tag, label, command);
@@ -34,7 +34,7 @@ auto SemaIR::create_text_label(std::string_view value, SourceRange source,
     return allocator.new_object<Argument>(private_tag, text_label_obj, source);
 }
 
-auto SemaIR::create_label(const SymLabel& label, SourceRange source,
+auto SemaIR::create_label(const SymbolTable::Label& label, SourceRange source,
                           ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
@@ -51,15 +51,15 @@ auto SemaIR::create_string(std::string_view value, SourceRange source,
     return allocator.new_object<Argument>(private_tag, string_obj, source);
 }
 
-auto SemaIR::create_variable(const SymVariable& var, SourceRange source,
-                             ArenaAllocator<> allocator)
+auto SemaIR::create_variable(const SymbolTable::Variable& var,
+                             SourceRange source, ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
     auto var_obj = VarRef(private_tag, var);
     return allocator.new_object<Argument>(private_tag, var_obj, source);
 }
 
-auto SemaIR::create_variable(const SymVariable& var, int32_t index,
+auto SemaIR::create_variable(const SymbolTable::Variable& var, int32_t index,
                              SourceRange source, ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
@@ -67,7 +67,8 @@ auto SemaIR::create_variable(const SymVariable& var, int32_t index,
     return allocator.new_object<Argument>(private_tag, var_obj, source);
 }
 
-auto SemaIR::create_variable(const SymVariable& var, const SymVariable& index,
+auto SemaIR::create_variable(const SymbolTable::Variable& var,
+                             const SymbolTable::Variable& index,
                              SourceRange source, ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
@@ -82,7 +83,7 @@ auto SemaIR::create_constant(const CommandManager::ConstantDef& cdef,
     return allocator.new_object<Argument>(private_tag, &cdef, source);
 }
 
-auto SemaIR::create_used_object(const SymUsedObject& used_object,
+auto SemaIR::create_used_object(const SymbolTable::UsedObject& used_object,
                                 SourceRange source, ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
@@ -161,9 +162,10 @@ auto SemaIR::Argument::as_var_ref() const noexcept -> std::optional<VarRef>
     return std::nullopt;
 }
 
-auto SemaIR::Argument::as_label() const noexcept -> const SymLabel*
+auto SemaIR::Argument::as_label() const noexcept -> const SymbolTable::Label*
 {
-    if(const auto* label = std::get_if<const SymLabel*>(&this->m_value))
+    if(const auto* label = std::get_if<const SymbolTable::Label*>(
+               &this->m_value))
         return *label;
     return nullptr;
 }
@@ -177,9 +179,11 @@ auto SemaIR::Argument::as_constant() const noexcept
     return nullptr;
 }
 
-auto SemaIR::Argument::as_used_object() const noexcept -> const SymUsedObject*
+auto SemaIR::Argument::as_used_object() const noexcept
+        -> const SymbolTable::UsedObject*
 {
-    if(const auto* uobj = std::get_if<const SymUsedObject*>(&this->m_value))
+    if(const auto* uobj = std::get_if<const SymbolTable::UsedObject*>(
+               &this->m_value))
         return *uobj;
     return nullptr;
 }
@@ -214,7 +218,7 @@ auto operator!=(const SemaIR::Argument& lhs,
     return !(lhs == rhs);
 }
 
-auto SemaIR::VarRef::def() const noexcept -> const SymVariable&
+auto SemaIR::VarRef::def() const noexcept -> const SymbolTable::Variable&
 {
     return *m_def;
 }
@@ -231,9 +235,11 @@ auto SemaIR::VarRef::index_as_int() const noexcept -> std::optional<int32_t>
     return std::nullopt;
 }
 
-auto SemaIR::VarRef::index_as_variable() const noexcept -> const SymVariable*
+auto SemaIR::VarRef::index_as_variable() const noexcept
+        -> const SymbolTable::Variable*
 {
-    if(const auto* var = std::get_if<const SymVariable*>(&this->m_index))
+    if(const auto* var = std::get_if<const SymbolTable::Variable*>(
+               &this->m_index))
         return *var;
     return nullptr;
 }
@@ -250,7 +256,7 @@ auto operator!=(const SemaIR::VarRef& lhs, const SemaIR::VarRef& rhs) noexcept
     return !(lhs == rhs);
 }
 
-auto SemaIR::Builder::label(const SymLabel* label_ptr) -> Builder&&
+auto SemaIR::Builder::label(const SymbolTable::Label* label_ptr) -> Builder&&
 {
     this->label_ptr = label_ptr;
     return std::move(*this);
@@ -311,8 +317,8 @@ auto SemaIR::Builder::arg_float(float value, SourceRange source) -> Builder&&
     return arg(SemaIR::create_float(value, source, allocator));
 }
 
-auto SemaIR::Builder::arg_label(const SymLabel& label, SourceRange source)
-        -> Builder&&
+auto SemaIR::Builder::arg_label(const SymbolTable::Label& label,
+                                SourceRange source) -> Builder&&
 {
     return arg(SemaIR::create_label(label, source, allocator));
 }
@@ -329,19 +335,20 @@ auto SemaIR::Builder::arg_string(std::string_view value, SourceRange source)
     return arg(SemaIR::create_string(value, source, allocator));
 }
 
-auto SemaIR::Builder::arg_var(const SymVariable& var, SourceRange source)
-        -> Builder&&
+auto SemaIR::Builder::arg_var(const SymbolTable::Variable& var,
+                              SourceRange source) -> Builder&&
 {
     return arg(SemaIR::create_variable(var, source, allocator));
 }
 
-auto SemaIR::Builder::arg_var(const SymVariable& var, int32_t index,
+auto SemaIR::Builder::arg_var(const SymbolTable::Variable& var, int32_t index,
                               SourceRange source) -> Builder&&
 {
     return arg(SemaIR::create_variable(var, index, source, allocator));
 }
 
-auto SemaIR::Builder::arg_var(const SymVariable& var, const SymVariable& index,
+auto SemaIR::Builder::arg_var(const SymbolTable::Variable& var,
+                              const SymbolTable::Variable& index,
                               SourceRange source) -> Builder&&
 {
     return arg(SemaIR::create_variable(var, index, source, allocator));
@@ -355,7 +362,7 @@ auto SemaIR::Builder::arg_const(const CommandManager::ConstantDef& cdef,
     return arg(SemaIR::create_constant(cdef, source, allocator));
 }
 
-auto SemaIR::Builder::arg_object(const SymUsedObject& used_object,
+auto SemaIR::Builder::arg_object(const SymbolTable::UsedObject& used_object,
                                  SourceRange source) -> Builder&&
 {
     return arg(SemaIR::create_used_object(used_object, source, allocator));

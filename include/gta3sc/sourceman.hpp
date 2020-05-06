@@ -14,16 +14,6 @@ enum class SourceLocation : uint32_t
 { // strong typedef
 };
 
-inline auto operator==(SourceLocation lhs, SourceLocation rhs) noexcept -> bool
-{
-    return static_cast<uint32_t>(lhs) == static_cast<uint32_t>(rhs);
-}
-
-inline auto operator!=(SourceLocation lhs, SourceLocation rhs) noexcept -> bool
-{
-    return !(lhs == rhs);
-}
-
 inline auto operator+(SourceLocation lhs, std::ptrdiff_t rhs) noexcept
         -> SourceLocation
 {
@@ -70,16 +60,18 @@ inline auto operator--(SourceLocation& lhs) noexcept -> SourceLocation&
     return lhs;
 }
 
-inline auto operator++(const SourceLocation& lhs, int) noexcept
-        -> SourceLocation
+inline auto operator++(SourceLocation& lhs, int) noexcept -> SourceLocation
 {
-    return lhs + 1;
+    const auto temp = lhs;
+    ++lhs;
+    return temp;
 }
 
-inline auto operator--(const SourceLocation& lhs, int) noexcept
-        -> SourceLocation
+inline auto operator--(SourceLocation& lhs, int) noexcept -> SourceLocation
 {
-    return lhs - 1;
+    const auto temp = lhs;
+    --lhs;
+    return temp;
 }
 
 /// Handle to a range of characters in the source file.

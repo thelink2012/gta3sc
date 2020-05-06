@@ -7,6 +7,7 @@ using namespace gta3sc::test;         // NOLINT
 using namespace gta3sc::test::syntax; // NOLINT
 using namespace std::literals::string_view_literals;
 using gta3sc::test::syntax::d;
+using ScopeId = gta3sc::SymbolTable::ScopeId;
 
 namespace gta3sc::test::syntax
 {
@@ -59,9 +60,9 @@ private:
     gta3sc::ArenaMemoryResource arena;
 
 protected:
-    gta3sc::SymbolRepository symrepo; // NOLINT
-    gta3sc::ModelManager modelman;    // NOLINT
-    gta3sc::syntax::Sema sema;        // NOLINT
+    gta3sc::SymbolTable symrepo;   // NOLINT
+    gta3sc::ModelManager modelman; // NOLINT
+    gta3sc::syntax::Sema sema;     // NOLINT
 };
 } // namespace gta3sc::test::syntax
 
@@ -91,9 +92,9 @@ TEST_CASE_FIXTURE(SemaFixture, "sema valid variables declarations")
 
     REQUIRE(sema.validate() != std::nullopt);
 
-    const gta3sc::SymVariable* gvar[10] = {};
-    const gta3sc::SymVariable* lvar1[10] = {};
-    const gta3sc::SymVariable* lvar2[10] = {};
+    const gta3sc::SymbolTable::Variable* gvar[10] = {};
+    const gta3sc::SymbolTable::Variable* lvar1[10] = {};
+    const gta3sc::SymbolTable::Variable* lvar2[10] = {};
 
     gvar[1] = symrepo.lookup_var("GVAR1");
     gvar[2] = symrepo.lookup_var("GVAR2");
@@ -105,72 +106,72 @@ TEST_CASE_FIXTURE(SemaFixture, "sema valid variables declarations")
     gvar[8] = symrepo.lookup_var("GVAR8");
     gvar[9] = symrepo.lookup_var("GVAR9");
 
-    lvar1[1] = symrepo.lookup_var("LVAR11", 1);
-    lvar1[2] = symrepo.lookup_var("LVAR12", 1);
-    lvar1[3] = symrepo.lookup_var("LVAR13", 1);
-    lvar1[4] = symrepo.lookup_var("LVAR14", 1);
-    lvar1[5] = symrepo.lookup_var("LVAR15", 1);
-    lvar1[6] = symrepo.lookup_var("LVAR16", 1);
-    lvar1[7] = symrepo.lookup_var("LVAR17", 1);
-    lvar1[8] = symrepo.lookup_var("LVAR18", 1);
-    lvar1[9] = symrepo.lookup_var("LVAR19", 1);
+    lvar1[1] = symrepo.lookup_var("LVAR11", ScopeId{1});
+    lvar1[2] = symrepo.lookup_var("LVAR12", ScopeId{1});
+    lvar1[3] = symrepo.lookup_var("LVAR13", ScopeId{1});
+    lvar1[4] = symrepo.lookup_var("LVAR14", ScopeId{1});
+    lvar1[5] = symrepo.lookup_var("LVAR15", ScopeId{1});
+    lvar1[6] = symrepo.lookup_var("LVAR16", ScopeId{1});
+    lvar1[7] = symrepo.lookup_var("LVAR17", ScopeId{1});
+    lvar1[8] = symrepo.lookup_var("LVAR18", ScopeId{1});
+    lvar1[9] = symrepo.lookup_var("LVAR19", ScopeId{1});
 
-    lvar2[1] = symrepo.lookup_var("LVAR21", 2);
-    lvar2[2] = symrepo.lookup_var("LVAR22", 2);
-    lvar2[3] = symrepo.lookup_var("LVAR23", 2);
-    lvar2[4] = symrepo.lookup_var("LVAR24", 2);
-    lvar2[5] = symrepo.lookup_var("LVAR25", 2);
-    lvar2[6] = symrepo.lookup_var("LVAR26", 2);
+    lvar2[1] = symrepo.lookup_var("LVAR21", ScopeId{2});
+    lvar2[2] = symrepo.lookup_var("LVAR22", ScopeId{2});
+    lvar2[3] = symrepo.lookup_var("LVAR23", ScopeId{2});
+    lvar2[4] = symrepo.lookup_var("LVAR24", ScopeId{2});
+    lvar2[5] = symrepo.lookup_var("LVAR25", ScopeId{2});
+    lvar2[6] = symrepo.lookup_var("LVAR26", ScopeId{2});
 
     REQUIRE(symrepo.lookup_var("gvar1") == nullptr);
-    REQUIRE(symrepo.lookup_var("GVAR1", 1) == nullptr);
+    REQUIRE(symrepo.lookup_var("GVAR1", ScopeId{1}) == nullptr);
     REQUIRE(symrepo.lookup_var("LVAR11") == nullptr);
-    REQUIRE(symrepo.lookup_var("LVAR11", 2) == nullptr);
+    REQUIRE(symrepo.lookup_var("LVAR11", ScopeId{2}) == nullptr);
 
     REQUIRE(gvar[1] != nullptr);
     REQUIRE(gvar[9] == nullptr);
     for(int i = 1; i <= 8; ++i)
         REQUIRE(gvar[i] != nullptr);
     for(int i = 1; i <= 8; ++i)
-        REQUIRE(gvar[i]->id == i - 1);
+        REQUIRE(gvar[i]->id() == i - 1);
     for(int i = 1; i <= 7; ++i)
-        REQUIRE(gvar[i]->dim == std::nullopt);
-    REQUIRE(gvar[8]->dim == 25);
-    REQUIRE(gvar[1]->type == gta3sc::SymVariable::Type::INT);
-    REQUIRE(gvar[2]->type == gta3sc::SymVariable::Type::INT);
-    REQUIRE(gvar[3]->type == gta3sc::SymVariable::Type::INT);
-    REQUIRE(gvar[4]->type == gta3sc::SymVariable::Type::FLOAT);
-    REQUIRE(gvar[5]->type == gta3sc::SymVariable::Type::TEXT_LABEL);
-    REQUIRE(gvar[6]->type == gta3sc::SymVariable::Type::INT);
-    REQUIRE(gvar[7]->type == gta3sc::SymVariable::Type::FLOAT);
-    REQUIRE(gvar[8]->type == gta3sc::SymVariable::Type::FLOAT);
+        REQUIRE(gvar[i]->dimensions() == std::nullopt);
+    REQUIRE(gvar[8]->dimensions() == 25);
+    REQUIRE(gvar[1]->type() == gta3sc::SymbolTable::VarType::INT);
+    REQUIRE(gvar[2]->type() == gta3sc::SymbolTable::VarType::INT);
+    REQUIRE(gvar[3]->type() == gta3sc::SymbolTable::VarType::INT);
+    REQUIRE(gvar[4]->type() == gta3sc::SymbolTable::VarType::FLOAT);
+    REQUIRE(gvar[5]->type() == gta3sc::SymbolTable::VarType::TEXT_LABEL);
+    REQUIRE(gvar[6]->type() == gta3sc::SymbolTable::VarType::INT);
+    REQUIRE(gvar[7]->type() == gta3sc::SymbolTable::VarType::FLOAT);
+    REQUIRE(gvar[8]->type() == gta3sc::SymbolTable::VarType::FLOAT);
 
     REQUIRE(lvar1[9] == nullptr);
     for(int i = 1; i <= 8; ++i)
         REQUIRE(lvar1[i] != nullptr);
     for(int i = 1; i <= 8; ++i)
-        REQUIRE(lvar1[i]->id == i - 1);
+        REQUIRE(lvar1[i]->id() == i - 1);
     for(int i = 1; i <= 8; ++i)
-        REQUIRE(lvar1[i]->dim == std::nullopt);
-    REQUIRE(lvar1[1]->type == gta3sc::SymVariable::Type::INT);
-    REQUIRE(lvar1[2]->type == gta3sc::SymVariable::Type::INT);
-    REQUIRE(lvar1[3]->type == gta3sc::SymVariable::Type::INT);
-    REQUIRE(lvar1[4]->type == gta3sc::SymVariable::Type::FLOAT);
-    REQUIRE(lvar1[5]->type == gta3sc::SymVariable::Type::FLOAT);
-    REQUIRE(lvar1[6]->type == gta3sc::SymVariable::Type::FLOAT);
-    REQUIRE(lvar1[7]->type == gta3sc::SymVariable::Type::FLOAT);
-    REQUIRE(lvar1[8]->type == gta3sc::SymVariable::Type::TEXT_LABEL);
+        REQUIRE(lvar1[i]->dimensions() == std::nullopt);
+    REQUIRE(lvar1[1]->type() == gta3sc::SymbolTable::VarType::INT);
+    REQUIRE(lvar1[2]->type() == gta3sc::SymbolTable::VarType::INT);
+    REQUIRE(lvar1[3]->type() == gta3sc::SymbolTable::VarType::INT);
+    REQUIRE(lvar1[4]->type() == gta3sc::SymbolTable::VarType::FLOAT);
+    REQUIRE(lvar1[5]->type() == gta3sc::SymbolTable::VarType::FLOAT);
+    REQUIRE(lvar1[6]->type() == gta3sc::SymbolTable::VarType::FLOAT);
+    REQUIRE(lvar1[7]->type() == gta3sc::SymbolTable::VarType::FLOAT);
+    REQUIRE(lvar1[8]->type() == gta3sc::SymbolTable::VarType::TEXT_LABEL);
 
     REQUIRE(lvar2[6] == nullptr);
     for(int i = 1; i <= 5; ++i)
         REQUIRE(lvar2[i] != nullptr);
     for(int i = 1; i <= 5; ++i)
-        REQUIRE(lvar2[i]->id == i - 1);
+        REQUIRE(lvar2[i]->id() == i - 1);
     for(int i = 1; i <= 5; ++i)
-        REQUIRE(lvar2[i]->type == gta3sc::SymVariable::Type::FLOAT);
-    REQUIRE(lvar2[1]->dim == 30);
+        REQUIRE(lvar2[i]->type() == gta3sc::SymbolTable::VarType::FLOAT);
+    REQUIRE(lvar2[1]->dimensions() == 30);
     for(int i = 2; i <= 5; ++i)
-        REQUIRE(lvar2[i]->dim == std::nullopt);
+        REQUIRE(lvar2[i]->dimensions() == std::nullopt);
 }
 
 TEST_CASE_FIXTURE(SemaFixture, "sema invalid variables declarations")
@@ -660,11 +661,11 @@ TEST_CASE_FIXTURE(SemaFixture, "sema LVAR_INT parameter")
         REQUIRE(set_lvar_int_1.command().args().size() == 2);
         REQUIRE(std::addressof(
                         set_lvar_int_1.command().arg(0).as_var_ref()->def())
-                == symrepo.lookup_var("$L2", 1));
+                == symrepo.lookup_var("$L2", ScopeId{1}));
         REQUIRE(set_lvar_int_2.command().args().size() == 2);
         REQUIRE(std::addressof(
                         set_lvar_int_2.command().arg(0).as_var_ref()->def())
-                == symrepo.lookup_var("L1", 1));
+                == symrepo.lookup_var("L1", ScopeId{1}));
     }
 
     SUBCASE("invalid LVAR_INT param - not identifier")
@@ -760,11 +761,11 @@ TEST_CASE_FIXTURE(SemaFixture, "sema LVAR_FLOAT parameter")
         REQUIRE(set_lvar_flt_1.command().args().size() == 2);
         REQUIRE(std::addressof(
                         set_lvar_flt_1.command().arg(0).as_var_ref()->def())
-                == symrepo.lookup_var("$L2", 1));
+                == symrepo.lookup_var("$L2", ScopeId{1}));
         REQUIRE(set_lvar_flt_2.command().args().size() == 2);
         REQUIRE(std::addressof(
                         set_lvar_flt_2.command().arg(0).as_var_ref()->def())
-                == symrepo.lookup_var("L1", 1));
+                == symrepo.lookup_var("L1", ScopeId{1}));
     }
 
     SUBCASE("invalid LVAR_FLOAT param - not identifier")
@@ -857,10 +858,10 @@ TEST_CASE_FIXTURE(SemaFixture, "sema LVAR_TEXT_LABEL parameter")
         const auto& set_lvar_2 = *std::prev(ir->end(), 2);
         REQUIRE(set_lvar_1.command().args().size() == 2);
         REQUIRE(std::addressof(set_lvar_1.command().arg(0).as_var_ref()->def())
-                == symrepo.lookup_var("$L2", 1));
+                == symrepo.lookup_var("$L2", ScopeId{1}));
         REQUIRE(set_lvar_2.command().args().size() == 2);
         REQUIRE(std::addressof(set_lvar_2.command().arg(0).as_var_ref()->def())
-                == symrepo.lookup_var("L1", 1));
+                == symrepo.lookup_var("L1", ScopeId{1}));
     }
 
     SUBCASE("invalid LVAR_TEXT_LABEL param - not identifier")
@@ -908,9 +909,9 @@ TEST_CASE_FIXTURE(SemaFixture, "sema OUTPUT_INT parameter")
         const auto& arg2 = std::prev(ir->end(), 2)->command().arg(2);
 
         REQUIRE(std::addressof(arg1.as_var_ref()->def())
-                == symrepo.lookup_var("X", 0));
+                == symrepo.lookup_var("X", ScopeId{0}));
         REQUIRE(std::addressof(arg2.as_var_ref()->def())
-                == symrepo.lookup_var("Y", 1));
+                == symrepo.lookup_var("Y", ScopeId{1}));
     }
 
     SUBCASE("invalid OUTPUT_INT param - not identifier")
@@ -959,9 +960,9 @@ TEST_CASE_FIXTURE(SemaFixture, "sema OUTPUT_FLOAT parameter")
         const auto& arg2 = std::prev(ir->end(), 2)->command().arg(2);
 
         REQUIRE(std::addressof(arg1.as_var_ref()->def())
-                == symrepo.lookup_var("X", 0));
+                == symrepo.lookup_var("X", ScopeId{0}));
         REQUIRE(std::addressof(arg2.as_var_ref()->def())
-                == symrepo.lookup_var("Y", 1));
+                == symrepo.lookup_var("Y", ScopeId{1}));
     }
 
     SUBCASE("invalid OUTPUT_FLOAT param - not identifier")
@@ -1011,12 +1012,12 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_INT parameter")
         REQUIRE(arg_1.as_float() == std::nullopt);
         REQUIRE(arg_1.as_var_ref() != std::nullopt);
         REQUIRE(std::addressof(arg_1.as_var_ref()->def())
-                == symrepo.lookup_var("X", 0));
+                == symrepo.lookup_var("X", ScopeId{0}));
 
         REQUIRE(arg_2.as_int() == std::nullopt);
         REQUIRE(arg_2.as_float() == std::nullopt);
         REQUIRE(std::addressof(arg_2.as_var_ref()->def())
-                == symrepo.lookup_var("Y", 1));
+                == symrepo.lookup_var("Y", ScopeId{1}));
 
         REQUIRE(arg_3.as_int() != std::nullopt);
         REQUIRE(*arg_3.as_int() == 8);
@@ -1130,12 +1131,12 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_FLOAT parameter")
         REQUIRE(arg_1.as_int() == std::nullopt);
         REQUIRE(arg_1.as_float() == std::nullopt);
         REQUIRE(std::addressof(arg_1.as_var_ref()->def())
-                == symrepo.lookup_var("X", 0));
+                == symrepo.lookup_var("X", ScopeId{0}));
 
         REQUIRE(arg_2.as_int() == std::nullopt);
         REQUIRE(arg_2.as_float() == std::nullopt);
         REQUIRE(std::addressof(arg_2.as_var_ref()->def())
-                == symrepo.lookup_var("Y", 1));
+                == symrepo.lookup_var("Y", ScopeId{1}));
 
         REQUIRE(arg_3.as_int() == std::nullopt);
         REQUIRE(arg_3.as_float() != std::nullopt);
@@ -1210,25 +1211,25 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_OPT parameter")
         REQUIRE(arg_1.as_int() == std::nullopt);
         REQUIRE(arg_1.as_float() == std::nullopt);
         REQUIRE(std::addressof(arg_1.as_var_ref()->def())
-                == symrepo.lookup_var("GI", 0));
+                == symrepo.lookup_var("GI", ScopeId{0}));
         REQUIRE(arg_1.as_constant() == nullptr);
 
         REQUIRE(arg_2.as_int() == std::nullopt);
         REQUIRE(arg_2.as_float() == std::nullopt);
         REQUIRE(std::addressof(arg_2.as_var_ref()->def())
-                == symrepo.lookup_var("GF", 0));
+                == symrepo.lookup_var("GF", ScopeId{0}));
         REQUIRE(arg_2.as_constant() == nullptr);
 
         REQUIRE(arg_3.as_int() == std::nullopt);
         REQUIRE(arg_3.as_float() == std::nullopt);
         REQUIRE(std::addressof(arg_3.as_var_ref()->def())
-                == symrepo.lookup_var("LI", 1));
+                == symrepo.lookup_var("LI", ScopeId{1}));
         REQUIRE(arg_3.as_constant() == nullptr);
 
         REQUIRE(arg_4.as_int() == std::nullopt);
         REQUIRE(arg_4.as_float() == std::nullopt);
         REQUIRE(std::addressof(arg_4.as_var_ref()->def())
-                == symrepo.lookup_var("LF", 1));
+                == symrepo.lookup_var("LF", ScopeId{1}));
         REQUIRE(arg_4.as_constant() == nullptr);
 
         REQUIRE(arg_5.as_int() != std::nullopt);
@@ -1958,7 +1959,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema used objects")
         REQUIRE(ir->back().command().arg(0).as_used_object()
                 == symrepo.lookup_used_object("LEVEL_MODEL"));
 
-        REQUIRE(symrepo.lookup_used_object("LEVEL_MODEL")->id == 0);
+        REQUIRE(symrepo.lookup_used_object("LEVEL_MODEL")->id() == 0);
     }
 
     SUBCASE("variable may be used as argument to object model param")
@@ -2023,9 +2024,9 @@ TEST_CASE_FIXTURE(SemaFixture, "sema used objects")
                 == symrepo.lookup_used_object("OTHER_LEVEL_MODEL"));
 
         REQUIRE(symrepo.lookup_used_object("LEVEL_MODEL"));
-        REQUIRE(symrepo.lookup_used_object("LEVEL_MODEL")->id == 0);
+        REQUIRE(symrepo.lookup_used_object("LEVEL_MODEL")->id() == 0);
         REQUIRE(symrepo.lookup_used_object("OTHER_LEVEL_MODEL"));
-        REQUIRE(symrepo.lookup_used_object("OTHER_LEVEL_MODEL")->id == 1);
+        REQUIRE(symrepo.lookup_used_object("OTHER_LEVEL_MODEL")->id() == 1);
     }
 
     SUBCASE("multiple used objects have different sequential ids (reversed)")
@@ -2048,9 +2049,9 @@ TEST_CASE_FIXTURE(SemaFixture, "sema used objects")
                 == symrepo.lookup_used_object("LEVEL_MODEL"));
 
         REQUIRE(symrepo.lookup_used_object("OTHER_LEVEL_MODEL"));
-        REQUIRE(symrepo.lookup_used_object("OTHER_LEVEL_MODEL")->id == 0);
+        REQUIRE(symrepo.lookup_used_object("OTHER_LEVEL_MODEL")->id() == 0);
         REQUIRE(symrepo.lookup_used_object("LEVEL_MODEL"));
-        REQUIRE(symrepo.lookup_used_object("LEVEL_MODEL")->id == 1);
+        REQUIRE(symrepo.lookup_used_object("LEVEL_MODEL")->id() == 1);
     }
 
     SUBCASE("multiple usages of used object do not define multiple entries in "
@@ -2074,8 +2075,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema used objects")
                 == symrepo.lookup_used_object("LEVEL_MODEL"));
 
         REQUIRE(symrepo.lookup_used_object("LEVEL_MODEL"));
-        REQUIRE(symrepo.lookup_used_object("LEVEL_MODEL")->id == 0);
-        REQUIRE(symrepo.used_objects.size() == 1);
+        REQUIRE(symrepo.lookup_used_object("LEVEL_MODEL")->id() == 0);
+        REQUIRE(symrepo.used_objects().size() == 1);
     }
 
     SUBCASE("unused level models is not an used object")
@@ -2098,8 +2099,8 @@ TEST_CASE_FIXTURE(SemaFixture, "local timers")
         build_sema("{\n}");
         REQUIRE(sema.validate() != std::nullopt);
 
-        const auto* const timera = symrepo.lookup_var("TIMERA", 1);
-        const auto* const timerb = symrepo.lookup_var("TIMERB", 1);
+        const auto* const timera = symrepo.lookup_var("TIMERA", ScopeId{1});
+        const auto* const timerb = symrepo.lookup_var("TIMERB", ScopeId{1});
 
         REQUIRE(timera != nullptr);
         REQUIRE(timerb != nullptr);
@@ -2112,14 +2113,14 @@ TEST_CASE_FIXTURE(SemaFixture, "local timers")
 
         SUBCASE("timers are integers")
         {
-            REQUIRE(timera->type == gta3sc::SymVariable::Type::INT);
-            REQUIRE(timera->type == gta3sc::SymVariable::Type::INT);
+            REQUIRE(timera->type() == gta3sc::SymbolTable::VarType::INT);
+            REQUIRE(timera->type() == gta3sc::SymbolTable::VarType::INT);
         }
 
         SUBCASE("timers use the first variable indices")
         {
-            REQUIRE(timera->id == 0);
-            REQUIRE(timerb->id == 1);
+            REQUIRE(timera->id() == 0);
+            REQUIRE(timerb->id() == 1);
         }
     }
 
@@ -2152,17 +2153,17 @@ TEST_CASE_FIXTURE(SemaFixture, "local timers")
         build_sema("{\nLVAR_INT x\n}");
         REQUIRE(sema.validate() != std::nullopt);
 
-        const auto* const timera = symrepo.lookup_var("TIMERA", 1);
-        const auto* const timerb = symrepo.lookup_var("TIMERB", 1);
-        const auto* const x = symrepo.lookup_var("X", 1);
+        const auto* const timera = symrepo.lookup_var("TIMERA", ScopeId{1});
+        const auto* const timerb = symrepo.lookup_var("TIMERB", ScopeId{1});
+        const auto* const x = symrepo.lookup_var("X", ScopeId{1});
 
         REQUIRE(x != nullptr);
-        REQUIRE(x->id == 0);
+        REQUIRE(x->id() == 0);
 
         REQUIRE(timera != nullptr);
-        REQUIRE(timera->id == 1);
+        REQUIRE(timera->id() == 1);
 
         REQUIRE(timerb != nullptr);
-        REQUIRE(timerb->id == 2);
+        REQUIRE(timerb->id() == 2);
     }
 }

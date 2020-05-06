@@ -27,7 +27,7 @@ auto Sema::discover_declarations_pass() -> bool
 {
     assert(report_count == 0);
     SourceRange scope_enter_source{};
-    this->current_scope = -1;
+    this->current_scope = no_local_scope;
 
     for(auto& line : parser_ir)
     {
@@ -40,20 +40,20 @@ auto Sema::discover_declarations_pass() -> bool
         {
             if(line.command().name() == "{"sv)
             {
-                assert(current_scope == -1);
-                this->current_scope = symrepo->allocate_scope();
+                assert(current_scope == no_local_scope);
+                this->current_scope = symrepo->new_scope();
                 scope_enter_source = line.command().source();
 
                 // We need the index of the first local scope in order to
                 // enumerate scopes during `check_semantics_pass`.
-                if(this->first_scope == -1)
+                if(this->first_scope == no_local_scope)
                 {
                     this->first_scope = current_scope;
                 }
             }
             else if(line.command().name() == "}"sv)
             {
-                assert(current_scope != -1);
+                assert(current_scope != no_local_scope);
 
                 // Instead of inserting the timer variable into the symbol table
                 // as the scope is activated, we do it just before deactivation.
@@ -61,66 +61,78 @@ auto Sema::discover_declarations_pass() -> bool
                 // scope, making the placement of timers more intuitive.
 
                 const auto [_, inserted_timera] = symrepo->insert_var(
-                        varname_timera, current_scope, SymVariable::Type::INT,
-                        std::nullopt, scope_enter_source);
+                        varname_timera, current_scope,
+                        SymbolTable::VarType::INT, std::nullopt,
+                        scope_enter_source);
 
                 const auto [__, inserted_timerb] = symrepo->insert_var(
-                        varname_timerb, current_scope, SymVariable::Type::INT,
-                        std::nullopt, scope_enter_source);
+                        varname_timerb, current_scope,
+                        SymbolTable::VarType::INT, std::nullopt,
+                        scope_enter_source);
 
                 assert(inserted_timera && inserted_timerb);
 
-                this->current_scope = -1;
+                this->current_scope = no_local_scope;
                 scope_enter_source = SourceRange{};
             }
             else if(line.command().name() == "VAR_INT"sv)
             {
-                declare_variable(line.command(), 0, SymVariable::Type::INT);
+                declare_variable(line.command(), SymbolTable::global_scope,
+                                 SymbolTable::VarType::INT);
             }
             else if(line.command().name() == "LVAR_INT"sv)
             {
                 declare_variable(line.command(), current_scope,
-                                 SymVariable::Type::INT);
+                                 SymbolTable::VarType::INT);
             }
             else if(line.command().name() == "VAR_FLOAT"sv)
             {
-                declare_variable(line.command(), 0, SymVariable::Type::FLOAT);
+                declare_variable(line.command(), SymbolTable::global_scope,
+                                 SymbolTable::VarType::FLOAT);
             }
             else if(line.command().name() == "LVAR_FLOAT"sv)
             {
                 declare_variable(line.command(), current_scope,
-                                 SymVariable::Type::FLOAT);
+                                 SymbolTable::VarType::FLOAT);
             }
             else if(line.command().name() == "VAR_TEXT_LABEL"sv)
             {
-                declare_variable(line.command(), 0,
-                                 SymVariable::Type::TEXT_LABEL);
+                declare_variable(line.command(), SymbolTable::global_scope,
+                                 SymbolTable::VarType::TEXT_LABEL);
             }
             else if(line.command().name() == "LVAR_TEXT_LABEL"sv)
             {
                 declare_variable(line.command(), current_scope,
-                                 SymVariable::Type::TEXT_LABEL);
+                                 SymbolTable::VarType::TEXT_LABEL);
             }
         }
     }
 
     // Allocate `vars_entity_type` for scopes in the symbol table.
-    this->vars_entity_type.resize(symrepo->var_tables.size());
-    for(size_t i = 0; i < symrepo->var_tables.size(); ++i)
-        this->vars_entity_type[i].resize(symrepo->var_tables[i].size());
+    this->vars_entity_type.resize(symrepo->num_scopes());
+    for(uint32_t i = 0, num_scopes = symrepo->num_scopes(); i < num_scopes; ++i)
+    {
+        this->vars_entity_type[i].resize(
+                symrepo->scope(SymbolTable::ScopeId{i}).size());
+    }
 
     // Ensure variables do not collide with other names in the same namespace.
-    for(ScopeId i = 0; i < symrepo->var_tables.size(); ++i)
+    for(uint32_t i = 0; i < symrepo->num_scopes(); ++i)
     {
-        if(i == 0 || i >= first_scope)
+        if(i == to_integer(SymbolTable::global_scope)
+           || i >= to_integer(first_scope))
         {
-            for(const auto& [name, var] : symrepo->var_tables[i])
+            for(const auto& var : symrepo->scope(SymbolTable::ScopeId{i}))
             {
-                if(i != 0 && symrepo->lookup_var(name, 0))
-                    report(var->source, Diag::duplicate_var_lvar);
+                if(i != to_integer(SymbolTable::global_scope)
+                   && symrepo->lookup_var(var.name(),
+                                          SymbolTable::global_scope))
+                {
+                    report(var.source(), Diag::duplicate_var_lvar);
+                }
 
-                if(cmdman->find_constant_any_means(name))
-                    report(var->source, Diag::duplicate_var_string_constant);
+                if(cmdman->find_constant_any_means(var.name()))
+                    report(var.source(), Diag::duplicate_var_string_constant);
             }
         }
     }
@@ -134,8 +146,8 @@ auto Sema::check_semantics_pass() -> std::optional<LinkedIR<SemaIR>>
 
     LinkedIR<SemaIR> linked;
 
-    this->current_scope = -1;
-    ScopeId scope_accum = first_scope;
+    this->current_scope = no_local_scope;
+    SymbolTable::ScopeId scope_accum = first_scope;
 
     this->alternator_set = cmdman->find_alternator("SET"sv);
     this->command_script_name = cmdman->find_command("SCRIPT_NAME"sv);
@@ -156,14 +168,15 @@ auto Sema::check_semantics_pass() -> std::optional<LinkedIR<SemaIR>>
         {
             if(line.command().name() == "{"sv)
             {
-                assert(this->current_scope == -1);
-                assert(scope_accum > 0);
+                assert(this->current_scope == no_local_scope);
+                assert(scope_accum != no_local_scope
+                       && scope_accum != SymbolTable::global_scope);
                 this->current_scope = scope_accum++;
             }
             else if(line.command().name() == "}"sv)
             {
-                assert(this->current_scope != -1);
-                this->current_scope = -1;
+                assert(this->current_scope != no_local_scope);
+                this->current_scope = no_local_scope;
             }
             else if(line.command().name() == "VAR_INT"sv
                     || line.command().name() == "LVAR_INT"sv
@@ -182,7 +195,7 @@ auto Sema::check_semantics_pass() -> std::optional<LinkedIR<SemaIR>>
 
         if(line.has_label())
         {
-            const SymLabel* label = validate_label_def(line.label());
+            const SymbolTable::Label* label = validate_label_def(line.label());
             builder.label(label);
         }
 
@@ -202,7 +215,7 @@ auto Sema::check_semantics_pass() -> std::optional<LinkedIR<SemaIR>>
 }
 
 auto Sema::validate_label_def(const ParserIR::LabelDef& label_def)
-        -> const SymLabel*
+        -> const SymbolTable::Label*
 {
     const auto* sym_label = symrepo->lookup_label(label_def.name());
     if(!sym_label)
@@ -594,8 +607,8 @@ auto Sema::validate_var_ref(const CommandManager::ParamDef& param,
         -> ArenaPtr<const SemaIR::Argument>
 {
     bool failed = false;
-    const SymVariable* sym_var{};
-    const SymVariable* sym_subscript{};
+    const SymbolTable::Variable* sym_var{};
+    const SymbolTable::Variable* sym_subscript{};
 
     if(arg.type() != ParserIR::Argument::Type::IDENTIFIER)
     {
@@ -633,7 +646,8 @@ auto Sema::validate_var_ref(const CommandManager::ParamDef& param,
     }
 
     // Check whether the storage of the variable matches the parameter.
-    if(is_gvar_param(param.type) && sym_var->scope != 0)
+    if(is_gvar_param(param.type)
+       && sym_var->scope() != SymbolTable::global_scope)
     {
         if(!analyzing_repeat_command) // REPEAT hardcodes the acceptance
         {                             // of LVAR_INTs parameters
@@ -641,14 +655,15 @@ auto Sema::validate_var_ref(const CommandManager::ParamDef& param,
             report(var_source, Diag::expected_gvar_got_lvar);
         }
     }
-    else if(is_lvar_param(param.type) && sym_var->scope == 0)
+    else if(is_lvar_param(param.type)
+            && sym_var->scope() == SymbolTable::global_scope)
     {
         failed = true;
         report(var_source, Diag::expected_lvar_got_gvar);
     }
 
     // Check whether the type of the variable matches the parameter.
-    if(!matches_var_type(param.type, sym_var->type))
+    if(!matches_var_type(param.type, sym_var->type()))
     {
         failed = true;
         report(var_source, Diag::var_type_mismatch);
@@ -680,7 +695,7 @@ auto Sema::validate_var_ref(const CommandManager::ParamDef& param,
         if(!analyzing_var_decl) // literal == dim would diag
         {
             if(subscript->literal < 0
-               || subscript->literal >= sym_var->dim.value_or(1))
+               || subscript->literal >= sym_var->dimensions().value_or(1))
             {
                 failed = true;
                 report(subscript->source, Diag::subscript_out_of_range);
@@ -698,7 +713,7 @@ auto Sema::validate_var_ref(const CommandManager::ParamDef& param,
             report(subscript->source, Diag::undefined_variable);
             subscript->literal = 0; // recover
         }
-        else if(sym_subscript->type != SymVariable::Type::INT)
+        else if(sym_subscript->type() != SymbolTable::VarType::INT)
         {
             failed = true;
             report(subscript->source, Diag::subscript_var_must_be_int);
@@ -817,16 +832,16 @@ auto Sema::validate_start_new_script(const SemaIR::Command& command) -> bool
     {
         if(const auto* target_label = command.arg(0).as_label())
         {
-            if(target_label->scope == 0)
+            if(target_label->scope() == SymbolTable::global_scope)
             {
                 report(command.arg(0).source(),
                        Diag::target_label_not_within_scope);
                 return false;
             }
 
-            if(!validate_target_scope_vars(command.args().begin(),
+            if(!validate_target_scope_vars(command.args().begin() + 1,
                                            command.args().end(),
-                                           target_label->scope))
+                                           target_label->scope()))
             {
                 return false;
             }
@@ -838,9 +853,10 @@ auto Sema::validate_start_new_script(const SemaIR::Command& command) -> bool
 
 auto Sema::validate_target_scope_vars(SemaIR::ArgumentView::iterator begin,
                                       SemaIR::ArgumentView::iterator end,
-                                      ScopeId target_scope_id) -> bool
+                                      SymbolTable::ScopeId target_scope_id)
+        -> bool
 {
-    assert(target_scope_id != 0);
+    assert(target_scope_id != SymbolTable::global_scope);
 
     const size_t num_target_vars = end - begin;
     bool failed = false;
@@ -857,24 +873,25 @@ auto Sema::validate_target_scope_vars(SemaIR::ArgumentView::iterator begin,
     // this function returns, but it's no big deal. It only happens for
     // START_NEW_SCRIPT alike commands and the allocation size is proportional
     // to the number of arguments passed.
-    const auto** target_vars = allocator.allocate_object<const SymVariable*>(
-            num_target_vars);
+    const auto** target_vars
+            = allocator.allocate_object<const SymbolTable::Variable*>(
+                    num_target_vars);
     std::uninitialized_fill_n(target_vars, num_target_vars, nullptr);
 
-    for(auto& [name, lvar] : symrepo->var_tables[target_scope_id])
+    for(auto& lvar : symrepo->scope(target_scope_id))
     {
         // Do not use timers as target variables.
-        if(lvar == target_scope_timera || lvar == target_scope_timerb)
+        if(&lvar == target_scope_timera || &lvar == target_scope_timerb)
             continue;
 
-        if(lvar->id < num_target_vars)
-            target_vars[lvar->id] = lvar;
+        if(lvar.id() < num_target_vars)
+            target_vars[lvar.id()] = &lvar;
     }
 
     for(size_t i = 0; i < num_target_vars; ++i)
     {
         const auto& arg = begin[i];
-        const SymVariable* target_var = target_vars[i];
+        const SymbolTable::Variable* target_var = target_vars[i];
 
         if(target_var == nullptr)
         {
@@ -892,7 +909,7 @@ auto Sema::validate_target_scope_vars(SemaIR::ArgumentView::iterator begin,
             // but anything else is a logic error in the compiler.
             if(arg.pun_as_int())
             {
-                if(target_vars[i]->type != SymVariable::Type::INT)
+                if(target_vars[i]->type() != SymbolTable::VarType::INT)
                 {
                     failed = true;
                     report(arg.source(), Diag::target_var_type_mismatch);
@@ -900,7 +917,7 @@ auto Sema::validate_target_scope_vars(SemaIR::ArgumentView::iterator begin,
             }
             else if(arg.pun_as_float())
             {
-                if(target_vars[i]->type != SymVariable::Type::FLOAT)
+                if(target_vars[i]->type() != SymbolTable::VarType::FLOAT)
                 {
                     failed = true;
                     report(arg.source(), Diag::target_var_type_mismatch);
@@ -908,7 +925,7 @@ auto Sema::validate_target_scope_vars(SemaIR::ArgumentView::iterator begin,
             }
             else if(arg.as_text_label())
             {
-                if(target_vars[i]->type != SymVariable::Type::TEXT_LABEL)
+                if(target_vars[i]->type() != SymbolTable::VarType::TEXT_LABEL)
                 {
                     failed = true;
                     report(arg.source(), Diag::target_var_type_mismatch);
@@ -917,7 +934,7 @@ auto Sema::validate_target_scope_vars(SemaIR::ArgumentView::iterator begin,
             else if(const auto var_ref = arg.as_var_ref())
             {
                 const auto& source_var = var_ref->def();
-                if(target_vars[i]->type != source_var.type)
+                if(target_vars[i]->type() != source_var.type())
                 {
                     failed = true;
                     report(arg.source(), Diag::target_var_type_mismatch);
@@ -948,7 +965,9 @@ auto Sema::validate_target_scope_vars(SemaIR::ArgumentView::iterator begin,
 
 void Sema::declare_label(const ParserIR::LabelDef& label_def)
 {
-    const auto scope_id = current_scope == -1 ? 0 : current_scope;
+    const auto scope_id = current_scope == no_local_scope
+                                  ? SymbolTable::global_scope
+                                  : current_scope;
     if(auto [_, inserted] = symrepo->insert_label(label_def.name(), scope_id,
                                                   label_def.source());
        !inserted)
@@ -957,12 +976,13 @@ void Sema::declare_label(const ParserIR::LabelDef& label_def)
     }
 }
 
-void Sema::declare_variable(const ParserIR::Command& command, ScopeId scope_id,
-                            SymVariable::Type type)
+void Sema::declare_variable(const ParserIR::Command& command,
+                            SymbolTable::ScopeId scope_id,
+                            SymbolTable::VarType type)
 {
     for(auto& arg : command.args())
     {
-        ScopeId var_scope_id = scope_id;
+        SymbolTable::ScopeId var_scope_id = scope_id;
 
         if(arg.type() != ParserIR::Argument::Type::IDENTIFIER)
         {
@@ -985,10 +1005,10 @@ void Sema::declare_variable(const ParserIR::Command& command, ScopeId scope_id,
             subscript->literal = 1; // recover
         }
 
-        if(var_scope_id == -1)
+        if(var_scope_id == no_local_scope)
         {
             report(arg.source(), Diag::var_decl_outside_of_scope);
-            var_scope_id = 0; // recover
+            var_scope_id = SymbolTable::global_scope; // recover
         }
 
         std::optional<int32_t> subscript_literal;
@@ -1004,7 +1024,7 @@ void Sema::declare_variable(const ParserIR::Command& command, ScopeId scope_id,
                         arg.source());
                 !inserted)
         {
-            if(var_scope_id == 0)
+            if(var_scope_id == SymbolTable::global_scope)
                 report(var_source, Diag::duplicate_var_global);
             else
                 report(var_source, Diag::duplicate_var_in_scope);
@@ -1023,12 +1043,13 @@ auto Sema::report(SourceRange source, Diag message) -> DiagnosticBuilder
     return report(source.begin, message).range(source);
 }
 
-auto Sema::lookup_var_lvar(std::string_view name) const -> const SymVariable*
+auto Sema::lookup_var_lvar(std::string_view name) const
+        -> const SymbolTable::Variable*
 {
-    if(const auto* gvar = symrepo->lookup_var(name, 0))
+    if(const auto* gvar = symrepo->lookup_var(name, SymbolTable::global_scope))
         return gvar;
 
-    if(current_scope != -1)
+    if(current_scope != no_local_scope)
     {
         if(const auto* lvar = symrepo->lookup_var(name, current_scope))
             return lvar;
@@ -1037,20 +1058,22 @@ auto Sema::lookup_var_lvar(std::string_view name) const -> const SymVariable*
     return nullptr;
 }
 
-auto Sema::var_entity_type(const SymVariable& var) const
+auto Sema::var_entity_type(const SymbolTable::Variable& var) const
         -> CommandManager::EntityId
 {
-    assert(var.scope < vars_entity_type.size());
-    assert(var.id < vars_entity_type[var.scope].size());
-    return vars_entity_type[var.scope][var.id];
+    const auto scope_index = to_integer(var.scope());
+    assert(scope_index < vars_entity_type.size());
+    assert(var.id() < vars_entity_type[scope_index].size());
+    return vars_entity_type[scope_index][var.id()];
 }
 
-void Sema::set_var_entity_type(const SymVariable& var,
+void Sema::set_var_entity_type(const SymbolTable::Variable& var,
                                CommandManager::EntityId entity_type)
 {
-    assert(var.scope < vars_entity_type.size());
-    assert(var.id < vars_entity_type[var.scope].size());
-    vars_entity_type[var.scope][var.id] = entity_type;
+    const auto scope_index = to_integer(var.scope());
+    assert(to_integer(var.scope()) < vars_entity_type.size());
+    assert(var.id() < vars_entity_type[scope_index].size());
+    vars_entity_type[scope_index][var.id()] = entity_type;
 }
 
 auto Sema::find_defaultmodel_constant(std::string_view name) const
@@ -1099,7 +1122,7 @@ auto Sema::is_lvar_param(ParamType param_type) const -> bool
 }
 
 auto Sema::matches_var_type(ParamType param_type,
-                            SymVariable::Type var_type) const -> bool
+                            SymbolTable::VarType var_type) const -> bool
 {
     switch(param_type)
     {
@@ -1109,23 +1132,23 @@ auto Sema::matches_var_type(ParamType param_type,
         case ParamType::LVAR_INT_OPT:
         case ParamType::INPUT_INT:
         case ParamType::OUTPUT_INT:
-            return (var_type == SymVariable::Type::INT);
+            return (var_type == SymbolTable::VarType::INT);
         case ParamType::VAR_FLOAT:
         case ParamType::LVAR_FLOAT:
         case ParamType::VAR_FLOAT_OPT:
         case ParamType::LVAR_FLOAT_OPT:
         case ParamType::INPUT_FLOAT:
         case ParamType::OUTPUT_FLOAT:
-            return (var_type == SymVariable::Type::FLOAT);
+            return (var_type == SymbolTable::VarType::FLOAT);
         case ParamType::VAR_TEXT_LABEL:
         case ParamType::LVAR_TEXT_LABEL:
         case ParamType::VAR_TEXT_LABEL_OPT:
         case ParamType::LVAR_TEXT_LABEL_OPT:
         case ParamType::TEXT_LABEL:
-            return (var_type == SymVariable::Type::TEXT_LABEL);
+            return (var_type == SymbolTable::VarType::TEXT_LABEL);
         case ParamType::INPUT_OPT:
-            return (var_type == SymVariable::Type::INT
-                    || var_type == SymVariable::Type::FLOAT);
+            return (var_type == SymbolTable::VarType::INT
+                    || var_type == SymbolTable::VarType::FLOAT);
         default:
             return false;
     }
@@ -1199,7 +1222,7 @@ auto Sema::is_matching_alternative(
                 auto [var_name, var_source, _] = parse_var_ref(arg_ident,
                                                                arg.source());
                 const auto* sym_var = symrepo->lookup_var(var_name);
-                if(!sym_var || !matches_var_type(param.type, sym_var->type))
+                if(!sym_var || !matches_var_type(param.type, sym_var->type()))
                     return false;
 
                 break;
@@ -1208,7 +1231,7 @@ auto Sema::is_matching_alternative(
             case ParamType::LVAR_FLOAT:
             case ParamType::LVAR_TEXT_LABEL:
             {
-                if(current_scope == -1)
+                if(current_scope == no_local_scope)
                     return false;
 
                 if(arg.type() != ParserIR::Argument::Type::IDENTIFIER)
@@ -1219,7 +1242,7 @@ auto Sema::is_matching_alternative(
                                                                arg.source());
                 const auto* sym_var = symrepo->lookup_var(var_name,
                                                           current_scope);
-                if(!sym_var || !matches_var_type(param.type, sym_var->type))
+                if(!sym_var || !matches_var_type(param.type, sym_var->type()))
                     return false;
 
                 break;

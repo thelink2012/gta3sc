@@ -51,7 +51,10 @@ public:
         return *this;
     }
 
-    constexpr auto base() const -> iterator_type { return inner_it; }
+    [[nodiscard]] constexpr auto base() const -> iterator_type
+    {
+        return inner_it;
+    }
 
     constexpr auto operator*() const -> reference
     {
@@ -95,13 +98,13 @@ public:
         return temp;
     }
 
-    constexpr auto operator+=(difference_type n) const -> Iterator&
+    constexpr auto operator+=(difference_type n) -> Iterator&
     {
         adaptor.advance_forward(inner_it, n);
         return *this;
     }
 
-    constexpr auto operator-=(difference_type n) const -> Iterator&
+    constexpr auto operator-=(difference_type n) -> Iterator&
     {
         adaptor.advance_backward(inner_it, n);
         return *this;
@@ -182,19 +185,23 @@ struct IdentityAdaptor
 {
     using difference_type =
             typename std::iterator_traits<Iter>::difference_type;
+
     using iterator_category =
             typename std::iterator_traits<Iter>::iterator_category;
+
     using reference = typename std::iterator_traits<Iter>::reference;
+
     using pointer = typename std::iterator_traits<Iter>::pointer;
+
     using value_type = typename std::iterator_traits<Iter>::value_type;
 
-    constexpr auto dereference(const Iter& it) const -> reference
+    [[nodiscard]] constexpr auto dereference(const Iter& it) const -> reference
     {
         return *it;
     }
 
-    constexpr auto at(const Iter& it,
-                      difference_type n) const /* -> unspecified */
+    [[nodiscard]] constexpr auto
+    at(const Iter& it, difference_type n) const /* -> unspecified */
     {
         return it[n];
     }
@@ -231,13 +238,13 @@ struct DereferenceAdaptor : IdentityAdaptor<Iter>
     using value_type
             = std::remove_pointer_t<typename IdentityAdaptor<Iter>::value_type>;
 
-    constexpr auto dereference(const Iter& it) const -> reference
+    [[nodiscard]] constexpr auto dereference(const Iter& it) const -> reference
     {
         return **it;
     }
 
-    constexpr decltype(auto) at(const Iter& it,
-                                difference_type n) const /* -> unspecified */
+    [[nodiscard]] constexpr decltype(auto)
+    at(const Iter& it, difference_type n) const /* -> unspecified */
     {
         return *it[n];
     }

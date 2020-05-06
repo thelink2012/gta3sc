@@ -49,7 +49,7 @@ public:
 
 public:
     /// Please use `create` instead.
-    SemaIR(PrivateTag /*unused*/, const SymLabel* label,
+    SemaIR(PrivateTag /*unused*/, const SymbolTable::Label* label,
            const Command* command) noexcept :
         m_label(label), m_command(command)
     {}
@@ -75,13 +75,14 @@ public:
     }
 
     /// Returns the label associated with this instruction.
-    [[nodiscard]] auto label() const noexcept -> const SymLabel&
+    [[nodiscard]] auto label() const noexcept -> const SymbolTable::Label&
     {
         return *m_label;
     }
 
     /// Returns the label associated with this instruction or `nullptr` if none.
-    [[nodiscard]] auto label_or_null() const noexcept -> const SymLabel*
+    [[nodiscard]] auto label_or_null() const noexcept
+            -> const SymbolTable::Label*
     {
         return m_label ? m_label : nullptr;
     }
@@ -110,7 +111,7 @@ public:
     //
 
     // Creates an instruction.
-    static auto create(const SymLabel* label, const Command* command,
+    static auto create(const SymbolTable::Label* label, const Command* command,
                        ArenaAllocator<> allocator) -> ArenaPtr<SemaIR>;
 
     /// Creates an integer argument.
@@ -124,8 +125,8 @@ public:
             -> ArenaPtr<const Argument>;
 
     /// Creates a label argument.
-    static auto create_label(const SymLabel& label, SourceRange source,
-                             ArenaAllocator<> allocator)
+    static auto create_label(const SymbolTable::Label& label,
+                             SourceRange source, ArenaAllocator<> allocator)
             -> ArenaPtr<const Argument>;
 
     /// Creates a text label argument.
@@ -145,21 +146,21 @@ public:
             -> ArenaPtr<const Argument>;
 
     /// Creates a variable reference argument.
-    static auto create_variable(const SymVariable& var, SourceRange source,
-                                ArenaAllocator<> allocator)
+    static auto create_variable(const SymbolTable::Variable& var,
+                                SourceRange source, ArenaAllocator<> allocator)
             -> ArenaPtr<const Argument>;
 
     /// Creates an array variable reference argument by using the given integer
     /// index.
-    static auto create_variable(const SymVariable& var, int32_t index,
+    static auto create_variable(const SymbolTable::Variable& var, int32_t index,
                                 SourceRange source, ArenaAllocator<> allocator)
             -> ArenaPtr<const Argument>;
 
     /// Creates an array variable reference argument by using the given variable
     /// index.
-    static auto create_variable(const SymVariable& var,
-                                const SymVariable& index, SourceRange source,
-                                ArenaAllocator<> allocator)
+    static auto create_variable(const SymbolTable::Variable& var,
+                                const SymbolTable::Variable& index,
+                                SourceRange source, ArenaAllocator<> allocator)
             -> ArenaPtr<const Argument>;
 
     /// Creates a string constant argument.
@@ -168,7 +169,7 @@ public:
             -> ArenaPtr<const Argument>;
 
     /// Creates a used object argument.
-    static auto create_used_object(const SymUsedObject& used_object,
+    static auto create_used_object(const SymbolTable::UsedObject& used_object,
                                    SourceRange source,
                                    ArenaAllocator<> allocator)
             -> ArenaPtr<const Argument>;
@@ -192,7 +193,7 @@ private:
     };
 
 private:
-    const SymLabel* const m_label{};
+    const SymbolTable::Label* const m_label{};
     const Command* const m_command{};
 };
 
@@ -222,19 +223,22 @@ struct SemaIR::String : WeakStringVieweable<StringTag>
 class SemaIR::VarRef
 {
 public:
-    VarRef(PrivateTag /*unused*/, const SymVariable& def) : m_def(&def) {}
+    VarRef(PrivateTag /*unused*/, const SymbolTable::Variable& def) :
+        m_def(&def)
+    {}
 
-    VarRef(PrivateTag /*unused*/, const SymVariable& def, int32_t index) :
+    VarRef(PrivateTag /*unused*/, const SymbolTable::Variable& def,
+           int32_t index) :
         m_def(&def), m_index(index)
     {}
 
-    VarRef(PrivateTag /*unused*/, const SymVariable& def,
-           const SymVariable& index) :
+    VarRef(PrivateTag /*unused*/, const SymbolTable::Variable& def,
+           const SymbolTable::Variable& index) :
         m_def(&def), m_index(&index)
     {}
 
     /// Returns the variable referenced by this.
-    [[nodiscard]] auto def() const noexcept -> const SymVariable&;
+    [[nodiscard]] auto def() const noexcept -> const SymbolTable::Variable&;
 
     /// Checks whether this variable reference is an array reference.
     [[nodiscard]] auto has_index() const noexcept -> bool;
@@ -245,7 +249,8 @@ public:
 
     /// Returns the variable in the array subscript or `nullptr` if
     /// either this is not an array or the index is not a variable.
-    [[nodiscard]] auto index_as_variable() const noexcept -> const SymVariable*;
+    [[nodiscard]] auto index_as_variable() const noexcept
+            -> const SymbolTable::Variable*;
 
     /// Compares whether two variable references are equal.
     friend auto operator==(const VarRef& lhs, const VarRef& rhs) noexcept
@@ -254,8 +259,8 @@ public:
             -> bool;
 
 private:
-    const SymVariable* m_def;
-    std::variant<std::monostate, int32_t, const SymVariable*> m_index;
+    const SymbolTable::Variable* m_def;
+    std::variant<std::monostate, int32_t, const SymbolTable::Variable*> m_index;
 };
 
 /// Represents a view to a sequence of arguments.
@@ -263,13 +268,11 @@ class SemaIR::ArgumentView
     : public util::RandomAccessView<const Argument*,
                                     util::iterator_adaptor::DereferenceAdaptor>
 {
-private:
-    using super_type = util::RandomAccessView<
-            const Argument*, util::iterator_adaptor::DereferenceAdaptor>;
-
 public:
     ArgumentView(PrivateTag /*unused*/, const Argument** begin, size_t count) :
-        super_type(begin, count)
+        util::RandomAccessView<const Argument*,
+                               util::iterator_adaptor::DereferenceAdaptor>(
+                begin, count)
     {}
 };
 
@@ -408,7 +411,7 @@ public:
 
     /// Returns the contained label reference or `nullptr` if this argument
     /// is not a label reference.
-    [[nodiscard]] auto as_label() const noexcept -> const SymLabel*;
+    [[nodiscard]] auto as_label() const noexcept -> const SymbolTable::Label*;
 
     /// Returns the contained string constant or `nullptr` if this argument
     /// is not a string constant.
@@ -417,7 +420,8 @@ public:
 
     /// Returns the contained used object or `nullptr` if this argument is
     /// not a used object.
-    [[nodiscard]] auto as_used_object() const noexcept -> const SymUsedObject*;
+    [[nodiscard]] auto as_used_object() const noexcept
+            -> const SymbolTable::UsedObject*;
 
     /// Type-puns the contained integer or string constant as an integer.
     ///
@@ -439,7 +443,8 @@ public:
 private:
     SourceRange m_source;
     const std::variant<int32_t, float, TextLabel, String, VarRef,
-                       const SymLabel*, const SymUsedObject*,
+                       const SymbolTable::Label*,
+                       const SymbolTable::UsedObject*,
                        const CommandManager::ConstantDef*>
             m_value;
     // FIXME cannot change the order of the variant or type() will break.
@@ -478,7 +483,7 @@ public:
 
     /// Sets (or unsets if `nullptr`) the instruction in construction to
     /// define the specified label.
-    auto label(const SymLabel* label_ptr) -> Builder&&;
+    auto label(const SymbolTable::Label* label_ptr) -> Builder&&;
 
     /// Sets the instruction in construction to be the specified command.
     ///
@@ -504,8 +509,8 @@ public:
 
     /// Appends an argument referencing the given label to the command in
     /// construction.
-    auto arg_label(const SymLabel& label, SourceRange source = no_source)
-            -> Builder&&;
+    auto arg_label(const SymbolTable::Label& label,
+                   SourceRange source = no_source) -> Builder&&;
 
     /// Appends the given string argument to the command in construction.
     auto arg_text_label(std::string_view value, SourceRange source = no_source)
@@ -517,17 +522,18 @@ public:
 
     /// Appends an argument referencing to the given variable to the command in
     /// construction.
-    auto arg_var(const SymVariable& var, SourceRange source = no_source)
-            -> Builder&&;
-
-    /// Appends an argument referencing to the given variable and given
-    /// array subscript index to the command in construction.
-    auto arg_var(const SymVariable& var, int32_t index,
+    auto arg_var(const SymbolTable::Variable& var,
                  SourceRange source = no_source) -> Builder&&;
 
     /// Appends an argument referencing to the given variable and given
     /// array subscript index to the command in construction.
-    auto arg_var(const SymVariable& var, const SymVariable& index,
+    auto arg_var(const SymbolTable::Variable& var, int32_t index,
+                 SourceRange source = no_source) -> Builder&&;
+
+    /// Appends an argument referencing to the given variable and given
+    /// array subscript index to the command in construction.
+    auto arg_var(const SymbolTable::Variable& var,
+                 const SymbolTable::Variable& index,
                  SourceRange source = no_source) -> Builder&&;
 
     /// Appends an argument referencing to the given string constant to the
@@ -537,7 +543,7 @@ public:
 
     /// Appends an argument referencing to the given used object to the
     /// command in construction.
-    auto arg_object(const SymUsedObject& used_object,
+    auto arg_object(const SymbolTable::UsedObject& used_object,
                     SourceRange source = no_source) -> Builder&&;
 
     /// Tells the builder the amount of arguments that follows.
@@ -573,7 +579,7 @@ private:
     bool has_not_flag = false;
     bool not_flag_value = false;
 
-    const SymLabel* label_ptr{};
+    const SymbolTable::Label* label_ptr{};
     const Command* command_ptr{};
 
     const CommandManager::CommandDef* command_def{};

@@ -266,6 +266,7 @@ public:
     template<typename U, typename... CtorArgs>
     [[nodiscard]] auto new_object(CtorArgs&&... ctor_args) -> U*
     {
+        static_assert(std::is_trivially_destructible_v<U>);
         U* p = allocate_object<U>();
         try
         {
@@ -289,6 +290,7 @@ public:
     template<typename U, typename... Args>
     void construct(U* p, Args&&... args)
     {
+        static_assert(std::is_trivially_destructible_v<U>);
         std::uninitialized_construct_using_allocator<U>(
                 p, *this, std::forward<Args>(args)...);
     }

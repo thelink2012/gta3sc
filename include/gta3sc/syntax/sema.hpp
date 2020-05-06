@@ -29,7 +29,7 @@ public:
     /// \param cmdman a container of command definitions.
     /// \param diag a handler to emit diagnostics into.
     /// \param arena the arena that should be used to allocate IR in.
-    explicit Sema(LinkedIR<ParserIR> parser_ir, SymbolRepository& symrepo,
+    explicit Sema(LinkedIR<ParserIR> parser_ir, SymbolTable& symrepo,
                   const CommandManager& cmdman, const ModelManager& modelman,
                   DiagnosticHandler& diag, ArenaAllocator<> allocator) noexcept
         :
@@ -58,7 +58,7 @@ public:
     /// Gets the entity type of the given variable at the end of the input.
     ///
     /// Must run `validate` beforehand.
-    [[nodiscard]] auto var_entity_type(const SymVariable& var) const
+    [[nodiscard]] auto var_entity_type(const SymbolTable::Variable& var) const
             -> CommandManager::EntityId;
 
 private:
@@ -85,7 +85,7 @@ private:
     // These functions are called from the semantic checking pass.
 
     auto validate_label_def(const ParserIR::LabelDef& label_def)
-            -> const SymLabel*;
+            -> const SymbolTable::Label*;
 
     auto validate_command(const ParserIR::Command& command)
             -> ArenaPtr<const SemaIR::Command>;
@@ -132,7 +132,8 @@ private:
 
     auto validate_target_scope_vars(SemaIR::ArgumentView::iterator begin,
                                     SemaIR::ArgumentView::iterator end,
-                                    ScopeId target_scope_id) -> bool;
+                                    SymbolTable::ScopeId target_scope_id)
+            -> bool;
 
     // The following functions validates declarations and inserts their
     // names and metadata into the symbol repository.
@@ -145,8 +146,9 @@ private:
 
     void declare_label(const ParserIR::LabelDef& label_def);
 
-    void declare_variable(const ParserIR::Command& command, ScopeId scope_id,
-                          SymVariable::Type type);
+    void declare_variable(const ParserIR::Command& command,
+                          SymbolTable::ScopeId scope_id,
+                          SymbolTable::VarType type);
 
     /// This function parses a variable reference (encoded as an identifier).
     ///
@@ -167,10 +169,10 @@ private:
     /// Lookups a variable in the global scope as well as in
     /// the current local scope.
     [[nodiscard]] auto lookup_var_lvar(std::string_view name) const
-            -> const SymVariable*;
+            -> const SymbolTable::Variable*;
 
     /// Sets the entity type for `var` in `vars_entity_type`.
-    void set_var_entity_type(const SymVariable& var,
+    void set_var_entity_type(const SymbolTable::Variable& var,
                              CommandManager::EntityId entity_type);
 
     /// Finds a constant in the default model enumeration.
@@ -193,7 +195,7 @@ private:
     /// Checks whether the typing of a parameter matches the
     /// typing of a variable.
     [[nodiscard]] auto matches_var_type(CommandManager::ParamType param_type,
-                                        SymVariable::Type var_type) const
+                                        SymbolTable::VarType var_type) const
             -> bool;
 
     /// Checks whether the specified command is an alternative of an certain
@@ -229,18 +231,23 @@ private:
 private:
     ArenaAllocator<> allocator;
     DiagnosticHandler* diag; // Do not use directly. Please call `report`.
-    SymbolRepository* symrepo;
+    SymbolTable* symrepo;
     const CommandManager* cmdman;
     const ModelManager* modelman;
     LinkedIR<ParserIR> parser_ir;
 
+    /// Used to represent no scope for `first_scope` and `current_scope`.
+    static constexpr auto no_local_scope = SymbolTable::invalid_scope;
+
     // The following variables are part of the "state machine" of
     // the semantic checker.
-    uint32_t report_count = 0;  ///< The number of errors encountered so far.
-    ScopeId first_scope = -1;   ///< The id of the first allocated scope.
-    ScopeId current_scope = -1; ///< The id of the current scope.
-    bool ran_analysis = false;  ///< Whether we already ran analysis.
-    bool analyzing_var_decl{};  ///< Whether we are checking a var decl.
+    uint32_t report_count = 0; ///< The number of errors encountered so far.
+    SymbolTable::ScopeId first_scope{
+            no_local_scope}; ///< The id of the first allocated scope.
+    SymbolTable::ScopeId current_scope{
+            no_local_scope};   ///< The id of the current scope.
+    bool ran_analysis = false; ///< Whether we already ran analysis.
+    bool analyzing_var_decl{}; ///< Whether we are checking a var decl.
     bool analyzing_alternative_command{}; ///< Whether we are checking a
                                           ///< command that was found by
                                           ///< matching an alternator.
@@ -262,4 +269,4 @@ private:
 } // namespace gta3sc::syntax
 
 // TODO should vars_entity_type (and similar) be stored in Sema or
-// SymbolRepository?
+// SymbolTable?

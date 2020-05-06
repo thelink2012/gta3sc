@@ -220,13 +220,11 @@ class ParserIR::ArgumentView
     : public util::RandomAccessView<const Argument*,
                                     util::iterator_adaptor::DereferenceAdaptor>
 {
-private:
-    using super_type = util::RandomAccessView<
-            const Argument*, util::iterator_adaptor::DereferenceAdaptor>;
-
 public:
     ArgumentView(PrivateTag /*unused*/, const Argument** begin, size_t count) :
-        super_type(begin, count)
+        util::RandomAccessView<const Argument*,
+                               util::iterator_adaptor::DereferenceAdaptor>(
+                begin, count)
     {}
 };
 
