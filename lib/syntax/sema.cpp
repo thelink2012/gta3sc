@@ -6,8 +6,8 @@ using namespace std::literals::string_view_literals;
 
 namespace gta3sc::syntax
 {
-using ParamType = CommandManager::ParamType;
-using EntityId = CommandManager::EntityId;
+using ParamType = CommandTable::ParamType;
+using EntityId = CommandTable::EntityId;
 
 static constexpr auto varname_timera = "TIMERA"sv;
 static constexpr auto varname_timerb = "TIMERB"sv;
@@ -232,14 +232,14 @@ auto Sema::validate_command(const ParserIR::Command& command)
         -> ArenaPtr<const SemaIR::Command>
 {
     bool failed = false;
-    const CommandManager::CommandDef* command_def{};
+    const CommandTable::CommandDef* command_def{};
 
     if(const auto* const alternator = cmdman->find_alternator(command.name()))
     {
         auto it = std::find_if(alternator->begin(), alternator->end(),
                                [&](const auto& alternative) {
                                    return is_matching_alternative(
-                                           command, *alternative.command);
+                                           command, alternative.command());
                                });
         if(it == alternator->end())
         {
@@ -247,7 +247,7 @@ auto Sema::validate_command(const ParserIR::Command& command)
             return nullptr;
         }
 
-        command_def = it->command;
+        command_def = &it->command();
         assert(command_def);
         this->analyzing_alternative_command = true;
     }
@@ -267,10 +267,10 @@ auto Sema::validate_command(const ParserIR::Command& command)
     builder.with_num_args(command.num_args());
 
     auto arg_it = command.args().begin();
-    auto param_it = command_def->params.begin();
+    auto param_it = command_def->params().begin();
 
     while(arg_it != command.args().end()
-          && param_it != command_def->params.end())
+          && param_it != command_def->params().end())
     {
         if(const auto* ir_arg = validate_argument(*param_it, *arg_it);
            ir_arg && !failed)
@@ -283,8 +283,7 @@ auto Sema::validate_command(const ParserIR::Command& command)
             ++param_it;
     }
 
-    const auto expected_args = (command_def->params.size()
-                                - param_it->is_optional());
+    const auto expected_args = command_def->num_min_params();
     const auto got_args = command.num_args();
 
     if(arg_it != command.args().end())
@@ -293,7 +292,7 @@ auto Sema::validate_command(const ParserIR::Command& command)
         report(command.source(), Diag::too_many_arguments)
                 .args(expected_args, got_args);
     }
-    else if(param_it != command_def->params.end() && !param_it->is_optional())
+    else if(param_it != command_def->params().end() && !param_it->is_optional())
     {
         failed = true;
         report(command.source(), Diag::too_few_arguments)
@@ -311,7 +310,7 @@ auto Sema::validate_command(const ParserIR::Command& command)
     return failed ? nullptr : result;
 }
 
-auto Sema::validate_argument(const CommandManager::ParamDef& param,
+auto Sema::validate_argument(const CommandTable::ParamDef& param,
                              const ParserIR::Argument& arg)
         -> ArenaPtr<const SemaIR::Argument>
 {
@@ -326,7 +325,7 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
                 // command selector. Thus, if this is an identifier, it
                 // is a valid global string constant.
                 const auto* cdef = cmdman->find_constant(
-                        CommandManager::global_enum, *arg.as_identifier());
+                        CommandTable::global_enum, *arg.as_identifier());
                 assert(cdef != nullptr);
 
                 return SemaIR::create_constant(*cdef, arg.source(), allocator);
@@ -347,7 +346,7 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
 
             std::string_view identifier = *arg.as_identifier();
 
-            if(cmdman->find_constant(CommandManager::global_enum, identifier))
+            if(cmdman->find_constant(CommandTable::global_enum, identifier))
             {
                 report(arg.source(), Diag::cannot_use_string_constant_here);
                 return nullptr;
@@ -448,7 +447,7 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
                 }
                 case ParserIR::Argument::Type::IDENTIFIER:
                 {
-                    if(cmdman->find_constant(CommandManager::global_enum,
+                    if(cmdman->find_constant(CommandTable::global_enum,
                                              *arg.as_identifier()))
                     {
                         report(arg.source(),
@@ -479,8 +478,7 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
                 case ParserIR::Argument::Type::IDENTIFIER:
                 {
                     if(const auto* cdef = cmdman->find_constant(
-                               CommandManager::global_enum,
-                               *arg.as_identifier()))
+                               CommandTable::global_enum, *arg.as_identifier()))
                     {
                         return SemaIR::create_constant(*cdef, arg.source(),
                                                        allocator);
@@ -498,7 +496,7 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
         case ParamType::OUTPUT_FLOAT:
         {
             if(arg.type() == ParserIR::Argument::Type::IDENTIFIER
-               && cmdman->find_constant(CommandManager::global_enum,
+               && cmdman->find_constant(CommandTable::global_enum,
                                         *arg.as_identifier()))
             {
                 report(arg.source(), Diag::cannot_use_string_constant_here);
@@ -506,15 +504,11 @@ auto Sema::validate_argument(const CommandManager::ParamDef& param,
             }
             return validate_var_ref(param, arg);
         }
-        default:
-        {
-            assert(false);
-            return nullptr;
-        }
     }
+    assert(false);
 }
 
-auto Sema::validate_integer_literal(const CommandManager::ParamDef& param,
+auto Sema::validate_integer_literal(const CommandTable::ParamDef& param,
                                     const ParserIR::Argument& arg)
         -> ArenaPtr<const SemaIR::Argument>
 {
@@ -531,7 +525,7 @@ auto Sema::validate_integer_literal(const CommandManager::ParamDef& param,
     return SemaIR::create_int(value, arg.source(), allocator);
 }
 
-auto Sema::validate_float_literal(const CommandManager::ParamDef& param,
+auto Sema::validate_float_literal(const CommandTable::ParamDef& param,
                                   const ParserIR::Argument& arg)
         -> ArenaPtr<const SemaIR::Argument>
 {
@@ -549,7 +543,7 @@ auto Sema::validate_float_literal(const CommandManager::ParamDef& param,
     return SemaIR::create_float(value, arg.source(), allocator);
 }
 
-auto Sema::validate_text_label(const CommandManager::ParamDef& param,
+auto Sema::validate_text_label(const CommandTable::ParamDef& param,
                                const ParserIR::Argument& arg)
         -> ArenaPtr<const SemaIR::Argument>
 {
@@ -565,7 +559,7 @@ auto Sema::validate_text_label(const CommandManager::ParamDef& param,
     return SemaIR::create_text_label(value, arg.source(), allocator);
 }
 
-auto Sema::validate_label(const CommandManager::ParamDef& param,
+auto Sema::validate_label(const CommandTable::ParamDef& param,
                           const ParserIR::Argument& arg)
         -> ArenaPtr<const SemaIR::Argument>
 {
@@ -587,7 +581,7 @@ auto Sema::validate_label(const CommandManager::ParamDef& param,
     return SemaIR::create_label(*sym_label, arg.source(), allocator);
 }
 
-auto Sema::validate_string_literal(const CommandManager::ParamDef& param,
+auto Sema::validate_string_literal(const CommandTable::ParamDef& param,
                                    const ParserIR::Argument& arg)
         -> ArenaPtr<const SemaIR::Argument>
 {
@@ -602,7 +596,7 @@ auto Sema::validate_string_literal(const CommandManager::ParamDef& param,
     return SemaIR::create_string(*arg.as_string(), arg.source(), allocator);
 }
 
-auto Sema::validate_var_ref(const CommandManager::ParamDef& param,
+auto Sema::validate_var_ref(const CommandTable::ParamDef& param,
                             const ParserIR::Argument& arg)
         -> ArenaPtr<const SemaIR::Argument>
 {
@@ -1059,7 +1053,7 @@ auto Sema::lookup_var_lvar(std::string_view name) const
 }
 
 auto Sema::var_entity_type(const SymbolTable::Variable& var) const
-        -> CommandManager::EntityId
+        -> CommandTable::EntityId
 {
     const auto scope_index = to_integer(var.scope());
     assert(scope_index < vars_entity_type.size());
@@ -1068,7 +1062,7 @@ auto Sema::var_entity_type(const SymbolTable::Variable& var) const
 }
 
 void Sema::set_var_entity_type(const SymbolTable::Variable& var,
-                               CommandManager::EntityId entity_type)
+                               CommandTable::EntityId entity_type)
 {
     const auto scope_index = to_integer(var.scope());
     assert(to_integer(var.scope()) < vars_entity_type.size());
@@ -1077,14 +1071,14 @@ void Sema::set_var_entity_type(const SymbolTable::Variable& var,
 }
 
 auto Sema::find_defaultmodel_constant(std::string_view name) const
-        -> const CommandManager::ConstantDef*
+        -> const CommandTable::ConstantDef*
 {
     if(this->defaultmodel_enum)
         return cmdman->find_constant(*defaultmodel_enum, name);
     return nullptr;
 }
 
-auto Sema::is_object_param(const CommandManager::ParamDef& param) const -> bool
+auto Sema::is_object_param(const CommandTable::ParamDef& param) const -> bool
 {
     return this->model_enum && param.enum_type == *model_enum;
 }
@@ -1100,9 +1094,25 @@ auto Sema::is_gvar_param(ParamType param_type) const -> bool
         case ParamType::VAR_FLOAT_OPT:
         case ParamType::VAR_TEXT_LABEL_OPT:
             return true;
-        default:
+        case ParamType::INT:
+        case ParamType::FLOAT:
+        case ParamType::LVAR_INT:
+        case ParamType::LVAR_FLOAT:
+        case ParamType::LVAR_TEXT_LABEL:
+        case ParamType::INPUT_INT:
+        case ParamType::INPUT_FLOAT:
+        case ParamType::OUTPUT_INT:
+        case ParamType::OUTPUT_FLOAT:
+        case ParamType::LABEL:
+        case ParamType::TEXT_LABEL:
+        case ParamType::STRING:
+        case ParamType::LVAR_INT_OPT:
+        case ParamType::LVAR_FLOAT_OPT:
+        case ParamType::LVAR_TEXT_LABEL_OPT:
+        case ParamType::INPUT_OPT:
             return false;
     }
+    assert(false);
 }
 
 auto Sema::is_lvar_param(ParamType param_type) const -> bool
@@ -1116,9 +1126,25 @@ auto Sema::is_lvar_param(ParamType param_type) const -> bool
         case ParamType::LVAR_FLOAT_OPT:
         case ParamType::LVAR_TEXT_LABEL_OPT:
             return true;
-        default:
+        case ParamType::INT:
+        case ParamType::FLOAT:
+        case ParamType::VAR_INT:
+        case ParamType::VAR_FLOAT:
+        case ParamType::VAR_TEXT_LABEL:
+        case ParamType::INPUT_INT:
+        case ParamType::INPUT_FLOAT:
+        case ParamType::OUTPUT_INT:
+        case ParamType::OUTPUT_FLOAT:
+        case ParamType::LABEL:
+        case ParamType::TEXT_LABEL:
+        case ParamType::STRING:
+        case ParamType::VAR_INT_OPT:
+        case ParamType::VAR_FLOAT_OPT:
+        case ParamType::VAR_TEXT_LABEL_OPT:
+        case ParamType::INPUT_OPT:
             return false;
     }
+    assert(false);
 }
 
 auto Sema::matches_var_type(ParamType param_type,
@@ -1149,41 +1175,45 @@ auto Sema::matches_var_type(ParamType param_type,
         case ParamType::INPUT_OPT:
             return (var_type == SymbolTable::VarType::INT
                     || var_type == SymbolTable::VarType::FLOAT);
-        default:
+        case ParamType::INT:
+        case ParamType::FLOAT:
+        case ParamType::LABEL:
+        case ParamType::STRING:
             return false;
     }
+    assert(false);
 }
 
-auto Sema::is_alternative_command(
-        const CommandManager::CommandDef& command_def,
-        const CommandManager::AlternatorDef& from) const -> bool
+auto Sema::is_alternative_command(const CommandTable::CommandDef& command_def,
+                                  const CommandTable::AlternatorDef& from) const
+        -> bool
 {
     auto it = std::find_if(from.begin(), from.end(),
                            [&](const auto& alternative) {
-                               return &command_def == alternative.command;
+                               return &command_def == &alternative.command();
                            });
     return (it != from.end());
 }
 
-auto Sema::is_matching_alternative(
-        const ParserIR::Command& command,
-        const CommandManager::CommandDef& alternative) -> bool
+auto Sema::is_matching_alternative(const ParserIR::Command& command,
+                                   const CommandTable::CommandDef& alternative)
+        -> bool
 {
     // Alternators do not admit optional arguments, so it's
     // all good to perform this check beforehand.
-    if(command.num_args() != alternative.params.size())
+    if(command.num_args() != alternative.num_min_params())
         return false;
 
     for(size_t i = 0, acount = command.num_args(); i < acount; ++i)
     {
         const auto& arg = command.arg(i);
-        const auto& param = alternative.params[i];
+        const auto& param = alternative.param(i);
 
         // The global string constants have higher precedence when checking for
         // anything that is an identifier, and that shall only match with INTs.
         if(param.type != ParamType::INT
            && arg.type() == ParserIR::Argument::Type::IDENTIFIER
-           && cmdman->find_constant(CommandManager::global_enum,
+           && cmdman->find_constant(CommandTable::global_enum,
                                     *arg.as_identifier()))
         {
             return false;
@@ -1195,7 +1225,7 @@ auto Sema::is_matching_alternative(
             {
                 if(arg.type() == ParserIR::Argument::Type::IDENTIFIER)
                 {
-                    if(!cmdman->find_constant(CommandManager::global_enum,
+                    if(!cmdman->find_constant(CommandTable::global_enum,
                                               *arg.as_identifier()))
                         return false;
                 }

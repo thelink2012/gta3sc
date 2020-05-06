@@ -12,7 +12,7 @@ namespace gta3sc
 class ModelTable
 {
 private:
-    /// This tag is used to make construction of the IR elements private.
+    /// This tag is used to make construction of the table elements private.
     struct PrivateTag
     {
     };

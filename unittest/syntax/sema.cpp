@@ -13,7 +13,7 @@ namespace gta3sc::test::syntax
 {
 class SemaFixture
     : public SyntaxFixture
-    , public CommandManagerFixture
+    , public CommandTableFixture
 {
 public:
     SemaFixture() : sema(default_sema()), symrepo(&arena)
@@ -1043,28 +1043,28 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_INT parameter")
         const auto& create_char_medic = std::next(ir->begin(), 5)->command();
         const auto& create_char_on = std::next(ir->begin(), 6)->command();
 
-        REQUIRE(wait_off.arg(0).as_constant()->value == 0);
-        REQUIRE(wait_on.arg(0).as_constant()->value == 1);
+        REQUIRE(wait_off.arg(0).as_constant()->value() == 0);
+        REQUIRE(wait_on.arg(0).as_constant()->value() == 1);
 
-        REQUIRE(create_char_male.arg(0).as_constant()->enum_id
+        REQUIRE(create_char_male.arg(0).as_constant()->enum_id()
                 == *cmdman.find_enumeration("PEDTYPE"));
-        REQUIRE(create_char_male.arg(0).as_constant()->value == 4);
-        REQUIRE(create_char_male.arg(1).as_constant()->enum_id
+        REQUIRE(create_char_male.arg(0).as_constant()->value() == 4);
+        REQUIRE(create_char_male.arg(1).as_constant()->enum_id()
                 == *cmdman.find_enumeration("DEFAULTMODEL"));
-        REQUIRE(create_char_male.arg(1).as_constant()->value == 5);
+        REQUIRE(create_char_male.arg(1).as_constant()->value() == 5);
 
-        REQUIRE(create_char_medic.arg(0).as_constant()->enum_id
+        REQUIRE(create_char_medic.arg(0).as_constant()->enum_id()
                 == *cmdman.find_enumeration("PEDTYPE"));
-        REQUIRE(create_char_medic.arg(0).as_constant()->value == 16);
-        REQUIRE(create_char_medic.arg(1).as_constant()->enum_id
+        REQUIRE(create_char_medic.arg(0).as_constant()->value() == 16);
+        REQUIRE(create_char_medic.arg(1).as_constant()->enum_id()
                 == *cmdman.find_enumeration("DEFAULTMODEL"));
-        REQUIRE(create_char_medic.arg(1).as_constant()->value == 5);
+        REQUIRE(create_char_medic.arg(1).as_constant()->value() == 5);
 
         REQUIRE(std::addressof(create_char_on.arg(0).as_var_ref()->def())
                 == symrepo.lookup_var("ON"));
-        REQUIRE(create_char_on.arg(1).as_constant()->enum_id
+        REQUIRE(create_char_on.arg(1).as_constant()->enum_id()
                 == *cmdman.find_enumeration("DEFAULTMODEL"));
-        REQUIRE(create_char_on.arg(1).as_constant()->value == 5);
+        REQUIRE(create_char_on.arg(1).as_constant()->value() == 5);
     }
 
     SUBCASE("invalid INPUT_INT param - float literal")
@@ -1248,8 +1248,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_OPT parameter")
         REQUIRE(arg_7.as_float() == std::nullopt);
         REQUIRE(arg_7.as_var_ref() == std::nullopt);
         REQUIRE(arg_7.as_constant() != nullptr);
-        REQUIRE(arg_7.as_constant()->enum_id == cmdman.global_enum);
-        REQUIRE(arg_7.as_constant()->value == 1);
+        REQUIRE(arg_7.as_constant()->enum_id() == cmdman.global_enum);
+        REQUIRE(arg_7.as_constant()->value() == 1);
     }
 
     SUBCASE("invalid INPUT_OPT param - string literal")
@@ -1509,13 +1509,13 @@ TEST_CASE_FIXTURE(SemaFixture, "sema alternators")
         REQUIRE(&command_1.def() == cmdman.find_command("SET_VAR_INT"));
         REQUIRE(std::addressof(command_1.arg(0).as_var_ref()->def())
                 == symrepo.lookup_var("X"));
-        REQUIRE(command_1.arg(1).as_constant()->value == 1);
+        REQUIRE(command_1.arg(1).as_constant()->value() == 1);
 
         REQUIRE(&command_2.def()
                 == cmdman.find_command("SET_VAR_INT_TO_CONSTANT"));
         REQUIRE(std::addressof(command_2.arg(0).as_var_ref()->def())
                 == symrepo.lookup_var("X"));
-        REQUIRE(command_2.arg(1).as_constant()->value == 145);
+        REQUIRE(command_2.arg(1).as_constant()->value() == 145);
     }
 
     SUBCASE("no alternative match - string constants")
@@ -1597,7 +1597,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema alternators")
 
 TEST_CASE_FIXTURE(SemaFixture, "sema entities")
 {
-    const auto no_entity = gta3sc::CommandManager::no_entity_type;
+    const auto no_entity = gta3sc::CommandTable::no_entity_type;
     const auto entity_car = cmdman.find_entity_type("CAR").value();
     const auto entity_char = cmdman.find_entity_type("CHAR").value();
 
@@ -1933,10 +1933,10 @@ TEST_CASE_FIXTURE(SemaFixture, "sema used objects")
         REQUIRE(ir->back().command().args().size() == 5);
         REQUIRE(!ir->back().command().arg(0).as_used_object());
         REQUIRE(ir->back().command().arg(0).as_constant());
-        REQUIRE(ir->back().command().arg(0).as_constant()->enum_id
+        REQUIRE(ir->back().command().arg(0).as_constant()->enum_id()
                 == defaultmodel_enum);
-        REQUIRE(ir->back().command().arg(0).as_constant()->value
-                == cmdman.find_constant(defaultmodel_enum, "CHEETAH")->value);
+        REQUIRE(ir->back().command().arg(0).as_constant()->value()
+                == cmdman.find_constant(defaultmodel_enum, "CHEETAH")->value());
 
         REQUIRE(!symrepo.lookup_used_object("CHEETAH"));
     }

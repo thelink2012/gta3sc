@@ -74,7 +74,7 @@ auto SemaIR::create_variable(const SymbolTable::Variable& var,
     return allocator.new_object<Argument>(private_tag, var_obj, source);
 }
 
-auto SemaIR::create_constant(const CommandManager::ConstantDef& cdef,
+auto SemaIR::create_constant(const CommandTable::ConstantDef& cdef,
                              SourceRange source, ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
@@ -169,9 +169,9 @@ auto SemaIR::Argument::as_label() const noexcept -> const SymbolTable::Label*
 }
 
 auto SemaIR::Argument::as_constant() const noexcept
-        -> const CommandManager::ConstantDef*
+        -> const CommandTable::ConstantDef*
 {
-    if(const auto* sconst = std::get_if<const CommandManager::ConstantDef*>(
+    if(const auto* sconst = std::get_if<const CommandTable::ConstantDef*>(
                &this->m_value))
         return *sconst;
     return nullptr;
@@ -191,7 +191,7 @@ auto SemaIR::Argument::pun_as_int() const noexcept -> std::optional<int32_t>
     if(const auto value = as_int())
         return *value;
     else if(const auto* sconst = as_constant())
-        return sconst->value;
+        return sconst->value();
     else
         return std::nullopt;
 }
@@ -267,7 +267,7 @@ auto SemaIR::Builder::command(const Command* command_ptr) -> Builder&&
     return std::move(*this);
 }
 
-auto SemaIR::Builder::command(const CommandManager::CommandDef& command_def,
+auto SemaIR::Builder::command(const CommandTable::CommandDef& command_def,
                               SourceRange source) -> Builder&&
 {
     assert(!this->command_ptr && !this->has_command_def);
@@ -354,7 +354,7 @@ auto SemaIR::Builder::arg_var(const SymbolTable::Variable& var,
 
 /// Appends an argument referencing to the given string constant to the
 /// command in construction.
-auto SemaIR::Builder::arg_const(const CommandManager::ConstantDef& cdef,
+auto SemaIR::Builder::arg_const(const CommandTable::ConstantDef& cdef,
                                 SourceRange source) -> Builder&&
 {
     return arg(SemaIR::create_constant(cdef, source, allocator));

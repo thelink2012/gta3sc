@@ -1,5 +1,5 @@
 #pragma once
-#include <gta3sc/command-manager.hpp>
+#include <gta3sc/command-table.hpp>
 #include <gta3sc/ir/symbol-table.hpp>
 #include <gta3sc/util/intrusive-bidirectional-list-node.hpp>
 #include <gta3sc/util/random-access-view.hpp>
@@ -158,7 +158,7 @@ public:
             -> ArenaPtr<const Argument>;
 
     /// Creates a string constant argument.
-    static auto create_constant(const CommandManager::ConstantDef& cdef,
+    static auto create_constant(const CommandTable::ConstantDef& cdef,
                                 SourceRange source, ArenaAllocator<> allocator)
             -> ArenaPtr<const Argument>;
 
@@ -275,7 +275,7 @@ class SemaIR::Command : public ArenaObj
 public:
     /// Please use `SemaIR::Builder::build_command`.
     Command(PrivateTag /*unused*/, SourceRange source,
-            const CommandManager::CommandDef& def,
+            const CommandTable::CommandDef& def,
             util::span<const Argument*> args, bool not_flag) noexcept :
         m_source(source), m_def(&def), m_args(args), m_not_flag(not_flag)
     {}
@@ -290,7 +290,7 @@ public:
     }
 
     /// Returns the definition of this command.
-    [[nodiscard]] auto def() const noexcept -> const CommandManager::CommandDef&
+    [[nodiscard]] auto def() const noexcept -> const CommandTable::CommandDef&
     {
         return *m_def;
     }
@@ -327,7 +327,7 @@ public:
 
 private:
     SourceRange m_source;
-    const CommandManager::CommandDef* m_def;
+    const CommandTable::CommandDef* m_def;
     util::span<const Argument*> m_args;
     bool m_not_flag{};
 };
@@ -394,7 +394,7 @@ public:
     /// Returns the contained string constant or `nullptr` if this argument
     /// is not a string constant.
     [[nodiscard]] auto as_constant() const noexcept
-            -> const CommandManager::ConstantDef*;
+            -> const CommandTable::ConstantDef*;
 
     /// Returns the contained used object or `nullptr` if this argument is
     /// not a used object.
@@ -423,7 +423,7 @@ private:
     const std::variant<int32_t, float, TextLabel, String, VarRef,
                        const SymbolTable::Label*,
                        const SymbolTable::UsedObject*,
-                       const CommandManager::ConstantDef*>
+                       const CommandTable::ConstantDef*>
             m_value;
     // FIXME cannot change the order of the variant or type() will break.
 
@@ -470,7 +470,7 @@ public:
     auto command(const Command* command_ptr) -> Builder&&;
 
     /// Sets the instruction in construction to be the specified command.
-    auto command(const CommandManager::CommandDef& command_def,
+    auto command(const CommandTable::CommandDef& command_def,
                  SourceRange source = no_source) -> Builder&&;
 
     /// Sets the not flag of the command being constructed.
@@ -516,7 +516,7 @@ public:
 
     /// Appends an argument referencing to the given string constant to the
     /// command in construction.
-    auto arg_const(const CommandManager::ConstantDef& cdef,
+    auto arg_const(const CommandTable::ConstantDef& cdef,
                    SourceRange source = no_source) -> Builder&&;
 
     /// Appends an argument referencing to the given used object to the
@@ -560,7 +560,7 @@ private:
     const SymbolTable::Label* label_ptr{};
     const Command* command_ptr{};
 
-    const CommandManager::CommandDef* command_def{};
+    const CommandTable::CommandDef* command_def{};
     SourceRange command_source;
 
     size_t args_hint = -1;
@@ -637,9 +637,8 @@ inline auto visit(Visitor&& vis, const SemaIR::Argument& arg,
                                *arg.as_constant(),
                                std::forward<OtherArgs>(other_args)...);
         }
-        default:
-            assert(false);
     }
+    assert(false);
 }
 
 // These resources are stored in a memory arena. Disposing storage

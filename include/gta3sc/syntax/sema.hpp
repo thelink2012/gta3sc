@@ -1,5 +1,5 @@
 #pragma once
-#include <gta3sc/command-manager.hpp>
+#include <gta3sc/command-table.hpp>
 #include <gta3sc/diagnostics.hpp>
 #include <gta3sc/ir/linked-ir.hpp>
 #include <gta3sc/ir/parser-ir.hpp>
@@ -30,7 +30,7 @@ public:
     /// \param diag a handler to emit diagnostics into.
     /// \param arena the arena that should be used to allocate IR in.
     explicit Sema(LinkedIR<ParserIR> parser_ir, SymbolTable& symrepo,
-                  const CommandManager& cmdman, const ModelTable& modelman,
+                  const CommandTable& cmdman, const ModelTable& modelman,
                   DiagnosticHandler& diag, ArenaAllocator<> allocator) noexcept
         :
         parser_ir(std::move(parser_ir)),
@@ -59,7 +59,7 @@ public:
     ///
     /// Must run `validate` beforehand.
     [[nodiscard]] auto var_entity_type(const SymbolTable::Variable& var) const
-            -> CommandManager::EntityId;
+            -> CommandTable::EntityId;
 
 private:
     struct VarRef;
@@ -90,31 +90,31 @@ private:
     auto validate_command(const ParserIR::Command& command)
             -> ArenaPtr<const SemaIR::Command>;
 
-    auto validate_argument(const CommandManager::ParamDef& param,
+    auto validate_argument(const CommandTable::ParamDef& param,
                            const ParserIR::Argument& arg)
             -> ArenaPtr<const SemaIR::Argument>;
 
-    auto validate_integer_literal(const CommandManager::ParamDef& param,
+    auto validate_integer_literal(const CommandTable::ParamDef& param,
                                   const ParserIR::Argument& arg)
             -> ArenaPtr<const SemaIR::Argument>;
 
-    auto validate_float_literal(const CommandManager::ParamDef& param,
+    auto validate_float_literal(const CommandTable::ParamDef& param,
                                 const ParserIR::Argument& arg)
             -> ArenaPtr<const SemaIR::Argument>;
 
-    auto validate_text_label(const CommandManager::ParamDef& param,
+    auto validate_text_label(const CommandTable::ParamDef& param,
                              const ParserIR::Argument& arg)
             -> ArenaPtr<const SemaIR::Argument>;
 
-    auto validate_label(const CommandManager::ParamDef& param,
+    auto validate_label(const CommandTable::ParamDef& param,
                         const ParserIR::Argument& arg)
             -> ArenaPtr<const SemaIR::Argument>;
 
-    auto validate_string_literal(const CommandManager::ParamDef& param,
+    auto validate_string_literal(const CommandTable::ParamDef& param,
                                  const ParserIR::Argument& arg)
             -> ArenaPtr<const SemaIR::Argument>;
 
-    auto validate_var_ref(const CommandManager::ParamDef& param,
+    auto validate_var_ref(const CommandTable::ParamDef& param,
                           const ParserIR::Argument& arg)
             -> ArenaPtr<const SemaIR::Argument>;
 
@@ -173,42 +173,42 @@ private:
 
     /// Sets the entity type for `var` in `vars_entity_type`.
     void set_var_entity_type(const SymbolTable::Variable& var,
-                             CommandManager::EntityId entity_type);
+                             CommandTable::EntityId entity_type);
 
     /// Finds a constant in the default model enumeration.
     [[nodiscard]] auto find_defaultmodel_constant(std::string_view name) const
-            -> const CommandManager::ConstantDef*;
+            -> const CommandTable::ConstantDef*;
 
     /// Checks whether the given parameter has an object string constant
     /// association.
     [[nodiscard]] auto
-    is_object_param(const CommandManager::ParamDef& param) const -> bool;
+    is_object_param(const CommandTable::ParamDef& param) const -> bool;
 
     /// Checks whether a parameter type accepts only global variables.
-    [[nodiscard]] auto is_gvar_param(CommandManager::ParamType param_type) const
+    [[nodiscard]] auto is_gvar_param(CommandTable::ParamType param_type) const
             -> bool;
 
     /// Checks whether a parameter type accepts only local variables.
-    [[nodiscard]] auto is_lvar_param(CommandManager::ParamType param_type) const
+    [[nodiscard]] auto is_lvar_param(CommandTable::ParamType param_type) const
             -> bool;
 
     /// Checks whether the typing of a parameter matches the
     /// typing of a variable.
-    [[nodiscard]] auto matches_var_type(CommandManager::ParamType param_type,
+    [[nodiscard]] auto matches_var_type(CommandTable::ParamType param_type,
                                         SymbolTable::VarType var_type) const
             -> bool;
 
     /// Checks whether the specified command is an alternative of an certain
     /// alternator.
     [[nodiscard]] auto
-    is_alternative_command(const CommandManager::CommandDef& command_def,
-                           const CommandManager::AlternatorDef& from) const
+    is_alternative_command(const CommandTable::CommandDef& command_def,
+                           const CommandTable::AlternatorDef& from) const
             -> bool;
 
     //// Checks whether the specified actual command/args matches the
     //// specification of a certain alternative command.
     auto is_matching_alternative(const ParserIR::Command& command,
-                                 const CommandManager::CommandDef& alternative)
+                                 const CommandTable::CommandDef& alternative)
             -> bool;
 
 private:
@@ -232,7 +232,7 @@ private:
     ArenaAllocator<> allocator;
     DiagnosticHandler* diag; // Do not use directly. Please call `report`.
     SymbolTable* symrepo;
-    const CommandManager* cmdman;
+    const CommandTable* cmdman;
     const ModelTable* modelman;
     LinkedIR<ParserIR> parser_ir;
 
@@ -253,17 +253,17 @@ private:
                                           ///< matching an alternator.
     bool analyzing_repeat_command{};      ///< Whether we are checking REPEAT.
 
-    const CommandManager::AlternatorDef* alternator_set{};
-    const CommandManager::CommandDef* command_script_name{};
-    const CommandManager::CommandDef* command_start_new_script{};
+    const CommandTable::AlternatorDef* alternator_set{};
+    const CommandTable::CommandDef* command_script_name{};
+    const CommandTable::CommandDef* command_start_new_script{};
 
-    std::optional<CommandManager::EnumId> model_enum;
-    std::optional<CommandManager::EnumId> defaultmodel_enum;
+    std::optional<CommandTable::EnumId> model_enum;
+    std::optional<CommandTable::EnumId> defaultmodel_enum;
 
     /// Set of script names already seen.
     std::vector<std::string_view> seen_script_names;
 
     /// The entity type for the variables in the program.
-    std::vector<std::vector<CommandManager::EntityId>> vars_entity_type;
+    std::vector<std::vector<CommandTable::EntityId>> vars_entity_type;
 };
 } // namespace gta3sc::syntax

@@ -1,5 +1,5 @@
 add_library(gta3sc 
-  command-manager.cpp
+  command-table.cpp
   model-table.cpp
   diagnostics.cpp
   sourceman.cpp

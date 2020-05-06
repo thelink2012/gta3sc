@@ -560,9 +560,8 @@ inline auto visit(Visitor&& vis, const ParserIR::Argument& arg,
                                *arg.as_string(),
                                std::forward<OtherArgs>(other_args)...);
         }
-        default:
-            assert(false);
     }
+    assert(false);
 }
 
 // These resources are stored in a memory arena. Disposing storage

@@ -1,23 +1,23 @@
 #pragma once
 #include <doctest/doctest.h>
-#include <gta3sc/command-manager.hpp>
+#include <gta3sc/command-table.hpp>
 
 namespace gta3sc::test
 {
-class CommandManagerFixture
+class CommandTableFixture
 {
 public:
-    CommandManagerFixture() : cmdman(build()) {}
+    CommandTableFixture() : cmdman(build()) {}
 
 private:
-    auto build() -> CommandManager
+    auto build() -> CommandTable
     {
-        using ParamDef = gta3sc::CommandManager::ParamDef;
-        using ParamType = gta3sc::CommandManager::ParamType;
-        using EntityId = gta3sc::CommandManager::EntityId;
-        using EnumId = gta3sc::CommandManager::EnumId;
+        using ParamDef = gta3sc::CommandTable::ParamDef;
+        using ParamType = gta3sc::CommandTable::ParamType;
+        using EntityId = gta3sc::CommandTable::EntityId;
+        using EnumId = gta3sc::CommandTable::EnumId;
 
-        CommandManager::Builder builder(&arena);
+        CommandTable::Builder builder(&arena);
 
         builder.insert_entity_type("CAR");
         builder.insert_entity_type("CHAR");
@@ -260,19 +260,18 @@ private:
     }
 
     static void
-    add_command(CommandManager::Builder& builder, std::string_view name,
+    add_command(CommandTable::Builder& builder, std::string_view name,
 
-                std::initializer_list<CommandManager::ParamDef> params)
+                std::initializer_list<CommandTable::ParamDef> params)
     {
         auto [command, _] = builder.insert_command(name);
         builder.set_command_params(*command, params.begin(), params.end(),
                                    params.size());
     }
 
-    static void
-    add_alternator(CommandManager::Builder& builder, std::string_view name,
-                   std::initializer_list<const CommandManager::CommandDef*>
-                           alternatives)
+    static void add_alternator(
+            CommandTable::Builder& builder, std::string_view name,
+            std::initializer_list<const CommandTable::CommandDef*> alternatives)
     {
         auto [alternator, _] = builder.insert_alternator(name);
         for(const auto& alternative : alternatives)
@@ -283,6 +282,6 @@ private:
     ArenaMemoryResource arena;
 
 protected:
-    CommandManager cmdman; // NOLINT
+    CommandTable cmdman; // NOLINT
 };
 } // namespace gta3sc::test

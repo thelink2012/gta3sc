@@ -1383,8 +1383,9 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
                 assert(false);
                 return std::nullopt;
             }
-            default:
+            case Category::end_of_line:
             {
+                // This can never happen (see the loop invariant).
                 assert(false);
                 return std::nullopt;
             }

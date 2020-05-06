@@ -62,6 +62,8 @@ auto SymbolTable::insert_var(std::string_view name, ScopeId scope_id,
     assert(scope_index < m_scopes.size());
 
     const auto var_id = static_cast<uint32_t>(m_scopes[scope_index].size());
+    assert(var_id < std::numeric_limits<decltype(var_id)>::max());
+
     const auto a_name = util::new_string(name, allocator);
 
     const auto* const symbol = allocator.new_object<SymbolTable::Variable>(
@@ -81,6 +83,8 @@ auto SymbolTable::insert_label(std::string_view name, ScopeId scope_id,
         return {l, false};
 
     const auto label_id = static_cast<uint32_t>(m_labels.size());
+    assert(label_id < std::numeric_limits<decltype(label_id)>::max());
+
     const auto a_name = util::new_string(name, allocator);
 
     const auto* const symbol = allocator.new_object<Label>(
@@ -99,6 +103,8 @@ auto SymbolTable::insert_used_object(std::string_view name, SourceRange source)
         return {uobj, false};
 
     const auto obj_id = static_cast<uint32_t>(m_used_objects.size());
+    assert(obj_id < std::numeric_limits<decltype(obj_id)>::max());
+
     const auto a_name = util::new_string(name, allocator);
 
     const auto* const symbol = allocator.new_object<SymbolTable::UsedObject>(

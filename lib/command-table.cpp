@@ -1,4 +1,4 @@
-#include <gta3sc/command-manager.hpp>
+#include <gta3sc/command-table.hpp>
 #include <gta3sc/util/ctype.hpp>
 #include <gta3sc/util/memory.hpp>
 
@@ -9,11 +9,10 @@ namespace linear_list = gta3sc::util::algorithm::linear_list;
 
 namespace gta3sc
 {
-CommandManager::CommandManager(CommandsMap&& commands_map,
-                               AlternatorsMap&& alternators_map,
-                               EnumsMap&& enums_map,
-                               ConstantsMap&& constants_map,
-                               EntitiesMap&& entities_map) noexcept :
+CommandTable::CommandTable(CommandMap&& commands_map,
+                           AlternatorMap&& alternators_map, EnumMap&& enums_map,
+                           ConstantMap&& constants_map,
+                           EntityMap&& entities_map) noexcept :
     commands_map(std::move(commands_map)),
     alternators_map(std::move(alternators_map)),
     enums_map(std::move(enums_map)),
@@ -21,7 +20,7 @@ CommandManager::CommandManager(CommandsMap&& commands_map,
     entities_map(std::move(entities_map))
 {}
 
-auto CommandManager::ParamDef::is_optional() const -> bool
+auto CommandTable::ParamDef::is_optional() const noexcept -> bool
 {
     switch(type)
     {
@@ -33,84 +32,101 @@ auto CommandManager::ParamDef::is_optional() const -> bool
         case ParamType::LVAR_TEXT_LABEL_OPT:
         case ParamType::INPUT_OPT:
             return true;
-        default:
+        case ParamType::INT:
+        case ParamType::FLOAT:
+        case ParamType::VAR_INT:
+        case ParamType::LVAR_INT:
+        case ParamType::VAR_FLOAT:
+        case ParamType::LVAR_FLOAT:
+        case ParamType::VAR_TEXT_LABEL:
+        case ParamType::LVAR_TEXT_LABEL:
+        case ParamType::INPUT_INT:
+        case ParamType::INPUT_FLOAT:
+        case ParamType::OUTPUT_INT:
+        case ParamType::OUTPUT_FLOAT:
+        case ParamType::LABEL:
+        case ParamType::TEXT_LABEL:
+        case ParamType::STRING:
             return false;
     }
+    assert(false);
 }
 
-auto CommandManager::AlternatorDef::begin() const -> const_iterator
+auto CommandTable::AlternatorDef::begin() const noexcept -> const_iterator
 {
     return const_iterator(first, nullptr);
 }
 
-auto CommandManager::AlternatorDef::end() const -> const_iterator
+auto CommandTable::AlternatorDef::end() const noexcept -> const_iterator
 {
     return const_iterator();
 }
 
-auto CommandManager::find_command(std::string_view name) const
+auto CommandTable::find_command(std::string_view name) const noexcept
         -> const CommandDef*
 {
     return find_command(commands_map, name);
 }
 
-auto CommandManager::find_alternator(std::string_view name) const
+auto CommandTable::find_alternator(std::string_view name) const noexcept
         -> const AlternatorDef*
 {
     return find_alternator(alternators_map, name);
 }
 
-auto CommandManager::find_enumeration(std::string_view name) const
+auto CommandTable::find_enumeration(std::string_view name) const noexcept
         -> std::optional<EnumId>
 {
     return find_enumeration(enums_map, name);
 }
 
-auto CommandManager::find_constant(EnumId enum_id, std::string_view name) const
+auto CommandTable::find_constant(EnumId enum_id,
+                                 std::string_view name) const noexcept
         -> const ConstantDef*
 {
     return find_constant(constants_map, enum_id, name);
 }
 
-auto CommandManager::find_constant_any_means(std::string_view name) const
+auto CommandTable::find_constant_any_means(std::string_view name) const noexcept
         -> const ConstantDef*
 {
     return find_constant_any_means(constants_map, name);
 }
 
-auto CommandManager::find_entity_type(std::string_view name) const
+auto CommandTable::find_entity_type(std::string_view name) const noexcept
         -> std::optional<EntityId>
 {
     return find_entity_type(entities_map, name);
 }
 
-auto CommandManager::find_command(const CommandsMap& commands_map,
-                                  std::string_view name) -> const CommandDef*
+auto CommandTable::find_command(const CommandMap& commands_map,
+                                std::string_view name) noexcept
+        -> const CommandDef*
 {
-    auto it = commands_map.find(name);
+    const auto it = commands_map.find(name);
     return it == commands_map.end() ? nullptr : it->second;
 }
 
-auto CommandManager::find_alternator(const AlternatorsMap& alternators_map,
-                                     std::string_view name)
+auto CommandTable::find_alternator(const AlternatorMap& alternators_map,
+                                   std::string_view name) noexcept
         -> const AlternatorDef*
 {
-    auto it = alternators_map.find(name);
+    const auto it = alternators_map.find(name);
     return it == alternators_map.end() ? nullptr : it->second;
 }
 
-auto CommandManager::find_enumeration(const EnumsMap& enums_map,
-                                      std::string_view name)
+auto CommandTable::find_enumeration(const EnumMap& enums_map,
+                                    std::string_view name) noexcept
         -> std::optional<EnumId>
 {
-    if(auto it = enums_map.find(name); it != enums_map.end())
+    if(const auto it = enums_map.find(name); it != enums_map.end())
         return it->second;
 
     return std::nullopt;
 }
 
-auto CommandManager::find_constant(const ConstantsMap& constants_map,
-                                   EnumId enum_id, std::string_view name)
+auto CommandTable::find_constant(const ConstantMap& constants_map,
+                                 EnumId enum_id, std::string_view name) noexcept
         -> const ConstantDef*
 {
     const auto cpair = constants_map.find(name);
@@ -119,18 +135,17 @@ auto CommandManager::find_constant(const ConstantsMap& constants_map,
 
     assert(cpair->second != nullptr);
 
-    for(ConstantDef::ConstIterator it(cpair->second, nullptr), end; it != end;
-        ++it)
+    for(ConstantDef::ConstIterator it(*cpair->second), end; it != end; ++it)
     {
-        if(it->enum_id == enum_id)
+        if(it->enum_id() == enum_id)
             return std::addressof(*it);
     }
 
     return nullptr;
 }
 
-auto CommandManager::find_constant_any_means(const ConstantsMap& constants_map,
-                                             std::string_view name)
+auto CommandTable::find_constant_any_means(const ConstantMap& constants_map,
+                                           std::string_view name) noexcept
         -> const ConstantDef*
 {
     const auto cdef = constants_map.find(name);
@@ -139,18 +154,17 @@ auto CommandManager::find_constant_any_means(const ConstantsMap& constants_map,
 
     assert(cdef->second != nullptr);
 
-    for(ConstantDef::ConstIterator it(cdef->second, nullptr), end; it != end;
-        ++it)
+    for(ConstantDef::ConstIterator it(*cdef->second), end; it != end; ++it)
     {
-        if(it->enum_id != global_enum)
+        if(it->enum_id() != global_enum)
             return std::addressof(*it);
     }
 
     return nullptr;
 }
 
-auto CommandManager::find_entity_type(const EntitiesMap& entities_map,
-                                      std::string_view name)
+auto CommandTable::find_entity_type(const EntityMap& entities_map,
+                                    std::string_view name) noexcept
         -> std::optional<EntityId>
 {
     if(auto it = entities_map.find(name); it != entities_map.end())
@@ -158,33 +172,34 @@ auto CommandManager::find_entity_type(const EntitiesMap& entities_map,
     return std::nullopt;
 }
 
-auto CommandManager::Builder::build() && -> CommandManager
+auto CommandTable::Builder::build() && -> CommandTable
 {
-    return CommandManager(std::move(commands_map), std::move(alternators_map),
-                          std::move(enums_map), std::move(constants_map),
-                          std::move(entities_map));
+    return CommandTable(std::move(commands_map), std::move(alternators_map),
+                        std::move(enums_map), std::move(constants_map),
+                        std::move(entities_map));
 }
 
-auto CommandManager::Builder::find_command(std::string_view name) const
+auto CommandTable::Builder::find_command(std::string_view name) const noexcept
         -> const CommandDef*
 {
-    return CommandManager::find_command(commands_map, name);
+    return CommandTable::find_command(commands_map, name);
 }
 
-auto CommandManager::Builder::find_command(std::string_view name) -> CommandDef*
+auto CommandTable::Builder::find_command(std::string_view name) noexcept
+        -> CommandDef*
 {
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast): Safe.
     return const_cast<CommandDef*>( // NOLINTNEXTLINE
             const_cast<const Builder&>(*this).find_command(name));
 }
 
-auto CommandManager::Builder::find_alternator(std::string_view name) const
-        -> const AlternatorDef*
+auto CommandTable::Builder::find_alternator(
+        std::string_view name) const noexcept -> const AlternatorDef*
 {
-    return CommandManager::find_alternator(alternators_map, name);
+    return CommandTable::find_alternator(alternators_map, name);
 }
 
-auto CommandManager::Builder::find_alternator(std::string_view name)
+auto CommandTable::Builder::find_alternator(std::string_view name) noexcept
         -> AlternatorDef*
 {
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast): Safe.
@@ -192,59 +207,59 @@ auto CommandManager::Builder::find_alternator(std::string_view name)
             const_cast<const Builder&>(*this).find_alternator(name));
 }
 
-auto CommandManager::Builder::find_enumeration(std::string_view name) const
-        -> std::optional<EnumId>
+auto CommandTable::Builder::find_enumeration(
+        std::string_view name) const noexcept -> std::optional<EnumId>
 {
-    return CommandManager::find_enumeration(enums_map, name);
+    return CommandTable::find_enumeration(enums_map, name);
 }
 
-auto CommandManager::Builder::find_constant(EnumId enum_id,
-                                            std::string_view name) const
+auto CommandTable::Builder::find_constant(EnumId enum_id,
+                                          std::string_view name) const noexcept
         -> const ConstantDef*
 {
-    return CommandManager::find_constant(constants_map, enum_id, name);
+    return CommandTable::find_constant(constants_map, enum_id, name);
 }
 
-auto CommandManager::Builder::find_entity_type(std::string_view name) const
-        -> std::optional<EntityId>
+auto CommandTable::Builder::find_entity_type(
+        std::string_view name) const noexcept -> std::optional<EntityId>
 {
-    return CommandManager::find_entity_type(entities_map, name);
+    return CommandTable::find_entity_type(entities_map, name);
 }
 
-auto CommandManager::Builder::insert_command(std::string_view name)
+auto CommandTable::Builder::insert_command(std::string_view name)
         -> std::pair<CommandDef*, bool>
 {
     if(auto it = commands_map.find(name); it != commands_map.end())
         return {it->second, false};
 
     auto a_name = util::new_string(name, allocator, util::toupper);
-    auto* a_cmd = allocator.new_object<CommandDef>();
-    a_cmd->name = a_name;
+    auto* a_cmd = allocator.new_object<CommandDef>(private_tag, a_name);
 
     auto [it, inserted] = commands_map.emplace(a_name, a_cmd);
     assert(inserted);
     return {it->second, true};
 }
 
-auto CommandManager::Builder::insert_alternator(std::string_view name)
+auto CommandTable::Builder::insert_alternator(std::string_view name)
         -> std::pair<AlternatorDef*, bool>
 {
     if(auto it = alternators_map.find(name); it != alternators_map.end())
         return {it->second, false};
 
     auto a_name = util::new_string(name, allocator, util::toupper);
-    auto* a_alternator = allocator.new_object<AlternatorDef>();
+    auto* a_alternator = allocator.new_object<AlternatorDef>(private_tag);
 
     auto [it, inserted] = alternators_map.emplace(a_name, a_alternator);
     assert(inserted);
     return {it->second, true};
 }
 
-auto CommandManager::Builder::insert_alternative(AlternatorDef& alternator,
-                                                 const CommandDef& command)
+auto CommandTable::Builder::insert_alternative(AlternatorDef& alternator,
+                                               const CommandDef& command)
         -> const AlternativeDef*
 {
-    auto* a_alternative = allocator.new_object<AlternativeDef>(command);
+    auto* a_alternative = allocator.new_object<AlternativeDef>(private_tag,
+                                                               command);
 
     std::tie(alternator.first, alternator.last) = linear_list::push_back(
             *a_alternative, alternator.first, alternator.last);
@@ -252,7 +267,7 @@ auto CommandManager::Builder::insert_alternative(AlternatorDef& alternator,
     return a_alternative;
 }
 
-auto CommandManager::Builder::insert_enumeration(std::string_view name)
+auto CommandTable::Builder::insert_enumeration(std::string_view name)
         -> std::pair<EnumId, bool>
 {
     if(auto it = enums_map.find(name); it != enums_map.end())
@@ -270,16 +285,17 @@ auto CommandManager::Builder::insert_enumeration(std::string_view name)
     return {it->second, true};
 }
 
-auto CommandManager::Builder::insert_or_assign_constant(EnumId enum_id,
-                                                        std::string_view name,
-                                                        int32_t value)
+auto CommandTable::Builder::insert_or_assign_constant(EnumId enum_id,
+                                                      std::string_view name,
+                                                      int32_t value)
         -> std::pair<const ConstantDef*, bool>
 {
     auto it = constants_map.find(name);
     if(it == constants_map.end())
     {
         auto a_name = util::new_string(name, allocator, util::toupper);
-        auto* cdef = allocator.new_object<ConstantDef>(enum_id, value);
+        auto* cdef = allocator.new_object<ConstantDef>(private_tag, enum_id,
+                                                       value);
         auto [_, inserted] = constants_map.emplace(a_name, cdef);
         assert(inserted);
         return {cdef, true};
@@ -291,14 +307,15 @@ auto CommandManager::Builder::insert_or_assign_constant(EnumId enum_id,
 
         for(ConstantDef::Iterator end{}; curr_it != end; prev_it = curr_it++)
         {
-            if(curr_it->enum_id == enum_id)
+            if(curr_it->enum_id() == enum_id)
             {
-                curr_it->value = value;
+                curr_it->m_value = value;
                 return {std::addressof(*curr_it), false};
             }
         }
 
-        auto* a_constant = allocator.new_object<ConstantDef>(enum_id, value);
+        auto* a_constant = allocator.new_object<ConstantDef>(private_tag,
+                                                             enum_id, value);
 
         linear_list::insert_after(*prev_it, *a_constant);
 
@@ -306,7 +323,7 @@ auto CommandManager::Builder::insert_or_assign_constant(EnumId enum_id,
     }
 }
 
-auto CommandManager::Builder::insert_entity_type(std::string_view name)
+auto CommandTable::Builder::insert_entity_type(std::string_view name)
         -> std::pair<EntityId, bool>
 {
     if(auto it = entities_map.find(name); it != entities_map.end())
