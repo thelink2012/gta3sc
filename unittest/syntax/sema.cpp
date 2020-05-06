@@ -18,7 +18,7 @@ class SemaFixture
 public:
     SemaFixture() : sema(default_sema()), symrepo(&arena)
     {
-        modelman = ModelManager::Builder(&arena)
+        modelman = ModelTable::Builder(&arena)
                            .insert_model("CHEETAH")
                            .insert_model("LEVEL_MODEL")
                            .insert_model("OTHER_LEVEL_MODEL")
@@ -61,7 +61,7 @@ private:
 
 protected:
     gta3sc::SymbolTable symrepo;   // NOLINT
-    gta3sc::ModelManager modelman; // NOLINT
+    gta3sc::ModelTable modelman; // NOLINT
     gta3sc::syntax::Sema sema;     // NOLINT
 };
 } // namespace gta3sc::test::syntax

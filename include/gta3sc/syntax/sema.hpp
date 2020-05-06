@@ -5,7 +5,7 @@
 #include <gta3sc/ir/parser-ir.hpp>
 #include <gta3sc/ir/sema-ir.hpp>
 #include <gta3sc/ir/symbol-table.hpp>
-#include <gta3sc/model-manager.hpp>
+#include <gta3sc/model-table.hpp>
 #include <gta3sc/util/arena.hpp>
 
 namespace gta3sc::syntax
@@ -30,7 +30,7 @@ public:
     /// \param diag a handler to emit diagnostics into.
     /// \param arena the arena that should be used to allocate IR in.
     explicit Sema(LinkedIR<ParserIR> parser_ir, SymbolTable& symrepo,
-                  const CommandManager& cmdman, const ModelManager& modelman,
+                  const CommandManager& cmdman, const ModelTable& modelman,
                   DiagnosticHandler& diag, ArenaAllocator<> allocator) noexcept
         :
         parser_ir(std::move(parser_ir)),
@@ -233,7 +233,7 @@ private:
     DiagnosticHandler* diag; // Do not use directly. Please call `report`.
     SymbolTable* symrepo;
     const CommandManager* cmdman;
-    const ModelManager* modelman;
+    const ModelTable* modelman;
     LinkedIR<ParserIR> parser_ir;
 
     /// Used to represent no scope for `first_scope` and `current_scope`.
