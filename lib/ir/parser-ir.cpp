@@ -1,8 +1,8 @@
 #include <algorithm>
 #include <cstring>
 #include <gta3sc/ir/parser-ir.hpp>
-#include <gta3sc/util/arena-utility.hpp>
 #include <gta3sc/util/ctype.hpp>
+#include <gta3sc/util/memory.hpp>
 
 namespace gta3sc
 {

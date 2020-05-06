@@ -1,5 +1,6 @@
 #pragma once
-#include <gta3sc/util/arena.hpp>
+#include <gta3sc/util/memory.hpp>
+#include <string_view>
 #include <unordered_map>
 
 namespace gta3sc
@@ -54,18 +55,18 @@ private:
 class ModelTable::ModelDef : public ArenaObj
 {
 public:
-    ModelDef(PrivateTag /*unused*/, std::string_view name) noexcept :
-        m_name(name)
+    explicit ModelDef(PrivateTag /*unused*/, uint8_t name_size) noexcept :
+        m_name_size(name_size)
     {}
 
     /// Returns the name of the object model.
     [[nodiscard]] auto name() const noexcept -> std::string_view
     {
-        return m_name;
+        return util::get_sibling_string(this, m_name_size);
     }
 
 private:
-    std::string_view m_name;
+    uint8_t m_name_size;
 };
 
 /// A builder capable of constructing a `ModelTable`.

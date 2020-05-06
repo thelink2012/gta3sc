@@ -184,6 +184,7 @@ inline auto CodeEmitter::emit_raw_bytes(RandomAccessIterator begin,
                                         RandomAccessIterator end)
         -> CodeEmitter&
 {
-    return emit_raw_bytes(begin, end, distance(begin, end));
+    const size_t output_size = end - begin;
+    return emit_raw_bytes(begin, end, output_size);
 }
 } // namespace gta3sc::codegen::trilogy

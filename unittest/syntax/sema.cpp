@@ -60,9 +60,9 @@ private:
     gta3sc::ArenaMemoryResource arena;
 
 protected:
-    gta3sc::SymbolTable symrepo;   // NOLINT
+    gta3sc::SymbolTable symrepo; // NOLINT
     gta3sc::ModelTable modelman; // NOLINT
-    gta3sc::syntax::Sema sema;     // NOLINT
+    gta3sc::syntax::Sema sema;   // NOLINT
 };
 } // namespace gta3sc::test::syntax
 

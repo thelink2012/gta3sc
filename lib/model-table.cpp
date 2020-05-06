@@ -1,11 +1,9 @@
 #include <gta3sc/model-table.hpp>
-#include <gta3sc/util/arena-utility.hpp>
 #include <gta3sc/util/ctype.hpp>
 
 namespace gta3sc
 {
-ModelTable::ModelTable(ModelMap&& models) noexcept :
-    models(std::move(models))
+ModelTable::ModelTable(ModelMap&& models) noexcept : models(std::move(models))
 {}
 
 auto ModelTable::find_model(std::string_view name) const noexcept
@@ -26,10 +24,8 @@ auto ModelTable::Builder::insert_model(std::string_view name) -> Builder&&
     if(this->models.contains(name))
         return std::move(*this);
 
-    auto name_a = util::new_string(name, allocator, util::toupper);
-    const auto* model_a = allocator.new_object<ModelDef>(private_tag, name_a);
-
-    models.emplace(name_a, model_a);
+    models.emplace(util::new_object_with_string<ModelDef>(
+            name, util::toupper, allocator, private_tag, name.size()));
 
     return std::move(*this);
 }

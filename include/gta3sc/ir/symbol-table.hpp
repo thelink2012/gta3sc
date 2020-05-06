@@ -21,6 +21,8 @@ namespace gta3sc
 /// Variables are stored in scopes. Each scope is identified by a index. The
 /// names from a scope does not collide with names from another scope. The
 /// global variable scope is always present on the table.
+///
+/// The names stored in this table are case-sensitive.
 class SymbolTable
 {
 private:
@@ -67,6 +69,9 @@ public:
     static constexpr ScopeId invalid_scope = ScopeId{static_cast<uint32_t>(-1)};
 
 public:
+    /// Constructs a symbol table.
+    ///
+    /// Allocation of symbols happens with the given arena allocator.
     explicit SymbolTable(ArenaAllocator<> allocator) noexcept;
 
     SymbolTable(const SymbolTable&) = delete;
