@@ -20,3 +20,4 @@ target_include_directories(gta3sc
   PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
   PUBLIC $<INSTALL_INTERFACE:include>)
 target_link_libraries(gta3sc span-lite)
+target_compile_options(gta3sc PRIVATE ${GTA3SC_PEDANTIC_COMPILE_OPTIONS})

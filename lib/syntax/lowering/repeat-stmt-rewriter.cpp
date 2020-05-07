@@ -15,7 +15,7 @@ constexpr auto command_is_thing_greater_or_equal_to_thing
 
 RepeatStmtRewriter::RepeatStmtRewriter(util::NameGenerator& namegen,
                                        ArenaAllocator<> allocator) noexcept :
-    namegen(&namegen), allocator(allocator)
+    allocator(allocator), namegen(&namegen)
 {}
 
 auto RepeatStmtRewriter::visit(const ParserIR& line) -> Result
@@ -48,7 +48,9 @@ auto RepeatStmtRewriter::visit_repeat(const ParserIR& line) -> Result
     const auto* const loop_label_def = generate_loop_label(repeat.source());
 
     repeat_stack.reserve(default_stack_capacity);
-    repeat_stack.push_back(RepeatStmt{&num_times, &iter_var, loop_label_def});
+    repeat_stack.push_back(RepeatStmt{.num_times = &num_times,
+                                      .iter_var = &iter_var,
+                                      .loop_label = loop_label_def});
 
     return LinkedIR<ParserIR>(
             {ParserIR::Builder(allocator)

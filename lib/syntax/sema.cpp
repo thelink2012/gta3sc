@@ -352,7 +352,7 @@ auto Sema::validate_argument(const CommandTable::ParamDef& param,
                 return nullptr;
             }
 
-            if(identifier.front() == '$')
+            if(identifier.starts_with('$'))
                 return validate_var_ref(param, arg);
             else
                 return validate_text_label(param, arg);
@@ -617,7 +617,7 @@ auto Sema::validate_var_ref(const CommandTable::ParamDef& param,
     // character and its suffix references a variable of text label type.
     if(param.type == ParamType::TEXT_LABEL)
     {
-        assert(arg_ident.front() == '$');
+        assert(arg_ident.starts_with('$'));
 
         if(arg_ident.size() == 1 || arg_ident[1] == '[' || arg_ident[1] == ']')
         {
@@ -668,10 +668,7 @@ auto Sema::validate_var_ref(const CommandTable::ParamDef& param,
     if(!subscript && sym_var->is_array())
     {
         subscript = VarSubscript{
-                var_name,
-                var_source,
-                0,
-        };
+                .value = var_name, .source = var_source, .literal = 0};
     }
 
     // The program is ill-formed if a variable name is followed by
@@ -700,7 +697,7 @@ auto Sema::validate_var_ref(const CommandTable::ParamDef& param,
 
     if(subscript && !subscript->literal)
     {
-        sym_subscript = lookup_var_lvar(subscript->name);
+        sym_subscript = lookup_var_lvar(subscript->value);
         if(!sym_subscript)
         {
             failed = true;
@@ -1360,9 +1357,9 @@ auto Sema::parse_var_ref(std::string_view identifier, SourceRange source)
         {
             const auto subscript_len = it_close - it_open - 1;
             subscript = VarSubscript{
-                    identifier.substr(it_open_pos + 1, subscript_len),
-                    source.subrange(it_open_pos + 1, subscript_len),
-            };
+                    .value = identifier.substr(it_open_pos + 1, subscript_len),
+                    .source = source.subrange(it_open_pos + 1, subscript_len),
+                    .literal = std::nullopt};
         }
     }
     else
@@ -1374,14 +1371,14 @@ auto Sema::parse_var_ref(std::string_view identifier, SourceRange source)
 
     assert(!var_name.empty());
     assert(var_name.size() == var_source.size());
-    assert(!subscript || !subscript->name.empty());
-    assert(!subscript || subscript->name.size() == subscript->source.size());
+    assert(!subscript || !subscript->value.empty());
+    assert(!subscript || subscript->value.size() == subscript->source.size());
 
     // We have to validate the subscript is either another identifier
     // or a positive integer literal.
     if(subscript)
     {
-        const auto& subval = subscript->name;
+        const auto& subval = subscript->value;
 
         if(subval.front() == '-')
         {
@@ -1429,6 +1426,7 @@ auto Sema::parse_var_ref(std::string_view identifier, SourceRange source)
         }
     }
 
-    return VarRef{var_name, var_source, subscript};
+    return VarRef{
+            .name = var_name, .source = var_source, .subscript = subscript};
 }
 } // namespace gta3sc::syntax

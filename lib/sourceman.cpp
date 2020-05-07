@@ -31,8 +31,9 @@ auto SourceManager::scan_directory(const std::filesystem::path& dir) -> bool
            && (util::toupper(extension[1]) == 'S')
            && (util::toupper(extension[2]) == 'C'))
         {
-            this->filename_to_path.emplace_back(
-                    FilenamePathPair{path.filename().generic_string(), path});
+            this->filename_to_path.emplace_back(FilenamePathPair{
+                    .filename = path.filename().generic_string(),
+                    .path = path});
         }
     }
     return !!ec;
@@ -137,11 +138,10 @@ auto SourceManager::load_file(const std::filesystem::path& path,
     if(next_source_loc + size + 1 <= next_source_loc)
         return std::nullopt; // overflow
 
-    SourceInfo info;
-    info.path = path;
-    info.start_loc = next_source_loc;
-    info.file_length = size;
-    info.data = std::move(data);
+    SourceInfo info{.path = path,
+                    .start_loc = next_source_loc,
+                    .file_length = static_cast<uint32_t>(size),
+                    .data = std::move(data)};
 
     assert(no_source_loc < info.start_loc
            || no_source_loc > info.start_loc + info.file_length);

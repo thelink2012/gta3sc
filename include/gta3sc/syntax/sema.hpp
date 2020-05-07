@@ -33,12 +33,12 @@ public:
                   const CommandTable& cmdman, const ModelTable& modelman,
                   DiagnosticHandler& diag, ArenaAllocator<> allocator) noexcept
         :
-        parser_ir(std::move(parser_ir)),
+        allocator(allocator),
+        diag(&diag),
+        symrepo(&symrepo),
         cmdman(&cmdman),
         modelman(&modelman),
-        symrepo(&symrepo),
-        diag(&diag),
-        allocator(allocator)
+        parser_ir(std::move(parser_ir))
     {}
 
     Sema(const Sema&) = delete;
@@ -215,8 +215,8 @@ private:
     struct VarSubscript
     {
         std::string_view
-                name; ///< Either a integer or variable name in the subscript.
-        SourceRange source; ///< The range of the subscript..
+                value; ///< Either an integer or variable name in the subscript.
+        SourceRange source; ///< The range of the subscript.
         std::optional<int32_t>
                 literal; ///< The integer literal in the subscript if any.
     };

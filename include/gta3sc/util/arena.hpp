@@ -95,7 +95,9 @@ public:
 
     /// Does nothing. Memory used by this resource increases monotonically
     /// until its destruction.
-    void deallocate(void* ptr, size_t bytes, size_t alignment) {}
+    void deallocate([[maybe_unused]] void* ptr, [[maybe_unused]] size_t bytes,
+                    [[maybe_unused]] size_t alignment)
+    {}
 
     /// Releases all the memory allocated by the arena.
     ///

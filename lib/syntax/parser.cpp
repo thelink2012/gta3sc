@@ -21,7 +21,6 @@ constexpr auto command_lvar_float = "LVAR_FLOAT"sv;
 constexpr auto command_var_text_label = "VAR_TEXT_LABEL"sv;
 constexpr auto command_lvar_text_label = "LVAR_TEXT_LABEL"sv;
 constexpr auto command_andor = "ANDOR"sv;
-constexpr auto command_goto = "GOTO"sv;
 constexpr auto command_goto_if_false = "GOTO_IF_FALSE"sv;
 constexpr auto command_goto_if_true = "GOTO_IF_TRUE"sv;
 constexpr auto command_if = "IF"sv;
@@ -570,7 +569,7 @@ auto Parser::parse_statement(bool allow_special_name)
 
     ArenaPtr<const ParserIR::LabelDef> label{};
 
-    if(is_peek(Category::word) && scanner.spelling(*peek()).back() == ':')
+    if(is_peek(Category::word) && scanner.spelling(*peek()).ends_with(':'))
     {
         auto label_def = *consume();
         auto label_name = scanner.spelling(label_def);

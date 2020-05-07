@@ -245,8 +245,8 @@ public:
         m_source(source),
         m_id(id),
         m_scope(scope),
-        m_type(type),
-        m_dim(dimensions)
+        m_dim(dimensions),
+        m_type(type)
     {}
 
     /// Returns the name of the variable.

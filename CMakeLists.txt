@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.12)
 
 project(gta3sc CXX)
 
@@ -19,9 +19,6 @@ if(GTA3SC_COVERAGE)
 endif()
 
 if(GTA3SC_ANALYSIS)
-  if(CMAKE_VERSION VERSION_LESS 3.6)
-    message(FATAL_ERROR "GTA3SC_ANALYSIS is only supported in CMake 3.6+")
-  endif()
   message("GTA3SC_ANALYSIS enabled. Switching to Debug build and verbose Makefile.")
   set(CMAKE_BUILD_TYPE Debug)
   set(CMAKE_VERBOSE_MAKEFILE ON)
@@ -32,6 +29,13 @@ if(GTA3SC_ANALYSIS)
   else()
     message(SEND_ERROR "GTA3SC_ANALYSIS enabled but no clang-tidy binary found")
   endif()
+endif()
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  set(GTA3SC_PEDANTIC_COMPILE_OPTIONS -pedantic-errors -pedantic -Wall -Wextra -Werror
+    -Wcast-align -Wdouble-promotion) # -Wconversion -Wno-sign-conversion
+elseif(MSVC)
+  # TODO
 endif()
 
 include(CTest)

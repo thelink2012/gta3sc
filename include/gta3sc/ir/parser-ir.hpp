@@ -492,6 +492,8 @@ private:
     void create_command_from_attributes();
 
 private:
+    static constexpr size_t no_args_hint = -1;
+
     ArenaAllocator<> allocator;
 
     bool has_command_name = false;
@@ -504,7 +506,7 @@ private:
     std::string_view command_name;
     SourceRange command_source;
 
-    size_t args_hint = -1;
+    size_t args_hint = no_args_hint;
     size_t args_capacity = 0;
     util::span<const Argument*> args;
 };

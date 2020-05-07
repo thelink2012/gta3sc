@@ -99,7 +99,7 @@ struct Diagnostic
     std::vector<Arg> args;           ///< Arguments for formatting the message.
 
     explicit Diagnostic(SourceLocation location, Diag message) noexcept :
-        location(location), message(message)
+        message(message), location(location)
     {}
 };
 

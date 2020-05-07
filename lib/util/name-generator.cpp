@@ -24,6 +24,9 @@ NameGenerator::NameGenerator(NameGenerator&& rhs) noexcept
 
 auto NameGenerator::operator=(NameGenerator&& rhs) noexcept -> NameGenerator&
 {
+    if(this == &rhs)
+        return *this;
+
     // not thread-safe
     counter.store(rhs.counter.exchange(0));
     this->prefix_format = std::move(rhs.prefix_format);
@@ -41,7 +44,8 @@ void NameGenerator::generate(std::string& str)
     str.resize(result_size + 1); // +1 to include null terminator
     // NOLINTNEXTLINE:  FIXME replace with std::format
     result_size = snprintf(&str[0], str.size(), prefix_format.c_str(), id);
-    assert(result_size > 0 && result_size + 1 == str.size());
+    assert(result_size > 0
+           && static_cast<size_t>(result_size + 1) == str.size());
 
     str.pop_back(); // exclude null terminator
 }

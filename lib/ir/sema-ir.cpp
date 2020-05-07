@@ -287,14 +287,15 @@ auto SemaIR::Builder::not_flag(bool not_flag_value) -> Builder&&
 
 auto SemaIR::Builder::with_num_args(size_t num_args) -> Builder&&
 {
-    assert(args_hint == -1 && args_capacity == 0);
+    assert(args_hint == no_args_hint && args_capacity == 0);
     this->args_hint = num_args;
     return std::move(*this);
 }
 
 auto SemaIR::Builder::arg(const Argument* value) -> Builder&&
 {
-    const size_t default_args_capacity = args_hint != -1 ? args_hint : 6;
+    const size_t default_args_capacity = args_hint != no_args_hint ? args_hint
+                                                                   : 6;
 
     assert(value != nullptr);
 
@@ -398,7 +399,7 @@ void SemaIR::Builder::create_command_from_attributes()
 {
     assert(this->has_command_def);
 
-    if(this->args_hint != -1)
+    if(this->args_hint != no_args_hint)
     {
         assert(args_capacity == 0 || args_capacity == args_hint);
         assert(args.size() <= args_hint);

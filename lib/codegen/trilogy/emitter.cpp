@@ -58,7 +58,7 @@ auto CodeEmitter::emit_opcode(int16_t command_id, bool not_flag) -> CodeEmitter&
 
 auto CodeEmitter::emit_eoal() -> CodeEmitter&
 {
-    return emit_raw_byte(std::byte{0});
+    return emit_raw_byte(datatype_eoal);
 }
 
 auto CodeEmitter::emit_int(int32_t value) -> CodeEmitter&
@@ -191,8 +191,8 @@ auto CodeEmitter::float_to_q11_4(float value) const -> int16_t
     constexpr float q11_4_min = -2048.0;
     constexpr float q11_4_max = 2047.9375;
 
-    static_assert(q11_4_min == -0x1p+11);
-    static_assert(q11_4_max == 0x1.fffcp+10);
+    static_assert(q11_4_min == -0x1p+11F);
+    static_assert(q11_4_max == 0x1.fffcp+10F);
 
     // According to [conv.fpint] (ISO C++), converting from float to an
     // integral is undefined behaviour if the truncated floating-point
