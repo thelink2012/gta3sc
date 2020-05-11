@@ -40,6 +40,8 @@ public:
     template<typename T>
     class NamespaceView;
 
+    using VariableNamespaceView = NamespaceView<Variable>;
+
     /// The type of a variable.
     enum class VarType : uint8_t
     {               // GTA3script types should be uppercase.
@@ -87,7 +89,7 @@ public:
 
     /// Returns a view to the variables in a given scope.
     [[nodiscard]] auto scope(ScopeId scope_id) const noexcept
-            -> NamespaceView<Variable>;
+            -> VariableNamespaceView;
 
     /// Returns a view to the labels stored in the table.
     [[nodiscard]] auto labels() const noexcept -> NamespaceView<Label>;
@@ -386,7 +388,7 @@ constexpr auto operator--(SymbolTable::ScopeId& lhs, int) noexcept
 }
 
 inline auto SymbolTable::scope(ScopeId scope_id) const noexcept
-        -> NamespaceView<Variable>
+        -> VariableNamespaceView
 {
     if(scope_id == global_scope && m_scopes.empty())
         return NamespaceView<Variable>(private_tag);
@@ -394,7 +396,7 @@ inline auto SymbolTable::scope(ScopeId scope_id) const noexcept
     const auto scope_index = to_integer(scope_id);
     assert(scope_index < m_scopes.size());
 
-    return NamespaceView<Variable>(private_tag, m_scopes[scope_index]);
+    return VariableNamespaceView(private_tag, m_scopes[scope_index]);
 }
 
 inline auto SymbolTable::used_objects() const noexcept
@@ -420,3 +422,5 @@ static_assert(std::is_trivially_destructible_v<SymbolTable::Label>);
 static_assert(std::is_trivially_destructible_v<SymbolTable::Variable>);
 static_assert(std::is_trivially_destructible_v<SymbolTable::UsedObject>);
 } // namespace gta3sc
+
+// TODO add SymbolTable::local_scopes() to replace integer for loops

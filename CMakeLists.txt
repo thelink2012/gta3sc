@@ -33,7 +33,8 @@ endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   set(GTA3SC_PEDANTIC_COMPILE_OPTIONS -pedantic-errors -pedantic -Wall -Wextra -Werror
-    -Wcast-align -Wdouble-promotion) # -Wconversion -Wno-sign-conversion
+    -Wcast-align -Wdouble-promotion -Wno-unused-variable)
+  # -Wconversion -Wno-sign-conversion
 elseif(MSVC)
   # TODO
 endif()

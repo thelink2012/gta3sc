@@ -413,7 +413,7 @@ auto Sema::validate_argument(const CommandTable::ParamDef& param,
                             return SemaIR::create_constant(*cdef, arg.source(),
                                                            allocator);
                         }
-                        else if(const auto* model = modelman->find_model(ident))
+                        else if(modelman->find_model(ident))
                         {
                             auto [uobj, _] = symrepo->insert_used_object(
                                     ident, arg.source());
