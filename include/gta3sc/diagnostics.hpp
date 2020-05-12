@@ -84,6 +84,8 @@ enum class Diag
     target_scope_not_enough_vars,
     target_var_type_mismatch,
     target_var_entity_type_mismatch,
+    codegen_label_at_local_zero_offset,
+    codegen_label_ref_across_segments,
 };
 
 /// Information about a diagnostic.

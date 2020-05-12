@@ -5,6 +5,7 @@ add_executable(gta3sc_unittest
     syntax/sema.cpp
     syntax/lowering/repeat-stmt-rewriter.cpp
     codegen/storage-table.cpp
+    codegen/relocation-table.cpp
     codegen/trilogy/emitter.cpp
 )
 target_compile_features(gta3sc_unittest PUBLIC cxx_std_20)

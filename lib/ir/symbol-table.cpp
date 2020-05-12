@@ -39,6 +39,13 @@ auto SymbolTable::lookup_label(std::string_view name) const noexcept
     return (it == m_labels.end() ? nullptr : it->second);
 }
 
+auto SymbolTable::lookup_file(std::string_view name) const noexcept
+        -> const File*
+{
+    const auto it = m_files.find(name);
+    return (it == m_files.end() ? nullptr : it->second);
+}
+
 auto SymbolTable::lookup_used_object(std::string_view name) const noexcept
         -> const SymbolTable::UsedObject*
 {
@@ -91,6 +98,32 @@ auto SymbolTable::insert_label(std::string_view name, ScopeId scope_id,
             private_tag, a_name, source, label_id, scope_id);
 
     const auto [iter, inserted] = m_labels.emplace(a_name, symbol);
+    assert(inserted);
+
+    return {iter->second, true};
+}
+
+auto SymbolTable::insert_file(std::string_view name, FileType type,
+                              SourceRange source)
+        -> std::pair<const File*, bool>
+{
+    if(const auto* f = lookup_file(name))
+        return {f, false};
+
+    const auto file_id = static_cast<uint32_t>(m_files.size());
+    assert(file_id < std::numeric_limits<decltype(file_id)>::max());
+
+    const auto type_as_int = static_cast<uint8_t>(type);
+    assert(type_as_int < std::size(m_num_files_of_type));
+
+    const auto type_id = m_num_files_of_type[type_as_int]++;
+
+    const auto a_name = util::new_string(name, allocator);
+
+    const auto* const symbol = allocator.new_object<File>(
+            private_tag, a_name, source, file_id, type_id, type);
+
+    const auto [iter, inserted] = m_files.emplace(a_name, symbol);
     assert(inserted);
 
     return {iter->second, true};

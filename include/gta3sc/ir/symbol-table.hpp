@@ -34,13 +34,17 @@ private:
 
 public:
     class Label;
+    class File;
     class Variable;
     class UsedObject;
 
     template<typename T>
     class NamespaceView;
 
+    using LabelNamespaceView = NamespaceView<Label>;
+    using FileNamespaceView = NamespaceView<File>;
     using VariableNamespaceView = NamespaceView<Variable>;
+    using UsedObjectNamespaceView = NamespaceView<UsedObject>;
 
     /// The type of a variable.
     enum class VarType : uint8_t
@@ -48,6 +52,15 @@ public:
         INT,        // NOLINT(readability-identifier-naming)
         FLOAT,      // NOLINT(readability-identifier-naming)
         TEXT_LABEL, // NOLINT(readability-identifier-naming)
+    };
+
+    /// The type of a script file.
+    enum class FileType : uint8_t
+    {
+        main,
+        main_extension,
+        subscript,
+        mission,
     };
 
     // Uniquely identifies a variable scope.
@@ -92,11 +105,13 @@ public:
             -> VariableNamespaceView;
 
     /// Returns a view to the labels stored in the table.
-    [[nodiscard]] auto labels() const noexcept -> NamespaceView<Label>;
+    [[nodiscard]] auto labels() const noexcept -> LabelNamespaceView;
+
+    /// Returns a view to the script files stored in the table.
+    [[nodiscard]] auto files() const noexcept -> FileNamespaceView;
 
     /// Returns a view to the used objects stored in the table.
-    [[nodiscard]] auto used_objects() const noexcept
-            -> NamespaceView<UsedObject>;
+    [[nodiscard]] auto used_objects() const noexcept -> UsedObjectNamespaceView;
 
     /// Finds a variable in a certain scope.
     ///
@@ -111,6 +126,12 @@ public:
     /// Returns the label or `nullptr` if it does not exist.
     [[nodiscard]] auto lookup_label(std::string_view name) const noexcept
             -> const Label*;
+
+    /// Finds a script file by name.
+    ///
+    /// Returns the script file or `nullptr` if it does not exist.
+    [[nodiscard]] auto lookup_file(std::string_view name) const noexcept
+            -> const File*;
 
     /// Finds an used object by name.
     ///
@@ -154,6 +175,19 @@ public:
     auto insert_label(std::string_view name, ScopeId scope_id,
                       SourceRange source) -> std::pair<const Label*, bool>;
 
+    /// Inserts a given file into the symbol table.
+    ///
+    /// No insertion takes place if a file of same name already exists.
+    ///
+    /// \param name the filename (with extension) of the script file.
+    /// \param source the location the filename was first seen.
+    /// \param type the type of the script file.
+    ///
+    /// Retruns a pair with the file and a boolean indicating whether any
+    /// insertion took place.
+    auto insert_file(std::string_view name, FileType type, SourceRange source)
+            -> std::pair<const File*, bool>;
+
     /// Inserts an used object into the symbol table.
     ///
     /// No insertion takes place if an used object of same name already exists.
@@ -173,6 +207,8 @@ private:
 private:
     ArenaAllocator<> allocator;
     SymbolMap<Label> m_labels;
+    SymbolMap<File> m_files;
+    uint32_t m_num_files_of_type[4]{};
     SymbolMap<UsedObject> m_used_objects;
     std::vector<SymbolMap<Variable>> m_scopes;
 };
@@ -230,6 +266,55 @@ private:
     SourceRange m_source;
     SymbolId m_id;
     ScopeId m_scope{};
+};
+
+/// Represents a script file.
+class SymbolTable::File
+{
+public:
+    using Type = FileType;
+
+    /// Please use `SymbolTable::insert_file` to create one.
+    File(PrivateTag /*unused*/, std::string_view name, SourceRange source,
+         SymbolId id, SymbolId type_id, Type type) noexcept :
+        m_name(name),
+        m_source(source),
+        m_id(id),
+        m_type_id(type_id),
+        m_type(type)
+    {}
+
+    /// Returns the name of the script file.
+    [[nodiscard]] auto name() const noexcept -> std::string_view
+    {
+        return m_name;
+    }
+
+    /// Returns the source location the script file was first referred from.
+    [[nodiscard]] auto source() const noexcept -> SourceRange
+    {
+        return m_source;
+    }
+
+    /// Returns the order the script file was inserted in the table.
+    [[nodiscard]] auto id() const noexcept -> SymbolId { return m_id; }
+
+    /// Returns the order the script file was inserted in the table excluding
+    /// any script files of other types.
+    [[nodiscard]] auto type_id() const noexcept -> SymbolId
+    {
+        return m_type_id;
+    }
+
+    /// Returns the type of this script file.
+    [[nodiscard]] auto type() const noexcept -> Type { return m_type; }
+
+private:
+    std::string_view m_name;
+    SourceRange m_source;
+    SymbolId m_id;
+    SymbolId m_type_id;
+    Type m_type;
 };
 
 /// Represents a declared variable.
@@ -400,9 +485,9 @@ inline auto SymbolTable::scope(ScopeId scope_id) const noexcept
 }
 
 inline auto SymbolTable::used_objects() const noexcept
-        -> NamespaceView<UsedObject>
+        -> UsedObjectNamespaceView
 {
-    return NamespaceView<UsedObject>(private_tag, m_used_objects);
+    return UsedObjectNamespaceView(private_tag, m_used_objects);
 }
 
 inline auto SymbolTable::num_scopes() const noexcept -> uint32_t
@@ -411,14 +496,20 @@ inline auto SymbolTable::num_scopes() const noexcept -> uint32_t
     return m_scopes.empty() ? 1 : static_cast<uint32_t>(m_scopes.size());
 }
 
-inline auto SymbolTable::labels() const noexcept -> NamespaceView<Label>
+inline auto SymbolTable::labels() const noexcept -> LabelNamespaceView
 {
-    return NamespaceView<Label>(private_tag, m_labels);
+    return LabelNamespaceView(private_tag, m_labels);
+}
+
+inline auto SymbolTable::files() const noexcept -> FileNamespaceView
+{
+    return FileNamespaceView(private_tag, m_files);
 }
 
 // These resources are stored in a memory arena. Disposing storage must be
 // enough for their destruction.
 static_assert(std::is_trivially_destructible_v<SymbolTable::Label>);
+static_assert(std::is_trivially_destructible_v<SymbolTable::File>);
 static_assert(std::is_trivially_destructible_v<SymbolTable::Variable>);
 static_assert(std::is_trivially_destructible_v<SymbolTable::UsedObject>);
 } // namespace gta3sc
