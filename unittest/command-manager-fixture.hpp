@@ -73,11 +73,14 @@ private:
                     {ParamDef{ParamType::INT}, ParamDef{ParamType::VAR_INT}});
         add_command(builder, "ENDREPEAT", {});
         add_command(builder, "WAIT", {ParamDef{ParamType::INPUT_INT}});
+        add_command(builder, "SET_TIME_SCALE",
+                    {ParamDef{ParamType::INPUT_FLOAT}});
         add_command(builder, "GOTO", {ParamDef{ParamType::LABEL}});
         add_command(builder, "GOSUB", {ParamDef{ParamType::LABEL}});
         add_command(builder, "RETURN", {});
         add_command(builder, "SCRIPT_NAME", {ParamDef{ParamType::TEXT_LABEL}});
         add_command(builder, "PRINT_HELP", {ParamDef{ParamType::TEXT_LABEL}});
+        add_command(builder, "LAUNCH_MISSION", {ParamDef{ParamType::LABEL}});
         add_command(
                 builder, "START_NEW_SCRIPT",
                 {ParamDef{ParamType::LABEL}, ParamDef{ParamType::INPUT_OPT}});
@@ -107,8 +110,6 @@ private:
                     {ParamDef{ParamType::INPUT_INT},
                      ParamDef{ParamType::INPUT_INT},
                      ParamDef{ParamType::OUTPUT_INT}});
-        add_command(builder, "SAVE_STRING_TO_DEBUG_FILE",
-                    {ParamDef{ParamType::STRING}});
         add_command(builder, "SAVE_STRING_TO_DEBUG_FILE",
                     {ParamDef{ParamType::STRING}});
 
@@ -256,6 +257,25 @@ private:
                        {builder.find_command("ACCEPTS_ONLY_LVAR_INT"),
                         builder.find_command("ACCEPTS_ONLY_LVAR_FLOAT")});
 
+        add_command(builder, "FLASH_RADAR_BLIP",
+                    {ParamDef{ParamType::INPUT_INT}});
+
+        add_command(builder, "COMMAND_WITHOUT_ID",
+                    {ParamDef{ParamType::INPUT_INT}});
+
+        set_command_id(builder, "WAIT", 1);
+        set_command_id(builder, "GOTO", 2);
+        set_command_id(builder, "START_NEW_SCRIPT", 79);
+        set_command_id(builder, "LAUNCH_MISSION", 215);
+        set_command_id(builder, "DO_FADE", 362);
+        set_command_id(builder, "SET_TIME_SCALE", 349);
+        set_command_id(builder, "PRINT_HELP", 997);
+        set_command_id(builder, "CREATE_OBJECT", 263);
+        set_command_id(builder, "SAVE_STRING_TO_DEBUG_FILE", 1462);
+        set_command_id(builder, "RETURN", 81);
+        set_command_id(builder, "FLASH_RADAR_BLIP", 1000, false);
+        set_command_id(builder, "COMMAND_WITHOUT_ID", std::nullopt, true);
+
         return std::move(builder).build();
     }
 
@@ -267,6 +287,15 @@ private:
         auto [command, _] = builder.insert_command(name);
         builder.set_command_params(*command, params.begin(), params.end(),
                                    params.size());
+    }
+
+    static void set_command_id(CommandTable::Builder& builder,
+                               std::string_view name, std::optional<int16_t> id,
+                               bool handled = true)
+    {
+        const auto command = builder.find_command(name);
+        REQUIRE(command != nullptr);
+        builder.set_command_id(*command, id, handled);
     }
 
     static void add_alternator(

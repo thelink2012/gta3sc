@@ -240,6 +240,15 @@ auto CommandTable::Builder::insert_command(std::string_view name)
     return {it->second, true};
 }
 
+void CommandTable::Builder::set_command_id(CommandDef& command,
+                                           std::optional<int16_t> target_id,
+                                           bool target_handled)
+{
+    assert(!target_id.has_value() || *target_id >= 0);
+    command.m_target_id = target_id;
+    command.m_target_handled = target_handled;
+}
+
 auto CommandTable::Builder::insert_alternator(std::string_view name)
         -> std::pair<AlternatorDef*, bool>
 {

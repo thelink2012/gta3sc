@@ -74,6 +74,8 @@ private:
 public:
     using FixupTableView = util::ContainerView<LabelFixupTable>;
     using FileFixupTableView = util::ContainerView<FileFixupTable>;
+    using LabelDefTableView = util::ContainerView<LabelDefTable>;
+    using FileDefTableView = util::ContainerView<FileDefTable>;
 
 public:
     /// Constructs an empty table.
@@ -93,6 +95,8 @@ public:
 
     /// Registers the location of a label.
     ///
+    /// This method may invalidate views and iterators to the `labels()` table.
+    ///
     /// Returns whether insertion took place i.e. `false` if the label has been
     /// already registered in the table.
     auto insert_label_loc(const SymbolTable::Label& label,
@@ -100,6 +104,8 @@ public:
                           AbsoluteOffset offset) -> bool;
 
     /// Registers the location of a file.
+    ///
+    /// This method may invalidate views and iterators to the `files()` table.
     ///
     /// Returns whether insertion took place i.e. `false` if the file has been
     /// already registered in the table.
@@ -156,6 +162,19 @@ public:
     [[nodiscard]] auto file_fixup_table() const noexcept -> FileFixupTableView
     {
         return FileFixupTableView(m_file_fixup_table);
+    }
+
+    /// Obtains a view to all registered label locations.
+    [[nodiscard]] auto labels() const noexcept -> LabelDefTableView
+    {
+        return LabelDefTableView(m_label_def_table);
+    }
+
+    /// Obtains a view to all registered file locations (directly or indirectly
+    /// i.e. an label may register the file it's contained in).
+    [[nodiscard]] auto files() const noexcept -> FileDefTableView
+    {
+        return FileDefTableView(m_file_def_table);
     }
 
 private:

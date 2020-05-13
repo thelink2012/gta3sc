@@ -296,7 +296,7 @@ public:
 
     /// Returns the opcode associated with the command in the target script
     /// engine.
-    [[nodiscard]] auto target_id() const noexcept -> std::optional<uint16_t>
+    [[nodiscard]] auto target_id() const noexcept -> std::optional<int16_t>
     {
         return m_target_id;
     }
@@ -311,7 +311,7 @@ private:
     friend class CommandTable::Builder;
     std::string_view m_name;
     util::span<const ParamDef> m_params;
-    std::optional<uint16_t> m_target_id;
+    std::optional<int16_t> m_target_id;
     bool m_target_handled{};
 };
 
@@ -472,6 +472,11 @@ public:
     void set_command_params(CommandDef& command,
                             RandomAccessIterator params_begin,
                             RandomAccessIterator params_end);
+
+    /// Sets the command id for a command and whether it is handled or
+    /// not by the target platform.
+    void set_command_id(CommandDef& command, std::optional<int16_t> target_id,
+                        bool target_handled);
 
     /// Inserts an alternator with the given name into the table.
     ///

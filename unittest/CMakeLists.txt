@@ -7,6 +7,7 @@ add_executable(gta3sc_unittest
     codegen/storage-table.cpp
     codegen/relocation-table.cpp
     codegen/trilogy/emitter.cpp
+    codegen/trilogy/codegen.cpp
 )
 target_compile_features(gta3sc_unittest PUBLIC cxx_std_20)
 target_link_libraries(gta3sc_unittest PRIVATE gta3sc doctest_with_main)

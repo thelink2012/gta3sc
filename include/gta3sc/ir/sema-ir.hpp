@@ -123,6 +123,11 @@ public:
                              SourceRange source, ArenaAllocator<> allocator)
             -> ArenaPtr<const Argument>;
 
+    // Creates a filename argument.
+    static auto create_filename(const SymbolTable::File& filename,
+                                SourceRange source, ArenaAllocator<> allocator)
+            -> ArenaPtr<const Argument>;
+
     /// Creates a text label argument.
     ///
     /// The text label value is automatically converted to uppercase during the
@@ -343,6 +348,7 @@ public:
         STRING,      // NOLINT(readability-identifier-naming)
         VARIABLE,    // NOLINT(readability-identifier-naming)
         LABEL,       // NOLINT(readability-identifier-naming)
+        FILENAME,    // NOLINT(readability-identifier-naming)
         USED_OBJECT, // NOLINT(readability-identifier-naming)
         CONSTANT,    // NOLINT(readability-identifier-naming)
     };
@@ -391,6 +397,10 @@ public:
     /// is not a label reference.
     [[nodiscard]] auto as_label() const noexcept -> const SymbolTable::Label*;
 
+    /// Returns the contained filename reference or `nullptr` if this argument
+    /// is not a filename reference.
+    [[nodiscard]] auto as_filename() const noexcept -> const SymbolTable::File*;
+
     /// Returns the contained string constant or `nullptr` if this argument
     /// is not a string constant.
     [[nodiscard]] auto as_constant() const noexcept
@@ -421,7 +431,7 @@ public:
 private:
     SourceRange m_source;
     const std::variant<int32_t, float, TextLabel, String, VarRef,
-                       const SymbolTable::Label*,
+                       const SymbolTable::Label*, const SymbolTable::File*,
                        const SymbolTable::UsedObject*,
                        const CommandTable::ConstantDef*>
             m_value;
@@ -489,6 +499,11 @@ public:
     /// construction.
     auto arg_label(const SymbolTable::Label& label,
                    SourceRange source = no_source) -> Builder&&;
+
+    /// Appends an argument referencing the given filename to the command in
+    /// construction.
+    auto arg_filename(const SymbolTable::File& filename,
+                      SourceRange source = no_source) -> Builder&&;
 
     /// Appends the given string argument to the command in construction.
     auto arg_text_label(std::string_view value, SourceRange source = no_source)
@@ -625,6 +640,12 @@ inline auto visit(Visitor&& vis, const SemaIR::Argument& arg,
         {
             return util::visit(std::forward<Visitor>(vis), util::visit_expand,
                                *arg.as_label(),
+                               std::forward<OtherArgs>(other_args)...);
+        }
+        case Type::FILENAME:
+        {
+            return util::visit(std::forward<Visitor>(vis), util::visit_expand,
+                               *arg.as_filename(),
                                std::forward<OtherArgs>(other_args)...);
         }
         case Type::USED_OBJECT:

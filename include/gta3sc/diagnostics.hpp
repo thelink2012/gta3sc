@@ -86,6 +86,7 @@ enum class Diag
     target_var_entity_type_mismatch,
     codegen_label_at_local_zero_offset,
     codegen_label_ref_across_segments,
+    codegen_target_does_not_support_command,
 };
 
 /// Information about a diagnostic.

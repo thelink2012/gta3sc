@@ -40,6 +40,13 @@ auto SemaIR::create_label(const SymbolTable::Label& label, SourceRange source,
     return allocator.new_object<Argument>(private_tag, &label, source);
 }
 
+auto SemaIR::create_filename(const SymbolTable::File& filename,
+                             SourceRange source, ArenaAllocator<> allocator)
+        -> ArenaPtr<const Argument>
+{
+    return allocator.new_object<Argument>(private_tag, &filename, source);
+}
+
 auto SemaIR::create_string(std::string_view value, SourceRange source,
                            ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
@@ -165,6 +172,13 @@ auto SemaIR::Argument::as_label() const noexcept -> const SymbolTable::Label*
     if(const auto* label = std::get_if<const SymbolTable::Label*>(
                &this->m_value))
         return *label;
+    return nullptr;
+}
+
+auto SemaIR::Argument::as_filename() const noexcept -> const SymbolTable::File*
+{
+    if(auto file = std::get_if<const SymbolTable::File*>(&this->m_value))
+        return *file;
     return nullptr;
 }
 
@@ -320,6 +334,12 @@ auto SemaIR::Builder::arg_label(const SymbolTable::Label& label,
                                 SourceRange source) -> Builder&&
 {
     return arg(SemaIR::create_label(label, source, allocator));
+}
+
+auto SemaIR::Builder::arg_filename(const SymbolTable::File& filename,
+                                   SourceRange source) -> Builder&&
+{
+    return arg(SemaIR::create_filename(filename, source, allocator));
 }
 
 auto SemaIR::Builder::arg_text_label(std::string_view value, SourceRange source)
