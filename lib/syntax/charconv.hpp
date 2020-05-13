@@ -65,7 +65,7 @@ inline auto from_chars(const char* first, const char* last, int32_t& value,
 }
 
 inline auto from_chars(const char* first, const char* last, float& value,
-                       chars_format fmt) -> from_chars_result
+                       [[maybe_unused]] chars_format fmt) -> from_chars_result
 {
     // We assume `[first, last)` is a valid floating point literal.
 

@@ -508,9 +508,9 @@ auto Sema::validate_argument(const CommandTable::ParamDef& param,
     assert(false);
 }
 
-auto Sema::validate_integer_literal(const CommandTable::ParamDef& param,
-                                    const ParserIR::Argument& arg)
-        -> ArenaPtr<const SemaIR::Argument>
+auto Sema::validate_integer_literal(
+        [[maybe_unused]] const CommandTable::ParamDef& param,
+        const ParserIR::Argument& arg) -> ArenaPtr<const SemaIR::Argument>
 {
     assert(param.type == ParamType::INT || param.type == ParamType::INPUT_INT
            || param.type == ParamType::INPUT_OPT);
@@ -525,9 +525,9 @@ auto Sema::validate_integer_literal(const CommandTable::ParamDef& param,
     return SemaIR::create_int(value, arg.source(), allocator);
 }
 
-auto Sema::validate_float_literal(const CommandTable::ParamDef& param,
-                                  const ParserIR::Argument& arg)
-        -> ArenaPtr<const SemaIR::Argument>
+auto Sema::validate_float_literal(
+        [[maybe_unused]] const CommandTable::ParamDef& param,
+        const ParserIR::Argument& arg) -> ArenaPtr<const SemaIR::Argument>
 {
     assert(param.type == ParamType::FLOAT
            || param.type == ParamType::INPUT_FLOAT
@@ -543,9 +543,9 @@ auto Sema::validate_float_literal(const CommandTable::ParamDef& param,
     return SemaIR::create_float(value, arg.source(), allocator);
 }
 
-auto Sema::validate_text_label(const CommandTable::ParamDef& param,
-                               const ParserIR::Argument& arg)
-        -> ArenaPtr<const SemaIR::Argument>
+auto Sema::validate_text_label(
+        [[maybe_unused]] const CommandTable::ParamDef& param,
+        const ParserIR::Argument& arg) -> ArenaPtr<const SemaIR::Argument>
 {
     assert(param.type == ParamType::TEXT_LABEL);
 
@@ -559,7 +559,7 @@ auto Sema::validate_text_label(const CommandTable::ParamDef& param,
     return SemaIR::create_text_label(value, arg.source(), allocator);
 }
 
-auto Sema::validate_label(const CommandTable::ParamDef& param,
+auto Sema::validate_label([[maybe_unused]] const CommandTable::ParamDef& param,
                           const ParserIR::Argument& arg)
         -> ArenaPtr<const SemaIR::Argument>
 {
@@ -581,9 +581,9 @@ auto Sema::validate_label(const CommandTable::ParamDef& param,
     return SemaIR::create_label(*sym_label, arg.source(), allocator);
 }
 
-auto Sema::validate_string_literal(const CommandTable::ParamDef& param,
-                                   const ParserIR::Argument& arg)
-        -> ArenaPtr<const SemaIR::Argument>
+auto Sema::validate_string_literal(
+        [[maybe_unused]] const CommandTable::ParamDef& param,
+        const ParserIR::Argument& arg) -> ArenaPtr<const SemaIR::Argument>
 {
     assert(param.type == ParamType::STRING);
 
