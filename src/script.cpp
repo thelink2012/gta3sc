@@ -230,7 +230,7 @@ size_t Script::distance_from_root() const
         return 0;
 
     auto parent = this->parent_script.lock();
-    return parent->code_size.value() + parent->distance_from_root();
+    return (this->code_offset.value() - parent->code_offset.value()) + parent->distance_from_root();
 }
 
 auto Script::scan_subdir() const -> Script::SubDir

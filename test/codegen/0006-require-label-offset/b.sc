@@ -1,0 +1,2 @@
+blabel:
+RETURN
