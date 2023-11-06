@@ -4,7 +4,7 @@
 #include <string>
 #include <cstring>
 
-#if defined(_WIN32)
+#if defined(_MSC_VER)
 inline int strcasecmp(const char* a, const char* b)
 {
     return _stricmp(a, b);
@@ -14,7 +14,7 @@ inline int strncasecmp(const char* a, const char* b, size_t count)
 {
     return _strnicmp(a, b, count);
 }
-#elif defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+#elif defined (__unix__) || (__MINGW32__) || (defined (__APPLE__) && defined (__MACH__))
     // Already has strcasecmp and strncasecmp
 #else
 #   error
