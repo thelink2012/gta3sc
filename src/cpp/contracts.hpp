@@ -49,6 +49,7 @@ struct unreachable_exception : std::runtime_error
 
 #define Expects(cond)     void(0)
 #define Ensures(cond)     void(0)
-#define Unreachable()     (std::terminate(), throw 0)
+#define Unreachable()     \
+    (throw std::runtime_error("Unreachable code reached"))
 
 #endif
