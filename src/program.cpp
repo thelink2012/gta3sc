@@ -147,13 +147,20 @@ auto load_dat(const fs::path& filepath, bool is_default_dat) -> std::map<std::st
 
     fs::path gamedir = filepath;
     gamedir.remove_filename(); // remove gta.dat
-    gamedir.remove_filename(); // remove data/
+    gamedir = gamedir.parent_path(); // remove trailing /
+    gamedir = gamedir.parent_path(); // remove /data
 
     for(const char* it = file_data.c_str();
         nextline(it, buffer, std::size(buffer)); )
     {
         if(!strncmp(buffer, "IDE", 3))
         {
+            for(auto& c : buffer) {
+                if(c == '\\') {
+                    c = fs::path::preferred_separator;
+                }
+            }
+
             load_ide(gamedir / (buffer+4), is_default_dat, output);
         }
     }

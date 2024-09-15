@@ -113,10 +113,6 @@ source_group("" FILES ${GTA3SC_SRC_MAIN})
 
 target_link_libraries(gta3sc cppformat)
 
-if(CMAKE_COMPILER_IS_GNUXX OR CMAKE_COMPILER_IS_CLANGXX)
-  target_link_libraries(gta3sc stdc++fs)
-endif()
-
 if(MSVC) # idk how to setup this in GCC/Clang
 	add_precompiled_header(gta3sc stdinc.h SOURCE_CXX src/stdinc.cpp)
 endif(MSVC)

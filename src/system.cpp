@@ -8,6 +8,11 @@
 #elif defined(__unix__)
 #include <unistd.h>
 #include <fcntl.h>
+#elif defined(__APPLE__)
+#include <sys/stat.h>
+#include <sys/syslimits.h>
+#include <unistd.h>
+#include <mach-o/dyld.h>
 #endif
 
 static fs::path find_config_path()
@@ -22,7 +27,7 @@ static fs::path find_config_path()
         return path;
     }
     throw std::runtime_error("find_config_path failed");
-#elif defined(__unix__)
+#elif defined(__unix__) || defined(__APPLE__)
     const char* home_path = std::getenv("HOME");
     std::vector<fs::path> search_path;
 
@@ -44,6 +49,20 @@ static fs::path find_config_path()
             if(outlen != -1)
             {
                 fs::path path(path_buffer, path_buffer + outlen);
+                path.replace_filename("config");
+                search_path.emplace_back(std::move(path));
+            }
+        }
+        #elif defined(__APPLE__)
+        {
+            const size_t bufSize = PATH_MAX + 1;
+            char exe_path[bufSize];
+            uint32_t size = bufSize;
+
+            ssize_t outlen = _NSGetExecutablePath(exe_path, &size);
+            if(outlen != -1)
+            {
+                fs::path path(exe_path);
                 path.replace_filename("config");
                 search_path.emplace_back(std::move(path));
             }
@@ -98,6 +117,15 @@ bool allocate_file(FILE* f, uint64_t size)
 
 #elif defined(__unix__)
     return !posix_fallocate(fileno(f), 0, size);
+#elif defined(__APPLE__)
+    struct stat st;
+    if (fstat(fileno(f), &st) == -1) {
+        return false;
+    }
+    if (ftruncate(fileno(f), size) == -1) {
+        return false;
+    }
+    return true;
 #else
 #   error allocate_file not implemented for this platform.
 #endif
