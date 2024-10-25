@@ -9465,7 +9465,7 @@
     <Command ID="0x62e" Name="GET_SCRIPT_TASK_STATUS">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="TASK_OPCODE"/>
         <Arg Type="INT" Out="true" Enum="SCRIPT_TASK_STATUS"/>
       </Args>
     </Command>
