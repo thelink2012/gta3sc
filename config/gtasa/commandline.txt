@@ -1,5 +1,7 @@
 -Wconflict-text-label-var
 --add-config=sounds.xml
+--add-config=eventchoices.xml
+--add-config=taskchoices.xml
 --add-config=extensions.xml
 --levelfile=gta.dat
 -mheader=gtasa

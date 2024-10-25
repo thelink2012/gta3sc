@@ -1,0 +1,48 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<GTA3Script>
+  <Constants>
+    <Enum Name="EVENT_CHOICE">
+      <Constant Name="EVENT_DRAGGED_OUT_CAR" Value="7"/>
+      <Constant Name="EVENT_KNOCK_OFF_BIKE"/>
+      <Constant Name="EVENT_DAMAGE"/>
+      <Constant Name="EVENT_DEAD_PED" Value="11"/>
+      <Constant Name="EVENT_POTENTIAL_GET_RUN_OVER"/>
+      <Constant Name="EVENT_POTENTIAL_WALK_INTO_PED"/>
+      <Constant Name="EVENT_SHOT_FIRED" Value="15"/>
+      <Constant Name="EVENT_PED_ENTERED_MY_VEHICLE" Value="17"/>
+      <Constant Name="EVENT_SEXY_PED" Value="20"/>
+      <Constant Name="EVENT_ATTRACTOR" Value="27"/>
+      <Constant Name="EVENT_VEHICLE_THREAT" Value="30"/>
+      <Constant Name="EVENT_GUN_AIMED_AT"/>
+      <Constant Name="EVENT_ACQUAINTANCE_PED_HATE" Value="36"/>
+      <Constant Name="EVENT_ACQUAINTANCE_PED_DISLIKE"/>
+      <Constant Name="EVENT_ACQUAINTANCE_PED_LIKE"/>
+      <Constant Name="EVENT_ACQUAINTANCE_PED_RESPECT"/>
+      <Constant Name="EVENT_VEHICLE_DAMAGE_WEAPON" Value="41"/>
+      <Constant Name="EVENT_SPECIAL"/>
+      <Constant Name="EVENT_GOT_KNOCKED_OVER_BY_CAR"/>
+      <Constant Name="EVENT_POTENTIAL_WALK_INTO_OBJECT"/>
+      <Constant Name="EVENT_POTENTIAL_WALK_INTO_FIRE" Value="46"/>
+      <Constant Name="EVENT_SCRIPTED_ATTRACTOR" Value="48"/>
+      <Constant Name="EVENT_SHOT_FIRED_WHIZZED_BY"/>
+      <Constant Name="EVENT_LOW_ANGER_AT_PLAYER"/>
+      <Constant Name="EVENT_HIGH_ANGER_AT_PLAYER"/>
+      <Constant Name="EVENT_HEALTH_REALLY_LOW"/>
+      <Constant Name="EVENT_HEALTH_LOW"/>
+      <Constant Name="EVENT_LEADER_ENTERED_CAR_AS_DRIVER"/>
+      <Constant Name="EVENT_LEADER_EXITED_CAR_AS_DRIVER"/>
+      <Constant Name="EVENT_POTENTIAL_WALK_INTO_VEHICLE"/>
+      <Constant Name="EVENT_FIRE_NEARBY" Value="59"/>
+      <Constant Name="EVENT_SOUND_LOUD" Value="61"/>
+      <Constant Name="EVENT_SOUND_QUIET"/>
+      <Constant Name="EVENT_ACQUAINTANCE_PED_HATE_BADLY_LIT"/>
+      <Constant Name="EVENT_SEEN_PANICKED_PED" Value="65"/>
+      <Constant Name="EVENT_PLAYER_COMMAND_TO_GROUP" Value="71"/>
+      <Constant Name="EVENT_SEEN_COP"/>
+      <Constant Name="EVENT_VEHICLE_DAMAGE_COLLISION"/>
+      <Constant Name="EVENT_DANGER" Value="75"/>
+      <Constant Name="EVENT_PLAYER_COMMAND_TO_GROUP_GATHER"/>
+      <Constant Name="EVENT_VEHICLE_ON_FIRE" Value="79"/>
+    </Enum>
+  </Constants>
+</GTA3Script>

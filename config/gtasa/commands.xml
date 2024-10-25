@@ -10682,14 +10682,14 @@
     <Command ID="0x708" Name="CLEAR_CHAR_DECISION_MAKER_EVENT_RESPONSE">
       <Args>
         <Arg Type="INT" Entity="DECISION_MAKER"/>
-        <Arg Type="INT" Enum="EVENT"/>
+        <Arg Type="INT" Enum="EVENT_CHOICE"/>
       </Args>
     </Command>
     <Command ID="0x709" Name="ADD_CHAR_DECISION_MAKER_EVENT_RESPONSE">
       <Args>
         <Arg Type="INT" Entity="DECISION_MAKER"/>
-        <Arg Type="INT" Enum="EVENT"/>
-        <Arg Type="INT" Enum="TASK"/>
+        <Arg Type="INT" Enum="EVENT_CHOICE"/>
+        <Arg Type="INT" Enum="TASK_CHOICE"/>
         <Arg Type="FLOAT"/>
         <Arg Type="FLOAT"/>
         <Arg Type="FLOAT"/>
@@ -11032,14 +11032,14 @@
     <Command ID="0x749" Name="CLEAR_GROUP_DECISION_MAKER_EVENT_RESPONSE">
       <Args>
         <Arg Type="INT" Entity="DECISION_MAKER"/>
-        <Arg Type="INT" Enum="EVENT"/>
+        <Arg Type="INT" Enum="EVENT_CHOICE"/>
       </Args>
     </Command>
     <Command ID="0x74a" Name="ADD_GROUP_DECISION_MAKER_EVENT_RESPONSE">
       <Args>
         <Arg Type="INT" Entity="DECISION_MAKER"/>
-        <Arg Type="INT" Enum="EVENT"/>
-        <Arg Type="INT" Enum="TASK"/>
+        <Arg Type="INT" Enum="EVENT_CHOICE"/>
+        <Arg Type="INT" Enum="TASK_CHOICE"/>
         <Arg Type="FLOAT"/>
         <Arg Type="FLOAT"/>
         <Arg Type="FLOAT"/>
@@ -11085,7 +11085,7 @@
     <Command ID="0x74f" Name="IS_CHAR_RESPONDING_TO_EVENT">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
-        <Arg Type="INT" Enum="EVENT"/>
+        <Arg Type="INT" Enum="EVENT_CHOICE"/>
       </Args>
     </Command>
     <Command ID="0x750" Name="SET_OBJECT_VISIBLE">
@@ -11956,7 +11956,7 @@
     <Command ID="0x80e" Name="GET_CHAR_HIGHEST_PRIORITY_EVENT">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
-        <Arg Type="INT" Out="true" Enum="EVENT"/>
+        <Arg Type="INT" Out="true" Enum="EVENT_CHOICE"/>
       </Args>
     </Command>
     <Command ID="0x80f" Name="ARE_PATHS_LOADED_FOR_CAR" Supported="false"/>
