@@ -58,14 +58,12 @@
       <Constant Name="LEFTSHOCK"/>
       <Constant Name="RIGHTSHOCK"/>
     </Enum>
-    <!-- Seems to be the same as VC -->
     <Enum Name="FACING">
       <Constant Name="FACING_FORWARD"/>
       <Constant Name="FACING_LEFT"/>
       <Constant Name="FACING_BACK"/>
       <Constant Name="FACING_RIGHT"/>
     </Enum>
-    <!-- Values according to http://gtag.gtagaming.com/opcode-database/opcode/04E3/ -->
     <Enum Name="PLAYER_MOOD">
       <Constant Name="MOOD_AG_UNUSED"/>
       <Constant Name="MOOD_AR"/>
@@ -79,7 +77,6 @@
       <Constant Name="MOOD_WR"/>
       <Constant Name="MOOD_END_UNUSED"/>
     </Enum>
-    <!-- Seems to be the same as VC (+) -->
     <Enum Name="DRIVINGMODE">
       <Constant Name="DRIVINGMODE_STOPFORCARS"/>
       <Constant Name="DRIVINGMODE_SLOWDOWNFORCARS"/>
@@ -89,7 +86,6 @@
       <Constant Name="DRIVINGMODE_AVOIDCARS_OBEYLIGHTS"/>
       <Constant Name="DRIVINGMODE_AVOIDCARS_STOPFORPEDS_OBEYLIGHTS"/>
     </Enum>
-    <!-- Seems to be the same as VC (+) -->
     <Enum Name="MISSION">
       <Constant Name="MISSION_NONE"/>
       <Constant Name="MISSION_CRUISE"/>
@@ -161,7 +157,6 @@
       <Constant Name="MISSION_ESCORT_REAR_FARAWAY"/>
       <Constant Name="MISSION_ESCORT_FRONT_FARAWAY"/>
     </Enum>
-    <!-- Seems to be the same as VC (+) -->
     <Enum Name="GARAGE">
       <Constant Name="GARAGE_NONE"/>
       <Constant Name="GARAGE_MISSION"/>
@@ -211,7 +206,6 @@
       <Constant Name="GARAGE_HIDEOUT_EIGHTEEN"/>
       <Constant Name="GARAGE_HIDEOUT_NINETEEN"/>
     </Enum>
-    <!-- From MTASA -->
     <Enum Name="PICKUP">
       <Constant Name="PICKUP_NONE"/>
       <Constant Name="PICKUP_IN_SHOP"/>
@@ -237,7 +231,6 @@
       <Constant Name="PICKUP_2P"/>
       <Constant Name="PICKUP_ONCE_FOR_MISSION"/>
     </Enum>
-    <!-- From MTASA, but MTA is MODE_CONSTNAME -->
     <Enum Name="CAMMODE">
       <Constant Name="NONE"/>
       <Constant Name="TOPDOWN"/>
@@ -296,19 +289,16 @@
       <Constant Name="TWOPLAYER_SEPARATE_CARS_TOPDOWN"/>
       <Constant Name="MODE_AIMWEAPON_FROMCAR"/>
     </Enum>
-    <!-- Seems to be the same as VC -->
     <Enum Name="CHANGECAMMODE">
       <Constant Name="NONE"/>
       <Constant Name="INTERPOLATION"/>
       <Constant Name="JUMP_CUT"/>
     </Enum>
-    <!-- Seems to be the same as VC -->
     <Enum Name="CAM_ZOOM">
       <Constant Name="CAM_ZOOM_ONE"/>
       <Constant Name="CAM_ZOOM_TWO"/>
       <Constant Name="CAM_ZOOM_THREE"/>
     </Enum>
-    <!-- From MTASA -->
     <Enum Name="STATUS">
       <Constant Name="STATUS_PLAYER"/>
       <Constant Name="STATUS_PLAYER_PLAYBACKFROMBUFFER"/>
@@ -324,14 +314,12 @@
       <Constant Name="STATUS_SIMPLE_TRAILER"/>
       <Constant Name="STATUS_GHOST"/>
     </Enum>
-    <!-- From MTASA, but MTA have MARKERONLY and BLIPONLY instead -->
     <Enum Name="BLIP_DISPLAY">
       <Constant Name="NEITHER"/>
       <Constant Name="MARKER_ONLY"/>
       <Constant Name="BLIP_ONLY"/>
       <Constant Name="BOTH"/>
     </Enum>
-    <!-- Seems to be the same as VC -->
     <Enum Name="BLIPCOLOUR">
       <Constant Name="RED"/>
       <Constant Name="GREEN"/>
@@ -341,7 +329,6 @@
       <Constant Name="PURPLE"/>
       <Constant Name="CYAN"/>
     </Enum>
-    <!-- From MTASA -->
     <Enum Name="RADAR_SPRITE">
       <Constant Name="RADAR_SPRITE_NONE"/>
       <Constant Name="RADAR_SPRITE_BORDER"/>
@@ -408,7 +395,6 @@
       <Constant Name="RADAR_SPRITE_GANG_G"/>
       <Constant Name="RADAR_SPRITE_SPRAY"/>
     </Enum>
-    <!-- From MTASA -->
     <Enum Name="CORONATYPE">
       <Constant Name="CORONATYPE_SHINYSTAR"/>
       <Constant Name="CORONATYPE_HEADLIGHT"/>
@@ -422,13 +408,11 @@
       <Constant Name="CORONATYPE_TORUS"/>
       <Constant Name="CORONATYPE_NONE"/>
     </Enum>
-    <!-- From MTASA -->
     <Enum Name="FLARETYPE">
       <Constant Name="FLARETYPE_NONE"/>
       <Constant Name="FLARETYPE_SUN"/>
       <Constant Name="FLARETYPE_HEADLIGHTS"/>
     </Enum>
-    <!-- Seems to be the same as VC (+) -->
     <Enum Name="HUD_FLASH">
       <Constant Name="HUD_FLASH_NONE" Value="-1"/>
       <Constant Name="HUD_FLASH_WEAPON" Value="0"/>
@@ -443,7 +427,6 @@
       <Constant Name="HUD_FLASH_BLIP"/>
       <Constant Name="HUD_FLASH_BREATH"/>
     </Enum>
-    <!-- From MTASA -->
     <Enum Name="PEDTYPE">
       <Constant Name="PEDTYPE_PLAYER1"/>
       <Constant Name="PEDTYPE_PLAYER2"/>
@@ -478,7 +461,6 @@
       <Constant Name="PEDTYPE_MISSION7"/>
       <Constant Name="PEDTYPE_MISSION8"/>
     </Enum>
-    <!-- Seems to be same as VC (+) -->
     <Enum Name="CARLOCK">
       <Constant Name="CARLOCK_NONE"/>
       <Constant Name="CARLOCK_UNLOCKED"/>
@@ -489,7 +471,6 @@
       <Constant Name="CARLOCK_FORCE_SHUT_DOORS"/>
       <Constant Name="CARLOCK_LOCKED_BUT_CAN_BE_DAMAGED"/>
     </Enum>
-    <!-- From MTASA -->
     <Enum Name="WHEEL">
       <Constant Name="FRONT_LEFT_WHEEL"/>
       <Constant Name="REAR_LEFT_WHEEL"/>
@@ -497,7 +478,6 @@
       <Constant Name="REAR_RIGHT_WHEEL"/>
       <Constant Name="ANY_WHEEL"/>
     </Enum>
-    <!-- From MTASA, except the enum there uses EXP_TYPE_CONSTNAME -->
     <Enum Name="EXPLOSION">
       <Constant Name="EXPLOSION_GRENADE"/>
       <Constant Name="EXPLOSION_MOLOTOV"/>
@@ -513,7 +493,6 @@
       <Constant Name="EXPLOSION_SMALL"/>
       <Constant Name="EXPLOSION_TINY"/>
     </Enum>
-    <!-- From MTASA -->
     <Enum Name="WEAPONTYPE">
       <Constant Name="WEAPONTYPE_UNARMED"/>
       <Constant Name="WEAPONTYPE_BRASSKNUCKLE"/>
@@ -574,8 +553,6 @@
       <Constant Name="WEAPONTYPE_ANYMELEE"/>
       <Constant Name="WEAPONTYPE_ANYWEAPON"/>
     </Enum>
-
-    <!-- Unknown Enum Constants -->
     <Enum Name="GANG">
       <Constant Name="GANG_FLAT"/>
       <Constant Name="GANG_GROVE"/>
@@ -603,7 +580,6 @@
       <Constant Name="RS_OFF"/>
     </Enum>
     <Enum Name="VIS">
-      <!-- 0, 1, 2, 3, 5, 6, 8, 9, 10, 11, 12, 14, 15, 17, 18 used by the game scm -->
     </Enum>
     <Enum Name="FONT">
       <Constant Name="FONT_BANK"/>
@@ -667,11 +643,6 @@
       <Constant Name="CARCOLOUR_STRIKINGBLUE"/>
       <Constant Name="CARCOLOUR_LIGHTBLUEGREY"/>
     </Enum>
-    
-    <!--
-      Enumerations added in SA and thus their name/values are unknown.
-      Don't use those! They are here as a documentation effort.
-    -->
     <Enum Name="LEVEL">
       <Constant Name="LEVEL_GENERIC"/>
       <Constant Name="LEVEL_LOSANGELES"/>
