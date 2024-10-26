@@ -12978,7 +12978,7 @@
         <Arg Type="INT"/>
         <Arg Type="INT" Desc="Bool"/>
         <Arg Type="INT" Desc="Bool"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="MENU_COLUMN_ALIGNMENT"/>
         <Arg Type="INT" Out="true"/>
       </Args>
     </Command>
@@ -12987,7 +12987,7 @@
       <Args>
         <Arg Type="INT"/>
         <Arg Type="INT"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="MENU_COLUMN_ALIGNMENT"/>
       </Args>
     </Command>
     <Command ID="0x8d7" Name="GET_MENU_ITEM_SELECTED">
@@ -13793,7 +13793,7 @@
         <Arg Type="INT"/>
         <Arg Type="INT" Desc="Bool"/>
         <Arg Type="INT" Desc="Bool"/>
-        <Arg Type="INT" Enum="MENU_GRID_ALIGNMENT"/>
+        <Arg Type="INT" Enum="MENU_COLUMN_ALIGNMENT"/>
         <Arg Type="INT" Out="true"/>
       </Args>
     </Command>

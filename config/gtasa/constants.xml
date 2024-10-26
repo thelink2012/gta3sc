@@ -1982,7 +1982,7 @@
       <Constant Name="CONVERSATION_STAT_PED_SPEAKING"/>
       <Constant Name="CONVERSATION_STAT_WAITINGFORINPUT"/>
     </Enum>
-    <Enum Name="MENU_GRID_ALIGNMENT">
+    <Enum Name="MENU_COLUMN_ALIGNMENT">
       <Constant Name="FO_CENTRE"/>
       <Constant Name="FO_LEFT"/>
       <Constant Name="FO_RIGHT"/>
