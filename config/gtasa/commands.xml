@@ -11733,7 +11733,7 @@
     <Command ID="0x7e0" Name="SET_BLIP_AS_FRIENDLY">
       <Args>
         <Arg Type="INT" Entity="BLIP"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Desc="Bool"/>
       </Args>
     </Command>
     <Command ID="0x7e1" Name="TASK_SWIM_TO_COORD">
