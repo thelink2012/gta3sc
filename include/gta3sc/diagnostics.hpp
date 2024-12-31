@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <functional>
 #include <gta3sc/sourceman.hpp>
 #include <memory>

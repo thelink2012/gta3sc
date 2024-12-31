@@ -6,6 +6,7 @@
 #include <optional>
 #include <string_view>
 #include <vector>
+#include <utility>
 
 namespace gta3sc
 {

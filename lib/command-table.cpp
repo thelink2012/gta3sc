@@ -1,6 +1,7 @@
 #include <gta3sc/command-table.hpp>
 #include <gta3sc/util/ctype.hpp>
 #include <gta3sc/util/memory.hpp>
+#include <limits>
 
 // FIXME none of the insertion commands here handle the case of the string
 // key being lowercase, which shouldn't reinsert the command.

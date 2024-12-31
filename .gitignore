@@ -5,6 +5,7 @@
 /*.html
 /compile_commands.json
 /.clangd
+/.cache
 
 #################
 ## C++

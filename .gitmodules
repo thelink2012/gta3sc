@@ -1,6 +1,6 @@
 [submodule "unittest/doctest"]
 	path = thirdparty/doctest
-	url = git://github.com/onqtam/doctest.git
+	url = https://github.com/doctest/doctest
 [submodule "thirdparty/span-lite"]
 	path = thirdparty/span-lite
 	url = https://github.com/martinmoene/span-lite
