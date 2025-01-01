@@ -66,8 +66,8 @@ public:
         return std::addressof(operator*());
     }
 
-    constexpr decltype(auto)
-    operator[](difference_type n) const /* -> unspecified */
+    constexpr auto
+    operator[](difference_type n) const -> decltype(auto)
     {
         return adaptor.at(inner_it, n);
     }
@@ -243,8 +243,8 @@ struct DereferenceAdaptor : IdentityAdaptor<Iter>
         return **it;
     }
 
-    [[nodiscard]] constexpr decltype(auto)
-    at(const Iter& it, difference_type n) const /* -> unspecified */
+    [[nodiscard]] constexpr auto
+    at(const Iter& it, difference_type n) const -> decltype(auto)
     {
         return *it[n];
     }

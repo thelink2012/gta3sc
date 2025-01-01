@@ -340,7 +340,7 @@ private:
 class SemaIR::Argument : public ArenaObj
 {
 public:
-    enum class Type
+    enum class Type : uint8_t
     {                // GTA3script types should be uppercase.
         INT,         // NOLINT(readability-identifier-naming)
         FLOAT,       // NOLINT(readability-identifier-naming)

@@ -1,8 +1,15 @@
 #include <algorithm>
+#include <cassert>
 #include <cstring>
 #include <gta3sc/ir/parser-ir.hpp>
 #include <gta3sc/util/ctype.hpp>
 #include <gta3sc/util/memory.hpp>
+#include <optional>
+#include <string_view>
+#include <tuple>
+#include <type_traits>
+#include <utility>
+#include <variant>
 
 namespace gta3sc
 {

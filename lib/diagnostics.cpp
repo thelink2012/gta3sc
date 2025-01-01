@@ -1,5 +1,7 @@
 #include <cassert>
 #include <gta3sc/diagnostics.hpp>
+#include <memory>
+#include <utility>
 
 namespace gta3sc
 {

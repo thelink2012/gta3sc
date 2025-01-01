@@ -16,7 +16,7 @@ namespace gta3sc
 class DiagnosticHandler;
 class DiagnosticBuilder;
 
-enum class Diag
+enum class Diag : uint32_t  // NOLINT(performance-enum-size)
 {
     internal_compiler_error,
     cannot_nest_scopes,

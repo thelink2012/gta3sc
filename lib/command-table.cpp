@@ -1,7 +1,16 @@
+#include <cassert>
+#include <cstdint>
 #include <gta3sc/command-table.hpp>
 #include <gta3sc/util/ctype.hpp>
+#include <gta3sc/util/intrusive-forward-list-node.hpp>
 #include <gta3sc/util/memory.hpp>
 #include <limits>
+#include <memory>
+#include <optional>
+#include <string_view>
+#include <tuple>
+#include <type_traits>
+#include <utility>
 
 // FIXME none of the insertion commands here handle the case of the string
 // key being lowercase, which shouldn't reinsert the command.
@@ -60,7 +69,7 @@ auto CommandTable::AlternatorDef::begin() const noexcept -> const_iterator
 
 auto CommandTable::AlternatorDef::end() const noexcept -> const_iterator
 {
-    return const_iterator();
+    return {};
 }
 
 auto CommandTable::find_command(std::string_view name) const noexcept
@@ -175,9 +184,9 @@ auto CommandTable::find_entity_type(const EntityMap& entities_map,
 
 auto CommandTable::Builder::build() && -> CommandTable
 {
-    return CommandTable(std::move(commands_map), std::move(alternators_map),
-                        std::move(enums_map), std::move(constants_map),
-                        std::move(entities_map));
+    return {std::move(commands_map), std::move(alternators_map),
+            std::move(enums_map), std::move(constants_map),
+            std::move(entities_map)};
 }
 
 auto CommandTable::Builder::find_command(std::string_view name) const noexcept
@@ -315,7 +324,7 @@ auto CommandTable::Builder::insert_or_assign_constant(EnumId enum_id,
         ConstantDef::Iterator prev_it{};
         ConstantDef::Iterator curr_it(it->second, nullptr);
 
-        for(ConstantDef::Iterator end{}; curr_it != end; prev_it = curr_it++)
+        for(const ConstantDef::Iterator end{}; curr_it != end; prev_it = curr_it++)
         {
             if(curr_it->enum_id() == enum_id)
             {

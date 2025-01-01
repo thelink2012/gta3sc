@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <cassert>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <limits>
@@ -23,7 +24,7 @@ struct from_chars_result
 };
 
 // NOLINTNEXTLINE(readability-identifier-naming): `std::` clone.
-enum class chars_format
+enum class chars_format : uint8_t
 {
     fixed = 1,
 };

@@ -30,7 +30,7 @@ TEST_CASE_FIXTURE(CodeEmitterFixture, "initial emitter state")
 
     SUBCASE("allocates internal buffer if requested")
     {
-        CodeEmitter emitter(32);
+        const CodeEmitter emitter(32);
         REQUIRE(emitter.buffer_capacity() == 32);
         REQUIRE(emitter.buffer_size() == 0); // not affected
         REQUIRE(emitter.offset() == 0);      // not affected

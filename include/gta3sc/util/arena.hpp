@@ -195,7 +195,7 @@ public:
     void deallocate_bytes(void* p, size_t nbytes,
                           size_t alignment = alignof(std::max_align_t))
     {
-        return arena->deallocate(p, nbytes, alignment);
+        arena->deallocate(p, nbytes, alignment);
     }
 
     template<typename U, typename... CtorArgs>

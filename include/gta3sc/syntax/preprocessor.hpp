@@ -12,14 +12,9 @@ class Preprocessor
 {
 public:
     explicit Preprocessor(SourceFile source, DiagnosticHandler& diag) :
-        source(std::move(source)), diag(&diag)
+        source(std::move(source)), diag(&diag), cursor(this->source.code_data())
     {
         // TODO if we move cursor initialization we can make this noexcept
-        this->cursor = this->source.code_data();
-        this->start_of_line = true;
-        this->end_of_stream = false;
-        this->inside_quotes = false;
-        this->num_block_comments = 0;
     }
 
     Preprocessor(const Preprocessor&) = delete;
@@ -54,9 +49,9 @@ private:
     DiagnosticHandler* diag;
 
     const char* cursor;
-    bool start_of_line;
-    bool end_of_stream;
-    bool inside_quotes;
-    uint8_t num_block_comments;
+    bool start_of_line{true};
+    bool end_of_stream{};
+    bool inside_quotes{};
+    uint8_t num_block_comments{};
 };
 } // namespace gta3sc::syntax

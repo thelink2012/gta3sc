@@ -12,7 +12,7 @@ inline auto operator<<(std::ostream& os, std::byte byte_val) -> std::ostream&
 {
     // FIXME not exception safe (needs gsl.finally)
     const auto old_flags = os.flags();
-    os << std::hex << std::showbase << int(byte_val);
+    os << std::hex << std::showbase << static_cast<int>(byte_val);
     os.flags(old_flags);
     return os;
 }

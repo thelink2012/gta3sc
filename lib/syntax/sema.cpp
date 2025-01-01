@@ -60,12 +60,12 @@ auto Sema::discover_declarations_pass() -> bool
                 // This way, the id of the variables are the last ones in the
                 // scope, making the placement of timers more intuitive.
 
-                const auto [_, inserted_timera] = symrepo->insert_var(
+                const auto [_unused1, inserted_timera] = symrepo->insert_var(
                         varname_timera, current_scope,
                         SymbolTable::VarType::INT, std::nullopt,
                         scope_enter_source);
 
-                const auto [__, inserted_timerb] = symrepo->insert_var(
+                const auto [_unused2, inserted_timerb] = symrepo->insert_var(
                         varname_timerb, current_scope,
                         SymbolTable::VarType::INT, std::nullopt,
                         scope_enter_source);
@@ -344,7 +344,7 @@ auto Sema::validate_argument(const CommandTable::ParamDef& param,
                 return nullptr;
             }
 
-            std::string_view identifier = *arg.as_identifier();
+            const std::string_view identifier = *arg.as_identifier();
 
             if(cmdman->find_constant(CommandTable::global_enum, identifier))
             {
@@ -405,7 +405,7 @@ auto Sema::validate_argument(const CommandTable::ParamDef& param,
                 }
                 case ParserIR::Argument::Type::IDENTIFIER:
                 {
-                    std::string_view ident = *arg.as_identifier();
+                    const std::string_view ident = *arg.as_identifier();
                     if(is_object_param(param))
                     {
                         if(const auto* cdef = find_defaultmodel_constant(ident))

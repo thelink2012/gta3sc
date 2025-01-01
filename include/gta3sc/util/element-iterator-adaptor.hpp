@@ -72,8 +72,8 @@ struct ElementAdaptor
             return get<I>(*it);
         }
 
-        [[nodiscard]] constexpr decltype(auto)
-        at(const Iter& it, difference_type n) const /* -> unspecified */
+        [[nodiscard]] constexpr auto
+        at(const Iter& it, difference_type n) const -> decltype(auto)
         {
             using std::get; // FIXME required due to a GCC 10 bug?
             return get<I>(*it[n]);
@@ -111,8 +111,8 @@ struct DereferenceElementAdaptor
             return *NextAdaptor<Iter>::dereference(it);
         }
 
-        [[nodiscard]] constexpr decltype(auto)
-        at(const Iter& it, difference_type n) const /* -> unspecified */
+        [[nodiscard]] constexpr auto
+        at(const Iter& it, difference_type n) const -> decltype(auto)
         {
             return *NextAdaptor<Iter>::at(it, n);
         }

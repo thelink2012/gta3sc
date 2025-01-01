@@ -5,8 +5,8 @@
 #include <memory>
 #include <optional>
 #include <string_view>
-#include <vector>
 #include <utility>
+#include <vector>
 
 namespace gta3sc
 {
@@ -103,7 +103,7 @@ struct SourceRange
     {
         offset = std::min(offset, this->size());
         count = std::min(count, this->size() - offset);
-        return SourceRange(this->begin + offset, count);
+        return {this->begin + offset, static_cast<ptrdiff_t>(count)};
     }
 
     friend auto operator==(const SourceRange& lhs,
@@ -274,7 +274,7 @@ public:
     /// Returns a string view to the source code.
     [[nodiscard]] auto code_view() const -> std::string_view
     {
-        return std::string_view(code_data(), code_size());
+        return {code_data(), code_size()};
     }
 
     /// Gets the source location of a given character.
@@ -294,7 +294,7 @@ public:
     [[nodiscard]] auto view_of(SourceRange range) const -> std::string_view
     {
         const auto* const begin = code_data() + (range.begin - info->start_loc);
-        return std::string_view(begin, range.end - range.begin);
+        return {begin, static_cast<size_t>(range.end - range.begin)};
     }
 
 protected:

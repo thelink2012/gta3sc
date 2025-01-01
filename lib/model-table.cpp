@@ -1,5 +1,8 @@
 #include <gta3sc/model-table.hpp>
 #include <gta3sc/util/ctype.hpp>
+#include <gta3sc/util/memory.hpp>
+#include <string_view>
+#include <utility>
 
 namespace gta3sc
 {

@@ -43,7 +43,7 @@ struct Token
 class Scanner
 {
 public:
-    explicit Scanner(Preprocessor pp) noexcept : pp(std::move(pp)), peek_char(0)
+    explicit Scanner(Preprocessor pp) noexcept : pp(std::move(pp))
     {}
 
     Scanner(const Scanner&) = delete;
@@ -110,6 +110,6 @@ private:
 
 private:
     Preprocessor pp;
-    char peek_char;
+    char peek_char{};
 };
 } // namespace gta3sc::syntax

@@ -3,6 +3,10 @@
 # We enable as many checks as possible. For every disabled check, a reason must
 # be given below.
 #
+# The checks under THE_FOLLOWING_NEEDS_TO_BE_REVISITED are disabled due to
+# updating clang-tidy 4 years forward and these rules being introduced.
+# They need to be revisited to see if they are useful for this codebase.
+#
 # A list of checks can be found at
 # https://clang.llvm.org/extra/clang-tidy/checks/list.html
 #
@@ -11,13 +15,20 @@
 #   android-cloexec-*
 #       Requires non portable code.
 #
+#   altera-*
+#       Specific to Altera coding standards.
+#
 #   fuchsia-*
 #       Too much strict and sometimes conflicts with modernize checks.
+#
+#   llvmlibc-*
+#       Specific to LLVM libc coding standards.
 #
 #   cert-dcl21-cpp
 #       Bad advice in Modern C++ [https://stackoverflow.com/a/16835004/2679626].
 #
 #   readability-else-after-return
+#   llvm-else-after-return
 #       Ends up converting else-if chains into plain ifs in case the previous
 #       body ends in a return. This hurts readability more than it helps.
 #       Otherwise, the purpose of the check is fair (reduce identation levels).
@@ -89,6 +100,7 @@
 Checks: '
         ,*,
         ,-android-cloexec-*,
+        ,-altera-*,
         ,-cert-dcl21-cpp,
         ,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,
         ,-cppcoreguidelines-avoid-magic-numbers,
@@ -105,6 +117,8 @@ Checks: '
         ,-hicpp-avoid-c-arrays,
         ,-llvm-qualified-auto,
         ,-llvm-header-guard,
+        ,-llvm-else-after-return,
+        ,-llvmlibc-*,
         ,-modernize-avoid-c-arrays,
         ,-readability-braces-around-statements,
         ,-readability-redundant-access-specifiers,
@@ -114,6 +128,25 @@ Checks: '
         ,-readability-implicit-bool-conversion,
         ,-readability-redundant-declaration,
         ,-readability-qualified-auto,
+        ,THE_FOLLOWING_NEEDS_TO_BE_REVISITED,
+        ,-bugprone-easily-swappable-parameters,
+        ,-bugprone-narrowing-conversions,
+        ,-bugprone-unchecked-optional-access,
+        ,-bugprone-optional-value-conversion,
+        ,-bugprone-exception-escape,
+        ,-cert-dcl58-cpp,
+        ,-clang-diagnostic-c++11-narrowing,
+        ,-cppcoreguidelines-narrowing-conversions,
+        ,-cppcoreguidelines-rvalue-reference-param-not-moved,
+        ,-cppcoreguidelines-avoid-do-while,
+        ,-misc-include-cleaner,
+        ,-misc-no-recursion,
+        ,-misc-use-anonymous-namespace,
+        ,-modernize-use-constraints,
+        ,-modernize-return-braced-init-list,
+        ,-readability-identifier-length,
+        ,-readability-function-cognitive-complexity,
+        ,-google-readability-function-size,-hicpp-function-size,-readability-function-size,
         '
 
 WarningsAsErrors: '*'

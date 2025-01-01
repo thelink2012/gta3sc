@@ -82,7 +82,7 @@ public:
 
     void fail_to_make_storage_table()
     {
-        return fail_to_make_storage_table(default_options);
+        fail_to_make_storage_table(default_options);
     }
 };
 

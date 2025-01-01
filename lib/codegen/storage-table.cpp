@@ -119,7 +119,7 @@ auto StorageTable::from_symbols(const SymbolTable& symtable,
 
     for(uint32_t i = 0; i < symtable.num_scopes(); ++i)
     {
-        SymbolTable::ScopeId scope_id{i};
+        const SymbolTable::ScopeId scope_id{i};
 
         if(auto local_table = LocalStorageTable::from_symbols(
                    symtable, scope_id, options_for_scope(scope_id, options));

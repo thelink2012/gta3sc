@@ -33,7 +33,7 @@ public:
     void generate(std::string& str);
 
 private:
-    std::atomic_uint32_t counter{};
+    std::atomic_uint32_t counter = 0;
     std::string prefix_format;
 };
 } // namespace gta3sc::util

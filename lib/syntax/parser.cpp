@@ -1375,7 +1375,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
                 consume();
                 break;
             }
-            case Category::string:
+            case Category::string:  // NOLINT(bugprone-branch-clone)
             {
                 // needs special care when comparing for name equality.
                 // not implemented yet. TODO

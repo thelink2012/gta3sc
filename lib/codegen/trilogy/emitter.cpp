@@ -82,14 +82,14 @@ auto CodeEmitter::emit_int(int32_t value) -> CodeEmitter&
 auto CodeEmitter::emit_i8(int8_t value) -> CodeEmitter&
 {
     emit_raw_byte(datatype_i8);
-    emit_raw_i8(static_cast<int8_t>(value));
+    emit_raw_i8(value);
     return *this;
 }
 
 auto CodeEmitter::emit_i16(int16_t value) -> CodeEmitter&
 {
     emit_raw_byte(datatype_i16);
-    emit_raw_i16(static_cast<int16_t>(value));
+    emit_raw_i16(value);
     return *this;
 }
 

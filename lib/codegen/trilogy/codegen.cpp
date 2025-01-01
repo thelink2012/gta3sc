@@ -69,23 +69,33 @@ void CodeGen::generate_argument(const SemaIR::Argument& arg,
         using Type = SemaIR::Argument::Type;
         case Type::INT:
         case Type::CONSTANT:
-            return generate_int(arg);
+            generate_int(arg);
+            break;
         case Type::FLOAT:
-            return generate_float(arg);
+            generate_float(arg);
+            break;
         case Type::TEXT_LABEL:
-            return generate_text_label(arg, param);
+            generate_text_label(arg, param);
+            break;
         case Type::STRING:
-            return generate_string(arg, param);
+            generate_string(arg, param);
+            break;
         case Type::VARIABLE:
-            return generate_var_ref(arg);
+            generate_var_ref(arg);
+            break;
         case Type::LABEL:
-            return generate_label(arg, reloc_table);
+            generate_label(arg, reloc_table);
+            break;
         case Type::FILENAME:
-            return generate_filename_label(arg, reloc_table);
+            generate_filename_label(arg, reloc_table);
+            break;
         case Type::USED_OBJECT:
-            return generate_used_object(arg);
+            generate_used_object(arg);
+            break;
+        default:
+            assert(false);
+            break;
     }
-    assert(false);
 }
 
 void CodeGen::generate_int(const SemaIR::Argument& arg)
