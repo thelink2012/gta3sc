@@ -19,9 +19,9 @@ public:
     SemaFixture() : sema(default_sema()), symrepo(&arena)
     {
         modelman = ModelTable::Builder(&arena)
-                           .insert_model("CHEETAH")
-                           .insert_model("LEVEL_MODEL")
-                           .insert_model("OTHER_LEVEL_MODEL")
+                           .insert_model("CHEETAH", 400)
+                           .insert_model("LEVEL_MODEL", 2000)
+                           .insert_model("OTHER_LEVEL_MODEL", 2001)
                            .build();
     }
 

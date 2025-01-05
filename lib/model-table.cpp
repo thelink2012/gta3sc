@@ -21,14 +21,14 @@ auto ModelTable::Builder::build() && -> ModelTable
     return ModelTable(std::move(this->models));
 }
 
-auto ModelTable::Builder::insert_model(std::string_view name) -> Builder&&
+auto ModelTable::Builder::insert_model(std::string_view name, uint32_t id) -> Builder&&
 {
     // FIXME this does not handle the case of name being lowercase
     if(this->models.contains(name))
         return std::move(*this);
 
     models.emplace(util::new_object_with_string<ModelDef>(
-            name, util::toupper, allocator, private_tag, name.size()));
+            name, util::toupper, allocator, private_tag, name.size(), id));
 
     return std::move(*this);
 }
