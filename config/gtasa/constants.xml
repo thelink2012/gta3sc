@@ -1,11 +1,4 @@
 <?xml version='1.0' encoding='utf-8'?>
-<!--
-  All constants in this file are classified as infered, even LEFTSTICKX!
-  As such those constants can only be used in guesser mode.
-
-  Enums marked with (+) do have more constant values, but they weren't guessed and aren't
-  present in the enumeration.
--->
 <GTA3Script>
   <Constants>
     <Enum Name="BOOL" Global="true">
@@ -76,6 +69,12 @@
       <Constant Name="MOOD_WG_UNUSED"/>
       <Constant Name="MOOD_WR"/>
       <Constant Name="MOOD_END_UNUSED"/>
+
+      <!-- Old guessed constants. Avoid. -->
+      <Constant Name="PLAYER_MOOD_CALM" Value="5"/>
+      <Constant Name="PLAYER_MOOD_PISSED_OFF" Value="7"/>
+      <Constant Name="PLAYER_MOOD_ANGRY" Value="1"/>
+      <Constant Name="PLAYER_MOOD_WISECRACKING" Value="9"/>
     </Enum>
     <Enum Name="DRIVINGMODE">
       <Constant Name="DRIVINGMODE_STOPFORCARS"/>
@@ -156,6 +155,10 @@
       <Constant Name="MISSION_ESCORT_RIGHT_FARAWAY"/>
       <Constant Name="MISSION_ESCORT_REAR_FARAWAY"/>
       <Constant Name="MISSION_ESCORT_FRONT_FARAWAY"/>
+
+      <!-- Old guessed constants. Avoid. -->
+      <Constant Name="MISSION_ATTACKPLAYER" Value="21"/>
+      <Constant Name="MISSION_HELI_LAND" Value="23"/>
     </Enum>
     <Enum Name="GARAGE">
       <Constant Name="GARAGE_NONE"/>
@@ -288,6 +291,22 @@
       <Constant Name="AIMWEAPON"/>
       <Constant Name="TWOPLAYER_SEPARATE_CARS_TOPDOWN"/>
       <Constant Name="MODE_AIMWEAPON_FROMCAR"/>
+
+      <!-- Old guessed constants. Avoid. -->
+      <Constant Name="CIRCLE" Value="12"/>
+      <Constant Name="1STPERSON" Value="16"/>
+      <Constant Name="1STPERSON_RUNABOUT" Value="41"/>
+      <Constant Name="AIMWEAPON_FROMCAR" Value="55"/>
+      <Constant Name="DW_HELI_CHASE"/>
+      <Constant Name="DW_CAM_MAN"/>
+      <Constant Name="DW_BIRDY"/>
+      <Constant Name="DW_PLANE_SPOTTER"/>
+      <Constant Name="DW_DOG_FIGHT"/>
+      <Constant Name="DW_FISH"/>
+      <Constant Name="DW_PLANECAM1"/>
+      <Constant Name="DW_PLANECAM2"/>
+      <Constant Name="DW_PLANECAM3"/>
+      <Constant Name="AIMWEAPON_ATTACHED"/>
     </Enum>
     <Enum Name="CHANGECAMMODE">
       <Constant Name="NONE"/>
@@ -313,6 +332,10 @@
       <Constant Name="STATUS_TRAILER"/>
       <Constant Name="STATUS_SIMPLE_TRAILER"/>
       <Constant Name="STATUS_GHOST"/>
+
+      <!-- Old guessed constants. Avoid. -->
+      <Constant Name="STATUS_HELI" Value="8"/>
+      <Constant Name="STATUS_PLANE" Value="9"/>
     </Enum>
     <Enum Name="BLIP_DISPLAY">
       <Constant Name="NEITHER"/>
@@ -407,6 +430,11 @@
       <Constant Name="CORONATYPE_STREAK"/>
       <Constant Name="CORONATYPE_TORUS"/>
       <Constant Name="CORONATYPE_NONE"/>
+
+      <!-- Old guessed constants. Avoid. -->
+      <Constant Name="PAD_5" Value="5"/>
+      <Constant Name="PAD_6"/>
+      <Constant Name="PAD_7"/>
     </Enum>
     <Enum Name="FLARETYPE">
       <Constant Name="FLARETYPE_NONE"/>
@@ -460,6 +488,17 @@
       <Constant Name="PEDTYPE_MISSION6"/>
       <Constant Name="PEDTYPE_MISSION7"/>
       <Constant Name="PEDTYPE_MISSION8"/>
+
+      <!-- Old guessed constants. Avoid. -->
+      <Constant Name="PEDTYPE_GANG1" Value="7"/>
+      <Constant Name="PEDTYPE_GANG2"/>
+      <Constant Name="PEDTYPE_GANG3"/>
+      <Constant Name="PEDTYPE_GANG4"/>
+      <Constant Name="PEDTYPE_GANG5"/>
+      <Constant Name="PEDTYPE_GANG6"/>
+      <Constant Name="PEDTYPE_GANG7"/>
+      <Constant Name="PEDTYPE_GANG8"/>
+      <Constant Name="PEDTYPE_LAST_PEDTYPE" Value="32"/>
     </Enum>
     <Enum Name="CARLOCK">
       <Constant Name="CARLOCK_NONE"/>
@@ -492,6 +531,9 @@
       <Constant Name="EXPLOSION_TANK_GRENADE"/>
       <Constant Name="EXPLOSION_SMALL"/>
       <Constant Name="EXPLOSION_TINY"/>
+
+      <!-- Old guessed constants. Avoid. -->
+      <Constant Name="EXPLOSION_BARREL" Value="9"/>
     </Enum>
     <Enum Name="WEAPONTYPE">
       <Constant Name="WEAPONTYPE_UNARMED"/>
@@ -552,6 +594,9 @@
       <Constant Name="WEAPONTYPE_UNIDENTIFIED"/>
       <Constant Name="WEAPONTYPE_ANYMELEE"/>
       <Constant Name="WEAPONTYPE_ANYWEAPON"/>
+
+      <!-- Old guessed constants. Avoid. -->
+      <Constant Name="WEAPONTYPE_FLARE" Value="58"/>
     </Enum>
     <Enum Name="GANG">
       <Constant Name="GANG_FLAT"/>

@@ -1,4 +1,8 @@
 <?xml version='1.0' encoding='UTF-8'?>
+<!--
+  Not exactly constants, but an workaround for opcode references.
+  See https://github.com/thelink2012/gta3sc/pull/133 for details.
+-->
 <GTA3Script>
   <Constants>
     <Enum Name="TASK_OPCODE">
