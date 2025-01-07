@@ -3261,7 +3261,7 @@
     </Command>
     <Command ID="0x1fa" Name="READ_KILL_FRENZY_STATUS">
       <Args>
-        <Arg Type="INT" Out="true"/>
+        <Arg Type="INT" Out="true" Enum="KILLFRENZY"/>
       </Args>
     </Command>
     <Command ID="0x1fb" Name="SQRT">
@@ -6402,8 +6402,8 @@
     <Command ID="0x3f3" Name="GET_CAR_COLOURS">
       <Args>
         <Arg Type="INT" Entity="CAR"/>
-        <Arg Type="INT" Out="true"/>
-        <Arg Type="INT" Out="true"/>
+        <Arg Type="INT" Out="true" Enum="CARCOLOUR"/>
+        <Arg Type="INT" Out="true" Enum="CARCOLOUR"/>
       </Args>
     </Command>
     <Command ID="0x3f4" Name="SET_ALL_CARS_CAN_BE_DAMAGED">
@@ -6700,7 +6700,7 @@
     </Command>
     <Command ID="0x42e" Name="REGISTER_FASTEST_TIME">
       <Args>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="STAT"/>
         <Arg Type="INT"/>
       </Args>
     </Command>
@@ -7482,7 +7482,7 @@
     </Command>
     <Command ID="0x4bb" Name="SET_AREA_VISIBLE">
       <Args>
-        <Arg Type="INT" Enum="VIS"/>
+        <Arg Type="INT"/>
       </Args>
     </Command>
     <Command ID="0x4bc" Name="SET_CUTSCENE_ANIM_TO_LOOP" Supported="false"/>
@@ -7905,7 +7905,7 @@
     <Command ID="0x500" Name="IS_PLAYER_WEARING">
       <Args>
         <Arg Type="INT" Entity="PLAYER"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="CLOTHES_TEX"/>
         <Arg Type="STRING"/>
       </Args>
     </Command>
@@ -8430,7 +8430,7 @@
     <Command ID="0x566" Name="SET_OBJECT_AREA_VISIBLE">
       <Args>
         <Arg Type="INT" Entity="OBJECT"/>
-        <Arg Type="INT" Enum="VIS"/>
+        <Arg Type="INT"/>
       </Args>
     </Command>
     <Command ID="0x567" Name="WAS_VEHICLE_EVER_POLICE" Supported="false">
@@ -8835,7 +8835,7 @@
     <Command ID="0x5c1" Name="TASK_SAY">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="SAY_CONTEXT"/>
       </Args>
     </Command>
     <Command ID="0x5c2" Name="TASK_SHAKE_FIST">
@@ -8918,7 +8918,7 @@
         <Arg Type="FLOAT" Desc="Y Coord"/>
         <Arg Type="FLOAT" Desc="Z Coord"/>
         <Arg Type="FLOAT"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="DRIVE_TO_MODE"/>
         <Arg Type="INT"/>
         <Arg Type="INT"/>
       </Args>
@@ -8937,7 +8937,7 @@
         <Arg Type="FLOAT" Desc="X Coord"/>
         <Arg Type="FLOAT" Desc="Y Coord"/>
         <Arg Type="FLOAT" Desc="Z Coord"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="PEDMOVE"/>
         <Arg Type="INT" Desc="Time"/>
       </Args>
     </Command>
@@ -8959,8 +8959,8 @@
     <Command ID="0x5d8" Name="TASK_FOLLOW_POINT_ROUTE">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
-        <Arg Type="INT"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="PEDMOVE"/>
+        <Arg Type="INT" Enum="FOLLOW_ROUTE"/>
       </Args>
     </Command>
     <Command ID="0x5d9" Name="TASK_GOTO_CHAR">
@@ -9087,7 +9087,7 @@
         <Arg Type="FLOAT" Desc="X Coord"/>
         <Arg Type="FLOAT" Desc="Y Coord"/>
         <Arg Type="FLOAT" Desc="Z Coord"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="PEDMOVE"/>
         <Arg Type="INT" Desc="Time"/>
       </Args>
     </Command>
@@ -9246,7 +9246,7 @@
         <Arg Type="FLOAT" Desc="X Coord"/>
         <Arg Type="FLOAT" Desc="Y Coord"/>
         <Arg Type="FLOAT" Desc="Z Coord"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="PEDMOVE"/>
         <Arg Type="INT" Entity="CAR"/>
       </Args>
     </Command>
@@ -9283,14 +9283,14 @@
     <Command ID="0x609" Name="LOAD_ALL_PATH_NODES_FOR_DEBUG" Supported="false"/>
     <Command ID="0x60a" Name="LOAD_CHAR_DECISION_MAKER">
       <Args>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="DECISION_MAKER_PED"/>
         <Arg Type="INT" Out="true" Entity="DECISION_MAKER"/>
       </Args>
     </Command>
     <Command ID="0x60b" Name="SET_CHAR_DECISION_MAKER">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
-        <Arg Type="INT" Entity="DECISION_MAKER"/>
+        <Arg Type="INT" Entity="DECISION_MAKER" Enum="DECISION_MAKER"/>
       </Args>
     </Command>
     <Command ID="0x60c" Name="CLEAR_ALL_DECISION_MAKERS" Supported="false"/>
@@ -9413,49 +9413,49 @@
     </Command>
     <Command ID="0x623" Name="INCREMENT_INT_STAT">
       <Args>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="STAT"/>
         <Arg Type="INT"/>
       </Args>
     </Command>
     <Command ID="0x624" Name="INCREMENT_FLOAT_STAT">
       <Args>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="STAT"/>
         <Arg Type="FLOAT"/>
       </Args>
     </Command>
     <Command ID="0x625" Name="DECREMENT_INT_STAT">
       <Args>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="STAT"/>
         <Arg Type="INT"/>
       </Args>
     </Command>
     <Command ID="0x626" Name="DECREMENT_FLOAT_STAT">
       <Args>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="STAT"/>
         <Arg Type="FLOAT"/>
       </Args>
     </Command>
     <Command ID="0x627" Name="REGISTER_INT_STAT">
       <Args>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="STAT"/>
         <Arg Type="INT"/>
       </Args>
     </Command>
     <Command ID="0x628" Name="REGISTER_FLOAT_STAT">
       <Args>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="STAT"/>
         <Arg Type="FLOAT"/>
       </Args>
     </Command>
     <Command ID="0x629" Name="SET_INT_STAT">
       <Args>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="STAT"/>
         <Arg Type="INT"/>
       </Args>
     </Command>
     <Command ID="0x62a" Name="SET_FLOAT_STAT">
       <Args>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="STAT"/>
         <Arg Type="FLOAT"/>
       </Args>
     </Command>
@@ -9465,13 +9465,13 @@
     <Command ID="0x62e" Name="GET_SCRIPT_TASK_STATUS">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
-        <Arg Type="INT"/>
-        <Arg Type="INT" Out="true"/>
+        <Arg Type="INT" Enum="TASK_OPCODE"/>
+        <Arg Type="INT" Out="true" Enum="SCRIPT_TASK_STATUS"/>
       </Args>
     </Command>
     <Command ID="0x62f" Name="CREATE_GROUP">
       <Args>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="DEFAULT_TASK_ALLOCATOR"/>
         <Arg Type="INT" Out="true" Entity="GROUP"/>
       </Args>
     </Command>
@@ -9501,7 +9501,7 @@
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
         <Arg Type="INT" Entity="CHAR"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="DUCKING_MODE"/>
         <Arg Type="INT"/>
         <Arg Type="INT"/>
       </Args>
@@ -9532,7 +9532,7 @@
         <Arg Type="FLOAT" Desc="X Coord"/>
         <Arg Type="FLOAT" Desc="Y Coord"/>
         <Arg Type="FLOAT" Desc="Z Coord"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="PEDMOVE"/>
         <Arg Type="FLOAT"/>
         <Arg Type="FLOAT"/>
         <Arg Type="INT" Entity="CHAR"/>
@@ -9625,13 +9625,13 @@
     <Command ID="0x651" Name="CREATE_FX_SYSTEM_WITH_DIRECTION" Supported="false"/>
     <Command ID="0x652" Name="GET_INT_STAT">
       <Args>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="STAT"/>
         <Arg Type="INT" Out="true"/>
       </Args>
     </Command>
     <Command ID="0x653" Name="GET_FLOAT_STAT">
       <Args>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="STAT"/>
         <Arg Type="FLOAT" Out="true"/>
       </Args>
     </Command>
@@ -9657,7 +9657,7 @@
     <Command ID="0x657" Name="OPEN_CAR_DOOR">
       <Args>
         <Arg Type="INT" Entity="CAR"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="CAR_DOOR"/>
       </Args>
     </Command>
     <Command ID="0x658" Name="SET_GROUP_DEFAULT_LEADER_TASK" Supported="false"/>
@@ -9924,7 +9924,7 @@
     <Command ID="0x67f" Name="FORCE_CAR_LIGHTS">
       <Args>
         <Arg Type="INT" Entity="CAR"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="CAR_LIGHTS"/>
       </Args>
     </Command>
     <Command ID="0x680" Name="ADD_PEDTYPE_AS_ATTRACTOR_USER">
@@ -10001,14 +10001,14 @@
     <Command ID="0x689" Name="POP_CAR_DOOR">
       <Args>
         <Arg Type="INT" Entity="CAR"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="CAR_DOOR"/>
         <Arg Type="INT" Desc="Bool"/>
       </Args>
     </Command>
     <Command ID="0x68a" Name="FIX_CAR_DOOR">
       <Args>
         <Arg Type="INT" Entity="CAR"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="CAR_DOOR"/>
       </Args>
     </Command>
     <Command ID="0x68b" Name="TASK_EVERYONE_LEAVE_CAR">
@@ -10046,14 +10046,14 @@
     <Command ID="0x697" Name="POP_CAR_PANEL">
       <Args>
         <Arg Type="INT" Entity="CAR"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="CAR_PANEL"/>
         <Arg Type="INT" Desc="Bool"/>
       </Args>
     </Command>
     <Command ID="0x698" Name="FIX_CAR_PANEL">
       <Args>
         <Arg Type="INT" Entity="CAR"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="CAR_PANEL"/>
       </Args>
     </Command>
     <Command ID="0x699" Name="FIX_CAR_TYRE">
@@ -10170,7 +10170,7 @@
     </Command>
     <Command ID="0x6ae" Name="LOAD_GROUP_DECISION_MAKER">
       <Args>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="DECISION_MAKER_GROUP"/>
         <Arg Type="INT" Out="true" Entity="DECISION_MAKER"/>
       </Args>
     </Command>
@@ -10325,7 +10325,7 @@
         <Arg Type="FLOAT" Desc="X Coord"/>
         <Arg Type="FLOAT" Desc="Y Coord"/>
         <Arg Type="FLOAT" Desc="Z Coord"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="PEDMOVE"/>
         <Arg Type="FLOAT" Desc="Radius"/>
         <Arg Type="FLOAT" Desc="Radius"/>
         <Arg Type="INT" Entity="CHAR"/>
@@ -10412,7 +10412,7 @@
     </Command>
     <Command ID="0x6d5" Name="CREATE_CHECKPOINT">
       <Args>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="CHECKPOINT"/>
         <Arg Type="FLOAT" Desc="X Coord"/>
         <Arg Type="FLOAT" Desc="Y Coord"/>
         <Arg Type="FLOAT" Desc="Z Coord"/>
@@ -10514,7 +10514,7 @@
     <Command ID="0x6e6" Name="GET_VEHICLE_MOD_TYPE">
       <Args>
         <Arg Type="INT" Enum="DEFAULTMODEL"/>
-        <Arg Type="INT" Out="true"/>
+        <Arg Type="INT" Out="true" Enum="MOD_TYPE"/>
       </Args>
     </Command>
     <Command ID="0x6e7" Name="ADD_VEHICLE_MOD">
@@ -10682,14 +10682,14 @@
     <Command ID="0x708" Name="CLEAR_CHAR_DECISION_MAKER_EVENT_RESPONSE">
       <Args>
         <Arg Type="INT" Entity="DECISION_MAKER"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="EVENT_CHOICE"/>
       </Args>
     </Command>
     <Command ID="0x709" Name="ADD_CHAR_DECISION_MAKER_EVENT_RESPONSE">
       <Args>
         <Arg Type="INT" Entity="DECISION_MAKER"/>
-        <Arg Type="INT"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="EVENT_CHOICE"/>
+        <Arg Type="INT" Enum="TASK_CHOICE"/>
         <Arg Type="FLOAT"/>
         <Arg Type="FLOAT"/>
         <Arg Type="FLOAT"/>
@@ -10705,8 +10705,8 @@
         <Arg Type="FLOAT" Desc="X Offset"/>
         <Arg Type="FLOAT" Desc="Y Offset"/>
         <Arg Type="FLOAT" Desc="Z Offset"/>
-        <Arg Type="INT"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="PED_PART"/>
+        <Arg Type="INT" Enum="HOLD_ORIENTATE"/>
         <Arg Type="STRING"/>
         <Arg Type="STRING"/>
         <Arg Type="INT" Desc="Time"/>
@@ -10762,7 +10762,7 @@
         <Arg Type="FLOAT" Desc="Y Coord"/>
         <Arg Type="FLOAT" Desc="Z Coord"/>
         <Arg Type="FLOAT" Desc="Radius"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="DRIVEBY"/>
         <Arg Type="INT" Desc="Bool"/>
         <Arg Type="INT"/>
       </Args>
@@ -10912,7 +10912,7 @@
     <Command ID="0x730" Name="DAMAGE_CAR_PANEL">
       <Args>
         <Arg Type="INT" Entity="CAR"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="CAR_PANEL"/>
       </Args>
     </Command>
     <Command ID="0x731" Name="SET_CAR_ROLL">
@@ -10934,12 +10934,12 @@
     <Command ID="0x734" Name="DONT_SUPPRESS_ANY_CAR_MODELS"/>
     <Command ID="0x735" Name="IS_PS2_KEYBOARD_KEY_PRESSED">
       <Args>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="PS2_KEY"/>
       </Args>
     </Command>
     <Command ID="0x736" Name="IS_PS2_KEYBOARD_KEY_JUST_PRESSED">
       <Args>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="PS2_KEY"/>
       </Args>
     </Command>
     <Command ID="0x737" Name="IS_CHAR_HOLDING_OBJECT">
@@ -10960,7 +10960,7 @@
     <Command ID="0x73c" Name="DAMAGE_CAR_DOOR">
       <Args>
         <Arg Type="INT" Entity="CAR"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="CAR_DOOR"/>
       </Args>
     </Command>
     <Command ID="0x73d" Name="GET_RANDOM_CAR_IN_SPHERE" Supported="false"/>
@@ -11016,7 +11016,7 @@
     </Command>
     <Command ID="0x746" Name="SET_RELATIONSHIP">
       <Args>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="ACQUAINTANCE_TYPE"/>
         <Arg Type="INT" Enum="PEDTYPE"/>
         <Arg Type="INT" Enum="PEDTYPE"/>
       </Args>
@@ -11032,14 +11032,14 @@
     <Command ID="0x749" Name="CLEAR_GROUP_DECISION_MAKER_EVENT_RESPONSE">
       <Args>
         <Arg Type="INT" Entity="DECISION_MAKER"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="EVENT_CHOICE"/>
       </Args>
     </Command>
     <Command ID="0x74a" Name="ADD_GROUP_DECISION_MAKER_EVENT_RESPONSE">
       <Args>
         <Arg Type="INT" Entity="DECISION_MAKER"/>
-        <Arg Type="INT"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="EVENT_CHOICE"/>
+        <Arg Type="INT" Enum="TASK_CHOICE"/>
         <Arg Type="FLOAT"/>
         <Arg Type="FLOAT"/>
         <Arg Type="FLOAT"/>
@@ -11085,7 +11085,7 @@
     <Command ID="0x74f" Name="IS_CHAR_RESPONDING_TO_EVENT">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="EVENT_CHOICE"/>
       </Args>
     </Command>
     <Command ID="0x750" Name="SET_OBJECT_VISIBLE">
@@ -11189,7 +11189,7 @@
     <Command ID="0x767" Name="SET_ZONE_POPULATION_TYPE">
       <Args>
         <Arg Type="TEXT_LABEL"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="POPCYCLE_ZONE"/>
       </Args>
     </Command>
     <Command ID="0x768" Name="SET_ZONE_GANG_CAP" Supported="false"/>
@@ -11209,7 +11209,7 @@
     <Command ID="0x76c" Name="SET_ZONE_GANG_STRENGTH">
       <Args>
         <Arg Type="TEXT_LABEL"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="GANG"/>
         <Arg Type="INT"/>
       </Args>
     </Command>
@@ -11231,7 +11231,7 @@
     <Command ID="0x771" Name="CUSTOM_PLATE_DESIGN_FOR_NEXT_CAR">
       <Args>
         <Arg Type="INT" Enum="DEFAULTMODEL"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="CARPLATE_DESIGN"/>
       </Args>
     </Command>
     <Command ID="0x772" Name="TASK_GOTO_CAR">
@@ -11264,21 +11264,21 @@
     <Command ID="0x77a" Name="SET_CHAR_RELATIONSHIP">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="ACQUAINTANCE_TYPE"/>
         <Arg Type="INT" Enum="PEDTYPE"/>
       </Args>
     </Command>
     <Command ID="0x77b" Name="CLEAR_CHAR_RELATIONSHIP">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="ACQUAINTANCE_TYPE"/>
         <Arg Type="INT" Enum="PEDTYPE"/>
       </Args>
     </Command>
     <Command ID="0x77c" Name="CLEAR_ALL_CHAR_RELATIONSHIPS">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="ACQUAINTANCE_TYPE"/>
       </Args>
     </Command>
     <Command ID="0x77d" Name="GET_CAR_PITCH">
@@ -11318,7 +11318,7 @@
       <Args>
         <Arg Type="INT"/>
         <Arg Type="INT"/>
-        <Arg Type="INT" Out="true"/>
+        <Arg Type="INT" Out="true" Enum="CLOTHES_TEX"/>
       </Args>
     </Command>
     <Command ID="0x784" Name="GIVE_PLAYER_CLOTHES">
@@ -11326,7 +11326,7 @@
         <Arg Type="INT" Entity="PLAYER"/>
         <Arg Type="INT"/>
         <Arg Type="INT"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="CLOTHES_TEX"/>
       </Args>
     </Command>
     <Command ID="0x785" Name="GIVE_PLAYER_TATTOO" Supported="false"/>
@@ -11345,7 +11345,7 @@
     <Command ID="0x788" Name="ATTACH_WINCH_TO_HELI">
       <Args>
         <Arg Type="INT" Entity="CAR"/>
-        <Arg Type="INT" Desc="Bool"/>
+        <Arg Type="INT" Enum="WINCHTYPE"/>
       </Args>
     </Command>
     <Command ID="0x789" Name="RELEASE_ENTITY_FROM_WINCH">
@@ -11437,7 +11437,7 @@
     </Command>
     <Command ID="0x7a1" Name="SET_NEXT_DESIRED_MOVE_STATE">
       <Args>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="PEDMOVE"/>
       </Args>
     </Command>
     <Command ID="0x7a2" Name="SET_NEXT_EVENT_RESPONSE_SEQUENCE" Supported="false"/>
@@ -11527,7 +11527,7 @@
     <Command ID="0x7b3" Name="SET_GROUP_DEFAULT_TASK_ALLOCATOR">
       <Args>
         <Arg Type="INT" Entity="GROUP"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="DEFAULT_TASK_ALLOCATOR"/>
       </Args>
     </Command>
     <Command ID="0x7b4" Name="SET_PLAYER_GROUP_RECRUITMENT">
@@ -11733,7 +11733,7 @@
     <Command ID="0x7e0" Name="SET_BLIP_AS_FRIENDLY">
       <Args>
         <Arg Type="INT" Entity="BLIP"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Desc="Bool"/>
       </Args>
     </Command>
     <Command ID="0x7e1" Name="TASK_SWIM_TO_COORD">
@@ -11759,7 +11759,7 @@
     </Command>
     <Command ID="0x7e5" Name="COPY_CHAR_DECISION_MAKER">
       <Args>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="DECISION_MAKER"/>
         <Arg Type="INT" Out="true" Entity="DECISION_MAKER"/>
       </Args>
     </Command>
@@ -11774,7 +11774,7 @@
         <Arg Type="INT" Entity="CHAR"/>
         <Arg Type="INT" Entity="CAR"/>
         <Arg Type="FLOAT"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="DRIVE_TO_MODE"/>
         <Arg Type="INT"/>
         <Arg Type="INT"/>
       </Args>
@@ -11802,7 +11802,7 @@
         <Arg Type="FLOAT" Desc="X Coord"/>
         <Arg Type="FLOAT" Desc="Y Coord"/>
         <Arg Type="FLOAT" Desc="Z Coord"/>
-        <Arg Type="INT" Out="true"/>
+        <Arg Type="INT" Out="true" Enum="LEVEL"/>
       </Args>
     </Command>
     <Command ID="0x7f0" Name="HAS_OBJECT_OF_TYPE_BEEN_SMASHED">
@@ -11887,7 +11887,7 @@
     <Command ID="0x7fe" Name="GIVE_MELEE_ATTACK_TO_CHAR">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="MELEE_COMBO"/>
         <Arg Type="INT"/>
       </Args>
     </Command>
@@ -11956,7 +11956,7 @@
     <Command ID="0x80e" Name="GET_CHAR_HIGHEST_PRIORITY_EVENT">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
-        <Arg Type="INT" Out="true"/>
+        <Arg Type="INT" Out="true" Enum="EVENT_CHOICE"/>
       </Args>
     </Command>
     <Command ID="0x80f" Name="ARE_PATHS_LOADED_FOR_CAR" Supported="false"/>
@@ -12030,8 +12030,8 @@
     <Command ID="0x817" Name="TASK_FOLLOW_PATROL_ROUTE">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
-        <Arg Type="INT"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="PEDMOVE"/>
+        <Arg Type="INT" Enum="FOLLOW_ROUTE"/>
       </Args>
     </Command>
     <Command ID="0x818" Name="IS_CHAR_IN_AIR">
@@ -12048,7 +12048,7 @@
     <Command ID="0x81a" Name="SET_CHAR_WEAPON_SKILL">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="WEAPONSKILL"/>
       </Args>
     </Command>
     <Command ID="0x81b" Name="ARE_PATHS_LOADED_IN_AREA" Supported="false"/>
@@ -12235,13 +12235,13 @@
     <Command ID="0x841" Name="SELECT_WEAPONS_FOR_VEHICLE">
       <Args>
         <Arg Type="INT" Entity="CAR"/>
-        <Arg Type="INT" Desc="Bool"/>
+        <Arg Type="INT" Enum="SELECTEDWEAPON"/>
       </Args>
     </Command>
     <Command ID="0x842" Name="GET_CITY_PLAYER_IS_IN">
       <Args>
         <Arg Type="INT" Entity="PLAYER"/>
-        <Arg Type="INT" Out="true"/>
+        <Arg Type="INT" Out="true" Enum="LEVEL"/>
       </Args>
     </Command>
     <Command ID="0x843" Name="GET_NAME_OF_ZONE">
@@ -12378,7 +12378,7 @@
     <Command ID="0x860" Name="SET_CHAR_AREA_VISIBLE">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
-        <Arg Type="INT" Enum="VIS"/>
+        <Arg Type="INT"/>
       </Args>
     </Command>
     <Command ID="0x861" Name="IS_ATTACHED_PLAYER_HEADING_ACHIEVED">
@@ -12408,7 +12408,7 @@
     </Command>
     <Command ID="0x867" Name="IS_PROCEDURAL_INTERIOR_ACTIVE">
       <Args>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="INTERIOR"/>
       </Args>
     </Command>
     <Command ID="0x868" Name="CLEAR_THIS_VIEW_INTEGER_VARIABLE">
@@ -12488,7 +12488,7 @@
     <Command ID="0x874" Name="SET_ZONE_POPULATION_RACE">
       <Args>
         <Arg Type="TEXT_LABEL"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="POPRACE"/>
       </Args>
     </Command>
     <Command ID="0x875" Name="SET_OBJECT_ONLY_DAMAGED_BY_PLAYER">
@@ -12506,7 +12506,7 @@
         <Arg Type="PARAM" Desc="Y Coord"/>
         <Arg Type="PARAM" Desc="Z Coord"/>
         <Arg Type="INT"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="BIRDTYPE"/>
       </Args>
     </Command>
     <Command ID="0x877" Name="GET_VEHICLE_DIRT_LEVEL" Supported="false"/>
@@ -12527,7 +12527,7 @@
         <Arg Type="INT" Entity="PLAYER"/>
         <Arg Type="STRING"/>
         <Arg Type="STRING"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="CLOTHES_TEX"/>
       </Args>
     </Command>
     <Command ID="0x87c" Name="CLEAR_LOADED_SHOP"/>
@@ -12561,7 +12561,7 @@
       <Args>
         <Arg Type="INT" Entity="FX_SYSTEM"/>
         <Arg Type="INT" Entity="CHAR"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="BONE"/>
       </Args>
     </Command>
     <Command ID="0x884" Name="REGISTER_ATTRACTOR_SCRIPT_BRAIN_FOR_CODE_USE">
@@ -12742,7 +12742,7 @@
     <Command ID="0x8a6" Name="OPEN_CAR_DOOR_A_BIT">
       <Args>
         <Arg Type="INT" Entity="CAR"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="CAR_DOOR"/>
         <Arg Type="FLOAT" Desc="Rotation"/>
       </Args>
     </Command>
@@ -12915,7 +12915,7 @@
     <Command ID="0x8c6" Name="SET_CHAR_CAN_BE_KNOCKED_OFF_BIKE">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
-        <Arg Type="INT" Desc="Bool"/>
+        <Arg Type="INT" Enum="KNOCKOFFBIKE"/>
       </Args>
     </Command>
     <Command ID="0x8c7" Name="SET_CHAR_COORDINATES_DONT_WARP_GANG">
@@ -12966,7 +12966,7 @@
     </Command>
     <Command ID="0x8d3" Name="GET_CURRENT_POPULATION_ZONE_TYPE">
       <Args>
-        <Arg Type="INT" Out="true"/>
+        <Arg Type="INT" Out="true" Enum="POPCYCLE_ZONE"/>
       </Args>
     </Command>
     <Command ID="0x8d4" Name="CREATE_MENU">
@@ -12978,7 +12978,7 @@
         <Arg Type="INT"/>
         <Arg Type="INT" Desc="Bool"/>
         <Arg Type="INT" Desc="Bool"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="MENU_COLUMN_ALIGNMENT"/>
         <Arg Type="INT" Out="true"/>
       </Args>
     </Command>
@@ -12987,7 +12987,7 @@
       <Args>
         <Arg Type="INT"/>
         <Arg Type="INT"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="MENU_COLUMN_ALIGNMENT"/>
       </Args>
     </Command>
     <Command ID="0x8d7" Name="GET_MENU_ITEM_SELECTED">
@@ -13154,7 +13154,7 @@
     <Command ID="0x8ec" Name="GET_VEHICLE_CLASS">
       <Args>
         <Arg Type="INT" Entity="CAR"/>
-        <Arg Type="INT" Out="true"/>
+        <Arg Type="INT" Out="true" Enum="VEHICLE_CLASS"/>
       </Args>
     </Command>
     <Command ID="0x8ed" Name="CLEAR_CONVERSATION_FOR_CHAR">
@@ -13217,7 +13217,7 @@
     <Command ID="0x8f7" Name="GET_CLOTHES_ITEM">
       <Args>
         <Arg Type="INT" Entity="PLAYER"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="CLOTHES_TEX"/>
         <Arg Type="INT" Out="true"/>
         <Arg Type="INT" Out="true"/>
       </Args>
@@ -13242,7 +13242,7 @@
     <Command ID="0x8fb" Name="SET_COORD_BLIP_APPEARANCE">
       <Args>
         <Arg Type="INT" Entity="BLIP"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="COORD_BLIP_APPEARANCE"/>
       </Args>
     </Command>
     <Command ID="0x8fc" Name="GET_MENU_POSITION" Supported="false"/>
@@ -13273,7 +13273,7 @@
     <Command ID="0x903" Name="SET_CHAR_BEEN_PHOTOGRAPHED_FLAG" Supported="false"/>
     <Command ID="0x904" Name="GET_HUD_COLOUR">
       <Args>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="HUD_COLOUR"/>
         <Arg Type="INT" Desc="Red" Out="true"/>
         <Arg Type="INT" Desc="Green" Out="true"/>
         <Arg Type="INT" Desc="Blue" Out="true"/>
@@ -13538,7 +13538,7 @@
         <Arg Type="FLOAT" Desc="X Coord"/>
         <Arg Type="FLOAT" Desc="Y Coord"/>
         <Arg Type="TEXT_LABEL"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="SWIRLS"/>
       </Args>
     </Command>
     <Command ID="0x938" Name="CLEAR_ALL_QUEUED_DIALOGUE" Supported="false"/>
@@ -13617,7 +13617,7 @@
     <Command ID="0x947" Name="SET_CHAR_SAY_CONTEXT">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="SAY_CONTEXT"/>
         <Arg Type="INT" Out="true"/>
       </Args>
     </Command>
@@ -13689,7 +13689,7 @@
     </Command>
     <Command ID="0x953" Name="GET_BEAT_TRACK_STATUS">
       <Args>
-        <Arg Type="INT" Out="true"/>
+        <Arg Type="INT" Out="true" Enum="BEAT_TRACK_STATUS"/>
       </Args>
     </Command>
     <Command ID="0x954" Name="PLAY_BEAT_TRACK"/>
@@ -13758,15 +13758,15 @@
     <Command ID="0x95e" Name="CONTROL_CAR_DOOR">
       <Args>
         <Arg Type="INT" Entity="CAR"/>
-        <Arg Type="INT"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="CAR_DOOR"/>
+        <Arg Type="INT" Enum="CAR_DOOR_STATE"/>
         <Arg Type="FLOAT"/>
       </Args>
     </Command>
     <Command ID="0x95f" Name="GET_DOOR_ANGLE_RATIO">
       <Args>
         <Arg Type="INT" Entity="CAR"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="CAR_DOOR"/>
         <Arg Type="FLOAT" Out="true"/>
       </Args>
     </Command>
@@ -13793,7 +13793,7 @@
         <Arg Type="INT"/>
         <Arg Type="INT" Desc="Bool"/>
         <Arg Type="INT" Desc="Bool"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="MENU_COLUMN_ALIGNMENT"/>
         <Arg Type="INT" Out="true"/>
       </Args>
     </Command>
@@ -13805,7 +13805,7 @@
     <Command ID="0x966" Name="GET_CHAR_SWIM_STATE">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
-        <Arg Type="INT" Out="true"/>
+        <Arg Type="INT" Out="true" Enum="SWIM_STATE"/>
       </Args>
     </Command>
     <Command ID="0x967" Name="START_CHAR_FACIAL_TALK">
@@ -13834,7 +13834,7 @@
     <Command ID="0x96d" Name="GET_CURRENT_CAR_MOD">
       <Args>
         <Arg Type="INT" Entity="CAR"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="MOD_TYPE"/>
         <Arg Type="INT" Out="true"/>
       </Args>
     </Command>
@@ -13881,7 +13881,7 @@
     </Command>
     <Command ID="0x978" Name="COPY_SHARED_CHAR_DECISION_MAKER">
       <Args>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="DECISION_MAKER"/>
         <Arg Type="INT" Out="true" Entity="DECISION_MAKER"/>
       </Args>
     </Command>
@@ -14001,7 +14001,7 @@
     <Command ID="0x98e" Name="SET_NAMED_ENTRY_EXIT_FLAG">
       <Args>
         <Arg Type="TEXT_LABEL"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="ENTRY_EXIT_FLAG"/>
         <Arg Type="INT" Desc="Bool"/>
       </Args>
     </Command>
@@ -14081,8 +14081,8 @@
         <Arg Type="FLOAT" Desc="X Offset"/>
         <Arg Type="FLOAT" Desc="Y Offset"/>
         <Arg Type="FLOAT" Desc="Z Offset"/>
-        <Arg Type="INT"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="PED_PART"/>
+        <Arg Type="INT" Enum="HOLD_ORIENTATE"/>
         <Arg Type="STRING"/>
         <Arg Type="STRING"/>
         <Arg Type="INT" Desc="Time"/>
@@ -14109,9 +14109,9 @@
         <Arg Type="TEXT_LABEL"/>
         <Arg Type="TEXT_LABEL"/>
         <Arg Type="TEXT_LABEL"/>
-        <Arg Type="INT"/>
-        <Arg Type="INT"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="SAY_CONTEXT"/>
+        <Arg Type="INT" Enum="SAY_CONTEXT"/>
+        <Arg Type="INT" Enum="SAY_CONTEXT"/>
       </Args>
     </Command>
     <Command ID="0x9a5" Name="SET_CCTV_EFFECT" Supported="false"/>
@@ -14140,13 +14140,13 @@
     <Command ID="0x9aa" Name="SET_UP_CONVERSATION_END_NODE_WITH_SPEECH">
       <Args>
         <Arg Type="TEXT_LABEL"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="SAY_CONTEXT"/>
       </Args>
     </Command>
     <Command ID="0x9ab" Name="RANDOM_PASSENGER_SAY">
       <Args>
         <Arg Type="INT" Entity="CAR"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="SAY_CONTEXT"/>
       </Args>
     </Command>
     <Command ID="0x9ac" Name="HIDE_ALL_FRONTEND_BLIPS">
@@ -14156,7 +14156,7 @@
     </Command>
     <Command ID="0x9ad" Name="SET_PLAYER_IN_CAR_CAMERA_MODE">
       <Args>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="CAR_ZOOM_MODE"/>
       </Args>
     </Command>
     <Command ID="0x9ae" Name="IS_CHAR_IN_ANY_TRAIN">
@@ -14197,7 +14197,7 @@
         <Arg Type="FLOAT" Desc="X Coord"/>
         <Arg Type="FLOAT" Desc="Y Coord"/>
         <Arg Type="FLOAT" Desc="Radius"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="ENTRY_EXIT_FLAG"/>
         <Arg Type="INT" Desc="Bool"/>
       </Args>
     </Command>
@@ -14368,7 +14368,7 @@
     <Command ID="0x9d5" Name="SET_CHAR_SAY_CONTEXT_IMPORTANT">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="SAY_CONTEXT"/>
         <Arg Type="INT" Desc="Bool"/>
         <Arg Type="INT" Desc="Bool"/>
         <Arg Type="INT" Desc="Bool"/>
@@ -14569,7 +14569,7 @@
     <Command ID="0x9fa" Name="HAS_GAME_JUST_RETURNED_FROM_FRONTEND"/>
     <Command ID="0x9fb" Name="GET_CURRENT_LANGUAGE">
       <Args>
-        <Arg Type="INT" Out="true"/>
+        <Arg Type="INT" Out="true" Enum="LANGUAGE"/>
       </Args>
     </Command>
     <Command ID="0x9fc" Name="IS_OBJECT_INTERSECTING_WORLD">
@@ -14661,7 +14661,7 @@
     <Command ID="0xa0f" Name="HAS_LANGUAGE_CHANGED"/>
     <Command ID="0xa10" Name="INCREMENT_INT_STAT_NO_MESSAGE">
       <Args>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="STAT"/>
         <Arg Type="INT"/>
       </Args>
     </Command>
@@ -14707,9 +14707,9 @@
         <Arg Type="TEXT_LABEL"/>
         <Arg Type="TEXT_LABEL"/>
         <Arg Type="TEXT_LABEL"/>
-        <Arg Type="INT"/>
-        <Arg Type="INT"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="SOUND"/>
+        <Arg Type="INT" Enum="SOUND"/>
+        <Arg Type="INT" Enum="SOUND"/>
       </Args>
     </Command>
     <Command ID="0xa19" Name="SET_AREA_NAME">
@@ -14755,7 +14755,7 @@
     </Command>
     <Command ID="0xa1f" Name="INCREMENT_FLOAT_STAT_NO_MESSAGE">
       <Args>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="STAT"/>
         <Arg Type="FLOAT"/>
       </Args>
     </Command>
@@ -14775,8 +14775,8 @@
       <Args>
         <Arg Type="INT"/>
         <Arg Type="INT" Entity="CAR"/>
-        <Arg Type="INT"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="CARCOLOUR"/>
+        <Arg Type="INT" Enum="CARCOLOUR"/>
       </Args>
     </Command>
     <Command ID="0xa23" Name="HIGHLIGHT_MENU_ITEM">
@@ -14837,7 +14837,7 @@
         <Arg Type="FLOAT" Desc="X Coord"/>
         <Arg Type="FLOAT" Desc="Y Coord"/>
         <Arg Type="FLOAT" Desc="Z Coord"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="PEDMOVE"/>
         <Arg Type="INT" Desc="Time"/>
         <Arg Type="FLOAT" Desc="Radius"/>
       </Args>
@@ -14905,7 +14905,7 @@
     <Command ID="0xa3c" Name="SET_UP_CONVERSATION_END_NODE_WITH_SCRIPTED_SPEECH">
       <Args>
         <Arg Type="TEXT_LABEL"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="SOUND"/>
       </Args>
     </Command>
     <Command ID="0xa3d" Name="ACTIVATE_PIMP_CHEAT">
@@ -14934,7 +14934,7 @@
         <Arg Type="FLOAT" Desc="X Coord"/>
         <Arg Type="FLOAT" Desc="Y Coord"/>
         <Arg Type="FLOAT" Desc="Z Coord"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="HUD_COLOUR"/>
         <Arg Type="INT" Out="true" Entity="USER_3D_MARKER"/>
       </Args>
     </Command>
