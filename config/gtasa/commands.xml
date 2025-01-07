@@ -7482,7 +7482,7 @@
     </Command>
     <Command ID="0x4bb" Name="SET_AREA_VISIBLE">
       <Args>
-        <Arg Type="INT" Enum="VIS"/>
+        <Arg Type="INT"/>
       </Args>
     </Command>
     <Command ID="0x4bc" Name="SET_CUTSCENE_ANIM_TO_LOOP" Supported="false"/>
@@ -8430,7 +8430,7 @@
     <Command ID="0x566" Name="SET_OBJECT_AREA_VISIBLE">
       <Args>
         <Arg Type="INT" Entity="OBJECT"/>
-        <Arg Type="INT" Enum="VIS"/>
+        <Arg Type="INT"/>
       </Args>
     </Command>
     <Command ID="0x567" Name="WAS_VEHICLE_EVER_POLICE" Supported="false">
@@ -12378,7 +12378,7 @@
     <Command ID="0x860" Name="SET_CHAR_AREA_VISIBLE">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
-        <Arg Type="INT" Enum="VIS"/>
+        <Arg Type="INT"/>
       </Args>
     </Command>
     <Command ID="0x861" Name="IS_ATTACHED_PLAYER_HEADING_ACHIEVED">

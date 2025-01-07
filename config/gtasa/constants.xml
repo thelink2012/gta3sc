@@ -579,8 +579,6 @@
       <Constant Name="RS_TALK"/>
       <Constant Name="RS_OFF"/>
     </Enum>
-    <Enum Name="VIS">
-    </Enum>
     <Enum Name="FONT">
       <Constant Name="FONT_BANK"/>
       <Constant Name="FONT_STANDARD"/>
