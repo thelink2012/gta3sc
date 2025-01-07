@@ -9290,7 +9290,7 @@
     <Command ID="0x60b" Name="SET_CHAR_DECISION_MAKER">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
-        <Arg Type="INT" Entity="DECISION_MAKER"/>
+        <Arg Type="INT" Entity="DECISION_MAKER" Enum="DECISION_MAKER"/>
       </Args>
     </Command>
     <Command ID="0x60c" Name="CLEAR_ALL_DECISION_MAKERS" Supported="false"/>
