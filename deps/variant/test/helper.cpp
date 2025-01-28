@@ -1,9 +1,9 @@
 // Eggs.Variant
 //
-// Copyright Agustin K-ballo Berge, Fusion Fenix 2014-2016
+// Copyright Agustin K-ballo Berge, Fusion Fenix 2014-2018
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <eggs/variant.hpp>
 #include <type_traits>
@@ -11,7 +11,6 @@
 
 #include <eggs/variant/detail/config/prefix.hpp>
 
-#define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
 template <class T, class = void>
@@ -69,13 +68,13 @@ TEST_CASE("variant_element<I, T>", "[variant.helper]")
             1, eggs::variant<int, std::string>
         >::type;
 
-    CHECK((std::is_same<variant_element_int, int>::value));
-    CHECK((std::is_same<variant_element_string, std::string>::value));
+    CHECK(std::is_same<variant_element_int, int>::value);
+    CHECK(std::is_same<variant_element_string, std::string>::value);
 
     using const_variant_element_int =
         eggs::variants::variant_element<
             0, eggs::variant<int, std::string> const
         >::type;
 
-    CHECK((std::is_same<const_variant_element_int, int const>::value));
+    CHECK(std::is_same<const_variant_element_int, int const>::value);
 }

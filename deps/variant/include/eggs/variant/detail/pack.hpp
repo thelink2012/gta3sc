@@ -1,10 +1,10 @@
 //! \file eggs/variant/detail/pack.hpp
 // Eggs.Variant
 //
-// Copyright Agustin K-ballo Berge, Fusion Fenix 2014-2016
+// Copyright Agustin K-ballo Berge, Fusion Fenix 2014-2018
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #ifndef EGGS_VARIANT_DETAIL_PACK_HPP
 #define EGGS_VARIANT_DETAIL_PACK_HPP
@@ -13,14 +13,19 @@
 #include <type_traits>
 #include <utility>
 
-#include <eggs/variant/detail/config/prefix.hpp>
+#include "config/prefix.hpp"
 
 namespace eggs { namespace variants { namespace detail
 {
     struct empty
     {
+        EGGS_CXX11_CONSTEXPR empty() noexcept {}
         EGGS_CXX11_CONSTEXPR bool operator==(empty) const { return true; }
+        EGGS_CXX11_CONSTEXPR bool operator!=(empty) const { return false; }
         EGGS_CXX11_CONSTEXPR bool operator<(empty) const { return false; }
+        EGGS_CXX11_CONSTEXPR bool operator>(empty) const { return false; }
+        EGGS_CXX11_CONSTEXPR bool operator<=(empty) const { return true; }
+        EGGS_CXX11_CONSTEXPR bool operator>=(empty) const { return true; }
     };
 
     template <typename T>
@@ -48,6 +53,12 @@ namespace eggs { namespace variants { namespace detail
         using type = pack_c;
         EGGS_CXX11_STATIC_CONSTEXPR std::size_t size = sizeof...(Vs);
     };
+
+    template <typename ...Ts>
+    static EGGS_CXX11_CONSTEXPR int swallow_pack(Ts const&...) noexcept
+    {
+        return 0;
+    }
 
     ///////////////////////////////////////////////////////////////////////////
     template <typename Is, bool Odd>
@@ -132,10 +143,21 @@ namespace eggs { namespace variants { namespace detail
     {};
 
     template <typename ...Ts>
+    using _always_true = std::true_type;
+
+    template <typename ...Ts>
+    static std::false_type _all_of(...);
+
+    template <typename ...Ts>
+    static auto _all_of(int) -> _always_true<
+        typename std::enable_if<bool(Ts::value)>::type...>;
+
+    template <typename ...Ts>
     struct all_of<pack<Ts...>>
-      : all_of<pack_c<bool, (Ts::value)...>>
+      : decltype(detail::_all_of<Ts...>(0))
     {};
 
+    ///////////////////////////////////////////////////////////////////////////
     template <typename ...Vs>
     struct any_of;
 
@@ -143,13 +165,26 @@ namespace eggs { namespace variants { namespace detail
     struct any_of<pack_c<bool, Vs...>>
       : std::integral_constant<
             bool
-          , !all_of<pack_c<bool, !Vs...>>::value
+          , !std::is_same<
+                pack_c<bool, Vs...>
+              , pack_c<bool, (Vs && false)...> // false...
+            >::value
         >
     {};
 
     template <typename ...Ts>
+    using _always_false = std::false_type;
+
+    template <typename ...Ts>
+    static std::true_type _any_of(...);
+
+    template <typename ...Ts>
+    static auto _any_of(int) -> _always_false<
+        typename std::enable_if<!bool(Ts::value)>::type...>;
+
+    template <typename ...Ts>
     struct any_of<pack<Ts...>>
-      : any_of<pack_c<bool, (Ts::value)...>>
+      : decltype(detail::_any_of<Ts...>(0))
     {};
 
     ///////////////////////////////////////////////////////////////////////////
@@ -164,27 +199,55 @@ namespace eggs { namespace variants { namespace detail
       : _indexed<Is, Ts>...
     {};
 
-    empty _at_index(...);
+    template <std::size_t I>
+    static empty _at_index(...);
 
     template <std::size_t I, typename T>
-    identity<T> _at_index(_indexed<I, T> const&);
+    static identity<T> _at_index(_indexed<I, T> const&);
 
     template <std::size_t I, typename Ts>
     struct at_index
-      : decltype(_at_index<I>(_indexer<Ts>{}))
+      : decltype(detail::_at_index<I>(_indexer<Ts>{}))
     {};
 
-    empty _index_of(...);
+    template <typename T, typename Ts>
+    struct count_of;
+
+    template <typename T>
+    struct count_of<T, pack<>>
+    {
+        EGGS_CXX11_STATIC_CONSTEXPR std::size_t value = 0;
+    };
+
+    template <typename T, typename H, typename ...Ts>
+    struct count_of<T, pack<H, Ts...>>
+    {
+        EGGS_CXX11_STATIC_CONSTEXPR std::size_t value =
+            count_of<T, pack<Ts...>>::value
+          + (std::is_same<T, H>::value ? 1 : 0);
+    };
+
+    template <typename T>
+    static empty _index_of(...);
 
     template <typename T, std::size_t I>
-    index<I> _index_of(_indexed<I, T> const&);
+    static index<I> _index_of(_indexed<I, T> const&);
 
     template <typename T, typename Ts>
     struct index_of
-      : decltype(_index_of<T>(_indexer<Ts>{}))
+#if 0
+        // most compilers get this wrong in the case of duplicated types
+      : decltype(detail::_index_of<T>(_indexer<Ts>{}))
+#else
+      : std::conditional<
+            count_of<T, Ts>::value == 1
+          , decltype(detail::_index_of<T>(_indexer<Ts>{}))
+          , empty
+        >::type
+#endif
     {};
 }}}
 
-#include <eggs/variant/detail/config/suffix.hpp>
+#include "config/suffix.hpp"
 
 #endif /*EGGS_VARIANT_DETAIL_PACK_HPP*/

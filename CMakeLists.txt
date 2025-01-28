@@ -3,15 +3,13 @@ project(gta3sc)
 include(deps/CMake/PrecompiledHeader.cmake)
 include(deps/CMake/GetGitRevisionDescription.cmake)
 
+set(CMAKE_CXX_STANDARD 17)
+
 if(NOT CMAKE_COMPILER_IS_GNUXX AND CMAKE_CXX_COMPILER_ID MATCHES "GNU")
   set(CMAKE_COMPILER_IS_GNUXX 1)
 endif()
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   set(CMAKE_COMPILER_IS_CLANGXX 1)
-endif()
-
-if(CMAKE_COMPILER_IS_GNUXX OR CMAKE_COMPILER_IS_CLANGXX)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
 endif()
 
 if(CMAKE_COMPILER_IS_GNUXX)

@@ -1,0 +1,89 @@
+# Eggs.Variant
+#
+# Copyright Agustin K-ballo Berge, Fusion Fenix 2014-2018
+#
+# Distributed under the Boost Software License, Version 1.0. (See accompanying
+# file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+
+platform: x64
+
+environment:
+  matrix:
+    # MSVC 14.0
+    - GENERATOR: Visual Studio 14 2015 Win64
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+
+    # MSVC 14.1
+    - GENERATOR: Visual Studio 15 2017 Win64
+      CXXFLAGS: /std:c++14 /permissive-
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+
+    - GENERATOR: Visual Studio 15 2017 Win64
+      CXXFLAGS: /std:c++latest /permissive-
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+
+    # LLVM
+    - GENERATOR: Visual Studio 14 2015 Win64
+      TOOLSET: LLVM-vs2014
+      CXXFLAGS: /EHsc
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+
+    # MinGW-w64
+    - GENERATOR: MinGW Makefiles
+      CXXFLAGS: -std=c++11
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+
+    - GENERATOR: MinGW Makefiles
+      CXXFLAGS: -std=c++14
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+
+    - GENERATOR: MinGW Makefiles
+      CXXFLAGS: -std=c++1z
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+
+branches:
+  only:
+    - master
+    - develop
+
+init:
+  - ps: |
+      if ($env:GENERATOR -eq "MinGW Makefiles") {
+        $env:Path = 'C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\mingw64\bin;' + $env:Path
+        # Workaround for CMake not wanting sh.exe on PATH for MinGW Makefiles
+        $env:Path = $env:Path -replace 'C:\\Program Files\\Git\\usr\\bin;',$null
+      }
+
+build_script:
+  - echo cmake -G "%GENERATOR%" -T "%TOOLSET%"
+  - ps: |
+      if ($env:GENERATOR -eq "MinGW Makefiles") {
+        $env:CXXFLAGS = $env:CXXFLAGS + ' -Wall -Wextra -Werror -pedantic-errors'
+
+        mkdir build-debug
+        cd build-debug
+        cmake -G "$env:GENERATOR" -DCMAKE_BUILD_TYPE=Debug ..
+        cmake --build . -- -j 2 -k
+        ctest --output-on-failure
+
+        cd ..
+        mkdir build-release
+        cd build-release
+        cmake -G "$env:GENERATOR" -DCMAKE_BUILD_TYPE=Release ..
+        cmake --build . -- -j 2 -k
+        ctest --output-on-failure
+      } else {
+        $env:CXXFLAGS = $env:CXXFLAGS + ' /W4'
+
+        mkdir build
+        cd build
+        if (Test-Path env:TOOLSET) {
+          cmake -G "$env:GENERATOR" -T "$env:TOOLSET" ..
+        } else {
+          cmake -G "$env:GENERATOR" ..
+        }
+        cmake --build . --config Debug
+        ctest --output-on-failure --build-config Debug
+        cmake --build . --config Release
+        ctest --output-on-failure --build-config Release
+      }

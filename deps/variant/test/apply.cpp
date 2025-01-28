@@ -1,9 +1,9 @@
 // Eggs.Variant
 //
-// Copyright Agustin K-ballo Berge, Fusion Fenix 2014-2016
+// Copyright Agustin K-ballo Berge, Fusion Fenix 2014-2018
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <eggs/variant.hpp>
 #include <sstream>
@@ -14,17 +14,19 @@
 
 using eggs::variants::detail::move;
 
-#define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 #include "constexpr.hpp"
-
-EGGS_CXX11_STATIC_CONSTEXPR std::size_t npos = eggs::variant<>::npos;
 
 struct fun
 {
     std::size_t nonconst_lvalue, const_lvalue, rvalue;
 
     fun() : nonconst_lvalue{0}, const_lvalue{0}, rvalue{0} {}
+
+    std::string operator()()
+    {
+        return "";
+    }
 
     template <typename T>
     static std::string to_string(T const& t)
@@ -88,6 +90,11 @@ struct fun
 #if EGGS_CXX11_HAS_CONSTEXPR
 struct constexpr_fun
 {
+    constexpr std::size_t operator()() const
+    {
+        return 0u;
+    }
+
     template <typename T>
     constexpr std::size_t operator()(T const&) const
     {
@@ -114,26 +121,6 @@ struct variant_like
     {}
 };
 
-namespace eggs { namespace variants
-{
-    template <>
-    struct variant_size<::variant_like>
-      : std::integral_constant<std::size_t, 2>
-    {};
-
-    template <>
-    struct variant_element<0, ::variant_like>
-    {
-        using type = int;
-    };
-
-    template <>
-    struct variant_element<1, ::variant_like>
-    {
-        using type = std::string;
-    };
-}}
-
 TEST_CASE("apply<R>(F&&, variant<Ts...>&)", "[variant.apply]")
 {
     eggs::variant<int, std::string> v(42);
@@ -152,7 +139,7 @@ TEST_CASE("apply<R>(F&&, variant<Ts...>&)", "[variant.apply]")
     {
         eggs::variant<int, std::string> empty;
 
-        REQUIRE(empty.which() == npos);
+        REQUIRE(empty.which() == eggs::variant_npos);
 
         CHECK_THROWS_AS(
             eggs::variants::apply<void>(fun{}, empty)
@@ -206,7 +193,7 @@ TEST_CASE("apply<R>(F&&, variant<Ts...> const&)", "[variant.apply]")
     {
         eggs::variant<int, std::string> const empty;
 
-        REQUIRE(empty.which() == npos);
+        REQUIRE(empty.which() == eggs::variant_npos);
 
         CHECK_THROWS_AS(
             eggs::variants::apply<void>(fun{}, empty)
@@ -255,7 +242,7 @@ TEST_CASE("apply<R>(F&&, variant<Ts...>&&)", "[variant.apply]")
     {
         eggs::variant<int, std::string> empty;
 
-        REQUIRE(empty.which() == npos);
+        REQUIRE(empty.which() == eggs::variant_npos);
 
         CHECK_THROWS_AS(
             eggs::variants::apply<void>(fun{}, ::move(empty))
@@ -296,7 +283,7 @@ TEST_CASE("apply<R>(F&&, variant<>&)", "[variant.apply]")
 {
     eggs::variant<> v;
 
-    REQUIRE(v.which() == npos);
+    REQUIRE(v.which() == eggs::variant_npos);
 
     CHECK_THROWS_AS(
         eggs::variants::apply<void>(fun{}, v)
@@ -307,7 +294,7 @@ TEST_CASE("apply<R>(F&&, variant<> const&)", "[variant.apply]")
 {
     eggs::variant<> const v;
 
-    REQUIRE(v.which() == npos);
+    REQUIRE(v.which() == eggs::variant_npos);
 
     CHECK_THROWS_AS(
         eggs::variants::apply<void>(fun{}, ::move(v))
@@ -318,7 +305,7 @@ TEST_CASE("apply<R>(F&&, variant<>&&)", "[variant.apply]")
 {
     eggs::variant<> v;
 
-    REQUIRE(v.which() == npos);
+    REQUIRE(v.which() == eggs::variant_npos);
 
     CHECK_THROWS_AS(
         eggs::variants::apply<void>(fun{}, ::move(v))
@@ -398,6 +385,36 @@ TEST_CASE("apply(F&&, variant<Ts...>&&)", "[variant.apply]")
             return 0;
         }};
         constexpr int c = test::call();
+    }
+#endif
+}
+
+TEST_CASE("apply<R>(F&&)", "[variant.apply]")
+{
+    fun f;
+    std::string ret = eggs::variants::apply<std::string>(f);
+
+    CHECK(ret == "");
+
+#if EGGS_CXX11_HAS_CONSTEXPR
+    // constexpr
+    {
+        constexpr std::size_t ar = eggs::variants::apply<std::size_t>(constexpr_fun{});
+    }
+#endif
+}
+
+TEST_CASE("apply(F&&)", "[variant.apply]")
+{
+    fun f;
+    std::string ret = eggs::variants::apply(f);
+
+    CHECK(ret == "");
+
+#if EGGS_CXX11_HAS_CONSTEXPR
+    // constexpr
+    {
+        constexpr std::size_t ar = eggs::variants::apply(constexpr_fun{});
     }
 #endif
 }

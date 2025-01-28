@@ -1,23 +1,36 @@
 // Eggs.Variant
 //
-// Copyright Agustin K-ballo Berge, Fusion Fenix 2014-2016
+// Copyright Agustin K-ballo Berge, Fusion Fenix 2014-2018
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <eggs/variant.hpp>
 #include <string>
-#include <typeinfo>
+#include <type_traits>
 
 #include <eggs/variant/detail/config/prefix.hpp>
 
-#define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 #include "constexpr.hpp"
 #include "dtor.hpp"
 #include "throw.hpp"
 
-EGGS_CXX11_STATIC_CONSTEXPR std::size_t npos = eggs::variant<>::npos;
+#if EGGS_CXX11_HAS_SFINAE_FOR_EXPRESSIONS
+struct WeirdAssignment
+{
+    WeirdAssignment(long) {}
+
+    WeirdAssignment& operator=(WeirdAssignment const&) = default;
+    WeirdAssignment& operator=(long) = delete;
+};
+
+struct WeirdConstructor
+{
+    WeirdConstructor(int) {}
+    explicit WeirdConstructor(long) = delete;
+};
+#endif
 
 TEST_CASE("variant<Ts...>::operator=(T&&)", "[variant.assign]")
 {
@@ -26,7 +39,7 @@ TEST_CASE("variant<Ts...>::operator=(T&&)", "[variant.assign]")
         eggs::variant<int, std::string> v;
 
         REQUIRE(bool(v) == false);
-        REQUIRE(v.which() == npos);
+        REQUIRE(v.which() == eggs::variant_npos);
 
         v = 42;
 
@@ -146,7 +159,7 @@ TEST_CASE("variant<Ts...>::operator=(T&&)", "[variant.assign]")
             CHECK_THROWS(v = Throw{});
 
             CHECK(bool(v) == false);
-            CHECK(v.which() == npos);
+            CHECK(v.which() == eggs::variant_npos);
             CHECK(Dtor::calls == 1u);
         }
         Dtor::calls = 0u;
@@ -171,7 +184,7 @@ TEST_CASE("variant<Ts...>::operator=(T&&)", "[variant.assign]")
         eggs::variant<int, std::string> v;
 
         REQUIRE(bool(v) == false);
-        REQUIRE(v.which() == npos);
+        REQUIRE(v.which() == eggs::variant_npos);
 
         v = "42";
 
@@ -182,6 +195,34 @@ TEST_CASE("variant<Ts...>::operator=(T&&)", "[variant.assign]")
 
 #if EGGS_CXX98_HAS_RTTI
         CHECK(v.target_type() == typeid(std::string));
+#endif
+    }
+
+    // sfinae
+    {
+        CHECK(
+            !std::is_assignable<
+                eggs::variant<int>&, std::string
+            >::value);
+        CHECK(
+            !std::is_assignable<
+                eggs::variant<int, int>&, int
+            >::value);
+        CHECK(
+            !std::is_assignable<
+                eggs::variant<int, int const>&, int
+            >::value);
+#if EGGS_CXX11_HAS_SFINAE_FOR_EXPRESSIONS
+#  if !defined(_MSC_FULL_VER) || _MSC_FULL_VER >= 191025206
+        CHECK(
+            !std::is_assignable<
+                eggs::variant<WeirdAssignment>&, long
+            >::value);
+#  endif
+        CHECK(
+            !std::is_assignable<
+                eggs::variant<WeirdConstructor>&, long
+            >::value);
 #endif
     }
 }

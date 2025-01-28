@@ -1,54 +1,79 @@
 //! \file eggs/variant/in_place.hpp
 // Eggs.Variant
 //
-// Copyright Agustin K-ballo Berge, Fusion Fenix 2014-2016
+// Copyright Agustin K-ballo Berge, Fusion Fenix 2014-2018
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #ifndef EGGS_VARIANT_IN_PLACE_HPP
 #define EGGS_VARIANT_IN_PLACE_HPP
 
-#include <eggs/variant/detail/pack.hpp>
-
 #include <cstddef>
-#include <stdexcept>
-#include <string>
+#include <type_traits>
 
-#include <eggs/variant/detail/config/prefix.hpp>
+#include "detail/config/prefix.hpp"
 
 namespace eggs { namespace variants
 {
-    ///////////////////////////////////////////////////////////////////////////
-    //! struct in_place_t {};
-    //!
-    //! The struct `in_place_t` is an empty structure type used as a unique
-    //! type to disambiguate constructor and function overloading.
-    //! Specifically, `variant<Ts...>` has a constructor with an unspecified
-    //! first parameter that matches an expression of the form `in_place<T>`,
-    //! followed by a parameter pack; this indicates that `T` should be
-    //! constructed in-place (as if by a call to a placement new expression)
-    //! with the forwarded pack expansion as arguments for the initialization
-    //! of `T`.
-    struct in_place_t {};
-
-    //! template <std::size_t I>
-    //! in_place_t in_place(unspecified<I>);
-    template <std::size_t I>
-    inline in_place_t in_place(detail::pack_c<std::size_t, I> = {})
+    namespace detail
     {
-        return {};
+        template <std::size_t I>
+        struct in_place_index_tag {};
+
+        template <typename T>
+        struct in_place_type_tag {};
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    //! The template aliases `in_place_index_t` and `in_place_type_t` are used
+    //! as unique types to disambiguate constructor and function overloading.
+    //! Specifically, `variant<Ts...>` has a constructor with
+    //! `in_place_type_t<T>`as the first parameter, followed by a parameter
+    //! pack; this indicates that `T` should be constructed in-place (as if
+    //! by a call to a placement new expression) with the forwarded pack
+    //! expansion as arguments for the initialization of `T`.
+
+    //! template <std::size_t I>
+    //! using in_place_index_t = void(*)(unspecified<I>);
+    template <std::size_t I>
+    using in_place_index_t = void(*)(detail::in_place_index_tag<I>);
+
     //! template <class T>
-    //! in_place_t in_place(unspecified<T>);
+    //! using in_place_type_t = void(*)(unspecified<T>);
     template <typename T>
-    inline in_place_t in_place(detail::pack<T> = {})
+    using in_place_type_t = void(*)(detail::in_place_type_tag<T>);
+
+    //! template <std::size_t I>
+    //! void in_place(unspecified<I>);
+    template <std::size_t I>
+    inline void in_place(detail::in_place_index_tag<I> = {}) {}
+
+    //! template <class T>
+    //! void in_place(unspecified<T>);
+    template <typename T>
+    inline void in_place(detail::in_place_type_tag<T> = {}) {}
+
+    ///////////////////////////////////////////////////////////////////////////
+    namespace detail
     {
-        return {};
+        template <typename T>
+        struct is_inplace_tag
+          : std::false_type
+        {};
+
+        template <std::size_t I>
+        struct is_inplace_tag<in_place_index_t<I>>
+          : std::true_type
+        {};
+
+        template <typename T>
+        struct is_inplace_tag<in_place_type_t<T>>
+          : std::true_type
+        {};
     }
 }}
 
-#include <eggs/variant/detail/config/suffix.hpp>
+#include "detail/config/suffix.hpp"
 
 #endif /*EGGS_VARIANT_IN_PLACE_HPP*/
