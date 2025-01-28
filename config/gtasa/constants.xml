@@ -1495,7 +1495,7 @@
       <Constant Name="POPCYCLE_ZONE_AIRPORT_RUNWAY"/>
       <Constant Name="POPCYCLE_ZONETYPES"/>
     </Enum>
-    <Enum Name="KILLFRENZY"> <!-- TODO global? -->
+    <Enum Name="KILLFRENZY">
       <Constant Name="KILLFRENZY_INITIALLY"/>
       <Constant Name="KILLFRENZY_ONGOING"/>
       <Constant Name="KILLFRENZY_PASSED"/>
