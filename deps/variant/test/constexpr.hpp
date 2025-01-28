@@ -1,14 +1,15 @@
 // Eggs.Variant
 //
-// Copyright Agustin K-ballo Berge, Fusion Fenix 2014-2016
+// Copyright Agustin K-ballo Berge, Fusion Fenix 2014-2018
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #ifndef EGGS_VARIANT_TEST_CONSTEXPR_HPP
 #define EGGS_VARIANT_TEST_CONSTEXPR_HPP
 
 #include <initializer_list>
+#include <type_traits>
 
 #include <eggs/variant/detail/config/prefix.hpp>
 
@@ -26,8 +27,19 @@ struct Constexpr
     constexpr Constexpr(Constexpr const& rhs) : x(rhs.x) {} // not trivially copyable
 
     constexpr bool operator==(Constexpr rhs) const { return x == rhs.x; }
+    constexpr bool operator!=(Constexpr rhs) const { return x != rhs.x; }
     constexpr bool operator<(Constexpr rhs) const { return x < rhs.x; }
+    constexpr bool operator>(Constexpr rhs) const { return x > rhs.x; }
+    constexpr bool operator<=(Constexpr rhs) const { return x <= rhs.x; }
+    constexpr bool operator>=(Constexpr rhs) const { return x >= rhs.x; }
 };
+
+#  if !EGGS_CXX11_STD_HAS_IS_TRIVIALLY_DESTRUCTIBLE
+namespace eggs { namespace variants { namespace detail
+{
+    template <> struct is_trivially_destructible<Constexpr> : std::true_type {};
+}}}
+#  endif
 
 struct ConstexprTrivial
 {
@@ -38,15 +50,13 @@ struct ConstexprTrivial
 #  endif
 };
 
-namespace std
+#  if !EGGS_CXX11_STD_HAS_IS_TRIVIALLY_COPYABLE || !EGGS_CXX11_STD_HAS_IS_TRIVIALLY_DESTRUCTIBLE
+namespace eggs { namespace variants { namespace detail
 {
-#if !EGGS_CXX11_STD_HAS_IS_TRIVIALLY_DESTRUCTIBLE
-    template <> struct is_pod<Constexpr> : true_type {};
-    template <> struct is_pod<ConstexprTrivial> : true_type {};
-#elif !EGGS_CXX11_STD_HAS_IS_TRIVIALLY_COPYABLE
-    template <> struct is_pod<ConstexprTrivial> : true_type {};
-#endif
-}
+    template <> struct is_trivially_copyable<ConstexprTrivial> : std::true_type {};
+    template <> struct is_trivially_destructible<ConstexprTrivial> : std::true_type {};
+}}}
+#  endif
 #endif
 
 #endif /*EGGS_VARIANT_TEST_CONSTEXPR_HPP*/

@@ -1,26 +1,27 @@
 //! \file eggs/variant/detail/visitor.hpp
 // Eggs.Variant
 //
-// Copyright Agustin K-ballo Berge, Fusion Fenix 2014-2016
+// Copyright Agustin K-ballo Berge, Fusion Fenix 2014-2018
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #ifndef EGGS_VARIANT_DETAIL_VISITOR_HPP
 #define EGGS_VARIANT_DETAIL_VISITOR_HPP
 
-#include <eggs/variant/detail/pack.hpp>
-#include <eggs/variant/detail/utility.hpp>
+#include "pack.hpp"
+#include "utility.hpp"
 
 #include <cassert>
 #include <cstddef>
 #include <exception>
-#include <memory>
+#include <functional>
+#include <new>
 #include <type_traits>
 #include <typeinfo>
 #include <utility>
 
-#include <eggs/variant/detail/config/prefix.hpp>
+#include "config/prefix.hpp"
 
 namespace eggs { namespace variants { namespace detail
 {
@@ -34,12 +35,9 @@ namespace eggs { namespace variants { namespace detail
         template <typename ...Ts>
         struct _table
         {
-            static EGGS_CXX11_CONSTEXPR R (*value[pack<Ts...>::size])(Args...)
-#if EGGS_CXX11_HAS_CONSTEXPR
-                = {&F::template call<Ts>...};
-#else
-                ;
-#endif
+            static EGGS_CXX17_INLINE EGGS_CXX11_CONSTEXPR
+                R (*value[pack<Ts...>::size])(Args...)
+                    = {&F::template call<Ts>...};
         };
 
 #if defined(NDEBUG)
@@ -76,14 +74,11 @@ namespace eggs { namespace variants { namespace detail
         }
     };
 
+#if !EGGS_CXX17_HAS_INLINE_VARIABLES
     template <typename F, typename R, typename ...Args>
     template <typename ...Ts>
     EGGS_CXX11_CONSTEXPR R (*visitor<F, R(Args...)>::_table<Ts...>::
-        value[pack<Ts...>::size])(Args...)
-#if EGGS_CXX11_HAS_CONSTEXPR
-        ;
-#else
-        = {&F::template call<Ts>...};
+        value[pack<Ts...>::size])(Args...);
 #endif
 
     ///////////////////////////////////////////////////////////////////////////
@@ -134,6 +129,7 @@ namespace eggs { namespace variants { namespace detail
         static void call(void* ptr)
         {
             static_cast<T*>(ptr)->~T();
+            (void)ptr; // silence bogus unreferenced formal parameter warning
         }
     };
 
@@ -172,6 +168,17 @@ namespace eggs { namespace variants { namespace detail
     };
 
     template <typename Union>
+    struct not_equal_to
+      : visitor<not_equal_to<Union>, bool(Union const&, Union const&)>
+    {
+        template <typename I>
+        static EGGS_CXX11_CONSTEXPR bool call(Union const& lhs, Union const& rhs)
+        {
+            return lhs.get(I{}) != rhs.get(I{});
+        }
+    };
+
+    template <typename Union>
     struct less
       : visitor<less<Union>, bool(Union const&, Union const&)>
     {
@@ -182,52 +189,60 @@ namespace eggs { namespace variants { namespace detail
         }
     };
 
-    ///////////////////////////////////////////////////////////////////////////
-    namespace _addressof
+    template <typename Union>
+    struct greater
+      : visitor<greater<Union>, bool(Union const&, Union const&)>
     {
-        struct _fallback {};
-
-        template <typename T>
-        _fallback operator&(T&&);
-
-        template <typename T>
-        struct has_addressof_operator
+        template <typename I>
+        static EGGS_CXX11_CONSTEXPR bool call(Union const& lhs, Union const& rhs)
         {
-            EGGS_CXX11_STATIC_CONSTEXPR bool value =
-                (std::is_class<T>::value || std::is_union<T>::value)
-             && !std::is_same<decltype(&std::declval<T&>()), _fallback>::value;
-        };
-    }
+            return lhs.get(I{}) > rhs.get(I{});
+        }
+    };
 
-    template <typename T>
-    EGGS_CXX11_CONSTEXPR typename std::enable_if<
-        !_addressof::has_addressof_operator<T>::value
-      , T*
-    >::type addressof(T& r) EGGS_CXX11_NOEXCEPT
+    template <typename Union>
+    struct less_equal
+      : visitor<less_equal<Union>, bool(Union const&, Union const&)>
     {
-        return &r;
-    }
+        template <typename I>
+        static EGGS_CXX11_CONSTEXPR bool call(Union const& lhs, Union const& rhs)
+        {
+            return lhs.get(I{}) <= rhs.get(I{});
+        }
+    };
 
-    template <typename T>
-    typename std::enable_if<
-        _addressof::has_addressof_operator<T>::value
-      , T*
-    >::type addressof(T& r) EGGS_CXX11_NOEXCEPT
+    template <typename Union>
+    struct greater_equal
+      : visitor<greater_equal<Union>, bool(Union const&, Union const&)>
     {
-        return std::addressof(r);
-    }
+        template <typename I>
+        static EGGS_CXX11_CONSTEXPR bool call(Union const& lhs, Union const& rhs)
+        {
+            return lhs.get(I{}) >= rhs.get(I{});
+        }
+    };
+
+    struct hash
+      : visitor<hash, std::size_t(void const*)>
+    {
+        template <typename T>
+        static std::size_t call(void const* ptr)
+        {
+            std::hash<typename std::remove_const<T>::type> h;
+            return h(*static_cast<T const*>(ptr));
+        }
+    };
 
     template <typename T, typename Union>
     struct target
       : visitor<target<T, Union>, T*(Union&)>
     {
-        static EGGS_CXX11_CONSTEXPR T* _impl(T& m)
+        static EGGS_CXX11_CONSTEXPR T* _impl(T* ptr)
         {
-            return detail::addressof(m);
+            return ptr;
         }
 
-        template <typename U>
-        static EGGS_CXX11_CONSTEXPR T* _impl(U&)
+        static EGGS_CXX11_CONSTEXPR T* _impl(void const*)
         {
             return nullptr;
         }
@@ -235,33 +250,11 @@ namespace eggs { namespace variants { namespace detail
         template <typename I>
         static EGGS_CXX11_CONSTEXPR T* call(Union& u)
         {
-            return target::_impl(u.get(I{}));
-        }
-    };
-
-    template <typename T, typename Union>
-    struct target<T, Union const>
-      : visitor<target<T, Union const>, T const*(Union const&)>
-    {
-        static EGGS_CXX11_CONSTEXPR T const* _impl(T const& m)
-        {
-            return detail::addressof(m);
-        }
-
-        template <typename U>
-        static EGGS_CXX11_CONSTEXPR T const* _impl(U const&)
-        {
-            return nullptr;
-        }
-
-        template <typename I>
-        static EGGS_CXX11_CONSTEXPR T const* call(Union const& u)
-        {
-            return target::_impl(u.get(I{}));
+            return target::_impl(detail::addressof(u.get(I{})));
         }
     };
 }}}
 
-#include <eggs/variant/detail/config/suffix.hpp>
+#include "config/suffix.hpp"
 
 #endif /*EGGS_VARIANT_DETAIL_VISITOR_HPP*/

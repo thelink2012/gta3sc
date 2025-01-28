@@ -1,25 +1,22 @@
 // Eggs.Variant
 //
-// Copyright Agustin K-ballo Berge, Fusion Fenix 2014-2016
+// Copyright Agustin K-ballo Berge, Fusion Fenix 2014-2018
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <eggs/variant.hpp>
 #include <string>
-#include <typeinfo>
+#include <type_traits>
 
 #include <eggs/variant/detail/config/prefix.hpp>
 
-#define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 #include "constexpr.hpp"
 
-using eggs::variants::in_place;
-
 TEST_CASE("variant<Ts...>::variant(in_place<I>, Args&&...)", "[variant.cnstr]")
 {
-    eggs::variant<int, std::string> v(in_place<0>, 42);
+    eggs::variant<int, std::string> v(eggs::variants::in_place<0>, 42);
 
     CHECK(bool(v) == true);
     CHECK(v.which() == 0u);
@@ -33,19 +30,12 @@ TEST_CASE("variant<Ts...>::variant(in_place<I>, Args&&...)", "[variant.cnstr]")
 #if EGGS_CXX11_HAS_CONSTEXPR
     // constexpr
     {
-        constexpr eggs::variant<int, Constexpr> v(in_place<1>, 42);
-        constexpr bool vb = bool(v);
-        constexpr std::size_t vw = v.which();
-        constexpr bool vttb = v.target<Constexpr>()->x == 42;
-
-#  if EGGS_CXX98_HAS_RTTI
-        constexpr std::type_info const& vtt = v.target_type();
-#  endif
+        constexpr eggs::variant<int, Constexpr> v(eggs::variants::in_place<1>, 42);
 
 #  if EGGS_CXX14_HAS_CONSTEXPR
         struct test { static constexpr int call()
         {
-            eggs::variant<int, Constexpr> v(in_place<1>, 42);
+            eggs::variant<int, Constexpr> v(eggs::variants::in_place<1>, 42);
             v.target<Constexpr>()->x = 43;
             return 0;
         }};
@@ -53,11 +43,25 @@ TEST_CASE("variant<Ts...>::variant(in_place<I>, Args&&...)", "[variant.cnstr]")
 #  endif
     }
 #endif
+
+    // sfinae
+    {
+        CHECK(
+            !std::is_constructible<
+                eggs::variant<int>,
+                eggs::variants::in_place_index_t<0>, std::string
+            >::value);
+        CHECK(
+            !std::is_constructible<
+                eggs::variant<int>,
+                eggs::variants::in_place_index_t<1>
+            >::value);
+    }
 }
 
 TEST_CASE("variant<T, T>::variant(in_place<I>, Args&&...)", "[variant.cnstr]")
 {
-    eggs::variant<int, int> v(in_place<0>, 42);
+    eggs::variant<int, int> v(eggs::variants::in_place<0>, 42);
 
     CHECK(bool(v) == true);
     CHECK(v.which() == 0u);
@@ -68,10 +72,9 @@ TEST_CASE("variant<T, T>::variant(in_place<I>, Args&&...)", "[variant.cnstr]")
 #endif
 }
 
-#if EGGS_CXX11_HAS_INITIALIZER_LIST_OVERLOADING
 TEST_CASE("variant<Ts...>::variant(in_place<I>, std::initializer_list<U>, Args&&...)", "[variant.cnstr]")
 {
-    eggs::variant<int, std::string> v(in_place<1>, {'4', '2'});
+    eggs::variant<int, std::string> v(eggs::variants::in_place<1>, {'4', '2'});
 
     CHECK(bool(v) == true);
     CHECK(v.which() == 1u);
@@ -85,19 +88,12 @@ TEST_CASE("variant<Ts...>::variant(in_place<I>, std::initializer_list<U>, Args&&
 #if EGGS_CXX14_HAS_CONSTEXPR
     // constexpr
     {
-        constexpr eggs::variant<int, Constexpr> v(in_place<1>, {4, 2});
-        constexpr bool vb = bool(v);
-        constexpr std::size_t vw = v.which();
-        constexpr bool vttb = v.target<Constexpr>()->x == 4;
-
-#  if EGGS_CXX98_HAS_RTTI
-        constexpr std::type_info const& vtt = v.target_type();
-#  endif
+        constexpr eggs::variant<int, Constexpr> v(eggs::variants::in_place<1>, {4, 2});
 
 #  if EGGS_CXX14_HAS_CONSTEXPR
         struct test { static constexpr int call()
         {
-            eggs::variant<int, Constexpr> v(in_place<1>, {4, 2});
+            eggs::variant<int, Constexpr> v(eggs::variants::in_place<1>, {4, 2});
             v.target<Constexpr>()->x = 5;
             return 0;
         }};
@@ -105,11 +101,25 @@ TEST_CASE("variant<Ts...>::variant(in_place<I>, std::initializer_list<U>, Args&&
 #  endif
     }
 #endif
+
+    // sfinae
+    {
+        CHECK(
+            !std::is_constructible<
+                eggs::variant<std::string>,
+                eggs::variants::in_place_index_t<0>, std::initializer_list<int>
+            >::value);
+        CHECK(
+            !std::is_constructible<
+                eggs::variant<std::string>,
+                eggs::variants::in_place_index_t<1>, std::initializer_list<int>
+            >::value);
+    }
 }
 
 TEST_CASE("variant<T, T>::variant(in_place<I>, std::initializer_list<U>, Args&&...)", "[variant.cnstr]")
 {
-    eggs::variant<std::string, std::string> v(in_place<1>, {'4', '2'});
+    eggs::variant<std::string, std::string> v(eggs::variants::in_place<1>, {'4', '2'});
 
     CHECK(bool(v) == true);
     CHECK(v.which() == 1u);
@@ -119,11 +129,10 @@ TEST_CASE("variant<T, T>::variant(in_place<I>, std::initializer_list<U>, Args&&.
     CHECK(v.target_type() == typeid(std::string));
 #endif
 }
-#endif
 
 TEST_CASE("variant<Ts...>::variant(in_place<T>, Args&&...)", "[variant.cnstr]")
 {
-    eggs::variant<int, std::string> v(in_place<int>, 42);
+    eggs::variant<int, std::string> v(eggs::variants::in_place<int>, 42);
 
     CHECK(bool(v) == true);
     CHECK(v.which() == 0u);
@@ -137,19 +146,12 @@ TEST_CASE("variant<Ts...>::variant(in_place<T>, Args&&...)", "[variant.cnstr]")
 #if EGGS_CXX11_HAS_CONSTEXPR
     // constexpr
     {
-        constexpr eggs::variant<int, Constexpr> v(in_place<Constexpr>, 42);
-        constexpr bool vb = bool(v);
-        constexpr std::size_t vw = v.which();
-        constexpr bool vttb = v.target<Constexpr>()->x == 42;
-
-#  if EGGS_CXX98_HAS_RTTI
-        constexpr std::type_info const& vtt = v.target_type();
-#  endif
+        constexpr eggs::variant<int, Constexpr> v(eggs::variants::in_place<Constexpr>, 42);
 
 #  if EGGS_CXX14_HAS_CONSTEXPR
         struct test { static constexpr int call()
         {
-            eggs::variant<int, Constexpr> v(in_place<Constexpr>, 42);
+            eggs::variant<int, Constexpr> v(eggs::variants::in_place<Constexpr>, 42);
             v.target<Constexpr>()->x = 43;
             return 0;
         }};
@@ -157,12 +159,30 @@ TEST_CASE("variant<Ts...>::variant(in_place<T>, Args&&...)", "[variant.cnstr]")
 #  endif
     }
 #endif
+
+    // sfinae
+    {
+        CHECK(
+            !std::is_constructible<
+                eggs::variant<int>,
+                eggs::variants::in_place_type_t<int>, std::string
+            >::value);
+        CHECK(
+            !std::is_constructible<
+                eggs::variant<int, int>,
+                eggs::variants::in_place_type_t<int>
+            >::value);
+        CHECK(
+            !std::is_constructible<
+                eggs::variant<int, int const>,
+                eggs::variants::in_place_type_t<int>
+            >::value);
+    }
 }
 
-#if EGGS_CXX11_HAS_INITIALIZER_LIST_OVERLOADING
 TEST_CASE("variant<Ts...>::variant(in_place<T>, std::initializer_list<U>, Args&&...)", "[variant.cnstr]")
 {
-    eggs::variant<int, std::string> v(in_place<std::string>, {'4', '2'});
+    eggs::variant<int, std::string> v(eggs::variants::in_place<std::string>, {'4', '2'});
 
     CHECK(bool(v) == true);
     CHECK(v.which() == 1u);
@@ -176,19 +196,12 @@ TEST_CASE("variant<Ts...>::variant(in_place<T>, std::initializer_list<U>, Args&&
 #if EGGS_CXX14_HAS_CONSTEXPR
     // constexpr
     {
-        constexpr eggs::variant<int, Constexpr> v(in_place<Constexpr>, {4, 2});
-        constexpr bool vb = bool(v);
-        constexpr std::size_t vw = v.which();
-        constexpr bool vttb = v.target<Constexpr>()->x == 4;
-
-#  if EGGS_CXX98_HAS_RTTI
-        constexpr std::type_info const& vtt = v.target_type();
-#  endif
+        constexpr eggs::variant<int, Constexpr> v(eggs::variants::in_place<Constexpr>, {4, 2});
 
 #  if EGGS_CXX14_HAS_CONSTEXPR
         struct test { static constexpr int call()
         {
-            eggs::variant<int, Constexpr> v(in_place<Constexpr>, {4, 2});
+            eggs::variant<int, Constexpr> v(eggs::variants::in_place<Constexpr>, {4, 2});
             v.target<Constexpr>()->x = 5;
             return 0;
         }};
@@ -196,5 +209,23 @@ TEST_CASE("variant<Ts...>::variant(in_place<T>, std::initializer_list<U>, Args&&
 #  endif
     }
 #endif
+
+    // sfinae
+    {
+        CHECK(
+            !std::is_constructible<
+                eggs::variant<std::string>,
+                eggs::variants::in_place_type_t<std::string>, std::initializer_list<int>
+            >::value);
+        CHECK(
+            !std::is_constructible<
+                eggs::variant<std::string, std::string>,
+                eggs::variants::in_place_type_t<std::string>, std::initializer_list<int>
+            >::value);
+        CHECK(
+            !std::is_constructible<
+                eggs::variant<std::string, std::string const>,
+                eggs::variants::in_place_type_t<std::string>, std::initializer_list<int>
+            >::value);
+    }
 }
-#endif

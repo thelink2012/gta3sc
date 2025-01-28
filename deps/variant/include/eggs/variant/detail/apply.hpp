@@ -1,34 +1,31 @@
 //! \file eggs/variant/detail/apply.hpp
 // Eggs.Variant
 //
-// Copyright Agustin K-ballo Berge, Fusion Fenix 2014-2016
+// Copyright Agustin K-ballo Berge, Fusion Fenix 2014-2018
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #ifndef EGGS_VARIANT_DETAIL_APPLY_HPP
 #define EGGS_VARIANT_DETAIL_APPLY_HPP
 
-#include <eggs/variant/detail/pack.hpp>
-#include <eggs/variant/detail/storage.hpp>
-#include <eggs/variant/detail/utility.hpp>
-#include <eggs/variant/detail/visitor.hpp>
-
-#include <eggs/variant/bad_variant_access.hpp>
+#include "pack.hpp"
+#include "storage.hpp"
+#include "utility.hpp"
+#include "visitor.hpp"
 
 #include <cstddef>
 #include <type_traits>
 #include <utility>
 
-#include <eggs/variant/detail/config/prefix.hpp>
+#include "config/prefix.hpp"
 
 namespace eggs { namespace variants { namespace detail
 {
     ///////////////////////////////////////////////////////////////////////////
     template <typename F, typename ...Ts>
     EGGS_CXX11_CONSTEXPR auto _invoke(F&& f, Ts&&... vs)
-        EGGS_CXX11_NOEXCEPT_IF(EGGS_CXX11_NOEXCEPT_EXPR(
-            detail::forward<F>(f)(detail::forward<Ts>(vs)...)))
+        noexcept(noexcept(detail::forward<F>(f)(detail::forward<Ts>(vs)...)))
      -> decltype(detail::forward<F>(f)(detail::forward<Ts>(vs)...))
     {
         return detail::forward<F>(f)(detail::forward<Ts>(vs)...);
@@ -37,8 +34,7 @@ namespace eggs { namespace variants { namespace detail
 #if EGGS_CXX11_HAS_SFINAE_FOR_EXPRESSIONS
     template <typename F, typename T0, typename ...Ts>
     EGGS_CXX11_CONSTEXPR auto _invoke(F&& f, T0&& v0, Ts&&... vs)
-        EGGS_CXX11_NOEXCEPT_IF(EGGS_CXX11_NOEXCEPT_EXPR(
-            (v0.*f)(detail::forward<Ts>(vs)...)))
+        noexcept(noexcept((v0.*f)(detail::forward<Ts>(vs)...)))
      -> decltype((v0.*f)(detail::forward<Ts>(vs)...))
     {
         return (v0.*f)(detail::forward<Ts>(vs)...);
@@ -46,22 +42,21 @@ namespace eggs { namespace variants { namespace detail
 
     template <typename F, typename T0, typename ...Ts>
     EGGS_CXX11_CONSTEXPR auto _invoke(F&& f, T0&& v0, Ts&&... vs)
-        EGGS_CXX11_NOEXCEPT_IF(EGGS_CXX11_NOEXCEPT_EXPR(
-            ((*v0).*f)(detail::forward<Ts>(vs)...)))
+        noexcept(noexcept(((*v0).*f)(detail::forward<Ts>(vs)...)))
      -> decltype(((*v0).*f)(detail::forward<Ts>(vs)...))
     {
         return ((*v0).*f)(detail::forward<Ts>(vs)...);
     }
 
     template <typename F, typename T0>
-    EGGS_CXX11_CONSTEXPR auto _invoke(F&& f, T0&& v0) EGGS_CXX11_NOEXCEPT
+    EGGS_CXX11_CONSTEXPR auto _invoke(F&& f, T0&& v0) noexcept
      -> decltype(v0.*f)
     {
         return v0.*f;
     }
 
     template <typename F, typename T0>
-    EGGS_CXX11_CONSTEXPR auto _invoke(F&& f, T0&& v0) EGGS_CXX11_NOEXCEPT
+    EGGS_CXX11_CONSTEXPR auto _invoke(F&& f, T0&& v0) noexcept
      -> decltype((*v0).*f)
     {
         return (*v0).*f;
@@ -74,8 +69,7 @@ namespace eggs { namespace variants { namespace detail
     {
         template <typename ...Ts>
         EGGS_CXX11_CONSTEXPR R operator()(Ts&&... vs) const
-            EGGS_CXX11_NOEXCEPT_IF(EGGS_CXX11_NOEXCEPT_EXPR(
-                _invoke(detail::forward<Ts>(vs)...)))
+            noexcept(noexcept(detail::_invoke(detail::forward<Ts>(vs)...)))
         {
             return detail::_invoke(detail::forward<Ts>(vs)...);
         }
@@ -86,8 +80,7 @@ namespace eggs { namespace variants { namespace detail
     {
         template <typename ...Ts>
         EGGS_CXX14_CONSTEXPR void operator()(Ts&&... vs) const
-            EGGS_CXX11_NOEXCEPT_IF(EGGS_CXX11_NOEXCEPT_EXPR(
-                _invoke(detail::forward<Ts>(vs)...)))
+            noexcept(noexcept(detail::_invoke(detail::forward<Ts>(vs)...)))
         {
             detail::_invoke(detail::forward<Ts>(vs)...);
         }
@@ -178,27 +171,27 @@ namespace eggs { namespace variants { namespace detail
             V1&& v1, Vs&&... vs)
         {
             using T = typename _apply_get<V0, I>::type;
-            return v0.which() != 0
-              ? _apply<R, F, pack<Ms..., T>, pack<V1, Vs...>>{}(
+            return _apply<R, F, pack<Ms..., T>, pack<V1, Vs...>>{}(
                     _apply_pack<typename std::decay<V1>::type>{}, v1.which() - 1
                   , detail::forward<F>(f)
                   , detail::forward<Ms>(ms)..., _apply_get<V0, I>{}(v0)
-                  , detail::forward<V1>(v1), detail::forward<Vs>(vs)...
-                )
-              : throw_bad_variant_access<R>();
+                  , detail::forward<V1>(v1), detail::forward<Vs>(vs)...);
         }
     };
+
+    template <typename R, typename F>
+    EGGS_CXX11_CONSTEXPR R apply(F&& f)
+    {
+        return _invoke_guard<R>{}(detail::forward<F>(f));
+    }
 
     template <typename R, typename F, typename V, typename ...Vs>
     EGGS_CXX11_CONSTEXPR R apply(F&& f, V&& v, Vs&&... vs)
     {
-        return v.which() != 0
-          ? _apply<R, F, pack<>, pack<V&&, Vs&&...>>{}(
+        return _apply<R, F, pack<>, pack<V&&, Vs&&...>>{}(
                 _apply_pack<typename std::decay<V>::type>{}, v.which() - 1
               , detail::forward<F>(f)
-              , detail::forward<V>(v), detail::forward<Vs>(vs)...
-            )
-          : throw_bad_variant_access<R>();
+              , detail::forward<V>(v), detail::forward<Vs>(vs)...);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -246,17 +239,19 @@ namespace eggs { namespace variants { namespace detail
     {};
 
     template <typename F, typename Vs>
-    struct _apply_result;
+    struct apply_result;
 
-    template <typename F, typename V, typename ...Vs>
-    struct _apply_result<F, pack<V, Vs...>>
-      : _apply_result_expand<F, pack<>, V, pack<Vs...>>
+    template <typename F>
+    struct apply_result<F, pack<>>
+      : _result_of<F, pack<>>
     {};
 
-    template <typename F, typename ...Vs>
-    using apply_result = typename _apply_result<F, pack<Vs...>>::type;
+    template <typename F, typename V, typename ...Vs>
+    struct apply_result<F, pack<V, Vs...>>
+      : _apply_result_expand<F, pack<>, V, pack<Vs...>>
+    {};
 }}}
 
-#include <eggs/variant/detail/config/suffix.hpp>
+#include "config/suffix.hpp"
 
 #endif /*EGGS_VARIANT_DETAIL_APPLY_HPP*/

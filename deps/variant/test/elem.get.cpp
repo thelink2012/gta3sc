@@ -1,9 +1,9 @@
 // Eggs.Variant
 //
-// Copyright Agustin K-ballo Berge, Fusion Fenix 2014-2016
+// Copyright Agustin K-ballo Berge, Fusion Fenix 2014-2018
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+// file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <eggs/variant.hpp>
 #include <string>
@@ -13,11 +13,8 @@
 
 using eggs::variants::detail::move;
 
-#define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 #include "constexpr.hpp"
-
-using eggs::variants::in_place;
 
 TEST_CASE("get<I>(variant<Ts...>&)", "[variant.elem]")
 {
@@ -55,7 +52,7 @@ TEST_CASE("get<I>(variant<Ts...>&)", "[variant.elem]")
 
 TEST_CASE("get<I>(variant<T, T>&)", "[variant.elem]")
 {
-    eggs::variant<int, int> v(in_place<0>, 42);
+    eggs::variant<int, int> v(eggs::variants::in_place<0>, 42);
 
     REQUIRE(v.which() == 0u);
     REQUIRE(v.target() != nullptr);
@@ -96,7 +93,7 @@ TEST_CASE("get<I>(variant<Ts...> const&)", "[variant.elem]")
 
 TEST_CASE("get<I>(variant<T, T> const&)", "[variant.elem]")
 {
-    eggs::variant<int, int> const v(in_place<0>, 42);
+    eggs::variant<int, int> const v(eggs::variants::in_place<0>, 42);
 
     REQUIRE(v.which() == 0u);
     REQUIRE(v.target() != nullptr);
