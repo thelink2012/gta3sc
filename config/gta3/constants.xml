@@ -145,6 +145,38 @@
       <Constant Name="MOTION_BLUR_INTRO4"/>
     </Enum>
     <Enum Name="PEDGRP">
+        <Constant Name="DEFAULT_PEDGRP"/>
+        <Constant Name="REDLIGHT_PEDGRP"/>
+        <Constant Name="REDLIGHT_NIGHT_PEDGRP"/>
+        <Constant Name="LITTLEITALY_PEDGRP"/>
+        <Constant Name="LITTLEITALY_NIGHT_PEDGRP"/>
+        <Constant Name="CHINATOWN_PEDGRP"/>
+        <Constant Name="CHINATOWN_NIGHT_PEDGRP"/>
+        <Constant Name="DOCKS_PEDGRP"/>
+        <Constant Name="DOCKS_NIGHT_PEDGRP"/>
+        <Constant Name="PROJECTS_PEDGRP"/>
+        <Constant Name="PROJECTS_NIGHT_PEDGRP"/>
+        <Constant Name="INDUSTRIAL_PEDGRP"/>
+        <Constant Name="INDUSTRIAL_NIGHT_PEDGRP"/>
+        <Constant Name="CITY_PEDGRP"/>
+        <Constant Name="CITY_NIGHT_PEDGRP"/>
+        <Constant Name="STADIUM_PEDGRP"/>
+        <Constant Name="STADIUM_NIGHT_PEDGRP"/>
+        <Constant Name="HOSPITAL_PEDGRP"/>
+        <Constant Name="HOSPITAL_NIGHT_PEDGRP"/>
+        <Constant Name="CONSTRUCTION_PEDGRP"/>
+        <Constant Name="CONSTRUCTION_NIGHT_PEDGRP"/>
+        <Constant Name="SHOPPING_PEDGRP"/>
+        <Constant Name="SHOPPING_NIGHT_PEDGRP"/>
+        <Constant Name="UNIVERSITY_PEDGRP"/>
+        <Constant Name="UNIVERSITY_NIGHT_PEDGRP"/>
+        <Constant Name="PARK_PEDGRP"/>
+        <Constant Name="PARK_NIGHT_PEDGRP"/>
+        <Constant Name="AIRPORT_PEDGRP"/>
+        <Constant Name="AIRPORT_NIGHT_PEDGRP"/>
+        <Constant Name="SWANKSVILLE_PEDGRP"/>
+        <Constant Name="SWANKSVILLE_NIGHT_PEDGRP"/>
+        <Constant Name="MAX_PEDGRPS"/>
     </Enum>
     <Enum Name="DOOR">
       <Constant Name="BONNET"/>
@@ -189,181 +221,259 @@
       <Constant Name="WEATHER_FOGGY"/>
     </Enum>
     <Enum Name="RADAR_SPRITE">
-      <Constant Name="RADAR_SPRITE_ASUKA" Value="1"/>
-      <Constant Name="RADAR_SPRITE_BOMB" Value="2"/>
-      <Constant Name="RADAR_SPRITE_CAT" Value="3"/>
-      <Constant Name="RADAR_SPRITE_DON" Value="6"/>
-      <Constant Name="RADAR_SPRITE_EIGHT" Value="7"/>
-      <Constant Name="RADAR_SPRITE_JOEY" Value="10"/>
-      <Constant Name="RADAR_SPRITE_KENJI" Value="11"/>
-      <Constant Name="RADAR_SPRITE_LUIGI" Value="13"/>
-      <Constant Name="RADAR_SPRITE_RAY" Value="15"/>
-      <Constant Name="RADAR_SPRITE_SAL" Value="16"/>
-      <Constant Name="RADAR_SPRITE_SPRAY" Value="18"/>
-      <Constant Name="RADAR_SPRITE_TONY" Value="19"/>
-      <Constant Name="RADAR_SPRITE_WEAPON" Value="20"/>
-      <Constant Name="RADAR_SPRITE_ICE" Value="9"/>
-      <Constant Name="RADAR_SPRITE_EL" Value="8"/>
-      <Constant Name="RADAR_SPRITE_LIZ" Value="12"/>
+      <Constant Name="RADAR_SPRITE_NONE"/>
+      <Constant Name="RADAR_SPRITE_ASUKA"/>
+      <Constant Name="RADAR_SPRITE_BOMB"/>
+      <Constant Name="RADAR_SPRITE_CAT"/>
+      <Constant Name="RADAR_SPRITE_CENTRE"/>
+      <Constant Name="RADAR_SPRITE_COPCAR"/>
+      <Constant Name="RADAR_SPRITE_DON"/>
+      <Constant Name="RADAR_SPRITE_EIGHT"/>
+      <Constant Name="RADAR_SPRITE_EL"/>
+      <Constant Name="RADAR_SPRITE_ICE"/>
+      <Constant Name="RADAR_SPRITE_JOEY"/>
+      <Constant Name="RADAR_SPRITE_KENJI"/>
+      <Constant Name="RADAR_SPRITE_LIZ"/>
+      <Constant Name="RADAR_SPRITE_LUIGI"/>
+      <Constant Name="RADAR_SPRITE_NORTH"/>
+      <Constant Name="RADAR_SPRITE_RAY"/>
+      <Constant Name="RADAR_SPRITE_SAL"/>
+      <Constant Name="RADAR_SPRITE_SAVE"/>
+      <Constant Name="RADAR_SPRITE_SPRAY"/>
+      <Constant Name="RADAR_SPRITE_TONY"/>
+      <Constant Name="RADAR_SPRITE_WEAPON"/>
     </Enum>
-    
-    <!--
-      The following constants were found by using a decompiler and matching the leaked source code.
-      Those are all the constants used in GTA III main.scm. They aren't the complete set of constants
-      since the SCM doesn't use them all.
-    -->
     <Enum Name="ANIM">
-      <Constant Name="ANIM_GANG2_PED" Value="9"/>
-      <Constant Name="ANIM_PANIC_CHUNKYPED" Value="18"/>
-      <Constant Name="ANIM_SEXY_WOMANPED" Value="15"/>
+      <Constant Name="ANIM_STD_PED"/>
+      <Constant Name="ANIM_PLAYER_PED"/>
+      <Constant Name="ANIM_PLAYER_ROCKET_PED"/>
+      <Constant Name="ANIM_PLAYER_1ARMED_PED"/>
+      <Constant Name="ANIM_PLAYER_2ARMED_PED"/>
+      <Constant Name="ANIM_PLAYER_BBBAT_PED"/>
+      <Constant Name="ANIM_SHUFFLE_PED"/>
+      <Constant Name="ANIM_OLD_PED"/>
+      <Constant Name="ANIM_GANG1_PED"/>
+      <Constant Name="ANIM_GANG2_PED"/>
+      <Constant Name="ANIM_FAT_PED"/>
+      <Constant Name="ANIM_OLDFAT_PED"/>
+      <Constant Name="ANIM_STD_WOMANPED"/>
+      <Constant Name="ANIM_SHOPPING_WOMANPED"/>
+      <Constant Name="ANIM_BUSY_WOMANPED"/>
+      <Constant Name="ANIM_SEXY_WOMANPED"/>
+      <Constant Name="ANIM_FAT_WOMANPED"/>
+      <Constant Name="ANIM_OLD_WOMANPED"/>
+      <Constant Name="ANIM_PANIC_CHUNKYPED"/>
+      <Constant Name="ANIM_NUM_ASSOCGROUPS"/>
     </Enum>
-    <Enum Name="CAMMODE">
+    <Enum Name="CAMMODE"> <!-- TODO same as VC? -->
       <Constant Name="BEHINDCAR" Value="3"/>
       <Constant Name="FIXED" Value="15"/>
       <Constant Name="FOLLOWPED" Value="4"/>
     </Enum>
-    <Enum Name="CARBOMB">
+    <Enum Name="CARBOMB">  <!-- TODO same as VC? -->
       <Constant Name="CARBOMB_ONIGNITION" Value="2"/>
       <Constant Name="CARBOMB_ONIGNITIONACTIVE" Value="5"/>
       <Constant Name="CARBOMB_REMOTE" Value="3"/>
       <Constant Name="CARBOMB_TIMED" Value="1"/>
       <Constant Name="CARBOMB_TIMEDACTIVE" Value="4"/>
     </Enum>
-    <Enum Name="CARCOLOUR">
+    <Enum Name="CARCOLOUR">  <!-- TODO same as VC? -->
       <Constant Name="CARCOLOUR_BLACK" Value="0"/>
       <Constant Name="CARCOLOUR_RED4" Value="13"/>
     </Enum>
     <Enum Name="DEFAULTMODEL">
-      <Constant Name="BOAT_GHOST" Value="150"/>
-      <Constant Name="BOAT_PREDATOR" Value="120"/>
-      <Constant Name="BOAT_REEFER" Value="143"/>
-      <Constant Name="BOAT_SPEEDER" Value="142"/>
-      <Constant Name="CAR_AMBULANCE" Value="106"/>
-      <Constant Name="CAR_BANSHEE" Value="119"/>
-      <Constant Name="CAR_BARRACKS" Value="123"/>
-      <Constant Name="CAR_BELLYUP" Value="132"/>
-      <Constant Name="CAR_BLISTA" Value="102"/>
-      <Constant Name="CAR_BOBCAT" Value="112"/>
-      <Constant Name="CAR_BORGNINE" Value="148"/>
-      <Constant Name="CAR_BUS" Value="121"/>
-      <Constant Name="CAR_CABBIE" Value="128"/>
-      <Constant Name="CAR_CHEETAH" Value="105"/>
-      <Constant Name="CAR_COACH" Value="127"/>
-      <Constant Name="CAR_COLUMB" Value="138"/>
-      <Constant Name="CAR_CORPSE" Value="115"/>
-      <Constant Name="CAR_DIABLOS" Value="137"/>
-      <Constant Name="CAR_ENFORCER" Value="117"/>
-      <Constant Name="CAR_ESPERANTO" Value="109"/>
-      <Constant Name="CAR_FBI" Value="107"/>
-      <Constant Name="CAR_FIRETRUCK" Value="97"/>
-      <Constant Name="CAR_FLATBED" Value="145"/>
-      <Constant Name="CAR_HOODS" Value="139"/>
-      <Constant Name="CAR_IDAHO" Value="91"/>
-      <Constant Name="CAR_INFERNUS" Value="101"/>
-      <Constant Name="CAR_KURUMA" Value="111"/>
-      <Constant Name="CAR_LANDSTALKER" Value="90"/>
-      <Constant Name="CAR_LINERUNNER" Value="93"/>
-      <Constant Name="CAR_MAFIA" Value="134"/>
-      <Constant Name="CAR_MANANA" Value="100"/>
-      <Constant Name="CAR_MOONBEAM" Value="108"/>
-      <Constant Name="CAR_MRWHOOPEE" Value="113"/>
-      <Constant Name="CAR_MRWONGS" Value="133"/>
-      <Constant Name="CAR_MULE" Value="104"/>
-      <Constant Name="CAR_PANLANT" Value="144"/>
-      <Constant Name="CAR_PATRIOT" Value="96"/>
-      <Constant Name="CAR_PERENNIAL" Value="94"/>
-      <Constant Name="CAR_POLICE" Value="116"/>
-      <Constant Name="CAR_PONY" Value="103"/>
-      <Constant Name="CAR_RCBANDIT" Value="131"/>
-      <Constant Name="CAR_RHINO" Value="122"/>
-      <Constant Name="CAR_RUMPO" Value="130"/>
-      <Constant Name="CAR_SECURICAR" Value="118"/>
-      <Constant Name="CAR_SENTINEL" Value="95"/>
-      <Constant Name="CAR_STALLION" Value="129"/>
-      <Constant Name="CAR_STINGER" Value="92"/>
-      <Constant Name="CAR_STRETCH" Value="99"/>
-      <Constant Name="CAR_TAXI" Value="110"/>
-      <Constant Name="CAR_TOYZ" Value="149"/>
-      <Constant Name="CAR_TRASHMASTER" Value="98"/>
-      <Constant Name="CAR_YAKUZA" Value="136"/>
-      <Constant Name="CAR_YANKEE" Value="146"/>
-      <Constant Name="CAR_YARDIE" Value="135"/>
-      <Constant Name="PED_B_MAN1" Value="59"/>
-      <Constant Name="PED_B_MAN2" Value="60"/>
-      <Constant Name="PED_B_MAN3" Value="61"/>
-      <Constant Name="PED_COP" Value="1"/>
-      <Constant Name="PED_CRIMINAL1" Value="24"/>
-      <Constant Name="PED_CRIMINAL2" Value="25"/>
-      <Constant Name="PED_CT_MAN1" Value="45"/>
-      <Constant Name="PED_DOCKER2" Value="54"/>
-      <Constant Name="PED_FAN_MAN2" Value="70"/>
-      <Constant Name="PED_FEMALE1" Value="34"/>
-      <Constant Name="PED_FEMALE2" Value="35"/>
-      <Constant Name="PED_GANG_COLOMBIAN_A" Value="20"/>
-      <Constant Name="PED_GANG_COLOMBIAN_B" Value="21"/>
-      <Constant Name="PED_GANG_DIABLO_A" Value="14"/>
-      <Constant Name="PED_GANG_DIABLO_B" Value="15"/>
-      <Constant Name="PED_GANG_HOOD_A" Value="22"/>
-      <Constant Name="PED_GANG_HOOD_B" Value="23"/>
-      <Constant Name="PED_GANG_MAFIA_A" Value="10"/>
-      <Constant Name="PED_GANG_MAFIA_B" Value="11"/>
-      <Constant Name="PED_GANG_TRIAD_A" Value="12"/>
-      <Constant Name="PED_GANG_TRIAD_B" Value="13"/>
-      <Constant Name="PED_GANG_YAKUZA_A" Value="16"/>
-      <Constant Name="PED_GANG_YAKUZA_B" Value="17"/>
-      <Constant Name="PED_GANG_YARDIE_A" Value="18"/>
-      <Constant Name="PED_GANG_YARDIE_B" Value="19"/>
-      <Constant Name="PED_LI_MAN1" Value="49"/>
-      <Constant Name="PED_LI_MAN2" Value="50"/>
-      <Constant Name="PED_MALE1" Value="7"/>
-      <Constant Name="PED_MALE2" Value="30"/>
-      <Constant Name="PED_MEDIC" Value="5"/>
-      <Constant Name="PED_P_MAN1" Value="41"/>
-      <Constant Name="PED_PIMP" Value="9"/>
-      <Constant Name="PED_PLAYER" Value="0"/>
-      <Constant Name="PED_PROSTITUTE" Value="39"/>
-      <Constant Name="PED_PROSTITUTE2" Value="40"/>
-      <Constant Name="PED_SCUM_MAN" Value="55"/>
-      <Constant Name="PED_SCUM_WOMAN" Value="56"/>
-      <Constant Name="PED_SPECIAL1" Value="26"/>
-      <Constant Name="PED_SPECIAL2" Value="27"/>
-      <Constant Name="PED_SPECIAL3" Value="28"/>
-      <Constant Name="PED_SPECIAL4" Value="29"/>
-      <Constant Name="PED_SWAT" Value="2"/>
-      <Constant Name="PED_TAXI_DRIVER" Value="8"/>
-      <Constant Name="PLANE_DODO" Value="126"/>
-      <Constant Name="PLANE_DEADDODO" Value="141"/>
-      <Constant Name="WEAPON_AK47" Value="171"/>
-      <Constant Name="WEAPON_BAT" Value="172"/>
-      <Constant Name="WEAPON_COLT45" Value="173"/>
-      <Constant Name="WEAPON_FLAME" Value="181"/>
-      <Constant Name="WEAPON_GRENADE" Value="170"/>
-      <Constant Name="WEAPON_M16" Value="180"/>
-      <Constant Name="WEAPON_MOLOTOV" Value="174"/>
-      <Constant Name="WEAPON_ROCKET" Value="175"/>
-      <Constant Name="WEAPON_SHOTGUN" Value="176"/>
-      <Constant Name="WEAPON_SNIPER" Value="177"/>
-      <Constant Name="WEAPON_UZI" Value="178"/>
-      <Constant Name="CUT_OBJ1" Value="185"/>
-      <Constant Name="CUT_OBJ2" Value="186"/>
-      <Constant Name="CUT_OBJ3" Value="187"/>
-      <Constant Name="CUT_OBJ4" Value="188"/>
-      <Constant Name="CUT_OBJ5" Value="189"/>
+        <Constant Name="PED_PLAYER" Value="0"/>
+        <Constant Name="PED_COP" Value="1"/>
+        <Constant Name="PED_SWAT" Value="2"/>
+        <Constant Name="PED_FBI" Value="3"/>
+        <Constant Name="PED_ARMY" Value="4"/>
+        <Constant Name="PED_MEDIC" Value="5"/>
+        <Constant Name="PED_FIREMAN" Value="6"/>
+        <Constant Name="PED_MALE1" Value="7"/>
+        <Constant Name="PED_TAXI_DRIVER" Value="8"/>
+        <Constant Name="PED_PIMP" Value="9"/>
+        <Constant Name="PED_GANG_MAFIA_A" Value="10"/>
+        <Constant Name="PED_GANG_MAFIA_B" Value="11"/>
+        <Constant Name="PED_GANG_TRIAD_A" Value="12"/>
+        <Constant Name="PED_GANG_TRIAD_B" Value="13"/>
+        <Constant Name="PED_GANG_DIABLO_A" Value="14"/>
+        <Constant Name="PED_GANG_DIABLO_B" Value="15"/>
+        <Constant Name="PED_GANG_YAKUZA_A" Value="16"/>
+        <Constant Name="PED_GANG_YAKUZA_B" Value="17"/>
+        <Constant Name="PED_GANG_YARDIE_A" Value="18"/>
+        <Constant Name="PED_GANG_YARDIE_B" Value="19"/>
+        <Constant Name="PED_GANG_COLOMBIAN_A" Value="20"/>
+        <Constant Name="PED_GANG_COLOMBIAN_B" Value="21"/>
+        <Constant Name="PED_GANG_HOOD_A" Value="22"/>
+        <Constant Name="PED_GANG_HOOD_B" Value="23"/>
+        <Constant Name="PED_CRIMINAL1" Value="24"/>
+        <Constant Name="PED_CRIMINAL2" Value="25"/>
+        <Constant Name="PED_SPECIAL1" Value="26"/>
+        <Constant Name="PED_SPECIAL2" Value="27"/>
+        <Constant Name="PED_SPECIAL3" Value="28"/>
+        <Constant Name="PED_SPECIAL4" Value="29"/>
+        <Constant Name="PED_MALE2" Value="30"/>
+        <Constant Name="PED_MALE3" Value="31"/>
+        <Constant Name="PED_FATMALE1" Value="32"/>
+        <Constant Name="PED_FATMALE2" Value="33"/>
+        <Constant Name="PED_FEMALE1" Value="34"/>
+        <Constant Name="PED_FEMALE2" Value="35"/>
+        <Constant Name="PED_FEMALE3" Value="36"/>
+        <Constant Name="PED_FATFEMALE1" Value="37"/>
+        <Constant Name="PED_FATFEMALE2" Value="38"/>
+        <Constant Name="PED_PROSTITUTE" Value="39"/>
+        <Constant Name="PED_PROSTITUTE2" Value="40"/>
+        <Constant Name="PED_P_MAN1" Value="41"/>
+        <Constant Name="PED_P_MAN2" Value="42"/>
+        <Constant Name="PED_P_WOM1" Value="43"/>
+        <Constant Name="PED_P_WOM2" Value="44"/>
+        <Constant Name="PED_CT_MAN1" Value="45"/>
+        <Constant Name="PED_CT_MAN2" Value="46"/>
+        <Constant Name="PED_CT_WOM1" Value="47"/>
+        <Constant Name="PED_CT_WOM2" Value="48"/>
+        <Constant Name="PED_LI_MAN1" Value="49"/>
+        <Constant Name="PED_LI_MAN2" Value="50"/>
+        <Constant Name="PED_LI_WOM1" Value="51"/>
+        <Constant Name="PED_LI_WOM2" Value="52"/>
+        <Constant Name="PED_DOCKER1" Value="53"/>
+        <Constant Name="PED_DOCKER2" Value="54"/>
+        <Constant Name="PED_SCUM_MAN" Value="55"/>
+        <Constant Name="PED_SCUM_WOMAN" Value="56"/>
+        <Constant Name="PED_WORKER1" Value="57"/>
+        <Constant Name="PED_WORKER2" Value="58"/>
+        <Constant Name="PED_B_MAN1" Value="59"/>
+        <Constant Name="PED_B_MAN2" Value="60"/>
+        <Constant Name="PED_B_MAN3" Value="61"/>
+        <Constant Name="PED_B_WOM1" Value="62"/>
+        <Constant Name="PED_B_WOM2" Value="63"/>
+        <Constant Name="PED_B_WOM3" Value="64"/>
+        <Constant Name="PED_MOD_MAN" Value="65"/>
+        <Constant Name="PED_MOD_WOM" Value="66"/>
+        <Constant Name="PED_ST_MAN" Value="67"/>
+        <Constant Name="PED_ST_WOM" Value="68"/>
+        <Constant Name="PED_FAN_MAN1" Value="69"/>
+        <Constant Name="PED_FAN_MAN2" Value="70"/>
+        <Constant Name="PED_FAN_WOM" Value="71"/>
+        <Constant Name="PED_HOS_MAN" Value="72"/>
+        <Constant Name="PED_HOS_WOM" Value="73"/>
+        <Constant Name="PED_CONST1" Value="74"/>
+        <Constant Name="PED_CONST2" Value="75"/>
+        <Constant Name="PED_SHOPPER1" Value="76"/>
+        <Constant Name="PED_SHOPPER2" Value="77"/>
+        <Constant Name="PED_SHOPPER3" Value="78"/>
+        <Constant Name="PED_STUD_MAN" Value="79"/>
+        <Constant Name="PED_STUD_WOM" Value="80"/>
+        <Constant Name="PED_CAS_MAN" Value="81"/>
+        <Constant Name="CAS_WOM" Value="82"/>
+        <Constant Name="CAR_LANDSTALKER" Value="90"/>
+        <Constant Name="CAR_IDAHO" Value="91"/>
+        <Constant Name="CAR_STINGER" Value="92"/>
+        <Constant Name="CAR_LINERUNNER" Value="93"/>
+        <Constant Name="CAR_PERENNIAL" Value="94"/>
+        <Constant Name="CAR_SENTINEL" Value="95"/>
+        <Constant Name="CAR_PATRIOT" Value="96"/>
+        <Constant Name="CAR_FIRETRUCK" Value="97"/>
+        <Constant Name="CAR_TRASHMASTER" Value="98"/>
+        <Constant Name="CAR_STRETCH" Value="99"/>
+        <Constant Name="CAR_MANANA" Value="100"/>
+        <Constant Name="CAR_INFERNUS" Value="101"/>
+        <Constant Name="CAR_BLISTA" Value="102"/>
+        <Constant Name="CAR_PONY" Value="103"/>
+        <Constant Name="CAR_MULE" Value="104"/>
+        <Constant Name="CAR_CHEETAH" Value="105"/>
+        <Constant Name="CAR_AMBULANCE" Value="106"/>
+        <Constant Name="CAR_FBI" Value="107"/>
+        <Constant Name="CAR_MOONBEAM" Value="108"/>
+        <Constant Name="CAR_ESPERANTO" Value="109"/>
+        <Constant Name="CAR_TAXI" Value="110"/>
+        <Constant Name="CAR_KURUMA" Value="111"/>
+        <Constant Name="CAR_BOBCAT" Value="112"/>
+        <Constant Name="CAR_MRWHOOPEE" Value="113"/>
+        <Constant Name="CAR_BFINJECT" Value="114"/>
+        <Constant Name="CAR_CORPSE" Value="115"/>
+        <Constant Name="CAR_POLICE" Value="116"/>
+        <Constant Name="CAR_ENFORCER" Value="117"/>
+        <Constant Name="CAR_SECURICAR" Value="118"/>
+        <Constant Name="CAR_BANSHEE" Value="119"/>
+        <Constant Name="BOAT_PREDATOR" Value="120"/>
+        <Constant Name="CAR_BUS" Value="121"/>
+        <Constant Name="CAR_RHINO" Value="122"/>
+        <Constant Name="CAR_BARRACKS" Value="123"/>
+        <Constant Name="TRAIN_TRAIN" Value="124"/>
+        <Constant Name="HELI_CHOPPER" Value="125"/>
+        <Constant Name="PLANE_DODO" Value="126"/>
+        <Constant Name="CAR_COACH" Value="127"/>
+        <Constant Name="CAR_CABBIE" Value="128"/>
+        <Constant Name="CAR_STALLION" Value="129"/>
+        <Constant Name="CAR_RUMPO" Value="130"/>
+        <Constant Name="CAR_RCBANDIT" Value="131"/>
+        <Constant Name="CAR_BELLYUP" Value="132"/>
+        <Constant Name="CAR_MRWONGS" Value="133"/>
+        <Constant Name="CAR_MAFIA" Value="134"/>
+        <Constant Name="CAR_YARDIE" Value="135"/>
+        <Constant Name="CAR_YAKUZA" Value="136"/>
+        <Constant Name="CAR_DIABLOS" Value="137"/>
+        <Constant Name="CAR_COLUMB" Value="138"/>
+        <Constant Name="CAR_HOODS" Value="139"/>
+        <Constant Name="PLANE_AIRTRAIN" Value="140"/>
+        <Constant Name="PLANE_DEADDODO" Value="141"/>
+        <Constant Name="BOAT_SPEEDER" Value="142"/>
+        <Constant Name="BOAT_REEFER" Value="143"/>
+        <Constant Name="CAR_PANLANT" Value="144"/>
+        <Constant Name="CAR_FLATBED" Value="145"/>
+        <Constant Name="CAR_YANKEE" Value="146"/>
+        <Constant Name="HELI_ESCAPE" Value="147"/>
+        <Constant Name="CAR_BORGNINE" Value="148"/>
+        <Constant Name="CAR_TOYZ" Value="149"/>
+        <Constant Name="BOAT_GHOST" Value="150"/>
+        <Constant Name="WHEEL_SPORT" Value="151"/>
+        <Constant Name="WHEEL_SALOON" Value="152"/>
+        <Constant Name="WHEEL_LIGHTVAN" Value="153"/>
+        <Constant Name="WHEEL_CLASSIC" Value="154"/>
+        <Constant Name="WHEEL_ALLOY" Value="155"/>
+        <Constant Name="WHEEL_LIGHTTRUCK" Value="156"/>
+        <Constant Name="WHEEL_SMALLCAR" Value="157"/>
+        <Constant Name="WEAPON_GRENADE" Value="170"/>
+        <Constant Name="WEAPON_AK47" Value="171"/>
+        <Constant Name="WEAPON_BAT" Value="172"/>
+        <Constant Name="WEAPON_COLT45" Value="173"/>
+        <Constant Name="WEAPON_MOLOTOV" Value="174"/>
+        <Constant Name="WEAPON_ROCKET" Value="175"/>
+        <Constant Name="WEAPON_SHOTGUN" Value="176"/>
+        <Constant Name="WEAPON_SNIPER" Value="177"/>
+        <Constant Name="WEAPON_UZI" Value="178"/>
+        <Constant Name="WEAPON_MISSILE" Value="179"/>
+        <Constant Name="WEAPON_M16" Value="180"/>
+        <Constant Name="WEAPON_FLAME" Value="181"/>
+        <Constant Name="WEAPON_BOMB" Value="182"/>
+        <Constant Name="WEAPON_FINGERS" Value="183"/>
+        <Constant Name="CUT_OBJ1" Value="185"/>
+        <Constant Name="CUT_OBJ2" Value="186"/>
+        <Constant Name="CUT_OBJ3" Value="187"/>
+        <Constant Name="CUT_OBJ4" Value="188"/>
+        <Constant Name="CUT_OBJ5" Value="189"/>
     </Enum>
-    <Enum Name="DRIVINGMODE">
+    <Enum Name="DRIVINGMODE"> <!-- TODO same as VC? -->
       <Constant Name="DRIVINGMODE_AVOIDCARS" Value="2"/>
       <Constant Name="DRIVINGMODE_SLOWDOWNFORCARS" Value="1"/>
       <Constant Name="DRIVINGMODE_STOPFORCARS" Value="0"/>
     </Enum>
     <Enum Name="EXPLOSION">
-      <Constant Name="EXPLOSION_CAR" Value="3"/>
-      <Constant Name="EXPLOSION_GRENADE" Value="0"/>
-      <Constant Name="EXPLOSION_HELI" Value="5"/>
+      <Constant Name="EXPLOSION_GRENADE"/>
+      <Constant Name="EXPLOSION_MOLOTOV"/>
+      <Constant Name="EXPLOSION_ROCKET"/>
+      <Constant Name="EXPLOSION_CAR"/>
+      <Constant Name="EXPLOSION_CAR_QUICK"/>
+      <Constant Name="EXPLOSION_HELI"/>
+      <Constant Name="EXPLOSION_MINE"/>
+      <Constant Name="EXPLOSION_BARREL"/>
+      <Constant Name="EXPLOSION_TANK_GRENADE"/>
+      <Constant Name="EXPLOSION_HELI_BOMB"/>
     </Enum>
-    <Enum Name="FLARETYPE">
+    <Enum Name="FLARETYPE"> <!-- TODO same as VC? -->
       <Constant Name="FLARETYPE_NONE" Value="0"/>
     </Enum>
-    <Enum Name="FOLLOW_ROUTE">
+    <Enum Name="FOLLOW_ROUTE"> <!-- TODO same as VC? -->
       <Constant Name="FOLLOW_ROUTE_BACKFORWARD" Value="2"/>
       <Constant Name="FOLLOW_ROUTE_LOOP" Value="3"/>
     </Enum>
@@ -373,9 +483,15 @@
       <Constant Name="FONT_HEADING"/>
     </Enum>
     <Enum Name="GANG">
-      <Constant Name="GANG_COLOMBIAN" Value="5"/>
-      <Constant Name="GANG_HOOD" Value="6"/>
-      <Constant Name="GANG_MAFIA" Value="0"/>
+      <Constant Name="GANG_MAFIA"/>
+      <Constant Name="GANG_TRIAD"/>
+      <Constant Name="GANG_DIABLO"/>
+      <Constant Name="GANG_YAKUZA"/>
+      <Constant Name="GANG_YARDIE"/>
+      <Constant Name="GANG_COLOMBIAN"/>
+      <Constant Name="GANG_HOOD"/>
+      <Constant Name="GANG8"/>
+      <Constant Name="GANG9"/>
     </Enum>
     <Enum Name="GARAGE">
       <Constant Name="GARAGE_NONE"/>
@@ -394,14 +510,25 @@
       <Constant Name="GARAGE_CRUSHER"/>
       <Constant Name="GARAGE_MISSION_KEEPCAR"/>
       <Constant Name="GARAGE_FOR_SCRIPT_TO_OPEN"/>
-      <Constant Name="GARAGE_HIDEOUT_ONE"/>
-      <Constant Name="GARAGE_HIDEOUT_TWO"/>
-      <Constant Name="GARAGE_HIDEOUT_THREE"/>
+      <Constant Name="GARAGE_HIDEOUT_INDUSTRIAL"/> <!-- TODO preserve ONE, TWO, THREE for compatibility? -->
+      <Constant Name="GARAGE_HIDEOUT_COMMERCIAL"/>
+      <Constant Name="GARAGE_HIDEOUT_SUBURBAN"/>
       <Constant Name="GARAGE_FOR_SCRIPT_TO_OPEN_AND_CLOSE"/>
       <Constant Name="GARAGE_KEEPS_OPENING_FOR_SPECIFIC_CAR"/>
       <Constant Name="GARAGE_MISSION_KEEPCAR_REMAINCLOSED"/>
+      <Constant Name="GARAGE_COLLECTCARS_4"/>
+      <Constant Name="GARAGE_FOR_SCRIPT_TO_OPEN_FOR_CAR"/>
+      <Constant Name="GARAGE_HIDEOUT_FOUR"/>
+      <Constant Name="GARAGE_HIDEOUT_FIVE"/>
+      <Constant Name="GARAGE_HIDEOUT_SIX"/>
+      <Constant Name="GARAGE_HIDEOUT_SEVEN"/>
+      <Constant Name="GARAGE_HIDEOUT_EIGHT"/>
+      <Constant Name="GARAGE_HIDEOUT_NINE"/>
+      <Constant Name="GARAGE_HIDEOUT_TEN"/>
+      <Constant Name="GARAGE_HIDEOUT_ELEVEN"/>
+      <Constant Name="GARAGE_HIDEOUT_TWELVE"/>
     </Enum>
-    <Enum Name="HUD_FLASH">
+    <Enum Name="HUD_FLASH"> <!-- TODO same as VC? -->
       <Constant Name="HUD_FLASH_HEALTH" Value="4"/>
       <Constant Name="HUD_FLASH_RADAR" Value="8"/>
     </Enum>
@@ -411,7 +538,7 @@
       <Constant Name="LEVEL_COMMERCIAL"/>
       <Constant Name="LEVEL_SUBURBAN"/>
     </Enum>
-    <Enum Name="MISSION">
+    <Enum Name="MISSION"> <!-- TODO same as VC? -->
       <Constant Name="MISSION_BLOCKPLAYER_FARAWAY" Value="4"/>
       <Constant Name="MISSION_CRUISE" Value="1"/>
       <Constant Name="MISSION_GOTOCOORDS_STRAIGHT_ACCURATE" Value="13"/>
@@ -420,135 +547,344 @@
       <Constant Name="MISSION_STOP_FOREVER" Value="11"/>
     </Enum>
     <Enum Name="PARTICLE">
-      <Constant Name="PARTICLE_BLOOD_SMALL" Value="5"/>
-      <Constant Name="PARTICLE_TEST" Value="65"/>
+      <Constant Name="PARTICLE_SPARK"/>
+      <Constant Name="PARTICLE_SPARK_SMALL"/>
+      <Constant Name="PARTICLE_WHEEL_DIRT"/>
+      <Constant Name="PARTICLE_WHEEL_WATER"/>
+      <Constant Name="PARTICLE_BLOOD"/>
+      <Constant Name="PARTICLE_BLOOD_SMALL"/>
+      <Constant Name="PARTICLE_BLOOD_SPURT"/>
+      <Constant Name="PARTICLE_DEBRIS"/>
+      <Constant Name="PARTICLE_DEBRIS2"/>
+      <Constant Name="PARTICLE_WATER"/>
+      <Constant Name="PARTICLE_FLAME"/>
+      <Constant Name="PARTICLE_FIREBALL"/>
+      <Constant Name="PARTICLE_GUNFLASH"/>
+      <Constant Name="PARTICLE_GUNFLASH_NOANIM"/>
+      <Constant Name="PARTICLE_GUNSMOKE"/>
+      <Constant Name="PARTICLE_GUNSMOKE2"/>
+      <Constant Name="PARTICLE_SMOKE"/>
+      <Constant Name="PARTICLE_SMOKE_SLOWMOTION"/>
+      <Constant Name="PARTICLE_GARAGEPAINT_SPRAY"/>
+      <Constant Name="PARTICLE_SHARD"/>
+      <Constant Name="PARTICLE_SPLASH"/>
+      <Constant Name="PARTICLE_CARFLAME"/>
+      <Constant Name="PARTICLE_STEAM"/>
+      <Constant Name="PARTICLE_STEAM2"/>
+      <Constant Name="PARTICLE_STEAM_NY"/>
+      <Constant Name="PARTICLE_STEAM_NY_SLOWMOTION"/>
+      <Constant Name="PARTICLE_ENGINE_STEAM"/>
+      <Constant Name="PARTICLE_RAINDROP"/>
+      <Constant Name="PARTICLE_RAINDROP_SMALL"/>
+      <Constant Name="PARTICLE_RAIN_SPLASH"/>
+      <Constant Name="PARTICLE_RAIN_SPLASH_BIGGROW"/>
+      <Constant Name="PARTICLE_RAIN_SPLASHUP"/>
+      <Constant Name="PARTICLE_WATERSPRAY"/>
+      <Constant Name="PARTICLE_EXPLOSION_MEDIUM"/>
+      <Constant Name="PARTICLE_EXPLOSION_LARGE"/>
+      <Constant Name="PARTICLE_EXPLOSION_MFAST"/>
+      <Constant Name="PARTICLE_EXPLOSION_LFAST"/>
+      <Constant Name="PARTICLE_CAR_SPLASH"/>
+      <Constant Name="PARTICLE_BOAT_SPLASH"/>
+      <Constant Name="PARTICLE_BOAT_THRUSTJET"/>
+      <Constant Name="PARTICLE_BOAT_WAKE"/>
+      <Constant Name="PARTICLE_WATER_HYDRANT"/>
+      <Constant Name="PARTICLE_WATER_CANNON"/>
+      <Constant Name="PARTICLE_EXTINGUISH_STEAM"/>
+      <Constant Name="PARTICLE_PED_SPLASH"/>
+      <Constant Name="PARTICLE_PEDFOOT_DUST"/>
+      <Constant Name="PARTICLE_HELI_DUST"/>
+      <Constant Name="PARTICLE_HELI_ATTACK"/>
+      <Constant Name="PARTICLE_ENGINE_SMOKE"/>
+      <Constant Name="PARTICLE_ENGINE_SMOKE2"/>
+      <Constant Name="PARTICLE_CARFLAME_SMOKE"/>
+      <Constant Name="PARTICLE_FIREBALL_SMOKE"/>
+      <Constant Name="PARTICLE_PAINT_SMOKE"/>
+      <Constant Name="PARTICLE_TREE_LEAVES"/>
+      <Constant Name="PARTICLE_CARCOLLISION_DUST"/>
+      <Constant Name="PARTICLE_CARDEBRIS"/>
+      <Constant Name="PARTICLE_HELIDEBRIS"/>
+      <Constant Name="PARTICLE_EXHAUST_FUMES"/>
+      <Constant Name="PARTICLE_RUBBER_SMOKE"/>
+      <Constant Name="PARTICLE_BURNINGRUBBER_SMOKE"/>
+      <Constant Name="PARTICLE_BULLETHIT_SMOKE"/>
+      <Constant Name="PARTICLE_GUNSHELL_FIRST"/>
+      <Constant Name="PARTICLE_GUNSHELL"/>
+      <Constant Name="PARTICLE_GUNSHELL_BUMP1"/>
+      <Constant Name="PARTICLE_GUNSHELL_BUMP2"/>
+      <Constant Name="PARTICLE_TEST"/>
+      <Constant Name="PARTICLE_BIRD_FRONT"/>
+      <Constant Name="PARTICLE_RAINDROP_2D"/>
     </Enum>
-    <Enum Name="PEDSTAT">
+    <Enum Name="PEDSTAT">  <!-- TODO same as VC? -->
       <Constant Name="PEDSTAT_GEEK_GUY" Value="14"/>
       <Constant Name="PEDSTAT_TOUGH_GUY" Value="16"/>
     </Enum>
     <Enum Name="PEDTYPE">
-      <Constant Name="PEDTYPE_BUM" Value="19"/>
-      <Constant Name="PEDTYPE_CIVFEMALE" Value="5"/>
-      <Constant Name="PEDTYPE_CIVMALE" Value="4"/>
-      <Constant Name="PEDTYPE_COP" Value="6"/>
-      <Constant Name="PEDTYPE_GANG_COLOMBIAN" Value="12"/>
-      <Constant Name="PEDTYPE_GANG_DIABLO" Value="9"/>
-      <Constant Name="PEDTYPE_GANG_HOOD" Value="13"/>
-      <Constant Name="PEDTYPE_GANG_MAFIA" Value="7"/>
-      <Constant Name="PEDTYPE_GANG_TRIAD" Value="8"/>
-      <Constant Name="PEDTYPE_GANG_YAKUZA" Value="10"/>
-      <Constant Name="PEDTYPE_GANG_YARDIE" Value="11"/>
-      <Constant Name="PEDTYPE_PROSTITUTE" Value="20"/>
-      <Constant Name="PEDTYPE_SPECIAL" Value="21"/>
+      <Constant Name="PEDTYPE_PLAYER1"/>
+      <Constant Name="PEDTYPE_PLAYER2"/>
+      <Constant Name="PEDTYPE_PLAYER3"/>
+      <Constant Name="PEDTYPE_PLAYER4"/>
+      <Constant Name="PEDTYPE_CIVMALE"/>
+      <Constant Name="PEDTYPE_CIVFEMALE"/>
+      <Constant Name="PEDTYPE_COP"/>
+      <Constant Name="PEDTYPE_GANG_MAFIA"/>
+      <Constant Name="PEDTYPE_GANG_TRIAD"/>
+      <Constant Name="PEDTYPE_GANG_DIABLO"/>
+      <Constant Name="PEDTYPE_GANG_YAKUZA"/>
+      <Constant Name="PEDTYPE_GANG_YARDIE"/>
+      <Constant Name="PEDTYPE_GANG_COLOMBIAN"/>
+      <Constant Name="PEDTYPE_GANG_HOOD"/>
+      <Constant Name="PEDTYPE_GANG8"/>
+      <Constant Name="PEDTYPE_GANG9"/>
+      <Constant Name="PEDTYPE_MEDIC"/>
+      <Constant Name="PEDTYPE_FIRE"/>
+      <Constant Name="PEDTYPE_CRIMINAL"/>
+      <Constant Name="PEDTYPE_BUM"/>
+      <Constant Name="PEDTYPE_PROSTITUTE"/>
+      <Constant Name="PEDTYPE_SPECIAL"/>
+      <Constant Name="PEDTYPE_DUMMY"/>
     </Enum>
     <Enum Name="PICKUP">
-      <Constant Name="PICKUP_IN_SHOP" Value="1"/>
-      <Constant Name="PICKUP_ON_STREET" Value="2"/>
-      <Constant Name="PICKUP_ON_STREET_SLOW" Value="14"/>
-      <Constant Name="PICKUP_ONCE" Value="3"/>
+      <Constant Name="PICKUP_NONE"/>
+      <Constant Name="PICKUP_IN_SHOP"/>
+      <Constant Name="PICKUP_ON_STREET"/>
+      <Constant Name="PICKUP_ONCE"/>
+      <Constant Name="PICKUP_ONCE_TIMEOUT"/>
+      <Constant Name="PICKUP_COLLECTABLE1"/>
+      <Constant Name="PICKUP_IN_SHOP_OUT_OF_STOCK"/>
+      <Constant Name="PICKUP_MONEY"/>
+      <Constant Name="PICKUP_MINE_INACTIVE"/>
+      <Constant Name="PICKUP_MINE_ARMED"/>
+      <Constant Name="PICKUP_NAUTICAL_MINE_INACTIVE"/>
+      <Constant Name="PICKUP_NAUTICAL_MINE_ARMED"/>
+      <Constant Name="PICKUP_FLOATINGPACKAGE"/>
+      <Constant Name="PICKUP_FLOATINGPACKAGE_FLOATING"/>
+      <Constant Name="PICKUP_ON_STREET_SLOW"/>
     </Enum>
     <Enum Name="POBJECT">
-      <Constant Name="POBJECT_CATALINAS_GUNFLASH" Value="18"/>
-      <Constant Name="POBJECT_CATALINAS_SHOTGUNFLASH" Value="19"/>
-      <Constant Name="POBJECT_DARK_SMOKE" Value="4"/>
-      <Constant Name="POBJECT_DRY_ICE" Value="11"/>
-      <Constant Name="POBJECT_DRY_ICE_SLOWMOTION" Value="12"/>
-      <Constant Name="POBJECT_FIRE_TRAIL" Value="13"/>
-      <Constant Name="POBJECT_FIREBALL_AND_SMOKE" Value="15"/>
-      <Constant Name="POBJECT_PAVEMENT_STEAM_SLOWMOTION" Value="1"/>
-      <Constant Name="POBJECT_WALL_STEAM_SLOWMOTION" Value="3"/>
+      <Constant Name="POBJECT_PAVEMENT_STEAM"/>
+      <Constant Name="POBJECT_PAVEMENT_STEAM_SLOWMOTION"/>
+      <Constant Name="POBJECT_WALL_STEAM"/>
+      <Constant Name="POBJECT_WALL_STEAM_SLOWMOTION"/>
+      <Constant Name="POBJECT_DARK_SMOKE"/>
+      <Constant Name="POBJECT_FIRE_HYDRANT"/>
+      <Constant Name="POBJECT_CAR_WATER_SPLASH"/>
+      <Constant Name="POBJECT_PED_WATER_SPLASH"/>
+      <Constant Name="POBJECT_SPLASHES_AROUND"/>
+      <Constant Name="POBJECT_SMALL_FIRE"/>
+      <Constant Name="POBJECT_BIG_FIRE"/>
+      <Constant Name="POBJECT_DRY_ICE"/>
+      <Constant Name="POBJECT_DRY_ICE_SLOWMOTION"/>
+      <Constant Name="POBJECT_FIRE_TRAIL"/>
+      <Constant Name="POBJECT_SMOKE_TRAIL"/>
+      <Constant Name="POBJECT_FIREBALL_AND_SMOKE"/>
+      <Constant Name="POBJECT_ROCKET_TRAIL"/>
+      <Constant Name="POBJECT_EXPLOSION_ONCE"/>
+      <Constant Name="POBJECT_CATALINAS_GUNFLASH"/>
+      <Constant Name="POBJECT_CATALINAS_SHOTGUNFLASH"/>
     </Enum>
     <Enum Name="RADIO">
-      <Constant Name="HEAD_RADIO" Value="0"/>
-      <Constant Name="JAH_RADIO" Value="2"/>
+      <Constant Name="HEAD_RADIO"/>
+      <Constant Name="DOUBLE_CLEFF"/>
+      <Constant Name="JAH_RADIO"/>
+      <Constant Name="RISE_FM"/>
+      <Constant Name="LIPS_106"/>
+      <Constant Name="GAME_FM"/>
+      <Constant Name="MSXFM"/>
+      <Constant Name="FLASHBACK_95.6"/>
+      <Constant Name="CHATTERBOX_FM"/>
     </Enum>
-    <Enum Name="SHADOW">
+    <Enum Name="SHADOW">  <!-- TODO same as VC? -->
       <Constant Name="SHADOW_EXPLOSION" Value="3"/>
     </Enum>
     <Enum Name="SOUND">
-      <Constant Name="SOUND_AMMUNATION_CHAT_1" Value="103"/>
-      <Constant Name="SOUND_AMMUNATION_CHAT_2" Value="104"/>
-      <Constant Name="SOUND_AMMUNATION_CHAT_3" Value="105"/>
-      <Constant Name="SOUND_BANK_ALARM_LOOP_L" Value="69"/>
-      <Constant Name="SOUND_CHUNKY_RUN_SHOUT" Value="95"/>
-      <Constant Name="SOUND_EVIDENCE_PICKUP" Value="82"/>
-      <Constant Name="SOUND_GATE_START_CLUNK" Value="92"/>
-      <Constant Name="SOUND_GATE_STOP_CLUNK" Value="93"/>
-      <Constant Name="SOUND_INJURED_PED_FEMALE_OUCH_L" Value="81"/>
-      <Constant Name="SOUND_INJURED_PED_FEMALE_OUCH_S" Value="80"/>
-      <Constant Name="SOUND_INJURED_PED_MALE_OUCH_L" Value="79"/>
-      <Constant Name="SOUND_INJURED_PED_MALE_OUCH_S" Value="78"/>
-      <Constant Name="SOUND_PART_MISSION_COMPLETE" Value="94"/>
-      <Constant Name="SOUND_POLICE_BALL_LOOP_L" Value="71"/>
-      <Constant Name="SOUND_POLICE_CELL_BEATING_LOOP_L" Value="77"/>
-      <Constant Name="SOUND_PORN_CINEMA_1_S" Value="62"/>
-      <Constant Name="SOUND_PORN_CINEMA_2_S" Value="64"/>
-      <Constant Name="SOUND_PORN_CINEMA_3_S" Value="66"/>
-      <Constant Name="SOUND_PRETEND_FIRE_LOOP" Value="102"/>
-      <Constant Name="SOUND_RACE_START_1" Value="99"/>
-      <Constant Name="SOUND_RACE_START_2" Value="98"/>
-      <Constant Name="SOUND_RACE_START_3" Value="97"/>
-      <Constant Name="SOUND_RACE_START_GO" Value="100"/>
-      <Constant Name="SOUND_RAVE_LOOP_INDUSTRIAL_L" Value="73"/>
-      <Constant Name="SOUND_SAWMILL_LOOP_L" Value="37"/>
-      <Constant Name="SOUND_SECURITY_GUARD_RUN_AWAY_SHOUT" Value="96"/>
-      <Constant Name="SOUND_STRIP_CLUB_LOOP_1_S" Value="30"/>
-      <Constant Name="SOUND_STRIP_CLUB_LOOP_2_S" Value="32"/>
-      <Constant Name="SOUND_SWAT_PED_SHOUT" Value="101"/>
-      <Constant Name="SOUND_TEST_1" Value="0"/>
-      <Constant Name="SOUND_UNLOAD_GOLD" Value="83"/>
+      <Constant Name="SOUND_TEST_1"/>
+      <Constant Name="SOUND_TEST_2"/>
+      <Constant Name="SOUND_TRAIN_STATION_LOOP_S"/>
+      <Constant Name="SOUND_TRAIN_STATION_LOOP_L"/>
+      <Constant Name="SOUND_CLUB_LOOP_1_S"/>
+      <Constant Name="SOUND_CLUB_LOOP_1_L"/>
+      <Constant Name="SOUND_CLUB_LOOP_2_S"/>
+      <Constant Name="SOUND_CLUB_LOOP_2_L"/>
+      <Constant Name="SOUND_CLUB_LOOP_3_S"/>
+      <Constant Name="SOUND_CLUB_LOOP_3_L"/>
+      <Constant Name="SOUND_CLUB_LOOP_4_S"/>
+      <Constant Name="SOUND_CLUB_LOOP_4_L"/>
+      <Constant Name="SOUND_CLUB_LOOP_5_S"/>
+      <Constant Name="SOUND_CLUB_LOOP_5_L"/>
+      <Constant Name="SOUND_CLUB_LOOP_6_S"/>
+      <Constant Name="SOUND_CLUB_LOOP_6_L"/>
+      <Constant Name="SOUND_CLUB_LOOP_7_S"/>
+      <Constant Name="SOUND_CLUB_LOOP_7_L"/>
+      <Constant Name="SOUND_CLUB_LOOP_8_S"/>
+      <Constant Name="SOUND_CLUB_LOOP_8_L"/>
+      <Constant Name="SOUND_CLUB_LOOP_9_S"/>
+      <Constant Name="SOUND_CLUB_LOOP_9_L"/>
+      <Constant Name="SOUND_CLUB_LOOP_10_S"/>
+      <Constant Name="SOUND_CLUB_LOOP_10_L"/>
+      <Constant Name="SOUND_CLUB_LOOP_11_S"/>
+      <Constant Name="SOUND_CLUB_LOOP_11_L"/>
+      <Constant Name="SOUND_CLUB_LOOP_12_S"/>
+      <Constant Name="SOUND_CLUB_LOOP_12_L"/>
+      <Constant Name="SOUND_CLUB_LOOP_RAGGA_S"/>
+      <Constant Name="SOUND_CLUB_LOOP_RAGGA_L"/>
+      <Constant Name="SOUND_STRIP_CLUB_LOOP_1_S"/>
+      <Constant Name="SOUND_STRIP_CLUB_LOOP_1_L"/>
+      <Constant Name="SOUND_STRIP_CLUB_LOOP_2_S"/>
+      <Constant Name="SOUND_STRIP_CLUB_LOOP_2_L"/>
+      <Constant Name="SOUND_WORKSHOP_LOOP_1_S"/>
+      <Constant Name="SOUND_WORKSHOP_LOOP_1_L"/>
+      <Constant Name="SOUND_SAWMILL_LOOP_S"/>
+      <Constant Name="SOUND_SAWMILL_LOOP_L"/>
+      <Constant Name="SOUND_DOG_FOOD_FACTORY_LOOP_S"/>
+      <Constant Name="SOUND_DOG_FOOD_FACTORY_LOOP_L"/>
+      <Constant Name="SOUND_LAUNDERETTE_LOOP_S"/>
+      <Constant Name="SOUND_LAUNDERETTE_LOOP_L"/>
+      <Constant Name="SOUND_RESTAURANT_CHINATOWN_LOOP_S"/>
+      <Constant Name="SOUND_RESTAURANT_CHINATOWN_LOOP_L"/>
+      <Constant Name="SOUND_RESTAURANT_ITALY_LOOP_S"/>
+      <Constant Name="SOUND_RESTAURANT_ITALY_LOOP_L"/>
+      <Constant Name="SOUND_RESTAURANT_GENERIC_LOOP_1_S"/>
+      <Constant Name="SOUND_RESTAURANT_GENERIC_LOOP_1_L"/>
+      <Constant Name="SOUND_RESTAURANT_GENERIC_LOOP_2_S"/>
+      <Constant Name="SOUND_RESTAURANT_GENERIC_LOOP_2_L"/>
+      <Constant Name="SOUND_AIRPORT_LOOP_S"/>
+      <Constant Name="SOUND_AIRPORT_LOOP_L"/>
+      <Constant Name="SOUND_SHOP_LOOP_S"/>
+      <Constant Name="SOUND_SHOP_LOOP_L"/>
+      <Constant Name="SOUND_CINEMA_LOOP_S"/>
+      <Constant Name="SOUND_CINEMA_LOOP_L"/>
+      <Constant Name="SOUND_DOCKS_LOOP_S"/>
+      <Constant Name="SOUND_DOCKS_LOOP_L"/>
+      <Constant Name="SOUND_HOME_LOOP_1_S"/>
+      <Constant Name="SOUND_HOME_LOOP_1_L"/>
+      <Constant Name="SOUND_PIANO_BAR_LOOP_1_S"/>
+      <Constant Name="SOUND_PIANO_BAR_LOOP_1_L"/>
+      <Constant Name="SOUND_PORN_CINEMA_1_S"/>
+      <Constant Name="SOUND_PORN_CINEMA_1_L"/>
+      <Constant Name="SOUND_PORN_CINEMA_2_S"/>
+      <Constant Name="SOUND_PORN_CINEMA_2_L"/>
+      <Constant Name="SOUND_PORN_CINEMA_3_S"/>
+      <Constant Name="SOUND_PORN_CINEMA_3_L"/>
+      <Constant Name="SOUND_BANK_ALARM_LOOP_S"/>
+      <Constant Name="SOUND_BANK_ALARM_LOOP_L"/>
+      <Constant Name="SOUND_POLICE_BALL_LOOP_S"/>
+      <Constant Name="SOUND_POLICE_BALL_LOOP_L"/>
+      <Constant Name="SOUND_RAVE_LOOP_INDUSTRIAL_S"/>
+      <Constant Name="SOUND_RAVE_LOOP_INDUSTRIAL_L"/>
+      <Constant Name="SOUND_DOG_FOOD_FACTORY_PED_CHOP_S"/>
+      <Constant Name="SOUND_DOG_FOOD_FACTORY_PED_CHOP_L"/>
+      <Constant Name="SOUND_POLICE_CELL_BEATING_LOOP_S"/>
+      <Constant Name="SOUND_POLICE_CELL_BEATING_LOOP_L"/>
+      <Constant Name="SOUND_INJURED_PED_MALE_OUCH_S"/>
+      <Constant Name="SOUND_INJURED_PED_MALE_OUCH_L"/>
+      <Constant Name="SOUND_INJURED_PED_FEMALE_OUCH_S"/>
+      <Constant Name="SOUND_INJURED_PED_FEMALE_OUCH_L"/>
+      <Constant Name="SOUND_EVIDENCE_PICKUP"/>
+      <Constant Name="SOUND_UNLOAD_GOLD"/>
+      <Constant Name="SOUND_RAVE_LOOP_COMMERCIAL_1_S"/>
+      <Constant Name="SOUND_RAVE_LOOP_COMMERCIAL_1_L"/>
+      <Constant Name="SOUND_RAVE_LOOP_COMMERCIAL_2_S"/>
+      <Constant Name="SOUND_RAVE_LOOP_COMMERCIAL_2_L"/>
+      <Constant Name="SOUND_RAVE_LOOP_SUBURBAN_S"/>
+      <Constant Name="SOUND_RAVE_LOOP_SUBURBAN_L"/>
+      <Constant Name="SOUND_MISTYS_HOUSE_LOOP_S"/>
+      <Constant Name="SOUND_MISTYS_HOUSE_LOOP_L"/>
+      <Constant Name="SOUND_GATE_START_CLUNK"/>
+      <Constant Name="SOUND_GATE_STOP_CLUNK"/>
+      <Constant Name="SOUND_PART_MISSION_COMPLETE"/>
+      <Constant Name="SOUND_CHUNKY_RUN_SHOUT"/>
+      <Constant Name="SOUND_SECURITY_GUARD_RUN_AWAY_SHOUT"/>
+      <Constant Name="SOUND_RACE_START_3"/>
+      <Constant Name="SOUND_RACE_START_2"/>
+      <Constant Name="SOUND_RACE_START_1"/>
+      <Constant Name="SOUND_RACE_START_GO"/>
+      <Constant Name="SOUND_SWAT_PED_SHOUT"/>
+      <Constant Name="SOUND_PRETEND_FIRE_LOOP"/>
+      <Constant Name="SOUND_AMMUNATION_CHAT_1"/>
+      <Constant Name="SOUND_AMMUNATION_CHAT_2"/>
+      <Constant Name="SOUND_AMMUNATION_CHAT_3"/>
+      <Constant Name="SOUND_BULLET_HIT_WALL"/>
+      <Constant Name="SOUND_BULLET_HIT_OBJECT"/>
+      <Constant Name="SOUND_BULLET_HIT_DUMMY"/>
+      <Constant Name="SOUND_BULLET_HIT_WATER"/>
+      <Constant Name="SOUND_TRAIN_ARRIVE_ANNOUNCEMENT"/>
+      <Constant Name="SOUND_TRAIN_LEAVE_ANNOUNCEMENT"/>
+      <Constant Name="SOUND_PHONE_RING"/>
+      <Constant Name="SOUND_PHONE_ANSWER"/>
+      <Constant Name="SOUND_GLASS_BREAK_VIOLENTLY"/>
+      <Constant Name="SOUND_GLASS_BREAK_SLOWLY"/>
+      <Constant Name="SOUND_GLASS_CRACKING"/>
+      <Constant Name="SOUND_GLASS_SEGMENT_HIT_GROUND"/>
+      <Constant Name="SOUND_WOODEN_BOX_SMASH"/>
+      <Constant Name="SOUND_CARDBOARD_BOX_SMASH"/>
+      <Constant Name="SOUND_BARPOST_SMASH"/>
+      <Constant Name="SOUND_TRAFFIC_CONE_SMASH"/>
+      <Constant Name="SOUND_BULLET_HIT_GROUND_1"/>
+      <Constant Name="SOUND_BULLET_HIT_GROUND_2"/>
     </Enum>
-    <Enum Name="STATUS">
+    <Enum Name="STATUS">  <!-- TODO same as VC? -->
       <Constant Name="STATUS_PLAYER" Value="0"/>
     </Enum>
     <Enum Name="THREAT">
-      <Constant Name="THREAT_CIVFEMALE" Value="32"/>
-      <Constant Name="THREAT_CIVMALE" Value="16"/>
-      <Constant Name="THREAT_COP" Value="64"/>
-      <Constant Name="THREAT_COP_CAR" Value="2097152"/>
-      <Constant Name="THREAT_CRIMINAL" Value="262144"/>
-      <Constant Name="THREAT_DEADPEDS" Value="33554432"/>
-      <Constant Name="THREAT_EMERGENCY" Value="65536"/>
-      <Constant Name="THREAT_FAST_CAR" Value="4194304"/>
-      <Constant Name="THREAT_FIREMAN" Value="16777216"/>
-      <Constant Name="THREAT_GANG_COLOMBIAN" Value="4096"/>
-      <Constant Name="THREAT_GANG_DIABLO" Value="512"/>
-      <Constant Name="THREAT_GANG_HOOD" Value="8192"/>
-      <Constant Name="THREAT_GANG_MAFIA" Value="128"/>
-      <Constant Name="THREAT_GANG_TRIAD" Value="256"/>
-      <Constant Name="THREAT_GANG_YAKUZA" Value="1024"/>
-      <Constant Name="THREAT_GANG_YARDIE" Value="2048"/>
-      <Constant Name="THREAT_GUN" Value="1048576"/>
       <Constant Name="THREAT_PLAYER1" Value="1"/>
       <Constant Name="THREAT_PLAYER2" Value="2"/>
       <Constant Name="THREAT_PLAYER3" Value="4"/>
       <Constant Name="THREAT_PLAYER4" Value="8"/>
+      <Constant Name="THREAT_CIVMALE" Value="16"/>
+      <Constant Name="THREAT_CIVFEMALE" Value="32"/>
+      <Constant Name="THREAT_COP" Value="64"/>
+      <Constant Name="THREAT_GANG_MAFIA" Value="128"/>
+      <Constant Name="THREAT_GANG_TRIAD" Value="256"/>
+      <Constant Name="THREAT_GANG_DIABLO" Value="512"/>
+      <Constant Name="THREAT_GANG_YAKUZA" Value="1024"/>
+      <Constant Name="THREAT_GANG_YARDIE" Value="2048"/>
+      <Constant Name="THREAT_GANG_COLOMBIAN" Value="4096"/>
+      <Constant Name="THREAT_GANG_HOOD" Value="8192"/>
+      <Constant Name="THREAT_GANG8" Value="16384"/>
+      <Constant Name="THREAT_GANG9" Value="32768"/>
+      <Constant Name="THREAT_EMERGENCY" Value="65536"/>
       <Constant Name="THREAT_PROSTITUTE" Value="131072"/>
+      <Constant Name="THREAT_CRIMINAL" Value="262144"/>
       <Constant Name="THREAT_SPECIAL" Value="524288"/>
+      <Constant Name="THREAT_GUN" Value="1048576"/>
+      <Constant Name="THREAT_COP_CAR" Value="2097152"/>
+      <Constant Name="THREAT_FAST_CAR" Value="4194304"/>
+      <Constant Name="THREAT_EXPLOSION" Value="8388608"/>
+      <Constant Name="THREAT_FIREMAN" Value="16777216"/>
+      <Constant Name="THREAT_DEADPEDS" Value="33554432"/>
     </Enum>
-    <Enum Name="WAITSTATE">
+    <Enum Name="WAITSTATE">  <!-- TODO same as VC? -->
       <Constant Name="WAITSTATE_CROSS_ROAD_LOOK" Value="3"/>
       <Constant Name="WAITSTATE_FALSE" Value="0"/>
       <Constant Name="WAITSTATE_PLAYANIM_CHAT" Value="19"/>
       <Constant Name="WAITSTATE_PLAYANIM_DUCK" Value="14"/>
     </Enum>
     <Enum Name="WEAPONTYPE">
-      <Constant Name="WEAPONTYPE_BASEBALLBAT" Value="1"/>
-      <Constant Name="WEAPONTYPE_CHAINGUN" Value="5"/>
-      <Constant Name="WEAPONTYPE_DETONATOR" Value="12"/>
-      <Constant Name="WEAPONTYPE_FLAMETHROWER" Value="9"/>
-      <Constant Name="WEAPONTYPE_GRENADE" Value="11"/>
-      <Constant Name="WEAPONTYPE_M16" Value="6"/>
-      <Constant Name="WEAPONTYPE_MOLOTOV" Value="10"/>
-      <Constant Name="WEAPONTYPE_PISTOL" Value="2"/>
-      <Constant Name="WEAPONTYPE_ROCKET" Value="8"/>
-      <Constant Name="WEAPONTYPE_RUNOVERBYCAR" Value="17"/>
-      <Constant Name="WEAPONTYPE_SHOTGUN" Value="4"/>
-      <Constant Name="WEAPONTYPE_SNIPERRIFLE" Value="7"/>
-      <Constant Name="WEAPONTYPE_UNARMED" Value="0"/>
-      <Constant Name="WEAPONTYPE_UZI" Value="3"/>
-      <Constant Name="WEAPONTYPE_UZI_DRIVEBY" Value="19"/>
+      <Constant Name="WEAPONTYPE_UNARMED"/>
+      <Constant Name="WEAPONTYPE_BASEBALLBAT"/>
+      <Constant Name="WEAPONTYPE_PISTOL"/>
+      <Constant Name="WEAPONTYPE_UZI"/>
+      <Constant Name="WEAPONTYPE_SHOTGUN"/>
+      <Constant Name="WEAPONTYPE_CHAINGUN"/>
+      <Constant Name="WEAPONTYPE_M16"/>
+      <Constant Name="WEAPONTYPE_SNIPERRIFLE"/>
+      <Constant Name="WEAPONTYPE_ROCKET"/>
+      <Constant Name="WEAPONTYPE_FLAMETHROWER"/>
+      <Constant Name="WEAPONTYPE_MOLOTOV"/>
+      <Constant Name="WEAPONTYPE_GRENADE"/>
+      <Constant Name="WEAPONTYPE_DETONATOR"/>
+      <Constant Name="WEAPONTYPE_HELICANNON"/>
+      <Constant Name="WEAPONTYPE_PAD14"/>
+      <Constant Name="WEAPONTYPE_ARMOUR"/>
+      <Constant Name="WEAPONTYPE_RAMMEDBYCAR"/>
+      <Constant Name="WEAPONTYPE_RUNOVERBYCAR"/>
+      <Constant Name="WEAPONTYPE_EXPLOSION"/>
+      <Constant Name="WEAPONTYPE_UZI_DRIVEBY"/>
+      <Constant Name="WEAPONTYPE_DROWNING"/>
+      <Constant Name="WEAPONTYPE_FALL"/>
+      <Constant Name="WEAPONTYPE_UNIDENTIFIED"/>
     </Enum>
   </Constants>
 </GTA3Script>
