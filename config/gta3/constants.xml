@@ -13,6 +13,12 @@
       <Constant Name="NIGHT"/>
       <Constant Name="DAY"/>
     </Enum>
+    <Enum Name="KILLFRENZY" Global="true">
+      <Constant Name="KILLFRENZY_INITIALLY"/>
+      <Constant Name="KILLFRENZY_ONGOING"/>
+      <Constant Name="KILLFRENZY_PASSED"/>
+      <Constant Name="KILLFRENZY_FAILED"/>
+    </Enum>
     <Enum Name="FADE">
       <Constant Name="FADE_OUT"/>
       <Constant Name="FADE_IN"/>
@@ -265,22 +271,6 @@
       <Constant Name="ANIM_PANIC_CHUNKYPED"/>
       <Constant Name="ANIM_NUM_ASSOCGROUPS"/>
     </Enum>
-    <Enum Name="CAMMODE"> <!-- TODO same as VC? -->
-      <Constant Name="BEHINDCAR" Value="3"/>
-      <Constant Name="FIXED" Value="15"/>
-      <Constant Name="FOLLOWPED" Value="4"/>
-    </Enum>
-    <Enum Name="CARBOMB">  <!-- TODO same as VC? -->
-      <Constant Name="CARBOMB_ONIGNITION" Value="2"/>
-      <Constant Name="CARBOMB_ONIGNITIONACTIVE" Value="5"/>
-      <Constant Name="CARBOMB_REMOTE" Value="3"/>
-      <Constant Name="CARBOMB_TIMED" Value="1"/>
-      <Constant Name="CARBOMB_TIMEDACTIVE" Value="4"/>
-    </Enum>
-    <Enum Name="CARCOLOUR">  <!-- TODO same as VC? -->
-      <Constant Name="CARCOLOUR_BLACK" Value="0"/>
-      <Constant Name="CARCOLOUR_RED4" Value="13"/>
-    </Enum>
     <Enum Name="DEFAULTMODEL">
         <Constant Name="PED_PLAYER" Value="0"/>
         <Constant Name="PED_COP" Value="1"/>
@@ -453,11 +443,6 @@
         <Constant Name="CUT_OBJ4" Value="188"/>
         <Constant Name="CUT_OBJ5" Value="189"/>
     </Enum>
-    <Enum Name="DRIVINGMODE"> <!-- TODO same as VC? -->
-      <Constant Name="DRIVINGMODE_AVOIDCARS" Value="2"/>
-      <Constant Name="DRIVINGMODE_SLOWDOWNFORCARS" Value="1"/>
-      <Constant Name="DRIVINGMODE_STOPFORCARS" Value="0"/>
-    </Enum>
     <Enum Name="EXPLOSION">
       <Constant Name="EXPLOSION_GRENADE"/>
       <Constant Name="EXPLOSION_MOLOTOV"/>
@@ -469,13 +454,6 @@
       <Constant Name="EXPLOSION_BARREL"/>
       <Constant Name="EXPLOSION_TANK_GRENADE"/>
       <Constant Name="EXPLOSION_HELI_BOMB"/>
-    </Enum>
-    <Enum Name="FLARETYPE"> <!-- TODO same as VC? -->
-      <Constant Name="FLARETYPE_NONE" Value="0"/>
-    </Enum>
-    <Enum Name="FOLLOW_ROUTE"> <!-- TODO same as VC? -->
-      <Constant Name="FOLLOW_ROUTE_BACKFORWARD" Value="2"/>
-      <Constant Name="FOLLOW_ROUTE_LOOP" Value="3"/>
     </Enum>
     <Enum Name="FONT">
       <Constant Name="FONT_BANK"/>
@@ -510,7 +488,7 @@
       <Constant Name="GARAGE_CRUSHER"/>
       <Constant Name="GARAGE_MISSION_KEEPCAR"/>
       <Constant Name="GARAGE_FOR_SCRIPT_TO_OPEN"/>
-      <Constant Name="GARAGE_HIDEOUT_INDUSTRIAL"/> <!-- TODO preserve ONE, TWO, THREE for compatibility? -->
+      <Constant Name="GARAGE_HIDEOUT_INDUSTRIAL"/>
       <Constant Name="GARAGE_HIDEOUT_COMMERCIAL"/>
       <Constant Name="GARAGE_HIDEOUT_SUBURBAN"/>
       <Constant Name="GARAGE_FOR_SCRIPT_TO_OPEN_AND_CLOSE"/>
@@ -527,24 +505,16 @@
       <Constant Name="GARAGE_HIDEOUT_TEN"/>
       <Constant Name="GARAGE_HIDEOUT_ELEVEN"/>
       <Constant Name="GARAGE_HIDEOUT_TWELVE"/>
-    </Enum>
-    <Enum Name="HUD_FLASH"> <!-- TODO same as VC? -->
-      <Constant Name="HUD_FLASH_HEALTH" Value="4"/>
-      <Constant Name="HUD_FLASH_RADAR" Value="8"/>
+      <!-- Old guessed constants. Avoid. -->
+      <Constant Name="GARAGE_HIDEOUT_ONE" Value="16"/>
+      <Constant Name="GARAGE_HIDEOUT_TWO"/>
+      <Constant Name="GARAGE_HIDEOUT_THREE"/>
     </Enum>
     <Enum Name="LEVEL">
       <Constant Name="LEVEL_GENERIC"/>
       <Constant Name="LEVEL_INDUSTRIAL"/>
       <Constant Name="LEVEL_COMMERCIAL"/>
       <Constant Name="LEVEL_SUBURBAN"/>
-    </Enum>
-    <Enum Name="MISSION"> <!-- TODO same as VC? -->
-      <Constant Name="MISSION_BLOCKPLAYER_FARAWAY" Value="4"/>
-      <Constant Name="MISSION_CRUISE" Value="1"/>
-      <Constant Name="MISSION_GOTOCOORDS_STRAIGHT_ACCURATE" Value="13"/>
-      <Constant Name="MISSION_NONE" Value="0"/>
-      <Constant Name="MISSION_RAMPLAYER_FARAWAY" Value="2"/>
-      <Constant Name="MISSION_STOP_FOREVER" Value="11"/>
     </Enum>
     <Enum Name="PARTICLE">
       <Constant Name="PARTICLE_SPARK"/>
@@ -615,10 +585,6 @@
       <Constant Name="PARTICLE_TEST"/>
       <Constant Name="PARTICLE_BIRD_FRONT"/>
       <Constant Name="PARTICLE_RAINDROP_2D"/>
-    </Enum>
-    <Enum Name="PEDSTAT">  <!-- TODO same as VC? -->
-      <Constant Name="PEDSTAT_GEEK_GUY" Value="14"/>
-      <Constant Name="PEDSTAT_TOUGH_GUY" Value="16"/>
     </Enum>
     <Enum Name="PEDTYPE">
       <Constant Name="PEDTYPE_PLAYER1"/>
@@ -694,9 +660,6 @@
       <Constant Name="MSXFM"/>
       <Constant Name="FLASHBACK_95.6"/>
       <Constant Name="CHATTERBOX_FM"/>
-    </Enum>
-    <Enum Name="SHADOW">  <!-- TODO same as VC? -->
-      <Constant Name="SHADOW_EXPLOSION" Value="3"/>
     </Enum>
     <Enum Name="SOUND">
       <Constant Name="SOUND_TEST_1"/>
@@ -824,9 +787,6 @@
       <Constant Name="SOUND_BULLET_HIT_GROUND_1"/>
       <Constant Name="SOUND_BULLET_HIT_GROUND_2"/>
     </Enum>
-    <Enum Name="STATUS">  <!-- TODO same as VC? -->
-      <Constant Name="STATUS_PLAYER" Value="0"/>
-    </Enum>
     <Enum Name="THREAT">
       <Constant Name="THREAT_PLAYER1" Value="1"/>
       <Constant Name="THREAT_PLAYER2" Value="2"/>
@@ -855,12 +815,6 @@
       <Constant Name="THREAT_FIREMAN" Value="16777216"/>
       <Constant Name="THREAT_DEADPEDS" Value="33554432"/>
     </Enum>
-    <Enum Name="WAITSTATE">  <!-- TODO same as VC? -->
-      <Constant Name="WAITSTATE_CROSS_ROAD_LOOK" Value="3"/>
-      <Constant Name="WAITSTATE_FALSE" Value="0"/>
-      <Constant Name="WAITSTATE_PLAYANIM_CHAT" Value="19"/>
-      <Constant Name="WAITSTATE_PLAYANIM_DUCK" Value="14"/>
-    </Enum>
     <Enum Name="WEAPONTYPE">
       <Constant Name="WEAPONTYPE_UNARMED"/>
       <Constant Name="WEAPONTYPE_BASEBALLBAT"/>
@@ -885,6 +839,294 @@
       <Constant Name="WEAPONTYPE_DROWNING"/>
       <Constant Name="WEAPONTYPE_FALL"/>
       <Constant Name="WEAPONTYPE_UNIDENTIFIED"/>
+    </Enum>
+    <Enum Name="CAMMODE">
+      <Constant Name="NONE"/>
+      <Constant Name="TOPDOWN"/>
+      <Constant Name="GTACLASSIC"/>
+      <Constant Name="BEHINDCAR"/>
+      <Constant Name="FOLLOWPED"/>
+      <Constant Name="AIMING"/>
+      <Constant Name="DEBUG"/>
+      <Constant Name="SNIPER"/>
+      <Constant Name="ROCKETLAUNCHER"/>
+      <Constant Name="MODELVIEW"/>
+      <Constant Name="BILL"/>
+      <Constant Name="SYPHON"/>
+      <Constant Name="CIRCLE"/>
+      <Constant Name="CHEESYZOOM"/>
+      <Constant Name="WHEELCAM"/>
+      <Constant Name="FIXED"/>
+      <Constant Name="1STPERSON"/>
+      <Constant Name="FLYBY"/>
+      <Constant Name="CAM_ON_A_STRING"/>
+      <Constant Name="REACTION"/>
+      <Constant Name="FOLLOW_PED_WITH_BIND"/>
+      <Constant Name="CHRIS"/>
+      <Constant Name="BEHINDBOAT"/>
+      <Constant Name="PLAYER_FALLEN_WATER"/>
+      <Constant Name="CAM_ON_TRAIN_ROOF"/>
+      <Constant Name="CAM_RUNNING_SIDE_TRAIN"/>
+      <Constant Name="BLOOD_ON_THE_TRACKS"/>
+      <Constant Name="IM_THE_PASSENGER_WOOWOO"/>
+      <Constant Name="SYPHON_CRIM_IN_FRONT"/>
+      <Constant Name="PED_DEAD_BABY"/>
+      <Constant Name="PILLOWS_PAPS"/>
+      <Constant Name="LOOK_AT_CARS"/>
+      <Constant Name="ARRESTCAM_ONE"/>
+      <Constant Name="ARRESTCAM_TWO"/>
+      <Constant Name="M16_1STPERSON"/>
+      <Constant Name="SPECIAL_FIXED_FOR_SYPHON"/>
+      <Constant Name="FIGHT_CAM"/>
+      <Constant Name="TOP_DOWN_PED"/>
+      <Constant Name="LIGHTHOUSE"/>
+      <Constant Name="SNIPER_RUNABOUT"/>
+      <Constant Name="ROCKETLAUNCHER_RUNABOUT"/>
+      <Constant Name="1STPERSON_RUNABOUT"/>
+      <Constant Name="M16_1STPERSON_RUNABOUT"/>
+      <Constant Name="FIGHT_CAM_RUNABOUT"/>
+      <Constant Name="EDITOR"/>
+      <Constant Name="HELICANNON_1STPERSON"/>
+    </Enum>
+    <Enum Name="CARBOMB">
+      <Constant Name="CARBOMB_NONE"/>
+      <Constant Name="CARBOMB_TIMED"/>
+      <Constant Name="CARBOMB_ONIGNITION"/>
+      <Constant Name="CARBOMB_REMOTE"/>
+      <Constant Name="CARBOMB_TIMEDACTIVE"/>
+      <Constant Name="CARBOMB_ONIGNITIONACTIVE"/>
+    </Enum>
+    <Enum Name="CARCOLOUR">
+      <Constant Name="CARCOLOUR_BLACK"/>
+      <Constant Name="CARCOLOUR_WHITE"/>
+      <Constant Name="CARCOLOUR_POLICECARBLUE"/>
+      <Constant Name="CARCOLOUR_CHERRYRED"/>
+      <Constant Name="CARCOLOUR_MIDNIGHTBLUE"/>
+      <Constant Name="CARCOLOUR_TEMPLECURTAINPURPLE"/>
+      <Constant Name="CARCOLOUR_TAXIYELLOW"/>
+      <Constant Name="CARCOLOUR_STRIKINGBLUE"/>
+      <Constant Name="CARCOLOUR_LIGHTBLUEGREY"/>
+      <Constant Name="CARCOLOUR_HOODS"/>
+      <Constant Name="CARCOLOUR_RED1"/>
+      <Constant Name="CARCOLOUR_RED2"/>
+      <Constant Name="CARCOLOUR_RED3"/>
+      <Constant Name="CARCOLOUR_RED4"/>
+      <Constant Name="CARCOLOUR_RED5"/>
+      <Constant Name="CARCOLOUR_RED6"/>
+      <Constant Name="CARCOLOUR_RED7"/>
+      <Constant Name="CARCOLOUR_RED8"/>
+      <Constant Name="CARCOLOUR_RED9"/>
+      <Constant Name="CARCOLOUR_RED10"/>
+      <Constant Name="CARCOLOUR_ORANGE1"/>
+      <Constant Name="CARCOLOUR_ORANGE2"/>
+      <Constant Name="CARCOLOUR_ORANGE3"/>
+      <Constant Name="CARCOLOUR_ORANGE4"/>
+      <Constant Name="CARCOLOUR_ORANGE5"/>
+      <Constant Name="CARCOLOUR_ORANGE6"/>
+      <Constant Name="CARCOLOUR_ORANGE7"/>
+      <Constant Name="CARCOLOUR_ORANGE8"/>
+      <Constant Name="CARCOLOUR_ORANGE9"/>
+      <Constant Name="CARCOLOUR_ORANGE10"/>
+      <Constant Name="CARCOLOUR_YELLOW1"/>
+      <Constant Name="CARCOLOUR_YELLOW2"/>
+      <Constant Name="CARCOLOUR_YELLOW3"/>
+      <Constant Name="CARCOLOUR_YELLOW4"/>
+      <Constant Name="CARCOLOUR_YELLOW5"/>
+      <Constant Name="CARCOLOUR_YELLOW6"/>
+      <Constant Name="CARCOLOUR_YELLOW7"/>
+      <Constant Name="CARCOLOUR_YELLOW8"/>
+      <Constant Name="CARCOLOUR_YELLOW9"/>
+      <Constant Name="CARCOLOUR_YELLOW10"/>
+      <Constant Name="CARCOLOUR_GREEN1"/>
+      <Constant Name="CARCOLOUR_GREEN2"/>
+      <Constant Name="CARCOLOUR_GREEN3"/>
+      <Constant Name="CARCOLOUR_GREEN4"/>
+      <Constant Name="CARCOLOUR_GREEN5"/>
+      <Constant Name="CARCOLOUR_GREEN6"/>
+      <Constant Name="CARCOLOUR_GREEN7"/>
+      <Constant Name="CARCOLOUR_GREEN8"/>
+      <Constant Name="CARCOLOUR_GREEN9"/>
+      <Constant Name="CARCOLOUR_GREEN10"/>
+      <Constant Name="CARCOLOUR_BLUE1"/>
+      <Constant Name="CARCOLOUR_BLUE2"/>
+      <Constant Name="CARCOLOUR_BLUE3"/>
+      <Constant Name="CARCOLOUR_BLUE4"/>
+      <Constant Name="CARCOLOUR_BLUE5"/>
+      <Constant Name="CARCOLOUR_BLUE6"/>
+      <Constant Name="CARCOLOUR_BLUE7"/>
+      <Constant Name="CARCOLOUR_BLUE8"/>
+      <Constant Name="CARCOLOUR_BLUE9"/>
+      <Constant Name="CARCOLOUR_BLUE10"/>
+      <Constant Name="CARCOLOUR_PURPLE1"/>
+      <Constant Name="CARCOLOUR_PURPLE2"/>
+      <Constant Name="CARCOLOUR_PURPLE3"/>
+      <Constant Name="CARCOLOUR_PURPLE4"/>
+      <Constant Name="CARCOLOUR_PURPLE5"/>
+      <Constant Name="CARCOLOUR_PURPLE6"/>
+      <Constant Name="CARCOLOUR_PURPLE7"/>
+      <Constant Name="CARCOLOUR_PURPLE8"/>
+      <Constant Name="CARCOLOUR_PURPLE9"/>
+      <Constant Name="CARCOLOUR_PURPLE10"/>
+      <Constant Name="CARCOLOUR_GREY1"/>
+      <Constant Name="CARCOLOUR_GREY2"/>
+      <Constant Name="CARCOLOUR_GREY3"/>
+      <Constant Name="CARCOLOUR_GREY4"/>
+      <Constant Name="CARCOLOUR_GREY5"/>
+      <Constant Name="CARCOLOUR_GREY6"/>
+      <Constant Name="CARCOLOUR_GREY7"/>
+      <Constant Name="CARCOLOUR_GREY8"/>
+      <Constant Name="CARCOLOUR_GREY9"/>
+      <Constant Name="CARCOLOUR_GREY10"/>
+      <Constant Name="CARCOLOUR_LIGHT1"/>
+      <Constant Name="CARCOLOUR_LIGHT2"/>
+      <Constant Name="CARCOLOUR_LIGHT3"/>
+      <Constant Name="CARCOLOUR_LIGHT4"/>
+      <Constant Name="CARCOLOUR_LIGHT5"/>
+      <Constant Name="CARCOLOUR_LIGHT6"/>
+      <Constant Name="CARCOLOUR_LIGHT7"/>
+      <Constant Name="CARCOLOUR_LIGHT8"/>
+      <Constant Name="CARCOLOUR_LIGHT9"/>
+      <Constant Name="CARCOLOUR_LIGHT10"/>
+      <Constant Name="CARCOLOUR_DARK1"/>
+      <Constant Name="CARCOLOUR_DARK2"/>
+      <Constant Name="CARCOLOUR_DARK3"/>
+      <Constant Name="CARCOLOUR_DARK4"/>
+      <Constant Name="CARCOLOUR_DARK5"/>
+    </Enum>
+    <Enum Name="DRIVINGMODE">
+      <Constant Name="DRIVINGMODE_STOPFORCARS"/>
+      <Constant Name="DRIVINGMODE_SLOWDOWNFORCARS"/>
+      <Constant Name="DRIVINGMODE_AVOIDCARS"/>
+      <Constant Name="DRIVINGMODE_PLOUGHTHROUGH"/>
+      <Constant Name="DRIVINGMODE_STOPFORCARS_IGNORELIGHTS"/>
+    </Enum>
+    <Enum Name="FLARETYPE">
+      <Constant Name="FLARETYPE_NONE"/>
+      <Constant Name="FLARETYPE_SUN"/>
+      <Constant Name="FLARETYPE_HEADLIGHTS"/>
+    </Enum>
+    <Enum Name="FOLLOW_ROUTE">
+      <Constant Name="FOLLOW_ROUTE_INVALID"/>
+      <Constant Name="FOLLOW_ROUTE_ONCE"/>
+      <Constant Name="FOLLOW_ROUTE_BACKFORWARD"/>
+      <Constant Name="FOLLOW_ROUTE_LOOP"/>
+    </Enum>
+    <Enum Name="HUD_FLASH">
+      <Constant Name="HUD_FLASH_WEAPON"/>
+      <Constant Name="HUD_FLASH_CLOCK"/>
+      <Constant Name="HUD_FLASH_SCORE"/>
+      <Constant Name="HUD_FLASH_ARMOUR"/>
+      <Constant Name="HUD_FLASH_HEALTH"/>
+      <Constant Name="HUD_FLASH_WANTED"/>
+      <Constant Name="HUD_FLASH_ZONE_NAME"/>
+      <Constant Name="HUD_FLASH_CAR_NAME"/>
+      <Constant Name="HUD_FLASH_RADAR"/>
+      <Constant Name="HUD_FLASH_BLIP"/>
+    </Enum>
+    <Enum Name="MISSION">
+      <Constant Name="MISSION_NONE"/>
+      <Constant Name="MISSION_CRUISE"/>
+      <Constant Name="MISSION_RAMPLAYER_FARAWAY"/>
+      <Constant Name="MISSION_RAMPLAYER_CLOSE"/>
+      <Constant Name="MISSION_BLOCKPLAYER_FARAWAY"/>
+      <Constant Name="MISSION_BLOCKPLAYER_CLOSE"/>
+      <Constant Name="MISSION_BLOCKPLAYER_HANDBRAKESTOP"/>
+      <Constant Name="MISSION_WAITFORDELETION"/>
+      <Constant Name="MISSION_GOTOCOORDS"/>
+      <Constant Name="MISSION_GOTOCOORDS_STRAIGHT"/>
+      <Constant Name="MISSION_EMERGENCYVEHICLE_STOP"/>
+      <Constant Name="MISSION_STOP_FOREVER"/>
+      <Constant Name="MISSION_GOTOCOORDS_ACCURATE"/>
+      <Constant Name="MISSION_GOTOCOORDS_STRAIGHT_ACCURATE"/>
+      <Constant Name="MISSION_GOTOCOORDS_ASTHECROWSWIMS"/>
+      <Constant Name="MISSION_RAMCAR_FARAWAY"/>
+      <Constant Name="MISSION_RAMCAR_CLOSE"/>
+      <Constant Name="MISSION_BLOCKCAR_FARAWAY"/>
+      <Constant Name="MISSION_BLOCKCAR_CLOSE"/>
+      <Constant Name="MISSION_BLOCKCAR_HANDBRAKESTOP"/>
+    </Enum>
+    <Enum Name="PEDSTAT">
+      <Constant Name="PEDSTAT_PLAYER"/>
+      <Constant Name="PEDSTAT_COP"/>
+      <Constant Name="PEDSTAT_MEDIC"/>
+      <Constant Name="PEDSTAT_FIRE"/>
+      <Constant Name="PEDSTAT_GANG1"/>
+      <Constant Name="PEDSTAT_GANG2"/>
+      <Constant Name="PEDSTAT_GANG3"/>
+      <Constant Name="PEDSTAT_GANG4"/>
+      <Constant Name="PEDSTAT_GANG5"/>
+      <Constant Name="PEDSTAT_GANG6"/>
+      <Constant Name="PEDSTAT_GANG7"/>
+      <Constant Name="PEDSTAT_STREET_GUY"/>
+      <Constant Name="PEDSTAT_SUIT_GUY"/>
+      <Constant Name="PEDSTAT_SENSIBLE_GUY"/>
+      <Constant Name="PEDSTAT_GEEK_GUY"/>
+      <Constant Name="PEDSTAT_OLD_GUY"/>
+      <Constant Name="PEDSTAT_TOUGH_GUY"/>
+      <Constant Name="PEDSTAT_STREET_GIRL"/>
+      <Constant Name="PEDSTAT_SUIT_GIRL"/>
+      <Constant Name="PEDSTAT_SENSIBLE_GIRL"/>
+      <Constant Name="PEDSTAT_GEEK_GIRL"/>
+      <Constant Name="PEDSTAT_OLD_GIRL"/>
+      <Constant Name="PEDSTAT_TOUGH_GIRL"/>
+      <Constant Name="PEDSTAT_TRAMP_MALE"/>
+      <Constant Name="PEDSTAT_TRAMP_FEMALE"/>
+      <Constant Name="PEDSTAT_TOURIST"/>
+      <Constant Name="PEDSTAT_PROSTITUTE"/>
+      <Constant Name="PEDSTAT_CRIMINAL"/>
+      <Constant Name="PEDSTAT_BUSKER"/>
+      <Constant Name="PEDSTAT_TAXIDRIVER"/>
+      <Constant Name="PEDSTAT_PSYCHO"/>
+      <Constant Name="PEDSTAT_STEWARD"/>
+      <Constant Name="PEDSTAT_SPORTSFAN"/>
+      <Constant Name="PEDSTAT_SHOPPER"/>
+      <Constant Name="PEDSTAT_OLDSHOPPER"/>
+    </Enum>
+    <Enum Name="SHADOW">
+      <Constant Name="SHADOW_NONE"/>
+      <Constant Name="SHADOW_CAR"/>
+      <Constant Name="SHADOW_PED"/>
+      <Constant Name="SHADOW_EXPLOSION"/>
+      <Constant Name="SHADOW_HELI"/>
+      <Constant Name="SHADOW_HEADLIGHTS"/>
+      <Constant Name="SHADOW_BLOOD"/>
+    </Enum>
+    <Enum Name="STATUS">
+      <Constant Name="STATUS_PLAYER"/>
+      <Constant Name="STATUS_PLAYER_PLAYBACKFROMBUFFER"/>
+      <Constant Name="STATUS_SIMPLE"/>
+      <Constant Name="STATUS_PHYSICS"/>
+      <Constant Name="STATUS_ABANDONED"/>
+      <Constant Name="STATUS_WRECKED"/>
+      <Constant Name="STATUS_TRAIN_MOVING"/>
+      <Constant Name="STATUS_TRAIN_NOT_MOVING"/>
+      <Constant Name="STATUS_HELI"/>
+      <Constant Name="STATUS_PLANE"/>
+      <Constant Name="STATUS_PLAYER_REMOTE"/>
+      <Constant Name="STATUS_PLAYER_DISABLED"/>
+    </Enum>
+    <Enum Name="WAITSTATE">
+      <Constant Name="WAITSTATE_FALSE"/>
+      <Constant Name="WAITSTATE_TRAFFIC_LIGHTS"/>
+      <Constant Name="WAITSTATE_CROSS_ROAD"/>
+      <Constant Name="WAITSTATE_CROSS_ROAD_LOOK"/>
+      <Constant Name="WAITSTATE_LOOK_PED"/>
+      <Constant Name="WAITSTATE_LOOK_SHOP"/>
+      <Constant Name="WAITSTATE_LOOK_ACCIDENT"/>
+      <Constant Name="WAITSTATE_FACEOFF_GANG"/>
+      <Constant Name="WAITSTATE_DOUBLEBACK"/>
+      <Constant Name="WAITSTATE_HITWALL"/>
+      <Constant Name="WAITSTATE_TURN180"/>
+      <Constant Name="WAITSTATE_SURPRISE"/>
+      <Constant Name="WAITSTATE_STUCK"/>
+      <Constant Name="WAITSTATE_LOOK_ABOUT"/>
+      <Constant Name="WAITSTATE_PLAYANIM_DUCK"/>
+      <Constant Name="WAITSTATE_PLAYANIM_COWER"/>
+      <Constant Name="WAITSTATE_PLAYANIM_TAXI"/>
+      <Constant Name="WAITSTATE_PLAYANIM_HANDSUP"/>
+      <Constant Name="WAITSTATE_PLAYANIM_HANDSCOWER"/>
+      <Constant Name="WAITSTATE_PLAYANIM_CHAT"/>
+      <Constant Name="WAITSTATE_FINISH_FLEE"/>
     </Enum>
   </Constants>
 </GTA3Script>
