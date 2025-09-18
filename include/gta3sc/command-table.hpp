@@ -545,8 +545,12 @@ void CommandTable::Builder::set_command_params(CommandDef& command,
                                                ForwardIterator params_end,
                                                size_t params_size)
 {
-    auto* a_params = allocator.allocate_object<ParamDef>(params_size);
-    std::uninitialized_copy(params_begin, params_end, a_params);
+    ParamDef* a_params = nullptr;
+    if(params_size > 0)
+    {
+        a_params = allocator.allocate_object<ParamDef>(params_size);
+        std::uninitialized_copy(params_begin, params_end, a_params);
+    }
     command.m_params = util::span(a_params, params_size);
 }
 

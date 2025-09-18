@@ -178,4 +178,5 @@ CheckOptions:
     value:           lower_case
 
 HeaderFilterRegex: '\/include\/gta3sc\/.*|\/lib\/.*|\/src\/.*|\/unittest\/.*'
+ExcludeHeaderFilterRegex: 'thirdparty/pugixml/.*'
 FormatStyle: file

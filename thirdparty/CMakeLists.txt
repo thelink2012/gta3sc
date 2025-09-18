@@ -2,6 +2,7 @@
 set(CMAKE_CXX_CLANG_TIDY "")
 
 add_subdirectory(span-lite EXCLUDE_FROM_ALL)
+add_subdirectory(pugixml EXCLUDE_FROM_ALL)
 
 if(BUILD_TESTING)
     set(DOCTEST_WITH_TESTS OFF)

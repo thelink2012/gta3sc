@@ -297,6 +297,12 @@ public:
         return {begin, static_cast<size_t>(range.end - range.begin)};
     }
 
+    /// Gets the path to this source file.
+    [[nodiscard]] auto path() const -> const std::filesystem::path&
+    {
+        return info->path;
+    }
+
 protected:
     friend class SourceManager;
 

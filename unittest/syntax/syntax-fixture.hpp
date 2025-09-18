@@ -1,11 +1,6 @@
 #pragma once
-#include <cstring>
-#include <doctest/doctest.h>
-#include <gta3sc/diagnostics.hpp>
-#include <gta3sc/sourceman.hpp>
-#include <memory>
+#include "../with-diagnostic-fixture.hpp"
 #include <ostream>
-#include <queue>
 
 // FIXME I don't feel it's good to include this here but are doing so
 // in order to pretty print
@@ -14,47 +9,10 @@
 
 namespace gta3sc::test::syntax
 {
-class SyntaxFixture
+class SyntaxFixture : public WithDiagnosticFixture
 {
 public:
-    SyntaxFixture() : diagman([this](const auto& diag) { diags.push(diag); }) {}
-
-    virtual ~SyntaxFixture() { CHECK(diags.empty()); }
-    SyntaxFixture(const SyntaxFixture&) = delete;
-    auto operator=(const SyntaxFixture&) -> SyntaxFixture& = delete;
-    SyntaxFixture(SyntaxFixture&&) noexcept = default;
-    auto operator=(SyntaxFixture&&) noexcept -> SyntaxFixture& = default;
-
-protected:
-    auto make_source(std::string_view src) -> gta3sc::SourceFile
-    {
-        const auto n = src.size();
-        auto ptr = std::make_unique<char[]>(n + 1);
-        std::memcpy(ptr.get(), src.data(), n);
-        ptr[n] = '\0';
-        return sourceman.load_file(std::move(ptr), n).value();
-    }
-
-    auto consume_diag() -> gta3sc::Diagnostic
-    {
-        REQUIRE(!this->diags.empty());
-        auto front = std::move(this->diags.front());
-        this->diags.pop();
-        return front;
-    }
-
-    auto peek_diag() -> const gta3sc::Diagnostic&
-    {
-        REQUIRE(!this->diags.empty());
-        return this->diags.front();
-    }
-
-protected:
-    // Do not lint regarding protected member variables, this isn't quite in
-    // the library code and we'll need protected access to the fixture.
-    gta3sc::SourceManager sourceman;      // NOLINT
-    gta3sc::DiagnosticHandler diagman;    // NOLINT
-    std::queue<gta3sc::Diagnostic> diags; // NOLINT
+    SyntaxFixture() = default;
 };
 } // namespace gta3sc::test::syntax
 

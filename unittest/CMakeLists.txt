@@ -8,9 +8,19 @@ add_executable(gta3sc_unittest
     codegen/relocation-table.cpp
     codegen/trilogy/emitter.cpp
     codegen/trilogy/codegen.cpp
+    config/config-fixture.hpp
+    config/config-fixture.cpp
+    config/config-alternator.cpp
+    config/config-commands.cpp
+    config/config-command.cpp
+    config/config-command-id.cpp
+    config/config-constant.cpp
+    config/config-import.cpp
+    config/config-load.cpp
+    config/config-root.cpp
 )
 target_compile_features(gta3sc_unittest PUBLIC cxx_std_20)
-target_link_libraries(gta3sc_unittest PRIVATE gta3sc doctest_with_main)
+target_link_libraries(gta3sc_unittest PRIVATE gta3sc gta3sc-config doctest_with_main)
 
 doctest_discover_tests(gta3sc_unittest)
 
