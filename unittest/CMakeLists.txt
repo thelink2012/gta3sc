@@ -1,4 +1,5 @@
 add_executable(gta3sc_unittest
+    with-temp-dir-fixture.cpp
     syntax/preprocessor.cpp
     syntax/scanner.cpp
     syntax/parser.cpp
@@ -9,7 +10,6 @@ add_executable(gta3sc_unittest
     codegen/trilogy/emitter.cpp
     codegen/trilogy/codegen.cpp
     config/config-fixture.hpp
-    config/config-fixture.cpp
     config/config-alternator.cpp
     config/config-commands.cpp
     config/config-command.cpp
@@ -18,6 +18,8 @@ add_executable(gta3sc_unittest
     config/config-import.cpp
     config/config-load.cpp
     config/config-root.cpp
+    config/models-ide.cpp
+    config/models-level.cpp
 )
 target_compile_features(gta3sc_unittest PUBLIC cxx_std_20)
 target_link_libraries(gta3sc_unittest PRIVATE gta3sc gta3sc-config doctest_with_main)

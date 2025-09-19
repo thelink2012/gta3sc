@@ -18,8 +18,8 @@ inline auto operator<<(std::ostream& os, std::byte byte_val) -> std::ostream&
 }
 
 template<typename T>
-inline auto operator<<(std::ostream& os, const std::vector<T>& v)
-        -> std::ostream&
+inline auto operator<<(std::ostream& os,
+                       const std::vector<T>& v) -> std::ostream&
 {
     os << "{";
     for(size_t i = 0; i < v.size(); ++i)

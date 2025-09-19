@@ -21,29 +21,4 @@ protected:
 
     ArenaMemoryResource arena;
 };
-
-class LoadConfigFixture : public ConfigFixture
-{
-public:
-    LoadConfigFixture()
-    {
-        root_test_dir = std::filesystem::temp_directory_path()
-                        / "gta3sc_load_config_test";
-        std::filesystem::create_directories(root_test_dir);
-    }
-
-    ~LoadConfigFixture() { std::filesystem::remove_all(root_test_dir); }
-
-    LoadConfigFixture(const LoadConfigFixture&) = delete;
-    auto operator=(const LoadConfigFixture&) -> LoadConfigFixture& = delete;
-
-    LoadConfigFixture(LoadConfigFixture&&) = delete;
-    auto operator=(LoadConfigFixture&&) -> LoadConfigFixture& = delete;
-
-protected:
-    void create_test_file(const std::filesystem::path& path,
-                          std::string_view content);
-
-    std::filesystem::path root_test_dir;
-};
 } // namespace gta3sc::test::config

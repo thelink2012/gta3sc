@@ -19,7 +19,7 @@ public:
     WithDiagnosticFixture(const WithDiagnosticFixture&) = delete;
     auto
     operator=(const WithDiagnosticFixture&) -> WithDiagnosticFixture& = delete;
-    
+
     WithDiagnosticFixture(WithDiagnosticFixture&&) noexcept = default;
     auto operator=(WithDiagnosticFixture&&) noexcept
             -> WithDiagnosticFixture& = default;

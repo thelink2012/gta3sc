@@ -150,6 +150,9 @@ private:
     DiagnosticHandler& diagman;
     ArenaMemoryResource scratchpad;
     uint8_t import_depth{0};
+
+    // TODO instead of an arena leaking all over the place, use member variables
+    // for example vec scratchpad_params, str scratchpad_upper, etc.
 };
 } // namespace
 
@@ -176,7 +179,7 @@ auto load_config(const std::filesystem::path& root_path,
     if(!config_file)
     {
         diagman.report(SourceManager::no_source_loc,
-                       Diag::config_could_not_open_file)
+                       Diag::config_xml_could_not_open_file)
                 .args(config_path.generic_string());
         return std::move(builder);
     }
@@ -313,7 +316,7 @@ void ConfigLoader::report_could_not_open_file(const SourceFile& config_file,
                                               std::string_view path)
 {
     diagman.report(xml_location(config_file, node),
-                   Diag::config_could_not_open_file)
+                   Diag::config_xml_could_not_open_file)
             .args(path);
 }
 

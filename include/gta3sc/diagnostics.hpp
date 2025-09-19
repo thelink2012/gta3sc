@@ -88,7 +88,7 @@ enum class Diag : uint32_t  // NOLINT(performance-enum-size)
     codegen_label_at_local_zero_offset,
     codegen_label_ref_across_segments,
     codegen_target_does_not_support_command,
-    config_could_not_open_file,       // %0 => string (filepath)
+    config_xml_could_not_open_file,   // %0 => string (filepath)
     config_xml_parse_failed,          // %0 => string (error description)
     config_xml_invalid_root_element,  // %0 => string (got)
     config_xml_invalid_version,       // %0 => string (got)
@@ -104,6 +104,8 @@ enum class Diag : uint32_t  // NOLINT(performance-enum-size)
     config_xml_import_failed_to_determine_game_config,
     config_xml_invalid_handled_without_id,
     config_xml_opt_must_be_last_param,
+    config_models_invalid_ide_line,
+    config_models_could_not_open_file, // %0 => string
 };
 
 /// Information about a diagnostic.

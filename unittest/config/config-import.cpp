@@ -1,11 +1,16 @@
+#include "../with-temp-dir-fixture.hpp"
 #include "config-fixture.hpp"
 #include <filesystem>
+#include <gta3sc/command-table.hpp>
+#include <gta3sc/config/config.hpp>
 #include <gta3sc/sourceman.hpp>
 using namespace std::string_view_literals;
 
 namespace gta3sc::test::config
 {
-class ImportConfigFixture : public LoadConfigFixture
+class ImportConfigFixture
+    : public ConfigFixture
+    , public WithTempDirFixture
 {
 public:
     ImportConfigFixture()
@@ -31,8 +36,7 @@ protected:
                 .build();
     }
 
-    // Overrides ConfigFixture::build_config to use create_test_file +
-    // load_test_config
+    // Override the ConfigFixture::build_config method to create files
     auto build_config(std::string_view src) -> CommandTable
     {
         auto temp_config_file = game0_dir / "config.xml";
@@ -215,7 +219,8 @@ TEST_CASE_FIXTURE(ImportConfigFixture, "config import with non-existent file")
     load_test_config(game0_dir / "config.xml");
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message == gta3sc::Diag::config_could_not_open_file);
+    CHECK(consume_diag().message
+          == gta3sc::Diag::config_xml_could_not_open_file);
 }
 
 TEST_CASE_FIXTURE(ImportConfigFixture,

@@ -1,10 +1,22 @@
-
+#include "../with-temp-dir-fixture.hpp"
 #include "config-fixture.hpp"
-#include "gta3sc/util/arena.hpp"
 #include <filesystem>
+#include <gta3sc/command-table.hpp>
+#include <gta3sc/config/config.hpp>
 #include <gta3sc/sourceman.hpp>
+#include <gta3sc/util/arena.hpp>
 using namespace std::string_view_literals;
+using namespace gta3sc::test;
 using namespace gta3sc::test::config;
+
+namespace gta3sc::test::config
+{
+class LoadConfigFixture
+    : public ConfigFixture
+    , public WithTempDirFixture
+{
+};
+} // namespace gta3sc::test::config
 
 TEST_CASE_FIXTURE(LoadConfigFixture,
                   "load_config with filesystem path and builder overload")
@@ -90,7 +102,8 @@ TEST_CASE_FIXTURE(LoadConfigFixture, "load_config with non-existent file")
                          .build();
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message == gta3sc::Diag::config_could_not_open_file);
+    CHECK(consume_diag().message
+          == gta3sc::Diag::config_xml_could_not_open_file);
 }
 
 TEST_CASE_FIXTURE(LoadConfigFixture,
@@ -101,5 +114,6 @@ TEST_CASE_FIXTURE(LoadConfigFixture,
             diagman, gta3sc::ArenaAllocator<>(&arena));
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message == gta3sc::Diag::config_could_not_open_file);
+    CHECK(consume_diag().message
+          == gta3sc::Diag::config_xml_could_not_open_file);
 }

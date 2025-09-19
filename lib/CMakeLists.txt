@@ -8,6 +8,7 @@ add_library(gta3sc
   ir/symbol-table.cpp
   util/arena.cpp
   util/name-generator.cpp
+  config/models.cpp
   syntax/preprocessor.cpp
   syntax/scanner.cpp
   syntax/parser.cpp

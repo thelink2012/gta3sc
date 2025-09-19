@@ -42,6 +42,12 @@ public:
     [[nodiscard]] auto find_model(std::string_view name) const noexcept
             -> const ModelDef*;
 
+    /// Returns the number of models in the table.
+    [[nodiscard]] auto size() const noexcept -> size_t
+    {
+        return models.size();
+    }
+
 private:
     using ModelMap
             = std::unordered_map<std::string_view, ArenaPtr<const ModelDef>>;
@@ -55,8 +61,9 @@ private:
 class ModelTable::ModelDef : public ArenaObj
 {
 public:
-    explicit ModelDef(PrivateTag /*unused*/, uint8_t name_size) noexcept :
-        m_name_size(name_size)
+    explicit ModelDef(PrivateTag /*unused*/, uint8_t name_size,
+                      uint32_t model_id) noexcept :
+        m_model_id(model_id), m_name_size(name_size)
     {}
 
     /// Returns the name of the object model.
@@ -65,7 +72,14 @@ public:
         return util::get_sibling_string(this, m_name_size);
     }
 
+    /// Returns the id of the object model.
+    [[nodiscard]] auto model_id() const noexcept -> uint32_t
+    {
+        return m_model_id;
+    }
+
 private:
+    uint32_t m_model_id;
     uint8_t m_name_size;
 };
 
@@ -87,8 +101,8 @@ public:
 
     ~Builder() noexcept = default;
 
-    /// Inserts a model into the table.
-    auto insert_model(std::string_view name) -> Builder&&;
+    /// Inserts (or replaces) a model into the table.
+    auto insert_model(std::string_view name, uint32_t id) -> Builder&&;
 
     /// Builds the model table.
     auto build() && -> ModelTable;
