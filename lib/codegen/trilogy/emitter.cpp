@@ -1,6 +1,6 @@
 #include <cmath>
 #include <gta3sc/codegen/trilogy/emitter.hpp>
-using gta3sc::util::bit_cast;
+using std::bit_cast;
 
 namespace gta3sc::codegen::trilogy
 {

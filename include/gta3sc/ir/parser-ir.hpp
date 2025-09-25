@@ -4,9 +4,9 @@
 #include <gta3sc/util/arena.hpp>
 #include <gta3sc/util/intrusive-bidirectional-list-node.hpp>
 #include <gta3sc/util/random-access-view.hpp>
-#include <gta3sc/util/span.hpp>
 #include <gta3sc/util/string-vieweable.hpp>
 #include <gta3sc/util/visit.hpp>
+#include <span>
 #include <string_view>
 #include <variant>
 
@@ -265,7 +265,7 @@ class ParserIR::Command : public ArenaObj
 public:
     /// Please use `ParserIR::Builder::build_command`.
     Command(PrivateTag /*unused*/, SourceRange source, std::string_view name,
-            util::span<const Argument*> args, bool not_flag) noexcept :
+            std::span<const Argument*> args, bool not_flag) noexcept :
         m_source(source), m_name(name), m_args(args), m_not_flag(not_flag)
     {}
 
@@ -317,7 +317,7 @@ public:
 private:
     SourceRange m_source;
     std::string_view m_name;
-    util::span<const Argument*> m_args;
+    std::span<const Argument*> m_args;
     bool m_not_flag{};
 };
 
@@ -508,7 +508,7 @@ private:
 
     size_t args_hint = no_args_hint;
     size_t args_capacity = 0;
-    util::span<const Argument*> args;
+    std::span<const Argument*> args;
 };
 
 template<typename InputIterator>

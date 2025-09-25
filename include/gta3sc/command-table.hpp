@@ -1,8 +1,8 @@
 #pragma once
 #include <gta3sc/util/arena.hpp>
 #include <gta3sc/util/intrusive-forward-list-node.hpp>
-#include <gta3sc/util/span.hpp>
 #include <optional>
+#include <span>
 #include <string_view>
 #include <unordered_map>
 
@@ -264,7 +264,7 @@ public:
     }
 
     /// Returns the parameters of the command.
-    [[nodiscard]] auto params() const noexcept -> util::span<const ParamDef>
+    [[nodiscard]] auto params() const noexcept -> std::span<const ParamDef>
     {
         return m_params;
     }
@@ -310,7 +310,7 @@ public:
 private:
     friend class CommandTable::Builder;
     std::string_view m_name;
-    util::span<const ParamDef> m_params;
+    std::span<const ParamDef> m_params;
     std::optional<int16_t> m_target_id;
     bool m_target_handled{};
 };
@@ -551,7 +551,7 @@ void CommandTable::Builder::set_command_params(CommandDef& command,
         a_params = allocator.allocate_object<ParamDef>(params_size);
         std::uninitialized_copy(params_begin, params_end, a_params);
     }
-    command.m_params = util::span(a_params, params_size);
+    command.m_params = std::span(a_params, params_size);
 }
 
 template<typename RandomAccessIterator>

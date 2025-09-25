@@ -282,7 +282,7 @@ public:
     /// Please use `SemaIR::Builder::build_command`.
     Command(PrivateTag /*unused*/, SourceRange source,
             const CommandTable::CommandDef& def,
-            util::span<const Argument*> args, bool not_flag) noexcept :
+            std::span<const Argument*> args, bool not_flag) noexcept :
         m_source(source), m_def(&def), m_args(args), m_not_flag(not_flag)
     {}
 
@@ -334,7 +334,7 @@ public:
 private:
     SourceRange m_source;
     const CommandTable::CommandDef* m_def;
-    util::span<const Argument*> m_args;
+    std::span<const Argument*> m_args;
     bool m_not_flag{};
 };
 
@@ -583,7 +583,7 @@ private:
 
     size_t args_hint = no_args_hint;
     size_t args_capacity = 0;
-    util::span<const Argument*> args;
+    std::span<const Argument*> args;
 };
 
 template<typename InputIterator>

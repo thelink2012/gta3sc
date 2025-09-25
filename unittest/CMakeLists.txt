@@ -21,7 +21,7 @@ add_executable(gta3sc_unittest
     config/models-ide.cpp
     config/models-level.cpp
 )
-target_compile_features(gta3sc_unittest PUBLIC cxx_std_20)
+target_compile_features(gta3sc_unittest PUBLIC cxx_std_26)
 target_link_libraries(gta3sc_unittest PRIVATE gta3sc gta3sc-config doctest_with_main)
 
 doctest_discover_tests(gta3sc_unittest)

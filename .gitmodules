@@ -1,9 +1,6 @@
 [submodule "unittest/doctest"]
 	path = thirdparty/doctest
 	url = https://github.com/doctest/doctest
-[submodule "thirdparty/span-lite"]
-	path = thirdparty/span-lite
-	url = https://github.com/martinmoene/span-lite
 [submodule "thirdparty/pugixml"]
 	path = thirdparty/pugixml
 	url = https://github.com/zeux/pugixml

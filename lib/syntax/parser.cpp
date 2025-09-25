@@ -1,4 +1,4 @@
-#include "charconv.hpp"
+#include <charconv>
 #include <gta3sc/diagnostics.hpp>
 #include <gta3sc/syntax/parser.hpp>
 #include <gta3sc/util/ctype.hpp>
@@ -500,8 +500,8 @@ auto Parser::parse_argument()
     {
         int32_t value{};
 
-        if(auto [_, ec] = util::from_chars(&*lexeme.begin(), &*lexeme.end(),
-                                           value);
+        if(auto [_, ec] = std::from_chars(&*lexeme.begin(), &*lexeme.end(),
+                                          value);
            ec != std::errc())
         {
             assert(ec == std::errc::result_out_of_range);
@@ -515,8 +515,8 @@ auto Parser::parse_argument()
     {
         float value{};
 
-        if(auto [_, ec] = util::from_chars(&*lexeme.begin(), &*lexeme.end(),
-                                           value, util::chars_format::fixed);
+        if(auto [_, ec] = std::from_chars(&*lexeme.begin(), &*lexeme.end(),
+                                          value, std::chars_format::fixed);
            ec != std::errc())
         {
             assert(ec == std::errc::result_out_of_range);

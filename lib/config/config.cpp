@@ -761,7 +761,7 @@ void ConfigLoader::process_command(const SourceFile& config_file,
     auto [command, _] = builder.insert_command(toupper(name.value()));
     assert(command != nullptr);
 
-    util::span<CommandTable::ParamDef> param_defs;
+    std::span<CommandTable::ParamDef> param_defs;
 
     // Process parameters if present
     if(auto params = node.child("Params"))

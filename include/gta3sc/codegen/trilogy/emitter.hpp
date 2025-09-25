@@ -1,7 +1,7 @@
 #pragma once
+#include <bit>
 #include <cassert>
 #include <cstdint>
-#include <gta3sc/util/bit_cast.hpp>
 #include <vector>
 
 namespace gta3sc::codegen::trilogy
@@ -156,7 +156,7 @@ template<typename InputIterator>
 inline auto CodeEmitter::emit_raw_bytes(InputIterator begin, InputIterator end,
                                         size_t output_size) -> CodeEmitter&
 {
-    using util::bit_cast;
+    using std::bit_cast;
     static_assert(
             sizeof(typename std::iterator_traits<InputIterator>::value_type)
             == sizeof(std::byte));

@@ -1,6 +1,5 @@
 #pragma once
 #include <atomic>
-#include <cstdint>
 #include <string>
 
 namespace gta3sc::util

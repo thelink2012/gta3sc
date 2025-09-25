@@ -1,6 +1,6 @@
 #pragma once
 #include <gta3sc/util/arena.hpp>
-#include <gta3sc/util/span.hpp>
+#include <span>
 #include <string_view>
 
 namespace gta3sc::util
@@ -73,10 +73,10 @@ inline auto new_string(std::string_view copy_from,
 ///
 /// Returns the new array and the new capacity.
 template<typename T, typename U>
-inline auto new_array_element(U&& value, util::span<T> current_array,
-                              size_t current_capacity, size_t default_capacity,
-                              ArenaAllocator<> allocator)
-        -> std::pair<util::span<T>, size_t>
+inline auto
+new_array_element(U&& value, std::span<T> current_array,
+                  size_t current_capacity, size_t default_capacity,
+                  ArenaAllocator<> allocator) -> std::pair<std::span<T>, size_t>
 {
     assert(default_capacity != 0);
     assert(current_array.size() <= current_capacity);
@@ -91,11 +91,11 @@ inline auto new_array_element(U&& value, util::span<T> current_array,
         std::uninitialized_move(current_array.begin(), current_array.end(),
                                 new_array);
 
-        current_array = util::span(new_array, current_array.size());
+        current_array = std::span(new_array, current_array.size());
         current_capacity = new_capacity;
     }
 
-    current_array = util::span(current_array.data(), current_array.size() + 1);
+    current_array = std::span(current_array.data(), current_array.size() + 1);
     allocator.construct(&current_array.back(), std::forward<U>(value));
 
     return {current_array, current_capacity};

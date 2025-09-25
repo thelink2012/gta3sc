@@ -1,4 +1,4 @@
-#include "charconv.hpp"
+#include <charconv>
 #include <gta3sc/diagnostics.hpp>
 #include <gta3sc/syntax/sema.hpp>
 using namespace std::literals::string_view_literals;
@@ -1510,8 +1510,8 @@ auto Sema::parse_var_ref(std::string_view identifier,
             {
                 int32_t value{};
 
-                if(auto [_, ec] = util::from_chars(&*subval.begin(),
-                                                   &*subval.end(), value);
+                if(auto [_, ec] = std::from_chars(&*subval.begin(),
+                                                  &*subval.end(), value);
                    ec != std::errc())
                 {
                     assert(ec == std::errc::result_out_of_range);
