@@ -1,9 +1,9 @@
 #pragma once
+#include <gta3sc/command-table.hpp>
+#include <gta3sc/diagnostics.hpp>
+#include <gta3sc/sourceman.hpp>
 
-#include "gta3sc/command-table.hpp"
-#include "gta3sc/diagnostics.hpp"
-#include "gta3sc/sourceman.hpp"
-namespace gta3sc
+namespace gta3sc::config
 {
 /// Loads a `config.xml` file and populates a command table builder with the
 /// commands, alternators, enumerations, etc defined in the file.

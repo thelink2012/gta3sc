@@ -80,6 +80,9 @@ auto load_models_from_level(
         const auto ide_relative_path = line.substr(4);
         const auto ide_path = root_path / ide_relative_path;
 
+        // TODO case insensitive load (can reuse code from sourceman?)
+        // TODO replace \\ and / by preffered separator
+
         std::error_code ec;
         if(!std::filesystem::is_regular_file(ide_path, ec) || ec)
         {

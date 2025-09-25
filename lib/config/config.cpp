@@ -156,7 +156,7 @@ private:
 };
 } // namespace
 
-namespace gta3sc
+namespace gta3sc::config
 {
 auto load_config(const std::filesystem::path& root_path,
                  const std::filesystem::path& config_path,

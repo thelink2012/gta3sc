@@ -13,11 +13,13 @@ add_library(gta3sc
   syntax/scanner.cpp
   syntax/parser.cpp
   syntax/sema.cpp
+  syntax/multifile-parser.cpp
   syntax/lowering/repeat-stmt-rewriter.cpp
   codegen/storage-table.cpp
   codegen/relocation-table.cpp
   codegen/trilogy/emitter.cpp
   codegen/trilogy/codegen.cpp
+  codegen/trilogy/multifile-codegen.cpp
 )
 target_compile_features(gta3sc PUBLIC cxx_std_20)
 target_include_directories(gta3sc
@@ -29,5 +31,6 @@ target_compile_options(gta3sc PRIVATE ${GTA3SC_PEDANTIC_COMPILE_OPTIONS})
 add_library(gta3sc-config
   config/config.cpp
 )
+target_compile_features(gta3sc-config PUBLIC cxx_std_20)
 target_link_libraries(gta3sc-config gta3sc pugixml-static)
 target_compile_options(gta3sc-config PRIVATE ${GTA3SC_PEDANTIC_COMPILE_OPTIONS})
