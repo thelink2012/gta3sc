@@ -1,6 +1,18 @@
 #include <cassert>
+#include <gta3sc/diagnostics.hpp>
 #include <gta3sc/syntax/scanner.hpp>
 #include <gta3sc/util/ctype.hpp>
+
+namespace gta3sc::syntax::diag
+{
+const DiagnosticDescriptor invalid_filename(DiagnosticSeverity::error,
+                                            "Invalid filename", "TODO");
+const DiagnosticDescriptor
+        unterminated_string_literal(DiagnosticSeverity::error,
+                                    "Unterminated string literal", "TODO");
+const DiagnosticDescriptor invalid_char(DiagnosticSeverity::error,
+                                        "Invalid character", "TODO");
+} // namespace gta3sc::syntax::diag
 
 namespace gta3sc::syntax
 {
@@ -94,7 +106,7 @@ auto Scanner::next_filename() -> std::optional<Token>
     }
 
     diagnostics()
-            .report(token.source.begin, Diag::invalid_filename)
+            .report(token.source.begin, diag::invalid_filename)
             .range(token.source);
 
     return std::nullopt;
@@ -256,7 +268,7 @@ auto Scanner::next() -> std::optional<Token>
                 if(is_newline(peek_char))
                 {
                     diagnostics().report(location(), 
-                            Diag::unterminated_string_literal);
+                            diag::unterminated_string_literal);
                     return std::nullopt;
                 }
             }
@@ -269,7 +281,7 @@ auto Scanner::next() -> std::optional<Token>
         word_token: default:
             if(!is_word_char(peek_char))
             {
-                diagnostics().report(location(), Diag::invalid_char);
+                diagnostics().report(location(), diag::invalid_char);
                 this->getc();
                 return std::nullopt;
             }

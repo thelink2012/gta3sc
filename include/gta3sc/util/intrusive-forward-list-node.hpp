@@ -51,8 +51,8 @@ public:
     template<typename U>
     friend constexpr auto
     algorithm::linear_list::push_back(IntrusiveForwardListNode<U>& node,
-                                      U* first, U* last) noexcept
-            -> std::pair<U*, U*>;
+                                      U* first,
+                                      U* last) noexcept -> std::pair<U*, U*>;
 
 private:
     T* next{};
@@ -98,8 +98,8 @@ public:
 
     constexpr IteratorImpl(const IteratorImpl&) noexcept = default;
 
-    constexpr auto operator=(const IteratorImpl&) noexcept
-            -> IteratorImpl& = default;
+    constexpr auto
+    operator=(const IteratorImpl&) noexcept -> IteratorImpl& = default;
 
     /// Enable conversion from iterator to const_iterator.
     template<bool IsOtherConstIter,
@@ -112,8 +112,8 @@ public:
 
     constexpr IteratorImpl(IteratorImpl&&) noexcept = default;
 
-    constexpr auto operator=(IteratorImpl&&) noexcept
-            -> IteratorImpl& = default;
+    constexpr auto
+    operator=(IteratorImpl&&) noexcept -> IteratorImpl& = default;
 
     constexpr ~IteratorImpl() noexcept = default;
 

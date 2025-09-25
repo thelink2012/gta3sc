@@ -1,19 +1,21 @@
-#include <cassert>
 #include <gta3sc/diagnostics.hpp>
-#include <memory>
-#include <utility>
+
+namespace gta3sc::diag
+{
+const DiagnosticDescriptor internal_compiler_error(DiagnosticSeverity::error,
+                                                   "Internal compiler error",
+                                                   "TODO");
+const DiagnosticDescriptor could_not_open_file(DiagnosticSeverity::error,
+                                               "Could not open file", "TODO");
+} // namespace gta3sc::diag
 
 namespace gta3sc
 {
-DiagnosticBuilder::~DiagnosticBuilder() noexcept
+Diagnostic::Builder::~Builder()
 {
-    if(diag != nullptr)
-        this->handler->emit(std::move(diag));
-}
-
-void DiagnosticHandler::emit(std::unique_ptr<Diagnostic> diag)
-{
-    assert(diag != nullptr);
-    emitter(*diag);
+    if(this->target != nullptr)
+    {
+        this->target->emit(std::move(diag));
+    }
 }
 } // namespace gta3sc

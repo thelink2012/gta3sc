@@ -11,9 +11,9 @@ namespace gta3sc::util
 template<typename To, typename From>
 constexpr auto bit_cast(const From& src) noexcept -> To
 {
-    static_assert(
-            sizeof(To) == sizeof(From)
-            && std::is_trivially_copyable_v<From> && std::is_trivial_v<To>);
+    static_assert(sizeof(To) == sizeof(From)
+                  && std::is_trivially_copyable_v<From>
+                  && std::is_trivial_v<To>);
     To dst;
     std::memcpy(&dst, &src, sizeof(dst));
     return dst;

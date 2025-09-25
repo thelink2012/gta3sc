@@ -9,6 +9,7 @@ add_library(gta3sc
   util/arena.cpp
   util/name-generator.cpp
   config/models.cpp
+  syntax/diagnostics.cpp
   syntax/preprocessor.cpp
   syntax/scanner.cpp
   syntax/parser.cpp

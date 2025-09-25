@@ -17,7 +17,7 @@ TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
     build_config("this is not xml");
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message == gta3sc::Diag::config_xml_parse_failed);
+    CHECK(consume_diag().descriptor == &gta3sc::config::diag::xml_parse_failed);
 }
 
 TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
@@ -26,7 +26,7 @@ TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
     build_config(R"(<?xml version="1.0" encoding="utf-8"?>)");
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message == gta3sc::Diag::config_xml_parse_failed);
+    CHECK(consume_diag().descriptor == &gta3sc::config::diag::xml_parse_failed);
 }
 
 TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
@@ -37,8 +37,8 @@ TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
 </WrongRoot>)");
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_xml_invalid_root_element);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::config::diag::xml_invalid_root_element);
 }
 
 TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
@@ -49,8 +49,8 @@ TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
 </GTA3Script>)");
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_xml_missing_required_attr);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::config::diag::xml_missing_required_attr);
 }
 
 TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
@@ -61,8 +61,8 @@ TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
 </GTA3Script>)");
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_xml_missing_required_attr);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::config::diag::xml_missing_required_attr);
 }
 
 TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
@@ -83,8 +83,8 @@ TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
 </GTA3Script>)");
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_xml_missing_required_attr);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::config::diag::xml_missing_required_attr);
 }
 
 TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
@@ -96,7 +96,7 @@ TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
 </GTA3Script>)");
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message == gta3sc::Diag::config_xml_unknown_node);
+    CHECK(consume_diag().descriptor == &gta3sc::config::diag::xml_unknown_node);
 }
 
 TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
@@ -108,7 +108,7 @@ TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
 </GTA3Script>)");
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message == gta3sc::Diag::config_xml_unknown_node);
+    CHECK(consume_diag().descriptor == &gta3sc::config::diag::xml_unknown_node);
 }
 
 TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
@@ -125,7 +125,7 @@ TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
     auto diag1 = consume_diag();
     auto diag2 = consume_diag();
     auto diag3 = consume_diag();
-    CHECK(diag1.message == gta3sc::Diag::config_xml_unknown_node);
-    CHECK(diag2.message == gta3sc::Diag::config_xml_unknown_node);
-    CHECK(diag3.message == gta3sc::Diag::config_xml_unknown_node);
+    CHECK(diag1.descriptor == &gta3sc::config::diag::xml_unknown_node);
+    CHECK(diag2.descriptor == &gta3sc::config::diag::xml_unknown_node);
+    CHECK(diag3.descriptor == &gta3sc::config::diag::xml_unknown_node);
 }

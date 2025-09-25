@@ -111,8 +111,8 @@ public:
     /// The given name must be in uppercase or no command will be found.
     ///
     /// Returns a pointer to the command information or `nullptr` if not found.
-    auto find_command(std::string_view name) const noexcept
-            -> const CommandDef*;
+    auto
+    find_command(std::string_view name) const noexcept -> const CommandDef*;
 
     /// Finds the alternator with the specified name.
     ///
@@ -180,24 +180,24 @@ private:
     using EntityMap = std::unordered_map<std::string_view, EntityId>;
 
     /// Static version of `this->find_command(name)`.
-    static auto find_command(const CommandMap& commands_map,
-                             std::string_view name) noexcept
-            -> const CommandDef*;
+    static auto
+    find_command(const CommandMap& commands_map,
+                 std::string_view name) noexcept -> const CommandDef*;
 
     /// Static version of `this->find_alternator(name)`.
-    static auto find_alternator(const AlternatorMap& alternators_map,
-                                std::string_view name) noexcept
-            -> const AlternatorDef*;
+    static auto
+    find_alternator(const AlternatorMap& alternators_map,
+                    std::string_view name) noexcept -> const AlternatorDef*;
 
     /// Static version of `this->find_enumeration(name)`.
-    static auto find_enumeration(const EnumMap& enums_map,
-                                 std::string_view name) noexcept
-            -> std::optional<EnumId>;
+    static auto
+    find_enumeration(const EnumMap& enums_map,
+                     std::string_view name) noexcept -> std::optional<EnumId>;
 
     /// Static version of `this->find_constant(enum_id, name)`.
-    static auto find_constant(const ConstantMap& constants_map, EnumId enum_id,
-                              std::string_view name) noexcept
-            -> const ConstantDef*;
+    static auto
+    find_constant(const ConstantMap& constants_map, EnumId enum_id,
+                  std::string_view name) noexcept -> const ConstantDef*;
 
     /// Static version of `this->find_constant_any_means(name)`.
     static auto find_constant_any_means(const ConstantMap& constants_map,
@@ -205,9 +205,9 @@ private:
             -> const ConstantDef*;
 
     /// Static version of `this->find_entity_type(name)`.
-    static auto find_entity_type(const EntityMap& entities_map,
-                                 std::string_view name) noexcept
-            -> std::optional<EntityId>;
+    static auto
+    find_entity_type(const EntityMap& entities_map,
+                     std::string_view name) noexcept -> std::optional<EntityId>;
 
 private:
     CommandMap commands_map;
@@ -419,8 +419,8 @@ public:
     auto build() && -> CommandTable;
 
     /// Behaves the same as `CommandTable::find_command`.
-    auto find_command(std::string_view name) const noexcept
-            -> const CommandDef*;
+    auto
+    find_command(std::string_view name) const noexcept -> const CommandDef*;
 
     /// Behaves the same as `CommandTable::find_command`.
     auto find_command(std::string_view name) noexcept -> CommandDef*;
@@ -484,8 +484,8 @@ public:
     /// of same name already exists, does nothing.
     ///
     /// Returns the alternator and whether insertion took place.
-    auto insert_alternator(std::string_view name)
-            -> std::pair<AlternatorDef*, bool>;
+    auto
+    insert_alternator(std::string_view name) -> std::pair<AlternatorDef*, bool>;
 
     /// Inserts a command alternative into a given alternator.
     ///

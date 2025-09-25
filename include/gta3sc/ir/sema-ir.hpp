@@ -75,8 +75,8 @@ public:
     }
 
     /// Returns the label associated with this instruction or `nullptr` if none.
-    [[nodiscard]] auto label_or_null() const noexcept
-            -> const SymbolTable::Label*
+    [[nodiscard]] auto
+    label_or_null() const noexcept -> const SymbolTable::Label*
     {
         return m_label ? m_label : nullptr;
     }
@@ -95,10 +95,10 @@ public:
     }
 
     /// Checks whether a given IR is equivalent to another IR.
-    friend auto operator==(const SemaIR& lhs, const SemaIR& rhs) noexcept
-            -> bool;
-    friend auto operator!=(const SemaIR& lhs, const SemaIR& rhs) noexcept
-            -> bool;
+    friend auto operator==(const SemaIR& lhs,
+                           const SemaIR& rhs) noexcept -> bool;
+    friend auto operator!=(const SemaIR& lhs,
+                           const SemaIR& rhs) noexcept -> bool;
 
     //
     // Factory methods
@@ -109,69 +109,70 @@ public:
                        ArenaAllocator<> allocator) -> ArenaPtr<SemaIR>;
 
     /// Creates an integer argument.
-    static auto create_int(int32_t value, SourceRange source,
-                           ArenaAllocator<> allocator)
-            -> ArenaPtr<const Argument>;
+    static auto
+    create_int(int32_t value, SourceRange source,
+               ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     /// Creates a floating-point argument.
-    static auto create_float(float value, SourceRange source,
-                             ArenaAllocator<> allocator)
-            -> ArenaPtr<const Argument>;
+    static auto
+    create_float(float value, SourceRange source,
+                 ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     /// Creates a label argument.
-    static auto create_label(const SymbolTable::Label& label,
-                             SourceRange source, ArenaAllocator<> allocator)
-            -> ArenaPtr<const Argument>;
+    static auto
+    create_label(const SymbolTable::Label& label, SourceRange source,
+                 ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     // Creates a filename argument.
-    static auto create_filename(const SymbolTable::File& filename,
-                                SourceRange source, ArenaAllocator<> allocator)
-            -> ArenaPtr<const Argument>;
+    static auto
+    create_filename(const SymbolTable::File& filename, SourceRange source,
+                    ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     /// Creates a text label argument.
     ///
     /// The text label value is automatically converted to uppercase during the
     /// creation of the object.
-    static auto create_text_label(std::string_view value, SourceRange source,
-                                  ArenaAllocator<> allocator)
-            -> ArenaPtr<const Argument>;
+    static auto
+    create_text_label(std::string_view value, SourceRange source,
+                      ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     /// Creates a string argument.
     ///
     /// The quotation marks that surrounds the string should not be present
     /// in `string`. The string is not converted to uppercase.
-    static auto create_string(std::string_view value, SourceRange source,
-                              ArenaAllocator<> allocator)
-            -> ArenaPtr<const Argument>;
+    static auto
+    create_string(std::string_view value, SourceRange source,
+                  ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     /// Creates a variable reference argument.
-    static auto create_variable(const SymbolTable::Variable& var,
-                                SourceRange source, ArenaAllocator<> allocator)
-            -> ArenaPtr<const Argument>;
+    static auto
+    create_variable(const SymbolTable::Variable& var, SourceRange source,
+                    ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     /// Creates an array variable reference argument by using the given integer
     /// index.
-    static auto create_variable(const SymbolTable::Variable& var, int32_t index,
-                                SourceRange source, ArenaAllocator<> allocator)
-            -> ArenaPtr<const Argument>;
+    static auto
+    create_variable(const SymbolTable::Variable& var, int32_t index,
+                    SourceRange source,
+                    ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     /// Creates an array variable reference argument by using the given variable
     /// index.
-    static auto create_variable(const SymbolTable::Variable& var,
-                                const SymbolTable::Variable& index,
-                                SourceRange source, ArenaAllocator<> allocator)
-            -> ArenaPtr<const Argument>;
+    static auto
+    create_variable(const SymbolTable::Variable& var,
+                    const SymbolTable::Variable& index, SourceRange source,
+                    ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     /// Creates a string constant argument.
-    static auto create_constant(const CommandTable::ConstantDef& cdef,
-                                SourceRange source, ArenaAllocator<> allocator)
-            -> ArenaPtr<const Argument>;
+    static auto
+    create_constant(const CommandTable::ConstantDef& cdef, SourceRange source,
+                    ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     /// Creates a used object argument.
-    static auto create_used_object(const SymbolTable::UsedObject& used_object,
-                                   SourceRange source,
-                                   ArenaAllocator<> allocator)
-            -> ArenaPtr<const Argument>;
+    static auto
+    create_used_object(const SymbolTable::UsedObject& used_object,
+                       SourceRange source,
+                       ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
 private:
     enum class TextLabelTag
@@ -248,14 +249,14 @@ public:
 
     /// Returns the variable in the array subscript or `nullptr` if
     /// either this is not an array or the index is not a variable.
-    [[nodiscard]] auto index_as_variable() const noexcept
-            -> const SymbolTable::Variable*;
+    [[nodiscard]] auto
+    index_as_variable() const noexcept -> const SymbolTable::Variable*;
 
     /// Compares whether two variable references are equal.
-    friend auto operator==(const VarRef& lhs, const VarRef& rhs) noexcept
-            -> bool;
-    friend auto operator!=(const VarRef& lhs, const VarRef& rhs) noexcept
-            -> bool;
+    friend auto operator==(const VarRef& lhs,
+                           const VarRef& rhs) noexcept -> bool;
+    friend auto operator!=(const VarRef& lhs,
+                           const VarRef& rhs) noexcept -> bool;
 
 private:
     const SymbolTable::Variable* m_def;
@@ -325,10 +326,10 @@ public:
     }
 
     /// Checks whether a given command is equivalent to another command.
-    friend auto operator==(const Command& lhs, const Command& rhs) noexcept
-            -> bool;
-    friend auto operator!=(const Command& lhs, const Command& rhs) noexcept
-            -> bool;
+    friend auto operator==(const Command& lhs,
+                           const Command& rhs) noexcept -> bool;
+    friend auto operator!=(const Command& lhs,
+                           const Command& rhs) noexcept -> bool;
 
 private:
     SourceRange m_source;
@@ -382,8 +383,8 @@ public:
 
     /// Returns the contained text label value or `nullptr` if this argument
     /// is not a text label.
-    [[nodiscard]] auto as_text_label() const noexcept
-            -> std::optional<TextLabel>;
+    [[nodiscard]] auto
+    as_text_label() const noexcept -> std::optional<TextLabel>;
 
     /// Returns the contained string or `nullptr` if this argument is not
     /// a string.
@@ -403,13 +404,13 @@ public:
 
     /// Returns the contained string constant or `nullptr` if this argument
     /// is not a string constant.
-    [[nodiscard]] auto as_constant() const noexcept
-            -> const CommandTable::ConstantDef*;
+    [[nodiscard]] auto
+    as_constant() const noexcept -> const CommandTable::ConstantDef*;
 
     /// Returns the contained used object or `nullptr` if this argument is
     /// not a used object.
-    [[nodiscard]] auto as_used_object() const noexcept
-            -> const SymbolTable::UsedObject*;
+    [[nodiscard]] auto
+    as_used_object() const noexcept -> const SymbolTable::UsedObject*;
 
     /// Type-puns the contained integer or string constant as an integer.
     ///
@@ -423,10 +424,10 @@ public:
     [[nodiscard]] auto pun_as_float() const noexcept -> std::optional<float>;
 
     /// Checks whether a given argument is equivalent to another argument.
-    friend auto operator==(const Argument& lhs, const Argument& rhs) noexcept
-            -> bool;
-    friend auto operator!=(const Argument& lhs, const Argument& rhs) noexcept
-            -> bool;
+    friend auto operator==(const Argument& lhs,
+                           const Argument& rhs) noexcept -> bool;
+    friend auto operator!=(const Argument& lhs,
+                           const Argument& rhs) noexcept -> bool;
 
 private:
     SourceRange m_source;
@@ -506,12 +507,12 @@ public:
                       SourceRange source = no_source) -> Builder&&;
 
     /// Appends the given string argument to the command in construction.
-    auto arg_text_label(std::string_view value, SourceRange source = no_source)
-            -> Builder&&;
+    auto arg_text_label(std::string_view value,
+                        SourceRange source = no_source) -> Builder&&;
 
     /// Appends the given string argument to the command in construction.
-    auto arg_string(std::string_view value, SourceRange source = no_source)
-            -> Builder&&;
+    auto arg_string(std::string_view value,
+                    SourceRange source = no_source) -> Builder&&;
 
     /// Appends an argument referencing to the given variable to the command in
     /// construction.
@@ -586,8 +587,8 @@ private:
 };
 
 template<typename InputIterator>
-auto SemaIR::Builder::with_args(InputIterator begin, InputIterator end)
-        -> Builder&&
+auto SemaIR::Builder::with_args(InputIterator begin,
+                                InputIterator end) -> Builder&&
 {
     with_num_args(std::distance(begin, end));
     for(auto it = begin; it != end; ++it)

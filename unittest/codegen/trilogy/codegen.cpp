@@ -1,13 +1,13 @@
 #include "../../command-manager-fixture.hpp"
+#include "../../with-diagnostic-fixture.hpp"
 #include <doctest/doctest.h>
 #include <gta3sc/codegen/storage-table.hpp>
 #include <gta3sc/codegen/trilogy/codegen.hpp>
-#include <queue>
+#include <gta3sc/diagnostics.hpp>
 
 using gta3sc::ArenaMemoryResource;
+using gta3sc::CallbackDiagnosticHandler;
 using gta3sc::CommandTable;
-using gta3sc::Diag;
-using gta3sc::DiagnosticHandler;
 using gta3sc::LinkedIR;
 using gta3sc::SemaIR;
 using gta3sc::SourceManager;
@@ -19,10 +19,13 @@ using gta3sc::codegen::StorageTable;
 using gta3sc::codegen::trilogy::CodeEmitter;
 using gta3sc::codegen::trilogy::CodeGen;
 using gta3sc::test::CommandTableFixture;
+using gta3sc::test::WithDiagnosticFixture;
 
 namespace
 {
-class CodeGenFixture : public CommandTableFixture
+class CodeGenFixture
+    : public CommandTableFixture
+    , public WithDiagnosticFixture
 {
 public:
     CodeGenFixture() : symtable(&arena) {}
@@ -31,7 +34,7 @@ public:
     auto operator=(const CodeGenFixture&) -> CodeGenFixture& = delete;
 
     CodeGenFixture(CodeGenFixture&&) = delete;
-    auto operator=(CodeGenFixture &&) -> CodeGenFixture& = delete;
+    auto operator=(CodeGenFixture&&) -> CodeGenFixture& = delete;
 
     ~CodeGenFixture() { CHECK(diags.empty()); }
 
@@ -87,13 +90,13 @@ protected:
     }
 
     template<typename IR>
-    auto generate_code(uint32_t multifile_offset, const IR& ir)
-            -> std::vector<std::byte>
+    auto generate_code(uint32_t multifile_offset,
+                       const IR& ir) -> std::vector<std::byte>
     {
         const auto& file = codegen_file();
         const auto storage_table = make_storage_table();
 
-        DiagnosticHandler diagman(
+        CallbackDiagnosticHandler diagman(
                 [this](const auto& diag) { diags.push(std::move(diag)); });
 
         auto codegen = CodeGen(file, multifile_offset, storage_table, diagman);
@@ -118,7 +121,7 @@ protected:
         const auto& file = codegen_file();
         const auto storage_table = make_storage_table();
 
-        DiagnosticHandler diagman(
+        CallbackDiagnosticHandler diagman(
                 [this](const auto& diag) { diags.push(std::move(diag)); });
 
         auto codegen = CodeGen(file, 0, storage_table, diagman);
@@ -157,19 +160,6 @@ protected:
         return *file;
     }
 
-    auto consume_diag() -> gta3sc::Diagnostic
-    {
-        auto front = peek_diag();
-        this->diags.pop();
-        return front;
-    }
-
-    auto peek_diag() -> const gta3sc::Diagnostic&
-    {
-        REQUIRE(!this->diags.empty());
-        return this->diags.front();
-    }
-
 protected:
     ArenaMemoryResource arena;   // NOLINT: Protected data is controlled
     RelocationTable reloc_table; // NOLINT: within this file.
@@ -177,7 +167,6 @@ protected:
 private:
     uint32_t next_symbol_id{};
     SymbolTable symtable;
-    std::queue<gta3sc::Diagnostic> diags;
 };
 } // namespace
 
@@ -235,8 +224,8 @@ TEST_CASE_FIXTURE(CodeGenFixture, "generating command")
         fail_to_generate_code(*SemaIR::Builder(&arena)
                                        .command(flash_radar_blip_command)
                                        .build());
-        REQUIRE(consume_diag().message
-                == Diag::codegen_target_does_not_support_command);
+        REQUIRE(consume_diag().descriptor
+                == &gta3sc::codegen::diag::target_does_not_support_command);
     }
 
     SUBCASE("generating a command without id produces an error")
@@ -247,8 +236,8 @@ TEST_CASE_FIXTURE(CodeGenFixture, "generating command")
 
         fail_to_generate_code(
                 *SemaIR::Builder(&arena).command(command_without_id).build());
-        REQUIRE(consume_diag().message
-                == Diag::codegen_target_does_not_support_command);
+        REQUIRE(consume_diag().descriptor
+                == &gta3sc::codegen::diag::target_does_not_support_command);
     }
 }
 

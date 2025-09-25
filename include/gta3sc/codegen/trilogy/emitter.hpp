@@ -127,8 +127,8 @@ public:
     /// Same as `emit_raw_bytes(data.begin(), data.end(), distance(begin,
     /// end))`.
     template<typename RandomAccessIterator>
-    auto emit_raw_bytes(RandomAccessIterator begin, RandomAccessIterator end)
-            -> CodeEmitter&;
+    auto emit_raw_bytes(RandomAccessIterator begin,
+                        RandomAccessIterator end) -> CodeEmitter&;
 
 private:
     /// Converts a floating-point into an Q11.4 fixed-point.
@@ -180,9 +180,9 @@ inline auto CodeEmitter::emit_raw_bytes(InputIterator begin, InputIterator end,
 }
 
 template<typename RandomAccessIterator>
-inline auto CodeEmitter::emit_raw_bytes(RandomAccessIterator begin,
-                                        RandomAccessIterator end)
-        -> CodeEmitter&
+inline auto
+CodeEmitter::emit_raw_bytes(RandomAccessIterator begin,
+                            RandomAccessIterator end) -> CodeEmitter&
 {
     const size_t output_size = end - begin;
     return emit_raw_bytes(begin, end, output_size);

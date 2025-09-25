@@ -32,8 +32,8 @@ public:
     auto operator=(const RepeatStmtRewriter&) -> RepeatStmtRewriter& = delete;
 
     RepeatStmtRewriter(RepeatStmtRewriter&&) noexcept = default;
-    auto operator=(RepeatStmtRewriter&&) noexcept
-            -> RepeatStmtRewriter& = default;
+    auto
+    operator=(RepeatStmtRewriter&&) noexcept -> RepeatStmtRewriter& = default;
 
     ~RepeatStmtRewriter() noexcept final = default;
 

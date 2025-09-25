@@ -1,6 +1,11 @@
 #pragma once
-#include <gta3sc/diagnostics.hpp>
 #include <gta3sc/sourceman.hpp>
+
+namespace gta3sc
+{
+class DiagnosticHandler;
+class DiagnosticDescriptor;
+} // namespace gta3sc
 
 namespace gta3sc::syntax
 {
@@ -55,3 +60,9 @@ private:
     uint8_t num_block_comments{};
 };
 } // namespace gta3sc::syntax
+
+namespace gta3sc::syntax::diag
+{
+extern const DiagnosticDescriptor unterminated_comment;
+extern const DiagnosticDescriptor limit_block_comments;
+} // namespace gta3sc::syntax::diag

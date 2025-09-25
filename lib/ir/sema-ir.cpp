@@ -115,8 +115,8 @@ auto operator!=(const SemaIR& lhs, const SemaIR& rhs) noexcept -> bool
     return !(lhs == rhs);
 }
 
-auto operator==(const SemaIR::Command& lhs, const SemaIR::Command& rhs) noexcept
-        -> bool
+auto operator==(const SemaIR::Command& lhs,
+                const SemaIR::Command& rhs) noexcept -> bool
 {
     return lhs.m_source == rhs.m_source && lhs.m_def == rhs.m_def
            && lhs.m_not_flag == rhs.m_not_flag
@@ -125,8 +125,8 @@ auto operator==(const SemaIR::Command& lhs, const SemaIR::Command& rhs) noexcept
                          [](const auto& a, const auto& b) { return *a == *b; });
 }
 
-auto operator!=(const SemaIR::Command& lhs, const SemaIR::Command& rhs) noexcept
-        -> bool
+auto operator!=(const SemaIR::Command& lhs,
+                const SemaIR::Command& rhs) noexcept -> bool
 {
     return !(lhs == rhs);
 }
@@ -256,14 +256,14 @@ auto SemaIR::VarRef::index_as_variable() const noexcept
     return nullptr;
 }
 
-auto operator==(const SemaIR::VarRef& lhs, const SemaIR::VarRef& rhs) noexcept
-        -> bool
+auto operator==(const SemaIR::VarRef& lhs,
+                const SemaIR::VarRef& rhs) noexcept -> bool
 {
     return lhs.m_def == rhs.m_def && lhs.m_index == rhs.m_index;
 }
 
-auto operator!=(const SemaIR::VarRef& lhs, const SemaIR::VarRef& rhs) noexcept
-        -> bool
+auto operator!=(const SemaIR::VarRef& lhs,
+                const SemaIR::VarRef& rhs) noexcept -> bool
 {
     return !(lhs == rhs);
 }
@@ -342,14 +342,14 @@ auto SemaIR::Builder::arg_filename(const SymbolTable::File& filename,
     return arg(SemaIR::create_filename(filename, source, allocator));
 }
 
-auto SemaIR::Builder::arg_text_label(std::string_view value, SourceRange source)
-        -> Builder&&
+auto SemaIR::Builder::arg_text_label(std::string_view value,
+                                     SourceRange source) -> Builder&&
 {
     return arg(SemaIR::create_text_label(value, source, allocator));
 }
 
-auto SemaIR::Builder::arg_string(std::string_view value, SourceRange source)
-        -> Builder&&
+auto SemaIR::Builder::arg_string(std::string_view value,
+                                 SourceRange source) -> Builder&&
 {
     return arg(SemaIR::create_string(value, source, allocator));
 }

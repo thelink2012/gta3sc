@@ -40,8 +40,8 @@ public:
     auto operator=(const LocalStorageTable&) -> LocalStorageTable& = delete;
 
     LocalStorageTable(LocalStorageTable&&) noexcept = default;
-    auto operator=(LocalStorageTable&&) noexcept
-            -> LocalStorageTable& = default;
+    auto
+    operator=(LocalStorageTable&&) noexcept -> LocalStorageTable& = default;
 
     ~LocalStorageTable() noexcept = default;
 

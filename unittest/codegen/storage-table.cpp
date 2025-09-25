@@ -89,8 +89,8 @@ public:
 class StorageTableFixture : public BaseStorageTableFixture
 {
 public:
-    auto make_storage_table(const StorageTable::Options& options)
-            -> StorageTable
+    auto
+    make_storage_table(const StorageTable::Options& options) -> StorageTable
     {
         auto table = StorageTable::from_symbols(symtable, options);
         REQUIRE(table != std::nullopt);

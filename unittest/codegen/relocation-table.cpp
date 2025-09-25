@@ -4,8 +4,8 @@
 #include <queue>
 
 using gta3sc::ArenaMemoryResource;
-using gta3sc::Diag;
-using gta3sc::DiagnosticHandler;
+using gta3sc::CallbackDiagnosticHandler;
+using gta3sc::DiagnosticDescriptor;
 using gta3sc::SourceManager;
 using gta3sc::SymbolTable;
 using gta3sc::codegen::RelocationTable;
@@ -26,8 +26,8 @@ public:
             -> RelocationTableFixture& = delete;
 
     RelocationTableFixture(RelocationTableFixture&&) = delete;
-    auto operator=(RelocationTableFixture &&)
-            -> RelocationTableFixture& = delete;
+    auto
+    operator=(RelocationTableFixture&&) -> RelocationTableFixture& = delete;
 
     ~RelocationTableFixture() { CHECK(diags.empty()); }
 
@@ -93,19 +93,19 @@ public:
         return reloc_offset.value();
     }
 
-    void fail_to_relocate_one(Diag reason)
+    void fail_to_relocate_one(const DiagnosticDescriptor& reason)
     {
         const auto view = reloc_table.fixup_table();
         REQUIRE(view.size() == 1);
         REQUIRE(reloc_table.relocate(view.front(), diagman) == std::nullopt);
         REQUIRE(!diags.empty());
-        REQUIRE(diags.front().message == reason);
+        REQUIRE(diags.front().descriptor == &reason);
         diags.pop();
     }
 
 private:
     ArenaMemoryResource arena;
-    DiagnosticHandler diagman;
+    CallbackDiagnosticHandler diagman;
     SymbolTable symtable;
     RelocationTable reloc_table;
     uint32_t next_label_id{};
@@ -273,7 +273,7 @@ TEST_CASE_FIXTURE(RelocationTableFixture, "references to mission labels")
     {
         const auto& main_file = make_file(FileType::main);
         insert_fixup_entry(mission_label, main_file, label_ref_offset);
-        fail_to_relocate_one(Diag::codegen_label_ref_across_segments);
+        fail_to_relocate_one(gta3sc::codegen::diag::label_ref_across_segments);
     }
 
     SUBCASE("reference from main extension file causes an error")
@@ -281,14 +281,14 @@ TEST_CASE_FIXTURE(RelocationTableFixture, "references to mission labels")
         const auto& main_extension_file = make_file(FileType::main_extension);
         insert_fixup_entry(mission_label, main_extension_file,
                            label_ref_offset);
-        fail_to_relocate_one(Diag::codegen_label_ref_across_segments);
+        fail_to_relocate_one(gta3sc::codegen::diag::label_ref_across_segments);
     }
 
     SUBCASE("reference from subscript file causes an error")
     {
         const auto& subscript_file = make_file(FileType::subscript);
         insert_fixup_entry(mission_label, subscript_file, label_ref_offset);
-        fail_to_relocate_one(Diag::codegen_label_ref_across_segments);
+        fail_to_relocate_one(gta3sc::codegen::diag::label_ref_across_segments);
     }
 
     SUBCASE("reference from the mission script file itself is okay")
@@ -303,7 +303,7 @@ TEST_CASE_FIXTURE(RelocationTableFixture, "references to mission labels")
         const auto& another_mission_file = make_file(FileType::mission);
         insert_fixup_entry(mission_label, another_mission_file,
                            label_ref_offset);
-        fail_to_relocate_one(Diag::codegen_label_ref_across_segments);
+        fail_to_relocate_one(gta3sc::codegen::diag::label_ref_across_segments);
     }
 }
 
@@ -321,7 +321,7 @@ TEST_CASE_FIXTURE(RelocationTableFixture,
     insert_file_loc(mission_file, mission_file_offset);
 
     insert_fixup_entry(mission_label, mission_file, label_ref_offset);
-    fail_to_relocate_one(Diag::codegen_label_at_local_zero_offset);
+    fail_to_relocate_one(gta3sc::codegen::diag::label_at_local_zero_offset);
 }
 
 TEST_CASE_FIXTURE(RelocationTableFixture,

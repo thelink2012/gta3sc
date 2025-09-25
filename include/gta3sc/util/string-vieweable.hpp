@@ -22,25 +22,25 @@ public:
     // NOLINTNEXTLINE: Implicit conversion is the intent of this.
     constexpr operator std::string_view() const noexcept { return m_value; }
 
-    friend constexpr auto operator==(const WeakStringVieweable& lhs,
-                                     const WeakStringVieweable& rhs) noexcept
-            -> bool
+    friend constexpr auto
+    operator==(const WeakStringVieweable& lhs,
+               const WeakStringVieweable& rhs) noexcept -> bool
     {
         return lhs.m_value == rhs.m_value;
     }
 
-    friend constexpr auto operator!=(const WeakStringVieweable& lhs,
-                                     const WeakStringVieweable& rhs) noexcept
-            -> bool
+    friend constexpr auto
+    operator!=(const WeakStringVieweable& lhs,
+               const WeakStringVieweable& rhs) noexcept -> bool
     {
         return !(lhs == rhs);
     }
 
     // TODO operator<=>
 
-    friend constexpr auto operator<<(std::ostream& os,
-                                     const WeakStringVieweable& rhs)
-            -> std::ostream&
+    friend constexpr auto
+    operator<<(std::ostream& os,
+               const WeakStringVieweable& rhs) -> std::ostream&
     {
         return os << rhs.m_value;
     }

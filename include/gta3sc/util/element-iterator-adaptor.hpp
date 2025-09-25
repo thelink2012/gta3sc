@@ -65,8 +65,8 @@ struct ElementAdaptor
                         I, std::remove_pointer_t<
                                    typename NextAdaptor<Iter>::pointer>>>*;
 
-        [[nodiscard]] constexpr auto dereference(const Iter& it) const
-                -> reference
+        [[nodiscard]] constexpr auto
+        dereference(const Iter& it) const -> reference
         {
             using std::get; // FIXME required due to a GCC 10 bug?
             return get<I>(*it);
@@ -105,8 +105,8 @@ struct DereferenceElementAdaptor
         using value_type
                 = std::remove_pointer_t<typename NextAdaptor<Iter>::value_type>;
 
-        [[nodiscard]] constexpr auto dereference(const Iter& it) const
-                -> reference
+        [[nodiscard]] constexpr auto
+        dereference(const Iter& it) const -> reference
         {
             return *NextAdaptor<Iter>::dereference(it);
         }

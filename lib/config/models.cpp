@@ -8,6 +8,13 @@
 // TODO replace SourceManager (and SourceFile) by FileManager once
 //      sourceman gets refactored.
 
+namespace gta3sc::config::diag
+{
+// Config Models diagnostics
+const DiagnosticDescriptor models_invalid_ide_line(DiagnosticSeverity::error,
+                                                   "Invalid IDE line", "TODO");
+} // namespace gta3sc::config::diag
+
 namespace
 {
 auto next_line(const char*& cursor, char* output_buf,
@@ -25,7 +32,7 @@ auto load_models_from_ide(const std::filesystem::path& ide_path, bool objs_only,
     if(!ide_file)
     {
         diagman.report(SourceManager::no_source_loc,
-                       Diag::config_models_could_not_open_file)
+                       gta3sc::diag::could_not_open_file)
                 .args(ide_path.generic_string());
         return std::move(builder);
     }
@@ -57,7 +64,7 @@ auto load_models_from_level(
     if(!level_file)
     {
         diagman.report(SourceManager::no_source_loc,
-                       Diag::config_models_could_not_open_file)
+                       gta3sc::diag::could_not_open_file)
                 .args(level_path.generic_string());
         return std::move(builder);
     }
@@ -85,7 +92,7 @@ auto load_models_from_level(
         {
             auto loc_start = level_file->location_of(line_cursor_start);
             auto loc_end = loc_start + (curr_file_cursor - line_cursor_start);
-            diagman.report(loc_start, Diag::config_models_could_not_open_file)
+            diagman.report(loc_start, gta3sc::diag::could_not_open_file)
                     .range(SourceRange{loc_start, loc_end})
                     .args(ide_path.generic_string());
 
@@ -144,7 +151,7 @@ auto load_models_from_ide(
         {
             auto loc_start = ide_file.location_of(line_cursor_start);
             auto loc_end = loc_start + (curr_file_cursor - line_cursor_start);
-            diagman.report(loc_start, Diag::config_models_invalid_ide_line)
+            diagman.report(loc_start, config::diag::models_invalid_ide_line)
                     .range(SourceRange{loc_start, loc_end});
             continue;
         }

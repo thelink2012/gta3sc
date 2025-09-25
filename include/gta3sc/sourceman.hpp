@@ -15,36 +15,36 @@ enum class SourceLocation : uint32_t
 { // strong typedef
 };
 
-inline auto operator+(SourceLocation lhs, std::ptrdiff_t rhs) noexcept
-        -> SourceLocation
+inline auto operator+(SourceLocation lhs,
+                      std::ptrdiff_t rhs) noexcept -> SourceLocation
 {
     return SourceLocation{
             static_cast<uint32_t>(static_cast<uint32_t>(lhs) + rhs)};
 }
 
-inline auto operator+=(SourceLocation& lhs, std::ptrdiff_t rhs) noexcept
-        -> SourceLocation&
+inline auto operator+=(SourceLocation& lhs,
+                       std::ptrdiff_t rhs) noexcept -> SourceLocation&
 {
     lhs = lhs + rhs;
     return lhs;
 }
 
-inline auto operator-(SourceLocation lhs, std::ptrdiff_t rhs) noexcept
-        -> SourceLocation
+inline auto operator-(SourceLocation lhs,
+                      std::ptrdiff_t rhs) noexcept -> SourceLocation
 {
     return SourceLocation{
             static_cast<uint32_t>(static_cast<uint32_t>(lhs) - rhs)};
 }
 
-inline auto operator-=(SourceLocation& lhs, std::ptrdiff_t rhs) noexcept
-        -> SourceLocation&
+inline auto operator-=(SourceLocation& lhs,
+                       std::ptrdiff_t rhs) noexcept -> SourceLocation&
 {
     lhs = lhs - rhs;
     return lhs;
 }
 
-inline auto operator-(SourceLocation lhs, SourceLocation rhs) noexcept
-        -> std::ptrdiff_t
+inline auto operator-(SourceLocation lhs,
+                      SourceLocation rhs) noexcept -> std::ptrdiff_t
 {
     return static_cast<std::ptrdiff_t>(lhs) - static_cast<std::ptrdiff_t>(rhs);
 }
@@ -98,8 +98,8 @@ struct SourceRange
     ///
     /// \param offset the position to start the new range from this range.
     /// \param count the length of the new range.
-    [[nodiscard]] auto subrange(size_t offset, size_t count = -1) const noexcept
-            -> SourceRange
+    [[nodiscard]] auto subrange(size_t offset,
+                                size_t count = -1) const noexcept -> SourceRange
     {
         offset = std::min(offset, this->size());
         count = std::min(count, this->size() - offset);
@@ -175,14 +175,14 @@ public:
     auto load_file(std::string_view filename) -> std::optional<SourceFile>;
 
     /// Loads a source file given its path.
-    auto load_file(const std::filesystem::path& path)
-            -> std::optional<SourceFile>;
+    auto
+    load_file(const std::filesystem::path& path) -> std::optional<SourceFile>;
 
     /// Loads a source file given a null-terminated sequence of characters.
     /// \param data the sequence of null-terminated characters.
     /// \param size the size of the sequence not including the null-terminator.
-    auto load_file(std::unique_ptr<char[]> data, size_t size)
-            -> std::optional<SourceFile>;
+    auto load_file(std::unique_ptr<char[]> data,
+                   size_t size) -> std::optional<SourceFile>;
 
 protected:
     friend class SourceFile;
@@ -205,18 +205,18 @@ protected:
 
 private:
     /// Checks whether two strings are equal (ignoring casing).
-    [[nodiscard]] auto iequal(std::string_view lhs, std::string_view rhs) const
-            -> bool;
+    [[nodiscard]] auto iequal(std::string_view lhs,
+                              std::string_view rhs) const -> bool;
 
     auto load_file(const std::filesystem::path& path, std::FILE* stream,
                    size_t hint_size = -1) -> std::optional<SourceFile>;
 
     auto load_file(const std::filesystem::path& path,
-                   std::unique_ptr<char[]> data, size_t size)
-            -> std::optional<SourceFile>;
+                   std::unique_ptr<char[]> data,
+                   size_t size) -> std::optional<SourceFile>;
 
-    auto load_file(std::FILE* stream, size_t hint_size = -1)
-            -> std::optional<SourceFile>;
+    auto load_file(std::FILE* stream,
+                   size_t hint_size = -1) -> std::optional<SourceFile>;
 
 private:
     struct FilenamePathPair
@@ -284,8 +284,8 @@ public:
     }
 
     /// Gets the source location of a given character view.
-    [[nodiscard]] auto location_of(std::string_view view) const
-            -> SourceLocation
+    [[nodiscard]] auto
+    location_of(std::string_view view) const -> SourceLocation
     {
         return location_of(view.data());
     }

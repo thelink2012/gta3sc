@@ -43,8 +43,7 @@ struct Token
 class Scanner
 {
 public:
-    explicit Scanner(Preprocessor pp) noexcept : pp(std::move(pp))
-    {}
+    explicit Scanner(Preprocessor pp) noexcept : pp(std::move(pp)) {}
 
     Scanner(const Scanner&) = delete;
     auto operator=(const Scanner&) -> Scanner& = delete;
@@ -113,3 +112,10 @@ private:
     char peek_char{};
 };
 } // namespace gta3sc::syntax
+
+namespace gta3sc::syntax::diag
+{
+extern const DiagnosticDescriptor invalid_filename;
+extern const DiagnosticDescriptor unterminated_string_literal;
+extern const DiagnosticDescriptor invalid_char;
+} // namespace gta3sc::syntax::diag

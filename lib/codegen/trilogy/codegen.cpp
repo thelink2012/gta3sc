@@ -1,6 +1,13 @@
 #include <gta3sc/codegen/relocation-table.hpp>
 #include <gta3sc/codegen/storage-table.hpp>
 #include <gta3sc/codegen/trilogy/codegen.hpp>
+#include <gta3sc/diagnostics.hpp>
+
+namespace gta3sc::codegen::diag
+{
+const DiagnosticDescriptor target_does_not_support_command(
+        DiagnosticSeverity::error, "Target does not support command", "TODO");
+} // namespace gta3sc::codegen::diag
 
 namespace gta3sc::codegen::trilogy
 {
@@ -36,7 +43,7 @@ auto CodeGen::generate_command(const SemaIR::Command& command,
     if(!cmd_def.target_handled() || !cmd_def.target_id())
     {
         diag->report(command.source().begin,
-                     Diag::codegen_target_does_not_support_command)
+                     diag::target_does_not_support_command)
                 .range(command.source());
         return false;
     }

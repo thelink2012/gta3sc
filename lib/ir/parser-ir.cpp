@@ -191,8 +191,8 @@ auto ParserIR::Builder::label(const LabelDef* label_ptr) -> Builder&&
     return std::move(*this);
 }
 
-auto ParserIR::Builder::label(std::string_view name, SourceRange source)
-        -> Builder&&
+auto ParserIR::Builder::label(std::string_view name,
+                              SourceRange source) -> Builder&&
 {
     return this->label(LabelDef::create(name, source, allocator));
 }
@@ -205,8 +205,8 @@ auto ParserIR::Builder::command(const Command* command_ptr) -> Builder&&
     return std::move(*this);
 }
 
-auto ParserIR::Builder::command(std::string_view name, SourceRange source)
-        -> Builder&&
+auto ParserIR::Builder::command(std::string_view name,
+                                SourceRange source) -> Builder&&
 {
     assert(!this->command_ptr && !this->has_command_name);
     this->command_ptr = nullptr;
@@ -254,20 +254,20 @@ auto ParserIR::Builder::arg_float(float value, SourceRange source) -> Builder&&
     return arg(ParserIR::create_float(value, source, allocator));
 }
 
-auto ParserIR::Builder::arg_ident(std::string_view value, SourceRange source)
-        -> Builder&&
+auto ParserIR::Builder::arg_ident(std::string_view value,
+                                  SourceRange source) -> Builder&&
 {
     return arg(ParserIR::create_identifier(value, source, allocator));
 }
 
-auto ParserIR::Builder::arg_filename(std::string_view value, SourceRange source)
-        -> Builder&&
+auto ParserIR::Builder::arg_filename(std::string_view value,
+                                     SourceRange source) -> Builder&&
 {
     return arg(ParserIR::create_filename(value, source, allocator));
 }
 
-auto ParserIR::Builder::arg_string(std::string_view value, SourceRange source)
-        -> Builder&&
+auto ParserIR::Builder::arg_string(std::string_view value,
+                                   SourceRange source) -> Builder&&
 {
     return arg(ParserIR::create_string(value, source, allocator));
 }

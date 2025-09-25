@@ -22,8 +22,8 @@ public:
             -> InstructionVisitor& = default;
 
     InstructionVisitor(InstructionVisitor&&) noexcept = default;
-    auto operator=(InstructionVisitor&&) noexcept
-            -> InstructionVisitor& = default;
+    auto
+    operator=(InstructionVisitor&&) noexcept -> InstructionVisitor& = default;
 
     virtual auto visit(const IRType&) -> Result = 0;
 };

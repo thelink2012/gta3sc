@@ -14,8 +14,8 @@ template<typename U>
 constexpr void init(IntrusiveBidirectionalListNode<U>& node) noexcept;
 
 template<typename U>
-constexpr auto empty(const IntrusiveBidirectionalListNode<U>& node) noexcept
-        -> bool;
+constexpr auto
+empty(const IntrusiveBidirectionalListNode<U>& node) noexcept -> bool;
 
 template<typename U>
 constexpr void insert(IntrusiveBidirectionalListNode<U>& pos,
@@ -148,8 +148,8 @@ public:
 
     constexpr IteratorImpl(const IteratorImpl&) noexcept = default;
 
-    constexpr auto operator=(const IteratorImpl&) noexcept
-            -> IteratorImpl& = default;
+    constexpr auto
+    operator=(const IteratorImpl&) noexcept -> IteratorImpl& = default;
 
     /// Enable conversion from iterator to const_iterator.
     template<bool IsOtherConstIter,
@@ -162,8 +162,8 @@ public:
 
     constexpr IteratorImpl(IteratorImpl&&) noexcept = default;
 
-    constexpr auto operator=(IteratorImpl&&) noexcept
-            -> IteratorImpl& = default;
+    constexpr auto
+    operator=(IteratorImpl&&) noexcept -> IteratorImpl& = default;
 
     constexpr ~IteratorImpl() noexcept = default;
 
@@ -247,8 +247,8 @@ constexpr void init(IntrusiveBidirectionalListNode<T>& node) noexcept
 
 /// Checks whether the circular list on which `node` is in is empty.
 template<typename T>
-constexpr auto empty(const IntrusiveBidirectionalListNode<T>& node) noexcept
-        -> bool
+constexpr auto
+empty(const IntrusiveBidirectionalListNode<T>& node) noexcept -> bool
 {
     if(&node == node.next)
     {
