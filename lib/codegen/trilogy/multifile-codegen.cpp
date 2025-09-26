@@ -53,6 +53,8 @@ bool MultifileCodeGen::generate_header_stubs(std::vector<std::byte>& output)
 bool MultifileCodeGen::generate_headers(const RelocationTable& reloc_table,
                                         std::vector<std::byte>& output)
 {
+    const auto max_used_object_name_length = 24;
+
     CodeEmitter emitter(header_size);
 
     RelocationTable::AbsoluteOffset next_header_offset = 0;
@@ -67,7 +69,8 @@ bool MultifileCodeGen::generate_headers(const RelocationTable& reloc_table,
     emitter.emit_opcode(0x0002)
             .emit_i32(next_header_offset)
             .emit_raw_byte(std::byte{0})
-            .emit_raw_u32(num_used_objects);
+            .emit_raw_u32(1 + num_used_objects)
+            .emit_fill(std::byte{0}, max_used_object_name_length);
     // TODO better encapsulate this code
     {
         std::vector<std::string_view> used_object_names;
@@ -75,18 +78,16 @@ bool MultifileCodeGen::generate_headers(const RelocationTable& reloc_table,
         for(const auto& used_object : symbol_table->used_objects())
             used_object_names[used_object.id()] = used_object.name();
 
-        const auto max_name_length = 24;
-
         for(auto used_object_name : used_object_names)
         {
-            if(used_object_name.size() > max_name_length)
+            if(used_object_name.size() > max_used_object_name_length)
             {
                 // TODO diag
-                used_object_name = used_object_name.substr(0, max_name_length);
+                used_object_name = used_object_name.substr(0, max_used_object_name_length);
             }
 
             emitter.emit_raw_bytes(used_object_name.begin(),
-                                   used_object_name.end(), max_name_length);
+                                   used_object_name.end(), max_used_object_name_length);
         }
     }
 
