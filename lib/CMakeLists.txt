@@ -22,6 +22,7 @@ add_library(gta3sc
   codegen/trilogy/emitter.cpp
   codegen/trilogy/codegen.cpp
   codegen/trilogy/multifile-codegen.cpp
+  driver/compilation.cpp
 )
 target_compile_features(gta3sc PUBLIC cxx_std_26)
 target_include_directories(gta3sc
