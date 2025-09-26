@@ -1,6 +1,8 @@
 #pragma once
+#include <gta3sc/diagnostics.hpp>
 #include <gta3sc/ir/linked-ir.hpp>
 #include <gta3sc/ir/parser-ir.hpp>
+#include <gta3sc/syntax/diagnostics.hpp>
 #include <gta3sc/syntax/scanner.hpp>
 #include <gta3sc/util/arena.hpp>
 
@@ -118,8 +120,8 @@ private:
 
     /// Produces the same effect as `is_peek(category, n)` but additionally
     /// checks the lexeme of the token. The comparision is case insensitive.
-    auto is_peek(Category category, std::string_view lexeme, size_t n = 0)
-            -> bool;
+    auto is_peek(Category category, std::string_view lexeme,
+                 size_t n = 0) -> bool;
 
     /// Peeks the type of the expression in the current line.
     ///
@@ -167,8 +169,8 @@ private:
     auto consume_whitespace() -> std::optional<Token>;
 
     /// Compares two strings for equality in a case-insensitive manner.
-    [[nodiscard]] auto iequal(std::string_view lhs, std::string_view rhs) const
-            -> bool;
+    [[nodiscard]] auto iequal(std::string_view lhs,
+                              std::string_view rhs) const -> bool;
 
     /// Checks whether the specified name is a command name used by
     /// the language grammar for special purposes (e.g. 'REPEAT', `VAR_INT`).
@@ -183,13 +185,15 @@ private:
     [[nodiscard]] auto is_relational_operator(Category category) const -> bool;
 
     /// Produces a diagnostic report associated with a given token.
-    auto report(const Token& token, Diag message) -> DiagnosticBuilder;
+    auto report(const Token& token,
+                const DiagnosticDescriptor& message) -> Diagnostic::Builder;
 
     /// Produces a diagnostic report associated with a given range.
-    auto report(SourceRange source, Diag message) -> DiagnosticBuilder;
+    auto report(SourceRange source,
+                const DiagnosticDescriptor& message) -> Diagnostic::Builder;
 
     /// Produces a diagnostic regarding a unexpected grammar name.
-    auto report_special_name(SourceRange source) -> DiagnosticBuilder;
+    auto report_special_name(SourceRange source) -> Diagnostic::Builder;
 
     /// Ensures that the rule that the first line of file must be
     /// MISSION_START is correct. Otherwise, produces a diagnostic.
@@ -259,9 +263,9 @@ private:
                                       bool not_flag = false)
             -> std::optional<LinkedIR<ParserIR>>;
 
-    auto parse_expression_detail(bool is_conditional, bool is_if_line,
-                                 bool not_flag)
-            -> std::optional<LinkedIR<ParserIR>>;
+    auto
+    parse_expression_detail(bool is_conditional, bool is_if_line,
+                            bool not_flag) -> std::optional<LinkedIR<ParserIR>>;
 
     [[nodiscard]] auto is_digit(char c) const -> bool;
     [[nodiscard]] auto is_integer(std::string_view lexeme) const -> bool;
@@ -281,3 +285,25 @@ private:
     std::vector<const ParserIR::Argument*> temp_args;
 };
 } // namespace gta3sc::syntax
+
+namespace gta3sc::syntax::diag
+{
+extern const DiagnosticDescriptor unexpected_special_name; // %0 => string
+extern const DiagnosticDescriptor expected_token;          // %0 => Category
+extern const DiagnosticDescriptor expected_words; // %0 => vector<string>
+extern const DiagnosticDescriptor expected_command;
+extern const DiagnosticDescriptor float_literal_too_big;
+extern const DiagnosticDescriptor expected_argument;
+extern const DiagnosticDescriptor cannot_nest_scopes;
+extern const DiagnosticDescriptor cannot_mix_andor;
+extern const DiagnosticDescriptor too_many_conditions;
+extern const DiagnosticDescriptor expected_require_command;
+extern const DiagnosticDescriptor invalid_expression;
+extern const DiagnosticDescriptor expected_conditional_expression;
+extern const DiagnosticDescriptor expected_conditional_operator;
+extern const DiagnosticDescriptor expected_assignment_operator;
+extern const DiagnosticDescriptor expected_ternary_operator;
+extern const DiagnosticDescriptor
+        invalid_expression_unassociative; // %0 => Category
+extern const DiagnosticDescriptor expected_mission_start_at_top;
+} // namespace gta3sc::syntax::diag

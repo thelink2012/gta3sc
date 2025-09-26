@@ -159,8 +159,8 @@ TEST_CASE_FIXTURE(ScannerFixture, "scanner with string literal")
     REQUIRE(scanner.next()->category == Category::end_of_line);
 
     REQUIRE(scanner.next() == std::nullopt);
-    REQUIRE(consume_diag().message
-            == gta3sc::Diag::unterminated_string_literal);
+    REQUIRE(consume_diag().descriptor
+            == &gta3sc::syntax::diag::unterminated_string_literal);
     REQUIRE(scanner.next()->category == Category::end_of_line);
 
     token = scanner.next().value();
@@ -214,15 +214,18 @@ TEST_CASE_FIXTURE(ScannerFixture, "scanner with filename")
     REQUIRE(scanner.next()->category == Category::whitespace);
 
     REQUIRE(scanner.next_filename() == std::nullopt); // 1.0sc
-    REQUIRE(consume_diag().message == gta3sc::Diag::invalid_filename);
+    REQUIRE(consume_diag().descriptor
+            == &gta3sc::syntax::diag::invalid_filename);
     REQUIRE(scanner.next()->category == Category::whitespace);
 
     REQUIRE(scanner.next_filename() == std::nullopt); // SC
-    REQUIRE(consume_diag().message == gta3sc::Diag::invalid_filename);
+    REQUIRE(consume_diag().descriptor
+            == &gta3sc::syntax::diag::invalid_filename);
     REQUIRE(scanner.next()->category == Category::end_of_line);
 
     REQUIRE(scanner.next_filename() == std::nullopt); // b
-    REQUIRE(consume_diag().message == gta3sc::Diag::invalid_filename);
+    REQUIRE(consume_diag().descriptor
+            == &gta3sc::syntax::diag::invalid_filename);
     token = scanner.next().value();
     REQUIRE(token.category == Category::string);
     REQUIRE(spelling(token) == "\"a\"");
@@ -512,7 +515,7 @@ TEST_CASE_FIXTURE(ScannerFixture, "scanner with invalid ASCII")
     REQUIRE(scanner.next()->category == Category::word);
     REQUIRE(scanner.next()->category == Category::whitespace);
     REQUIRE(scanner.next() == std::nullopt);
-    REQUIRE(consume_diag().message == gta3sc::Diag::invalid_char);
+    REQUIRE(consume_diag().descriptor == &gta3sc::syntax::diag::invalid_char);
     REQUIRE(scanner.next()->category == Category::whitespace);
     REQUIRE(scanner.next()->category == Category::word);
     REQUIRE(scanner.next()->category == Category::end_of_line);

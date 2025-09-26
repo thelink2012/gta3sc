@@ -6,6 +6,7 @@
 #include <gta3sc/ir/sema-ir.hpp>
 #include <gta3sc/ir/symbol-table.hpp>
 #include <gta3sc/model-table.hpp>
+#include <gta3sc/syntax/diagnostics.hpp>
 #include <gta3sc/util/arena.hpp>
 
 namespace gta3sc::syntax
@@ -130,10 +131,10 @@ private:
 
     auto validate_start_new_script(const SemaIR::Command& command) -> bool;
 
-    auto validate_target_scope_vars(SemaIR::ArgumentView::iterator begin,
-                                    SemaIR::ArgumentView::iterator end,
-                                    SymbolTable::ScopeId target_scope_id)
-            -> bool;
+    auto
+    validate_target_scope_vars(SemaIR::ArgumentView::iterator begin,
+                               SemaIR::ArgumentView::iterator end,
+                               SymbolTable::ScopeId target_scope_id) -> bool;
 
     // The following functions validates declarations and inserts their
     // names and metadata into the symbol repository.
@@ -157,14 +158,16 @@ private:
     /// coincide to what the user actually wrote in the source code.
     ///
     /// Compare `report_count` before and after the call to check success.
-    auto parse_var_ref(std::string_view identifier, SourceRange source)
-            -> VarRef;
+    auto parse_var_ref(std::string_view identifier,
+                       SourceRange source) -> VarRef;
 
     /// Reports an invalid situation and increments `report_count`.
-    auto report(SourceLocation source, Diag message) -> DiagnosticBuilder;
+    auto report(SourceLocation source,
+                const DiagnosticDescriptor& message) -> Diagnostic::Builder;
 
     /// Reports an invalid situation and increments `report_count`.
-    auto report(SourceRange source, Diag message) -> DiagnosticBuilder;
+    auto report(SourceRange source,
+                const DiagnosticDescriptor& message) -> Diagnostic::Builder;
 
     /// Lookups a variable in the global scope as well as in
     /// the current local scope.
@@ -185,25 +188,24 @@ private:
     is_object_param(const CommandTable::ParamDef& param) const -> bool;
 
     /// Checks whether a parameter type accepts only global variables.
-    [[nodiscard]] auto is_gvar_param(CommandTable::ParamType param_type) const
-            -> bool;
+    [[nodiscard]] auto
+    is_gvar_param(CommandTable::ParamType param_type) const -> bool;
 
     /// Checks whether a parameter type accepts only local variables.
-    [[nodiscard]] auto is_lvar_param(CommandTable::ParamType param_type) const
-            -> bool;
+    [[nodiscard]] auto
+    is_lvar_param(CommandTable::ParamType param_type) const -> bool;
 
     /// Checks whether the typing of a parameter matches the
     /// typing of a variable.
-    [[nodiscard]] auto matches_var_type(CommandTable::ParamType param_type,
-                                        SymbolTable::VarType var_type) const
-            -> bool;
+    [[nodiscard]] auto
+    matches_var_type(CommandTable::ParamType param_type,
+                     SymbolTable::VarType var_type) const -> bool;
 
     /// Checks whether the specified command is an alternative of an certain
     /// alternator.
-    [[nodiscard]] auto
-    is_alternative_command(const CommandTable::CommandDef& command_def,
-                           const CommandTable::AlternatorDef& from) const
-            -> bool;
+    [[nodiscard]] auto is_alternative_command(
+            const CommandTable::CommandDef& command_def,
+            const CommandTable::AlternatorDef& from) const -> bool;
 
     //// Checks whether the specified actual command/args matches the
     //// specification of a certain alternative command.
@@ -267,3 +269,47 @@ private:
     std::vector<std::vector<CommandTable::EntityId>> vars_entity_type;
 };
 } // namespace gta3sc::syntax
+
+namespace gta3sc::syntax::diag
+{
+extern const DiagnosticDescriptor duplicate_var_lvar;
+extern const DiagnosticDescriptor duplicate_var_string_constant;
+extern const DiagnosticDescriptor undefined_label;
+extern const DiagnosticDescriptor alternator_mismatch;
+extern const DiagnosticDescriptor undefined_command;
+extern const DiagnosticDescriptor expected_text_label;
+extern const DiagnosticDescriptor cannot_use_string_constant_here;
+extern const DiagnosticDescriptor expected_input_int;
+extern const DiagnosticDescriptor expected_input_float;
+extern const DiagnosticDescriptor expected_input_opt;
+extern const DiagnosticDescriptor expected_integer;
+extern const DiagnosticDescriptor expected_float;
+extern const DiagnosticDescriptor expected_label;
+extern const DiagnosticDescriptor expected_string;
+extern const DiagnosticDescriptor expected_variable;
+extern const DiagnosticDescriptor expected_varname_after_dollar;
+extern const DiagnosticDescriptor undefined_variable;
+extern const DiagnosticDescriptor expected_gvar_got_lvar;
+extern const DiagnosticDescriptor expected_lvar_got_gvar;
+extern const DiagnosticDescriptor var_type_mismatch;
+extern const DiagnosticDescriptor subscript_but_var_is_not_array;
+extern const DiagnosticDescriptor subscript_out_of_range;
+extern const DiagnosticDescriptor subscript_var_must_be_int;
+extern const DiagnosticDescriptor subscript_var_must_not_be_array;
+extern const DiagnosticDescriptor var_entity_type_mismatch;
+extern const DiagnosticDescriptor duplicate_script_name;
+extern const DiagnosticDescriptor target_label_not_within_scope;
+extern const DiagnosticDescriptor target_scope_not_enough_vars;
+extern const DiagnosticDescriptor target_var_type_mismatch;
+extern const DiagnosticDescriptor target_var_entity_type_mismatch;
+extern const DiagnosticDescriptor internal_compiler_error;
+extern const DiagnosticDescriptor duplicate_label;
+extern const DiagnosticDescriptor var_decl_subscript_must_be_literal;
+extern const DiagnosticDescriptor var_decl_subscript_must_be_nonzero;
+extern const DiagnosticDescriptor var_decl_outside_of_scope;
+extern const DiagnosticDescriptor duplicate_var_timer;
+extern const DiagnosticDescriptor duplicate_var_global;
+extern const DiagnosticDescriptor duplicate_var_in_scope;
+extern const DiagnosticDescriptor expected_subscript;
+extern const DiagnosticDescriptor subscript_must_be_positive;
+} // namespace gta3sc::syntax::diag

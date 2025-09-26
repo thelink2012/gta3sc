@@ -16,8 +16,8 @@
 
 namespace gta3sc
 {
-auto SourceManager::iequal(std::string_view lhs, std::string_view rhs) const
-        -> bool
+auto SourceManager::iequal(std::string_view lhs,
+                           std::string_view rhs) const -> bool
 {
     return util::insensitive_equal(lhs, rhs);
 }
@@ -82,21 +82,21 @@ auto SourceManager::load_file(const std::filesystem::path& path)
     return load_file(path, stream, size);
 }
 
-auto SourceManager::load_file(std::FILE* stream, size_t hint_size)
-        -> std::optional<SourceFile>
+auto SourceManager::load_file(std::FILE* stream,
+                              size_t hint_size) -> std::optional<SourceFile>
 {
     return load_file(std::filesystem::path(), stream, hint_size);
 }
 
-auto SourceManager::load_file(std::unique_ptr<char[]> data, size_t size)
-        -> std::optional<SourceFile>
+auto SourceManager::load_file(std::unique_ptr<char[]> data,
+                              size_t size) -> std::optional<SourceFile>
 {
     return load_file(std::filesystem::path(), std::move(data), size);
 }
 
 auto SourceManager::load_file(const std::filesystem::path& path,
-                              std::FILE* stream, size_t hint_size)
-        -> std::optional<SourceFile>
+                              std::FILE* stream,
+                              size_t hint_size) -> std::optional<SourceFile>
 {
     // TODO should this detect the encoding of the file and convert to utf8?
 
@@ -104,7 +104,9 @@ auto SourceManager::load_file(const std::filesystem::path& path,
     size_t source_size = 0; // not including null terminator
 
     // Add one to the hint_size so we can trigger EOF on the first iteration.
-    const size_t block_size = (hint_size == static_cast<size_t>(-1) ? 4096 : 1 + hint_size);
+    const size_t block_size = (hint_size == static_cast<size_t>(-1)
+                                       ? 4096
+                                       : 1 + hint_size);
 
     while(true)
     {
@@ -136,8 +138,8 @@ auto SourceManager::load_file(const std::filesystem::path& path,
 }
 
 auto SourceManager::load_file(const std::filesystem::path& path,
-                              std::unique_ptr<char[]> data, size_t size)
-        -> std::optional<SourceFile>
+                              std::unique_ptr<char[]> data,
+                              size_t size) -> std::optional<SourceFile>
 {
     assert(data[size] == '\0');
 

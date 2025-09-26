@@ -1,6 +1,5 @@
 #pragma once
 #include <gta3sc/util/ctype.hpp>
-#include <string>
 #include <string_view>
 
 namespace gta3sc::util

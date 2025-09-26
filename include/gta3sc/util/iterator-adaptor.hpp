@@ -66,8 +66,7 @@ public:
         return std::addressof(operator*());
     }
 
-    constexpr auto
-    operator[](difference_type n) const -> decltype(auto)
+    constexpr auto operator[](difference_type n) const -> decltype(auto)
     {
         return adaptor.at(inner_it, n);
     }
@@ -124,44 +123,44 @@ public:
         return temp;
     }
 
-    constexpr friend auto operator==(const Iterator& lhs, const Iterator& rhs)
-            -> bool
+    constexpr friend auto operator==(const Iterator& lhs,
+                                     const Iterator& rhs) -> bool
     {
         return lhs.inner_it == rhs.inner_it;
     }
 
-    constexpr friend auto operator!=(const Iterator& lhs, const Iterator& rhs)
-            -> bool
+    constexpr friend auto operator!=(const Iterator& lhs,
+                                     const Iterator& rhs) -> bool
     {
         return lhs.inner_it != rhs.inner_it;
     }
 
-    constexpr friend auto operator<=(const Iterator& lhs, const Iterator& rhs)
-            -> bool
+    constexpr friend auto operator<=(const Iterator& lhs,
+                                     const Iterator& rhs) -> bool
     {
         return lhs.inner_it <= rhs.inner_it;
     }
 
-    constexpr friend auto operator>=(const Iterator& lhs, const Iterator& rhs)
-            -> bool
+    constexpr friend auto operator>=(const Iterator& lhs,
+                                     const Iterator& rhs) -> bool
     {
         return lhs.inner_it >= rhs.inner_it;
     }
 
-    constexpr friend auto operator<(const Iterator& lhs, const Iterator& rhs)
-            -> bool
+    constexpr friend auto operator<(const Iterator& lhs,
+                                    const Iterator& rhs) -> bool
     {
         return lhs.inner_it <= rhs.inner_it;
     }
 
-    constexpr friend auto operator>(const Iterator& lhs, const Iterator& rhs)
-            -> bool
+    constexpr friend auto operator>(const Iterator& lhs,
+                                    const Iterator& rhs) -> bool
     {
         return lhs.inner_it >= rhs.inner_it;
     }
 
-    constexpr friend auto operator+(difference_type n, const Iterator& rhs)
-            -> Iterator
+    constexpr friend auto operator+(difference_type n,
+                                    const Iterator& rhs) -> Iterator
     {
         return rhs + n;
     }
@@ -243,8 +242,8 @@ struct DereferenceAdaptor : IdentityAdaptor<Iter>
         return **it;
     }
 
-    [[nodiscard]] constexpr auto
-    at(const Iter& it, difference_type n) const -> decltype(auto)
+    [[nodiscard]] constexpr auto at(const Iter& it,
+                                    difference_type n) const -> decltype(auto)
     {
         return *it[n];
     }

@@ -31,8 +31,9 @@ protected:
     load_test_config(const std::filesystem::path& config_path,
                      const std::filesystem::path& root_path) -> CommandTable
     {
-        return gta3sc::load_config(root_path, config_path, sourceman, diagman,
-                                   gta3sc::CommandTable::Builder(&arena))
+        return gta3sc::config::load_config(
+                       root_path, config_path, sourceman, diagman,
+                       gta3sc::CommandTable::Builder(&arena))
                 .build();
     }
 
@@ -58,8 +59,8 @@ TEST_CASE_FIXTURE(ImportConfigFixture, "config import missing name attribute")
 </GTA3Script>)");
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_xml_missing_required_attr);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::config::diag::xml_missing_required_attr);
 }
 
 TEST_CASE_FIXTURE(ImportConfigFixture, "config import empty name attribute")
@@ -70,8 +71,8 @@ TEST_CASE_FIXTURE(ImportConfigFixture, "config import empty name attribute")
 </GTA3Script>)");
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_xml_missing_required_attr);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::config::diag::xml_missing_required_attr);
 }
 
 TEST_CASE_FIXTURE(ImportConfigFixture,
@@ -83,8 +84,8 @@ TEST_CASE_FIXTURE(ImportConfigFixture,
 </GTA3Script>)");
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_xml_security_import_filesystem_traversal);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::config::diag::xml_security_import_filesystem_traversal);
 }
 
 TEST_CASE_FIXTURE(ImportConfigFixture,
@@ -96,8 +97,8 @@ TEST_CASE_FIXTURE(ImportConfigFixture,
 </GTA3Script>)");
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_xml_security_import_filesystem_traversal);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::config::diag::xml_security_import_filesystem_traversal);
 }
 
 TEST_CASE_FIXTURE(ImportConfigFixture,
@@ -109,8 +110,8 @@ TEST_CASE_FIXTURE(ImportConfigFixture,
 </GTA3Script>)");
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_xml_security_import_filesystem_traversal);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::config::diag::xml_security_import_filesystem_traversal);
 }
 
 TEST_CASE_FIXTURE(ImportConfigFixture, "config import without from attribute")
@@ -219,8 +220,7 @@ TEST_CASE_FIXTURE(ImportConfigFixture, "config import with non-existent file")
     load_test_config(game0_dir / "config.xml");
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_xml_could_not_open_file);
+    CHECK(consume_diag().descriptor == &gta3sc::diag::could_not_open_file);
 }
 
 TEST_CASE_FIXTURE(ImportConfigFixture,
@@ -243,8 +243,8 @@ TEST_CASE_FIXTURE(ImportConfigFixture,
     load_test_config(outside_root_dir / "config.xml", root_config_dir);
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_xml_import_failed_to_determine_game_config);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::config::diag::xml_import_failed_to_determine_game_config);
 }
 
 TEST_CASE_FIXTURE(ImportConfigFixture,
@@ -271,7 +271,7 @@ TEST_CASE_FIXTURE(ImportConfigFixture,
     load_test_config(game0_dir / "config.xml");
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message == gta3sc::Diag::config_xml_parse_failed);
+    CHECK(consume_diag().descriptor == &gta3sc::config::diag::xml_parse_failed);
 }
 
 TEST_CASE_FIXTURE(ImportConfigFixture,
@@ -308,7 +308,8 @@ TEST_CASE_FIXTURE(ImportConfigFixture,
     load_test_config(game0_dir / "config.xml");
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message == gta3sc::Diag::config_xml_import_too_deep);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::config::diag::xml_import_too_deep);
 }
 
 TEST_CASE_FIXTURE(ImportConfigFixture,
@@ -320,7 +321,7 @@ TEST_CASE_FIXTURE(ImportConfigFixture,
 </GTA3Script>)");
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message == gta3sc::Diag::config_xml_empty_attr);
+    CHECK(consume_diag().descriptor == &gta3sc::config::diag::xml_empty_attr);
 }
 
 TEST_CASE_FIXTURE(

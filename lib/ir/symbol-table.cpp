@@ -18,9 +18,8 @@ auto SymbolTable::new_scope() -> ScopeId
     return ScopeId{static_cast<uint32_t>(m_scopes.size() - 1)};
 }
 
-auto SymbolTable::lookup_var(std::string_view name,
-                             ScopeId scope_id) const noexcept
-        -> const SymbolTable::Variable*
+auto SymbolTable::lookup_var(std::string_view name, ScopeId scope_id)
+        const noexcept -> const SymbolTable::Variable*
 {
     if(scope_id == global_scope && m_scopes.empty())
         return nullptr;
@@ -53,11 +52,10 @@ auto SymbolTable::lookup_used_object(std::string_view name) const noexcept
     return (it == m_used_objects.end() ? nullptr : it->second);
 }
 
-auto SymbolTable::insert_var(std::string_view name, ScopeId scope_id,
-                             SymbolTable::Variable::Type type,
-                             std::optional<uint16_t> dimensions,
-                             SourceRange source)
-        -> std::pair<const SymbolTable::Variable*, bool>
+auto SymbolTable::insert_var(
+        std::string_view name, ScopeId scope_id,
+        SymbolTable::Variable::Type type, std::optional<uint16_t> dimensions,
+        SourceRange source) -> std::pair<const SymbolTable::Variable*, bool>
 {
     if(const auto* v = lookup_var(name, scope_id))
         return {v, false};

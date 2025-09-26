@@ -9,6 +9,7 @@ add_library(gta3sc
   util/arena.cpp
   util/name-generator.cpp
   config/models.cpp
+  syntax/diagnostics.cpp
   syntax/preprocessor.cpp
   syntax/scanner.cpp
   syntax/parser.cpp
@@ -21,16 +22,15 @@ add_library(gta3sc
   codegen/trilogy/codegen.cpp
   codegen/trilogy/multifile-codegen.cpp
 )
-target_compile_features(gta3sc PUBLIC cxx_std_20)
+target_compile_features(gta3sc PUBLIC cxx_std_26)
 target_include_directories(gta3sc
   PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
   PUBLIC $<INSTALL_INTERFACE:include>)
-target_link_libraries(gta3sc span-lite)
 target_compile_options(gta3sc PRIVATE ${GTA3SC_PEDANTIC_COMPILE_OPTIONS})
 
 add_library(gta3sc-config
   config/config.cpp
 )
-target_compile_features(gta3sc-config PUBLIC cxx_std_20)
+target_compile_features(gta3sc-config PUBLIC cxx_std_26)
 target_link_libraries(gta3sc-config gta3sc pugixml-static)
 target_compile_options(gta3sc-config PRIVATE ${GTA3SC_PEDANTIC_COMPILE_OPTIONS})

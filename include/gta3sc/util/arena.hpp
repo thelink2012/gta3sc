@@ -65,7 +65,7 @@ public:
     ArenaMemoryResource(const ArenaMemoryResource&) = delete;
 
     auto operator=(const ArenaMemoryResource&) -> ArenaMemoryResource& = delete;
-    auto operator=(ArenaMemoryResource &&) -> ArenaMemoryResource&& = delete;
+    auto operator=(ArenaMemoryResource&&) -> ArenaMemoryResource&& = delete;
 
     ~ArenaMemoryResource() { this->release(); }
 
@@ -125,8 +125,8 @@ private:
         bool owns_prev_region;   //< Whether the arena owns the previous region.
     };
 
-    static auto align(size_t alignment, size_t bytes, char*& ptr, size_t& space)
-            -> char*;
+    static auto align(size_t alignment, size_t bytes, char*& ptr,
+                      size_t& space) -> char*;
 };
 
 /// An allocator encapsulating an arena memory resource.
@@ -186,8 +186,8 @@ public:
     }
 
     [[nodiscard]] auto
-    allocate_bytes(size_t nbytes, size_t alignment = alignof(std::max_align_t))
-            -> void*
+    allocate_bytes(size_t nbytes,
+                   size_t alignment = alignof(std::max_align_t)) -> void*
     {
         return arena->allocate(nbytes, alignment);
     }

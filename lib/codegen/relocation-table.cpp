@@ -1,6 +1,16 @@
 #include <gta3sc/codegen/relocation-table.hpp>
 #include <gta3sc/diagnostics.hpp>
 
+namespace gta3sc::codegen::diag
+{
+const DiagnosticDescriptor
+        label_at_local_zero_offset(DiagnosticSeverity::error,
+                                   "Label at local zero offset", "TODO");
+const DiagnosticDescriptor
+        label_ref_across_segments(DiagnosticSeverity::error,
+                                  "Label reference across segments", "TODO");
+} // namespace gta3sc::codegen::diag
+
 namespace gta3sc::codegen
 {
 RelocationTable::RelocationTable(const SymbolTable& table_size_hint) noexcept
@@ -83,7 +93,7 @@ auto RelocationTable::relocate(const FixupEntry& entry,
         if(segbase == label_def.offset)
         {
             diagman.report(entry.label->source().begin,
-                           Diag::codegen_label_at_local_zero_offset)
+                           diag::label_at_local_zero_offset)
                     .range(entry.label->source());
             return std::nullopt;
         }
@@ -96,7 +106,7 @@ auto RelocationTable::relocate(const FixupEntry& entry,
         // TODO this should have a front-end checking equivalent 'cause we do
         // not have code locations here
         diagman.report(SourceManager::no_source_loc,
-                       Diag::codegen_label_ref_across_segments);
+                       diag::label_ref_across_segments);
         return std::nullopt;
     }
 }
@@ -150,8 +160,8 @@ auto RelocationTable::is_in_main_segment(const SymbolTable::File& file) noexcept
 }
 
 auto RelocationTable::is_in_same_segment(
-        const SymbolTable::File& filea, const SymbolTable::File& fileb) noexcept
-        -> bool
+        const SymbolTable::File& filea,
+        const SymbolTable::File& fileb) noexcept -> bool
 {
     switch(filea.type())
     {

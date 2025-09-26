@@ -1,4 +1,15 @@
+#include <gta3sc/diagnostics.hpp>
 #include <gta3sc/syntax/preprocessor.hpp>
+
+namespace gta3sc::syntax::diag
+{
+const DiagnosticDescriptor unterminated_comment(DiagnosticSeverity::error,
+                                                "Unterminated comment", "TODO");
+const DiagnosticDescriptor
+        limit_block_comments(DiagnosticSeverity::error,
+                             "Maximum number of block comments reached",
+                             "TODO");
+} // namespace gta3sc::syntax::diag
 
 namespace gta3sc::syntax
 {
@@ -50,7 +61,7 @@ auto Preprocessor::next() -> char
         if(*cursor == '\0')
         {
             if(!end_of_stream && num_block_comments > 0)
-                diagnostics().report(location(), Diag::unterminated_comment);
+                diagnostics().report(location(), diag::unterminated_comment);
 
             this->end_of_stream = true;
             return '\0';
@@ -74,7 +85,7 @@ auto Preprocessor::next() -> char
                 {
                     if(num_block_comments == max_nesting)
                         diagnostics().report(location(),
-                                             Diag::limit_block_comments);
+                                             diag::limit_block_comments);
                     else
                         ++num_block_comments;
 

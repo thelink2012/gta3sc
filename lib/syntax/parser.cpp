@@ -1,4 +1,5 @@
-#include "charconv.hpp"
+#include <charconv>
+#include <gta3sc/diagnostics.hpp>
 #include <gta3sc/syntax/parser.hpp>
 #include <gta3sc/util/ctype.hpp>
 #include <gta3sc/util/string.hpp>
@@ -7,6 +8,51 @@ using namespace std::literals::string_view_literals;
 // grammar from https://git.io/fNxZP f1f8a9096cb7a861e410d3f208f2589737220327
 
 // TODO parse mission start/end such that we ensure its amount of params
+
+namespace gta3sc::syntax::diag
+{
+const DiagnosticDescriptor unexpected_special_name(DiagnosticSeverity::error,
+                                                   "Unexpected special name",
+                                                   "TODO");
+const DiagnosticDescriptor expected_token(DiagnosticSeverity::error,
+                                          "Expected token", "TODO");
+const DiagnosticDescriptor expected_words(DiagnosticSeverity::error,
+                                          "Expected words", "TODO");
+const DiagnosticDescriptor expected_command(DiagnosticSeverity::error,
+                                            "Expected command", "TODO");
+const DiagnosticDescriptor float_literal_too_big(DiagnosticSeverity::error,
+                                                 "Float literal too big",
+                                                 "TODO");
+const DiagnosticDescriptor expected_argument(DiagnosticSeverity::error,
+                                             "Expected argument", "TODO");
+const DiagnosticDescriptor cannot_nest_scopes(DiagnosticSeverity::error,
+                                              "Cannot nest scopes", "TODO");
+const DiagnosticDescriptor cannot_mix_andor(DiagnosticSeverity::error,
+                                            "Cannot mix AND/OR", "TODO");
+const DiagnosticDescriptor too_many_conditions(DiagnosticSeverity::error,
+                                               "Too many conditions", "TODO");
+const DiagnosticDescriptor expected_require_command(DiagnosticSeverity::error,
+                                                    "Expected require command",
+                                                    "TODO");
+const DiagnosticDescriptor invalid_expression(DiagnosticSeverity::error,
+                                              "Invalid expression", "TODO");
+const DiagnosticDescriptor expected_conditional_expression(
+        DiagnosticSeverity::error, "Expected conditional expression", "TODO");
+const DiagnosticDescriptor
+        expected_conditional_operator(DiagnosticSeverity::error,
+                                      "Expected conditional operator", "TODO");
+const DiagnosticDescriptor
+        expected_assignment_operator(DiagnosticSeverity::error,
+                                     "Expected assignment operator", "TODO");
+const DiagnosticDescriptor
+        expected_ternary_operator(DiagnosticSeverity::error,
+                                  "Expected ternary operator", "TODO");
+const DiagnosticDescriptor invalid_expression_unassociative(
+        DiagnosticSeverity::error, "Invalid expression unassociative", "TODO");
+const DiagnosticDescriptor
+        expected_mission_start_at_top(DiagnosticSeverity::error,
+                                      "Expected mission start at top", "TODO");
+} // namespace gta3sc::syntax::diag
 
 namespace gta3sc::syntax
 {
@@ -68,27 +114,29 @@ auto Parser::diagnostics() const -> DiagnosticHandler &
     return scanner.diagnostics();
 }
 
-auto Parser::report(const Token &token, Diag message) -> DiagnosticBuilder
+auto Parser::report(const Token &token,
+                    const DiagnosticDescriptor &message) -> Diagnostic::Builder
 {
     return report(token.source, message);
 }
 
 // NOLINTNEXTLINE(readability-make-member-function-const): Produces side-effect
-auto Parser::report(SourceRange source, Diag message) -> DiagnosticBuilder
+auto Parser::report(SourceRange source,
+                    const DiagnosticDescriptor &message) -> Diagnostic::Builder
 {
     return diagnostics().report(source.begin, message).range(source);
 }
 
-auto Parser::report_special_name(SourceRange source) -> DiagnosticBuilder
+auto Parser::report_special_name(SourceRange source) -> Diagnostic::Builder
 {
     // This method can be specialized to produce a different diagnostic
     // for each special name. Currently we produce a generic message.
     const std::string_view name = source_file().view_of(source);
-    return report(source, Diag::unexpected_special_name).args(name);
+    return report(source, diag::unexpected_special_name).args(name);
 }
 
-auto Parser::is_special_name(std::string_view name, bool check_var_decl) const
-        -> bool
+auto Parser::is_special_name(std::string_view name,
+                             bool check_var_decl) const -> bool
 {
     if(check_var_decl && is_var_decl_command(name))
         return true;
@@ -158,8 +206,8 @@ auto Parser::is_peek(Category category, size_t n) -> bool
     return peek(n) && peek(n)->category == category;
 }
 
-auto Parser::is_peek(Category category, std::string_view lexeme, size_t n)
-        -> bool
+auto Parser::is_peek(Category category, std::string_view lexeme,
+                     size_t n) -> bool
 {
     return is_peek(category, n) && iequal(scanner.spelling(*peek(n)), lexeme);
 }
@@ -219,7 +267,7 @@ auto Parser::consume_filename() -> std::optional<Token>
     // have a peek token here.
     if(has_peek_token[0] && is_peek(Category::end_of_line))
     {
-        report(*peek(), Diag::expected_identifier);
+        report(*peek(), diag::expected_identifier);
         return std::nullopt;
     }
 
@@ -235,7 +283,7 @@ auto Parser::consume(Category category) -> std::optional<Token>
 
     if(token->category != category)
     {
-        report(*token, Diag::expected_token).args(category);
+        report(*token, diag::expected_token).args(category);
         return std::nullopt;
     }
 
@@ -250,7 +298,7 @@ auto Parser::consume_word(std::string_view lexeme) -> std::optional<Token>
 
     if(!iequal(scanner.spelling(*token), lexeme))
     {
-        report(*token, Diag::expected_word).args(lexeme);
+        report(*token, diag::expected_word).args(lexeme);
         return std::nullopt;
     }
 
@@ -276,7 +324,7 @@ auto Parser::consume_command() -> std::optional<Token>
 
     if(token->category != Category::word)
     {
-        report(*token, Diag::expected_command);
+        report(*token, diag::expected_command);
         return std::nullopt;
     }
 
@@ -382,8 +430,8 @@ auto Parser::is_identifier(std::string_view lexeme) const -> bool
     return false;
 }
 
-auto Parser::parse_command(bool is_if_line, bool not_flag)
-        -> std::optional<ArenaPtr<ParserIR>>
+auto Parser::parse_command(bool is_if_line,
+                           bool not_flag) -> std::optional<ArenaPtr<ParserIR>>
 {
     // command_name := token_char {token_char} ;
     // command := command_name { sep argument } ;
@@ -452,12 +500,12 @@ auto Parser::parse_argument()
     {
         int32_t value{};
 
-        if(auto [_, ec] = util::from_chars(&*lexeme.begin(), &*lexeme.end(),
-                                           value);
+        if(auto [_, ec] = std::from_chars(&*lexeme.begin(), &*lexeme.end(),
+                                          value);
            ec != std::errc())
         {
             assert(ec == std::errc::result_out_of_range);
-            report(*token, Diag::integer_literal_too_big);
+            report(*token, diag::integer_literal_too_big);
             return std::nullopt;
         }
 
@@ -467,12 +515,12 @@ auto Parser::parse_argument()
     {
         float value{};
 
-        if(auto [_, ec] = util::from_chars(&*lexeme.begin(), &*lexeme.end(),
-                                           value, util::chars_format::fixed);
+        if(auto [_, ec] = std::from_chars(&*lexeme.begin(), &*lexeme.end(),
+                                          value, std::chars_format::fixed);
            ec != std::errc())
         {
             assert(ec == std::errc::result_out_of_range);
-            report(*token, Diag::float_literal_too_big);
+            report(*token, diag::float_literal_too_big);
             return std::nullopt;
         }
 
@@ -484,7 +532,7 @@ auto Parser::parse_argument()
     }
     else
     {
-        report(*token, Diag::expected_argument);
+        report(*token, diag::expected_argument);
         return std::nullopt;
     }
 }
@@ -518,7 +566,7 @@ auto Parser::parse_subscript_file() -> std::optional<LinkedIR<ParserIR>>
     if(const auto &mission_start_command = (*mission_start)->command();
        mission_start_command.has_args())
     {
-        report(mission_start_command.source(), Diag::too_many_arguments);
+        report(mission_start_command.source(), diag::too_many_arguments);
         return std::nullopt;
     }
 
@@ -529,7 +577,7 @@ auto Parser::parse_subscript_file() -> std::optional<LinkedIR<ParserIR>>
     if(const auto &mission_end_command = body_stms->back().command();
        mission_end_command.has_args())
     {
-        report(mission_end_command.source(), Diag::too_many_arguments);
+        report(mission_end_command.source(), diag::too_many_arguments);
         return std::nullopt;
     }
 
@@ -577,7 +625,7 @@ auto Parser::parse_statement(bool allow_special_name)
 
         if(!is_identifier(label_name))
         {
-            report(label_def, Diag::expected_identifier);
+            report(label_def, diag::expected_identifier);
             return std::nullopt;
         }
 
@@ -668,14 +716,14 @@ auto Parser::parse_statement_list(
     else if(stop_when.size() == 1)
     {
         diagnostics()
-                .report(scanner.location(), Diag::expected_word)
+                .report(scanner.location(), diag::expected_word)
                 .args(*stop_when.begin());
         return std::nullopt;
     }
     else
     {
         diagnostics()
-                .report(scanner.location(), Diag::expected_words)
+                .report(scanner.location(), diag::expected_words)
                 .args(std::vector(stop_when));
         return std::nullopt;
     }
@@ -789,7 +837,7 @@ auto Parser::parse_embedded_statement(bool allow_special_name)
             if(const auto &command = (*ir)->command();
                is_var_decl_command(command.name()) && !command.has_args())
             {
-                report(command.source(), Diag::too_few_arguments);
+                report(command.source(), diag::too_few_arguments);
                 return std::nullopt;
             }
 
@@ -823,7 +871,7 @@ auto Parser::parse_scope_statement() -> std::optional<LinkedIR<ParserIR>>
 
     if(this->in_lexical_scope)
     {
-        report((*open_command)->command().source(), Diag::cannot_nest_scopes);
+        report((*open_command)->command().source(), diag::cannot_nest_scopes);
         return std::nullopt;
     }
 
@@ -939,7 +987,7 @@ auto Parser::parse_conditional_list(ParserIR *op_cond0)
 
         if(is_peek(Category::word, anti_prefix))
         {
-            report(peek()->source, Diag::cannot_mix_andor);
+            report(peek()->source, diag::cannot_mix_andor);
             return {std::nullopt, 0};
         }
 
@@ -952,7 +1000,7 @@ auto Parser::parse_conditional_list(ParserIR *op_cond0)
     // this limitation embedded in its first parameter.
     if(num_conds > 6)
     {
-        report(andor_list.back().command().source(), Diag::too_many_conditions);
+        report(andor_list.back().command().source(), diag::too_many_conditions);
         return {std::nullopt, 0};
     }
 
@@ -1052,7 +1100,7 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
         {
             if(else_command.has_args())
             {
-                report(else_command.source(), Diag::too_many_arguments);
+                report(else_command.source(), diag::too_many_arguments);
                 return std::nullopt;
             }
 
@@ -1066,7 +1114,7 @@ auto Parser::parse_if_statement_detail(bool is_ifnot)
         if(const auto &endif_command = body_stms->back().command();
            endif_command.has_args())
         {
-            report(endif_command.source(), Diag::too_many_arguments);
+            report(endif_command.source(), diag::too_many_arguments);
             return std::nullopt;
         }
 
@@ -1125,7 +1173,7 @@ auto Parser::parse_while_statement_detail(bool is_whilenot)
     if(const auto &endwhile_command = body_stms->back().command();
        endwhile_command.has_args())
     {
-        report(endwhile_command.source(), Diag::too_many_arguments);
+        report(endwhile_command.source(), diag::too_many_arguments);
         return std::nullopt;
     }
 
@@ -1164,12 +1212,12 @@ auto Parser::parse_repeat_statement() -> std::optional<LinkedIR<ParserIR>>
     if(const auto repeat_num_args = (*repeat_command)->command().num_args();
        repeat_num_args < 2)
     {
-        report((*repeat_command)->command().source(), Diag::too_few_arguments);
+        report((*repeat_command)->command().source(), diag::too_few_arguments);
         return std::nullopt;
     }
     else if(repeat_num_args > 2)
     {
-        report((*repeat_command)->command().source(), Diag::too_many_arguments);
+        report((*repeat_command)->command().source(), diag::too_many_arguments);
         return std::nullopt;
     }
 
@@ -1181,7 +1229,7 @@ auto Parser::parse_repeat_statement() -> std::optional<LinkedIR<ParserIR>>
     if(const auto &endrepeat_command = body_stms->back().command();
        endrepeat_command.has_args())
     {
-        report((*repeat_command)->command().source(), Diag::too_many_arguments);
+        report((*repeat_command)->command().source(), diag::too_many_arguments);
         return std::nullopt;
     }
 
@@ -1226,7 +1274,7 @@ auto Parser::parse_require_statement() -> std::optional<ArenaPtr<ParserIR>>
     }
     else
     {
-        report(command->source, Diag::expected_require_command);
+        report(command->source, diag::expected_require_command);
         return std::nullopt;
     }
 
@@ -1318,7 +1366,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
         // any of the productions in the specification.
         if(num_toks == std::size(cats))
         {
-            diagnostics().report(spans[0].begin, Diag::invalid_expression);
+            diagnostics().report(spans[0].begin, diag::invalid_expression);
             return std::nullopt;
         }
 
@@ -1375,7 +1423,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
                 consume();
                 break;
             }
-            case Category::string:  // NOLINT(bugprone-branch-clone)
+            case Category::string: // NOLINT(bugprone-branch-clone)
             {
                 // needs special care when comparing for name equality.
                 // not implemented yet. TODO
@@ -1395,7 +1443,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
     if(num_toks == 0)
     {
         assert(peek() != std::nullopt);
-        report(peek()->source, Diag::invalid_expression);
+        report(peek()->source, diag::invalid_expression);
         return std::nullopt;
     }
 
@@ -1404,13 +1452,13 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
     {
         if(num_toks >= 2 && is_relational_operator(cats[1]))
         {
-            diagnostics().report(spans[0].begin, Diag::invalid_expression);
+            diagnostics().report(spans[0].begin, diag::invalid_expression);
             return std::nullopt;
         }
         else
         {
             diagnostics().report(spans[0].begin,
-                                 Diag::expected_conditional_expression);
+                                 diag::expected_conditional_expression);
             return std::nullopt;
         }
     }
@@ -1533,7 +1581,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
         if(it_cond == std::end(lookup_conditional)
            && it_assign == std::end(lookup_assignment))
         {
-            diagnostics().report(spans[0].begin, Diag::invalid_expression);
+            diagnostics().report(spans[0].begin, diag::invalid_expression);
             return std::nullopt;
         }
 
@@ -1547,7 +1595,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
 
             if(it == std::end(lookup_conditional))
             {
-                report(spans[1], Diag::expected_conditional_operator);
+                report(spans[1], diag::expected_conditional_operator);
                 return std::nullopt;
             }
 
@@ -1565,7 +1613,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
 
             if(it == std::end(lookup_assignment))
             {
-                report(spans[1], Diag::expected_assignment_operator);
+                report(spans[1], diag::expected_assignment_operator);
                 return std::nullopt;
             }
 
@@ -1602,7 +1650,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
 
         if(it == std::end(lookup_ternary))
         {
-            report(spans[3], Diag::expected_ternary_operator);
+            report(spans[3], diag::expected_ternary_operator);
             return std::nullopt;
         }
 
@@ -1628,7 +1676,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
             {
                 diagnostics()
                         .report(spans[0].begin,
-                                Diag::invalid_expression_unassociative)
+                                diag::invalid_expression_unassociative)
                         .args(cats[3]);
                 return std::nullopt;
             }
@@ -1658,7 +1706,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
     }
     else
     {
-        diagnostics().report(spans[0].begin, Diag::invalid_expression);
+        diagnostics().report(spans[0].begin, diag::invalid_expression);
         return std::nullopt;
     }
 
@@ -1688,7 +1736,7 @@ auto Parser::ensure_mission_start_at_top_of_file() -> bool
     if(!has_mission_start)
     {
         diagnostics().report(source_file().location_of(file_contents),
-                             Diag::expected_mission_start_at_top);
+                             diag::expected_mission_start_at_top);
         return false;
     }
 

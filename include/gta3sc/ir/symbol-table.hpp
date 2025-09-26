@@ -101,8 +101,8 @@ public:
     [[nodiscard]] auto num_scopes() const noexcept -> uint32_t;
 
     /// Returns a view to the variables in a given scope.
-    [[nodiscard]] auto scope(ScopeId scope_id) const noexcept
-            -> VariableNamespaceView;
+    [[nodiscard]] auto
+    scope(ScopeId scope_id) const noexcept -> VariableNamespaceView;
 
     /// Returns a view to the labels stored in the table.
     [[nodiscard]] auto labels() const noexcept -> LabelNamespaceView;
@@ -116,22 +116,21 @@ public:
     /// Finds a variable in a certain scope.
     ///
     /// Returns the variable or `nullptr` if it does not exist.
-    [[nodiscard]] auto
-    lookup_var(std::string_view name,
-               ScopeId scope_id = global_scope) const noexcept
-            -> const Variable*;
+    [[nodiscard]] auto lookup_var(
+            std::string_view name,
+            ScopeId scope_id = global_scope) const noexcept -> const Variable*;
 
     /// Finds a label by name.
     ///
     /// Returns the label or `nullptr` if it does not exist.
-    [[nodiscard]] auto lookup_label(std::string_view name) const noexcept
-            -> const Label*;
+    [[nodiscard]] auto
+    lookup_label(std::string_view name) const noexcept -> const Label*;
 
     /// Finds a script file by name.
     ///
     /// Returns the script file or `nullptr` if it does not exist.
-    [[nodiscard]] auto lookup_file(std::string_view name) const noexcept
-            -> const File*;
+    [[nodiscard]] auto
+    lookup_file(std::string_view name) const noexcept -> const File*;
 
     /// Finds an used object by name.
     ///
@@ -159,8 +158,8 @@ public:
     /// Returns a pair with the variable and a boolean indicating whether any
     /// insertion took place.
     auto insert_var(std::string_view name, ScopeId scope_id, VarType type,
-                    std::optional<uint16_t> dimensions, SourceRange source)
-            -> std::pair<const Variable*, bool>;
+                    std::optional<uint16_t> dimensions,
+                    SourceRange source) -> std::pair<const Variable*, bool>;
 
     /// Inserts a label into the symbol table.
     ///
@@ -185,8 +184,8 @@ public:
     ///
     /// Retruns a pair with the file and a boolean indicating whether any
     /// insertion took place.
-    auto insert_file(std::string_view name, FileType type, SourceRange source)
-            -> std::pair<const File*, bool>;
+    auto insert_file(std::string_view name, FileType type,
+                     SourceRange source) -> std::pair<const File*, bool>;
 
     /// Inserts an used object into the symbol table.
     ///
@@ -416,64 +415,64 @@ constexpr auto to_integer(SymbolTable::ScopeId scope_id) noexcept -> uint32_t
     return static_cast<std::underlying_type_t<SymbolTable::ScopeId>>(scope_id);
 }
 
-constexpr auto operator+(SymbolTable::ScopeId lhs, uint32_t rhs) noexcept
-        -> SymbolTable::ScopeId
+constexpr auto operator+(SymbolTable::ScopeId lhs,
+                         uint32_t rhs) noexcept -> SymbolTable::ScopeId
 {
     return SymbolTable::ScopeId{to_integer(lhs) + rhs};
 }
 
-constexpr auto operator+=(SymbolTable::ScopeId& lhs, uint32_t rhs) noexcept
-        -> SymbolTable::ScopeId&
+constexpr auto operator+=(SymbolTable::ScopeId& lhs,
+                          uint32_t rhs) noexcept -> SymbolTable::ScopeId&
 {
     lhs = lhs + rhs;
     return lhs;
 }
 
-constexpr auto operator-(SymbolTable::ScopeId lhs, uint32_t rhs) noexcept
-        -> SymbolTable::ScopeId
+constexpr auto operator-(SymbolTable::ScopeId lhs,
+                         uint32_t rhs) noexcept -> SymbolTable::ScopeId
 {
     return SymbolTable::ScopeId{to_integer(lhs) - rhs};
 }
 
-constexpr auto operator-=(SymbolTable::ScopeId& lhs, int32_t rhs) noexcept
-        -> SymbolTable::ScopeId&
+constexpr auto operator-=(SymbolTable::ScopeId& lhs,
+                          int32_t rhs) noexcept -> SymbolTable::ScopeId&
 {
     lhs = lhs - rhs;
     return lhs;
 }
 
-constexpr auto operator++(SymbolTable::ScopeId& lhs) noexcept
-        -> SymbolTable::ScopeId
+constexpr auto
+operator++(SymbolTable::ScopeId& lhs) noexcept -> SymbolTable::ScopeId
 {
     lhs += 1;
     return lhs;
 }
 
-constexpr auto operator--(SymbolTable::ScopeId& lhs) noexcept
-        -> SymbolTable::ScopeId&
+constexpr auto
+operator--(SymbolTable::ScopeId& lhs) noexcept -> SymbolTable::ScopeId&
 {
     lhs -= 1;
     return lhs;
 }
 
-constexpr auto operator++(SymbolTable::ScopeId& lhs, int) noexcept
-        -> SymbolTable::ScopeId
+constexpr auto operator++(SymbolTable::ScopeId& lhs,
+                          int) noexcept -> SymbolTable::ScopeId
 {
     const auto temp = lhs;
     ++lhs;
     return temp;
 }
 
-constexpr auto operator--(SymbolTable::ScopeId& lhs, int) noexcept
-        -> SymbolTable::ScopeId
+constexpr auto operator--(SymbolTable::ScopeId& lhs,
+                          int) noexcept -> SymbolTable::ScopeId
 {
     const auto temp = lhs;
     --lhs;
     return temp;
 }
 
-inline auto SymbolTable::scope(ScopeId scope_id) const noexcept
-        -> VariableNamespaceView
+inline auto
+SymbolTable::scope(ScopeId scope_id) const noexcept -> VariableNamespaceView
 {
     if(scope_id == global_scope && m_scopes.empty())
         return NamespaceView<Variable>(private_tag);
@@ -484,8 +483,8 @@ inline auto SymbolTable::scope(ScopeId scope_id) const noexcept
     return VariableNamespaceView(private_tag, m_scopes[scope_index]);
 }
 
-inline auto SymbolTable::used_objects() const noexcept
-        -> UsedObjectNamespaceView
+inline auto
+SymbolTable::used_objects() const noexcept -> UsedObjectNamespaceView
 {
     return UsedObjectNamespaceView(private_tag, m_used_objects);
 }

@@ -19,7 +19,8 @@ NameGenerator::NameGenerator(NameGenerator&& rhs) noexcept
 {
     // not thread-safe
     counter.store(rhs.counter.exchange(0));
-    this->prefix_format = std::move(rhs.prefix_format); // NOLINT(cppcoreguidelines-prefer-member-initializer)
+    this->prefix_format = std::move(
+            rhs.prefix_format); // NOLINT(cppcoreguidelines-prefer-member-initializer)
 }
 
 auto NameGenerator::operator=(NameGenerator&& rhs) noexcept -> NameGenerator&

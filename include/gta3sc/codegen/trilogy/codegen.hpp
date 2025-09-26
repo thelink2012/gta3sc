@@ -1,9 +1,14 @@
 #pragma once
 #include <gta3sc/codegen/relocation-table.hpp>
 #include <gta3sc/codegen/trilogy/emitter.hpp>
-#include <gta3sc/diagnostics.hpp>
 #include <gta3sc/ir/linked-ir.hpp>
 #include <gta3sc/ir/sema-ir.hpp>
+
+namespace gta3sc
+{
+class DiagnosticDescriptor;
+class DiagnosticHandler;
+} // namespace gta3sc
 
 namespace gta3sc::codegen
 {
@@ -83,6 +88,12 @@ public:
     auto generate(const LinkedIR<SemaIR>& ir, RelocationTable& reloc_table,
                   OutputIterator output_iter) -> std::optional<OutputIterator>;
 
+    /// Returns the current absolute offset in the generated code.
+    auto absolute_offset() const noexcept -> AbsoluteOffset;
+
+    /// Returns the current relative offset in the generated code.
+    auto relative_offset() const noexcept -> RelativeOffset;
+
 private:
     // The methods below generate code for the element given as first parameter
     // using `emitter` and returns an boolean on whether the generation was
@@ -129,10 +140,20 @@ private:
     CodeEmitter emitter;
 };
 
+inline auto CodeGen::absolute_offset() const noexcept -> AbsoluteOffset
+{
+    return base_offset + emitter.offset();
+}
+
+inline auto CodeGen::relative_offset() const noexcept -> RelativeOffset
+{
+    return emitter.offset();
+}
+
 template<typename OutputIterator>
-inline auto CodeGen::generate(const SemaIR& ir, RelocationTable& reloc_table,
-                              OutputIterator output_iter)
-        -> std::optional<OutputIterator>
+inline auto
+CodeGen::generate(const SemaIR& ir, RelocationTable& reloc_table,
+                  OutputIterator output_iter) -> std::optional<OutputIterator>
 {
     this->emitter.buffer_clear();
 
@@ -143,10 +164,10 @@ inline auto CodeGen::generate(const SemaIR& ir, RelocationTable& reloc_table,
 }
 
 template<typename OutputIterator>
-inline auto CodeGen::generate(const LinkedIR<SemaIR>& linked_ir,
-                              RelocationTable& reloc_table,
-                              OutputIterator output_iter)
-        -> std::optional<OutputIterator>
+inline auto
+CodeGen::generate(const LinkedIR<SemaIR>& linked_ir,
+                  RelocationTable& reloc_table,
+                  OutputIterator output_iter) -> std::optional<OutputIterator>
 {
     bool has_any_error = false;
     for(const auto& ir : linked_ir)
@@ -159,3 +180,8 @@ inline auto CodeGen::generate(const LinkedIR<SemaIR>& linked_ir,
     return !has_any_error ? std::optional(output_iter) : std::nullopt;
 }
 } // namespace gta3sc::codegen::trilogy
+
+namespace gta3sc::codegen::diag
+{
+extern const DiagnosticDescriptor target_does_not_support_command;
+}

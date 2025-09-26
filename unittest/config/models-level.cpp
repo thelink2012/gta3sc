@@ -32,8 +32,7 @@ TEST_CASE_FIXTURE(ModelsTestFixture,
                          .build();
 
     REQUIRE(diags.size() == 1);
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_models_could_not_open_file);
+    CHECK(consume_diag().descriptor == &gta3sc::diag::could_not_open_file);
     CHECK(table.size() == 0);
 }
 
@@ -119,8 +118,7 @@ end)");
 
     // Should have 1 diagnostic for the nonexistent IDE file
     REQUIRE(diags.size() == 1);
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_models_could_not_open_file);
+    CHECK(consume_diag().descriptor == &gta3sc::diag::could_not_open_file);
 
     // Should still load models from valid IDE files
     CHECK(table.size() == 2);
@@ -318,8 +316,7 @@ end)");
 
     // Should have 1 diagnostic for the long filename that doesn't exist
     REQUIRE(diags.size() == 1);
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_models_could_not_open_file);
+    CHECK(consume_diag().descriptor == &gta3sc::diag::could_not_open_file);
 
     // Should still load models from valid IDE files
     CHECK(table.size() == 2);

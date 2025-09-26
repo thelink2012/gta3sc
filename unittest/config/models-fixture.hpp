@@ -1,4 +1,5 @@
 #include "../with-diagnostic-fixture.hpp"
+#include "../with-source-fixture.hpp"
 #include "../with-temp-dir-fixture.hpp"
 #include <gta3sc/model-table.hpp>
 
@@ -7,6 +8,7 @@ namespace gta3sc::test::config
 class ModelsTestFixture
     : public WithTempDirFixture
     , public WithDiagnosticFixture
+    , public WithSourceFixture
 {
 public:
     auto expect_model(const ModelTable& table, std::string_view name,

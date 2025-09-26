@@ -21,12 +21,14 @@ auto ModelTable::Builder::build() && -> ModelTable
     return ModelTable(std::move(this->models));
 }
 
-auto ModelTable::Builder::insert_model(std::string_view name, uint32_t id) -> Builder&&
+auto ModelTable::Builder::insert_model(std::string_view name,
+                                       uint32_t id) -> Builder&&
 {
-    // FIXME this causes a memory growth proportional to number of inserts if all items are dups.
+    // FIXME this causes a memory growth proportional to number of inserts if
+    // all items are dups.
 
     auto [key, value] = util::new_object_with_string<ModelDef>(
-        name, util::toupper, allocator, private_tag, name.size(), id);
+            name, util::toupper, allocator, private_tag, name.size(), id);
 
     models.insert_or_assign(std::move(key), std::move(value));
 

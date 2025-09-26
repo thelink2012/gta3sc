@@ -30,8 +30,7 @@ TEST_CASE_FIXTURE(ModelsTestFixture,
                          .build();
 
     REQUIRE(diags.size() == 1);
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_models_could_not_open_file);
+    CHECK(consume_diag().descriptor == &gta3sc::diag::could_not_open_file);
     CHECK(table.size() == 0);
 }
 
@@ -207,10 +206,10 @@ end)");
 
     // Should have 2 diagnostics for invalid lines
     REQUIRE(diags.size() == 2);
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_models_invalid_ide_line);
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_models_invalid_ide_line);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::config::diag::models_invalid_ide_line);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::config::diag::models_invalid_ide_line);
 
     CHECK(table.size() == 2);
 
@@ -255,8 +254,8 @@ weap
 end)");
 
     CHECK(diags.size() == 1);
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_models_invalid_ide_line);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::config::diag::models_invalid_ide_line);
 
     CHECK(table.size() == 2);
 

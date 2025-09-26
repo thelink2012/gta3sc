@@ -4,9 +4,9 @@
 #include <gta3sc/util/arena.hpp>
 #include <gta3sc/util/intrusive-bidirectional-list-node.hpp>
 #include <gta3sc/util/random-access-view.hpp>
-#include <gta3sc/util/span.hpp>
 #include <gta3sc/util/string-vieweable.hpp>
 #include <gta3sc/util/visit.hpp>
+#include <span>
 #include <string_view>
 #include <variant>
 
@@ -101,10 +101,10 @@ public:
     }
 
     /// Checks whether a given IR is equivalent to another IR.
-    friend auto operator==(const ParserIR& lhs, const ParserIR& rhs) noexcept
-            -> bool;
-    friend auto operator!=(const ParserIR& lhs, const ParserIR& rhs) noexcept
-            -> bool;
+    friend auto operator==(const ParserIR& lhs,
+                           const ParserIR& rhs) noexcept -> bool;
+    friend auto operator!=(const ParserIR& lhs,
+                           const ParserIR& rhs) noexcept -> bool;
 
     //
     // Factory methods
@@ -115,38 +115,38 @@ public:
                        ArenaAllocator<> allocator) -> ArenaPtr<ParserIR>;
 
     /// Creates an integer argument.
-    static auto create_int(int32_t value, SourceRange source,
-                           ArenaAllocator<> allocator)
-            -> ArenaPtr<const Argument>;
+    static auto
+    create_int(int32_t value, SourceRange source,
+               ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     /// Creates a floating-point argument.
-    static auto create_float(float value, SourceRange source,
-                             ArenaAllocator<> allocator)
-            -> ArenaPtr<const Argument>;
+    static auto
+    create_float(float value, SourceRange source,
+                 ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     /// Creates an identifier argument.
     ///
     /// The identifier is automatically converted to uppercase during the
     /// creation of the object.
-    static auto create_identifier(std::string_view name, SourceRange source,
-                                  ArenaAllocator<> allocator)
-            -> ArenaPtr<const Argument>;
+    static auto
+    create_identifier(std::string_view name, SourceRange source,
+                      ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     /// Creates a filename argument.
     ///
     /// The filename is automatically converted to uppercase during the
     /// creation of the object.
-    static auto create_filename(std::string_view filename, SourceRange source,
-                                ArenaAllocator<> allocator)
-            -> ArenaPtr<const Argument>;
+    static auto
+    create_filename(std::string_view filename, SourceRange source,
+                    ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     /// Creates a string argument.
     ///
     /// The quotation marks that surrounds the string should not be present
     /// in `string`. The string is not converted to uppercase.
-    static auto create_string(std::string_view string, SourceRange source,
-                              ArenaAllocator<> allocator)
-            -> ArenaPtr<const Argument>;
+    static auto
+    create_string(std::string_view string, SourceRange source,
+                  ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
 private:
     struct IdentifierTag
@@ -244,10 +244,10 @@ public:
     }
 
     /// Compares whether a given label definition is equivalent to another.
-    friend auto operator==(const LabelDef& lhs, const LabelDef& rhs) noexcept
-            -> bool;
-    friend auto operator!=(const LabelDef& lhs, const LabelDef& rhs) noexcept
-            -> bool;
+    friend auto operator==(const LabelDef& lhs,
+                           const LabelDef& rhs) noexcept -> bool;
+    friend auto operator!=(const LabelDef& lhs,
+                           const LabelDef& rhs) noexcept -> bool;
 
     /// Creates a label definition.
     ///
@@ -265,7 +265,7 @@ class ParserIR::Command : public ArenaObj
 public:
     /// Please use `ParserIR::Builder::build_command`.
     Command(PrivateTag /*unused*/, SourceRange source, std::string_view name,
-            util::span<const Argument*> args, bool not_flag) noexcept :
+            std::span<const Argument*> args, bool not_flag) noexcept :
         m_source(source), m_name(name), m_args(args), m_not_flag(not_flag)
     {}
 
@@ -309,15 +309,15 @@ public:
     }
 
     /// Compares whether a given command is equivalent to another command.
-    friend auto operator==(const Command& lhs, const Command& rhs) noexcept
-            -> bool;
-    friend auto operator!=(const Command& lhs, const Command& rhs) noexcept
-            -> bool;
+    friend auto operator==(const Command& lhs,
+                           const Command& rhs) noexcept -> bool;
+    friend auto operator!=(const Command& lhs,
+                           const Command& rhs) noexcept -> bool;
 
 private:
     SourceRange m_source;
     std::string_view m_name;
-    util::span<const Argument*> m_args;
+    std::span<const Argument*> m_args;
     bool m_not_flag{};
 };
 
@@ -362,8 +362,8 @@ public:
 
     /// Returns the contained identifier or `std::nullopt` if this argument is
     /// not an identifier.
-    [[nodiscard]] auto as_identifier() const noexcept
-            -> std::optional<Identifier>;
+    [[nodiscard]] auto
+    as_identifier() const noexcept -> std::optional<Identifier>;
 
     /// Returns the contained filename or `std::nullopt` if this argument is not
     /// a filename.
@@ -376,14 +376,14 @@ public:
     /// Returns whether the value of this is equal the value of another
     /// argument (i.e. same as `operator==` without comparing source
     /// location).
-    [[nodiscard]] auto is_same_value(const Argument& other) const noexcept
-            -> bool;
+    [[nodiscard]] auto
+    is_same_value(const Argument& other) const noexcept -> bool;
 
     /// Compares whether a given argument is equivalent to another.
-    friend auto operator==(const Argument& lhs, const Argument& rhs) noexcept
-            -> bool;
-    friend auto operator!=(const Argument& lhs, const Argument& rhs) noexcept
-            -> bool;
+    friend auto operator==(const Argument& lhs,
+                           const Argument& rhs) noexcept -> bool;
+    friend auto operator!=(const Argument& lhs,
+                           const Argument& rhs) noexcept -> bool;
 
 private:
     SourceRange m_source;
@@ -428,8 +428,8 @@ public:
     auto label(const LabelDef* label_ptr) -> Builder&&;
 
     /// Sets the instruction in construction to define a label.
-    auto label(std::string_view name, SourceRange source = no_source)
-            -> Builder&&;
+    auto label(std::string_view name,
+               SourceRange source = no_source) -> Builder&&;
 
     /// Sets the instruction in construction to be the specified command.
     ///
@@ -438,8 +438,8 @@ public:
     auto command(const Command* command_ptr) -> Builder&&;
 
     /// Sets the instruction in construction to be the specified command.
-    auto command(std::string_view name, SourceRange source = no_source)
-            -> Builder&&;
+    auto command(std::string_view name,
+                 SourceRange source = no_source) -> Builder&&;
 
     /// Sets the not flag of the command being constructed.
     auto not_flag(bool not_flag_value = true) -> Builder&&;
@@ -454,16 +454,16 @@ public:
     auto arg_float(float value, SourceRange source = no_source) -> Builder&&;
 
     /// Appends the given identifier argument to the command in construction.
-    auto arg_ident(std::string_view value, SourceRange source = no_source)
-            -> Builder&&;
+    auto arg_ident(std::string_view value,
+                   SourceRange source = no_source) -> Builder&&;
 
     /// Appends the given filename argument to the command in construction.
-    auto arg_filename(std::string_view value, SourceRange source = no_source)
-            -> Builder&&;
+    auto arg_filename(std::string_view value,
+                      SourceRange source = no_source) -> Builder&&;
 
     /// Appends the given string argument to the command in construction.
-    auto arg_string(std::string_view value, SourceRange source = no_source)
-            -> Builder&&;
+    auto arg_string(std::string_view value,
+                    SourceRange source = no_source) -> Builder&&;
 
     /// Tells the builder the amount of arguments that follows.
     ///
@@ -508,12 +508,12 @@ private:
 
     size_t args_hint = no_args_hint;
     size_t args_capacity = 0;
-    util::span<const Argument*> args;
+    std::span<const Argument*> args;
 };
 
 template<typename InputIterator>
-auto ParserIR::Builder::with_args(InputIterator begin, InputIterator end)
-        -> Builder&&
+auto ParserIR::Builder::with_args(InputIterator begin,
+                                  InputIterator end) -> Builder&&
 {
     with_num_args(std::distance(begin, end));
     for(auto it = begin; it != end; ++it)

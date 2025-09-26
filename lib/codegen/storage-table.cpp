@@ -21,12 +21,12 @@ static auto build_lookup_by_id(SymbolTable::VariableNamespaceView vars) noexcept
         -> std::vector<const SymbolTable::Variable*>;
 
 /// Computes the number of storage indices taken by a given variable.
-static auto num_indices_for_var(const SymbolTable::Variable& var) noexcept
-        -> BigIndexType;
+static auto
+num_indices_for_var(const SymbolTable::Variable& var) noexcept -> BigIndexType;
 
 /// Computes the number of storage indices taken by a given variable type.
-static auto num_indices_for_type(SymbolTable::VarType type) noexcept
-        -> BigIndexType;
+static auto
+num_indices_for_type(SymbolTable::VarType type) noexcept -> BigIndexType;
 
 /// Unwraps the structure in `timer_opt` or returns impossible values.
 static auto unwrap_timer_options(
@@ -46,10 +46,9 @@ auto LocalStorageTable::var_index(
     return index_for_vars[var.id()];
 }
 
-auto LocalStorageTable::from_symbols(const SymbolTable& symtable,
-                                     SymbolTable::ScopeId scope_id,
-                                     const Options& options) noexcept
-        -> std::optional<LocalStorageTable>
+auto LocalStorageTable::from_symbols(
+        const SymbolTable& symtable, SymbolTable::ScopeId scope_id,
+        const Options& options) noexcept -> std::optional<LocalStorageTable>
 {
     LocalStorageTable storage;
 

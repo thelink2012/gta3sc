@@ -90,9 +90,8 @@ auto CommandTable::find_enumeration(std::string_view name) const noexcept
     return find_enumeration(enums_map, name);
 }
 
-auto CommandTable::find_constant(EnumId enum_id,
-                                 std::string_view name) const noexcept
-        -> const ConstantDef*
+auto CommandTable::find_constant(EnumId enum_id, std::string_view name)
+        const noexcept -> const ConstantDef*
 {
     return find_constant(constants_map, enum_id, name);
 }
@@ -223,9 +222,8 @@ auto CommandTable::Builder::find_enumeration(
     return CommandTable::find_enumeration(enums_map, name);
 }
 
-auto CommandTable::Builder::find_constant(EnumId enum_id,
-                                          std::string_view name) const noexcept
-        -> const ConstantDef*
+auto CommandTable::Builder::find_constant(EnumId enum_id, std::string_view name)
+        const noexcept -> const ConstantDef*
 {
     return CommandTable::find_constant(constants_map, enum_id, name);
 }
@@ -304,10 +302,9 @@ auto CommandTable::Builder::insert_enumeration(std::string_view name)
     return {it->second, true};
 }
 
-auto CommandTable::Builder::insert_or_assign_constant(EnumId enum_id,
-                                                      std::string_view name,
-                                                      int32_t value)
-        -> std::pair<const ConstantDef*, bool>
+auto CommandTable::Builder::insert_or_assign_constant(
+        EnumId enum_id, std::string_view name,
+        int32_t value) -> std::pair<const ConstantDef*, bool>
 {
     auto it = constants_map.find(name);
     if(it == constants_map.end())
@@ -324,7 +321,8 @@ auto CommandTable::Builder::insert_or_assign_constant(EnumId enum_id,
         ConstantDef::Iterator prev_it{};
         ConstantDef::Iterator curr_it(it->second, nullptr);
 
-        for(const ConstantDef::Iterator end{}; curr_it != end; prev_it = curr_it++)
+        for(const ConstantDef::Iterator end{}; curr_it != end;
+            prev_it = curr_it++)
         {
             if(curr_it->enum_id() == enum_id)
             {

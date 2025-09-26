@@ -42,9 +42,9 @@ public:
     }
 
 private:
-    auto make_parser(gta3sc::SourceFile source,
-                     gta3sc::ArenaMemoryResource& arena)
-            -> gta3sc::syntax::Parser
+    auto
+    make_parser(gta3sc::SourceFile source,
+                gta3sc::ArenaMemoryResource& arena) -> gta3sc::syntax::Parser
     {
         auto pp = gta3sc::syntax::Preprocessor(std::move(source), diagman);
         auto scanner = gta3sc::syntax::Scanner(std::move(pp));
@@ -180,51 +180,56 @@ TEST_CASE_FIXTURE(SemaFixture, "sema invalid variables declarations")
     {
         build_sema("VAR_INT x[y] z[10]");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message
-              == gta3sc::Diag::var_decl_subscript_must_be_literal);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::var_decl_subscript_must_be_literal);
     }
 
     SUBCASE("zero integer literal subscript")
     {
         build_sema("VAR_INT x[0] z[10]");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message
-              == gta3sc::Diag::var_decl_subscript_must_be_nonzero);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::var_decl_subscript_must_be_nonzero);
     }
 
     SUBCASE("local variable declaration outside of scope")
     {
         build_sema("LVAR_INT x y z");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message
-              == gta3sc::Diag::var_decl_outside_of_scope);
-        CHECK(consume_diag().message
-              == gta3sc::Diag::var_decl_outside_of_scope);
-        CHECK(consume_diag().message
-              == gta3sc::Diag::var_decl_outside_of_scope);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::var_decl_outside_of_scope);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::var_decl_outside_of_scope);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::var_decl_outside_of_scope);
     }
 
     SUBCASE("variable decl name is not identifier")
     {
         build_sema("VAR_INT x 9 z");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_identifier);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_identifier);
     }
 
     SUBCASE("global variable duplicate")
     {
         build_sema("VAR_INT x x y\nVAR_INT y\n");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::duplicate_var_global);
-        CHECK(consume_diag().message == gta3sc::Diag::duplicate_var_global);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::duplicate_var_global);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::duplicate_var_global);
     }
 
     SUBCASE("local variable duplicate")
     {
         build_sema("{\nLVAR_INT x x y\nLVAR_INT y\n}\n");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::duplicate_var_in_scope);
-        CHECK(consume_diag().message == gta3sc::Diag::duplicate_var_in_scope);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::duplicate_var_in_scope);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::duplicate_var_in_scope);
     }
 
     SUBCASE("local variable in different scopes is not a duplicate")
@@ -237,14 +242,16 @@ TEST_CASE_FIXTURE(SemaFixture, "sema invalid variables declarations")
     {
         build_sema("VAR_INT x\n{\nLVAR_INT x\n}");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::duplicate_var_lvar);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::duplicate_var_lvar);
     }
 
     SUBCASE("global variable with same name as local variable")
     {
         build_sema("{\nLVAR_INT x\n}\nVAR_INT x");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::duplicate_var_lvar);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::duplicate_var_lvar);
     }
 }
 
@@ -263,7 +270,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema label declaration")
     {
         build_sema("label1:\nlabel1:\n");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::duplicate_label);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::duplicate_label);
     }
 }
 
@@ -282,10 +290,10 @@ TEST_CASE_FIXTURE(SemaFixture,
     build_sema("VAR_INT ON PEDTYPE_CIVMALE\n"
                "{\nLVAR_INT FALSE PEDTYPE_CIVFEMALE\n}");
     REQUIRE(sema.validate() == std::nullopt);
-    CHECK(consume_diag().message
-          == gta3sc::Diag::duplicate_var_string_constant);
-    CHECK(consume_diag().message
-          == gta3sc::Diag::duplicate_var_string_constant);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::syntax::diag::duplicate_var_string_constant);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::syntax::diag::duplicate_var_string_constant);
     CHECK(diags.empty()); // does not collide with ON/FALSE
 }
 
@@ -293,8 +301,10 @@ TEST_CASE_FIXTURE(SemaFixture, "sema using local variable from another scope")
 {
     build_sema("{\nLVAR_INT x\n}\n{\nSET_VAR_INT x 1\n}\nSET_VAR_INT x 1");
     REQUIRE(sema.validate() == std::nullopt);
-    CHECK(consume_diag().message == gta3sc::Diag::undefined_variable);
-    CHECK(consume_diag().message == gta3sc::Diag::undefined_variable);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::syntax::diag::undefined_variable);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::syntax::diag::undefined_variable);
 }
 
 TEST_CASE_FIXTURE(SemaFixture, "sema parsing variable reference")
@@ -303,36 +313,40 @@ TEST_CASE_FIXTURE(SemaFixture, "sema parsing variable reference")
     {
         build_sema("VAR_INT x[] z[10]");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_subscript);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_subscript);
     }
 
     SUBCASE("negative subscript")
     {
         build_sema("VAR_INT x[-5] z[10]", true); // parser error
-        CHECK(consume_diag().message == gta3sc::Diag::expected_token);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_token);
     }
 
     SUBCASE("too big literal subscript")
     {
         build_sema("VAR_INT x[2147483647] y[2147483648] z[10]");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::integer_literal_too_big);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::integer_literal_too_big);
     }
 
     SUBCASE("floating point subscript")
     {
         build_sema("VAR_INT x[2.0] z[10]");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_integer);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_integer);
     }
 
     SUBCASE("swap brackets")
     {
         build_sema("VAR_INT x]10[ z[10]");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(peek_diag().message == gta3sc::Diag::expected_word);
+        CHECK(peek_diag().descriptor == &gta3sc::syntax::diag::expected_word);
         CHECK(consume_diag().args.at(0) == d("["));
-        CHECK(peek_diag().message == gta3sc::Diag::expected_word);
+        CHECK(peek_diag().descriptor == &gta3sc::syntax::diag::expected_word);
         CHECK(consume_diag().args.at(0) == d("]"));
     }
 
@@ -340,25 +354,27 @@ TEST_CASE_FIXTURE(SemaFixture, "sema parsing variable reference")
     {
         build_sema("VAR_INT x10] z[10]");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(peek_diag().message == gta3sc::Diag::expected_word);
+        CHECK(peek_diag().descriptor == &gta3sc::syntax::diag::expected_word);
         CHECK(consume_diag().args.at(0) == d("["));
-        CHECK(peek_diag().message == gta3sc::Diag::expected_word);
+        CHECK(peek_diag().descriptor == &gta3sc::syntax::diag::expected_word);
         CHECK(consume_diag().args.at(0) == d("]"));
-        CHECK(consume_diag().message == gta3sc::Diag::expected_subscript);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_subscript);
     }
 
     SUBCASE("missing closing bracket")
     {
         build_sema("VAR_INT x[10 z[10]");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(peek_diag().message == gta3sc::Diag::expected_word);
+        CHECK(peek_diag().descriptor == &gta3sc::syntax::diag::expected_word);
         CHECK(consume_diag().args.at(0) == d("]"));
     }
 
     SUBCASE("empty var name")
     {
         build_sema("VAR_INT [10] z[10]", true); // parser error
-        CHECK(consume_diag().message == gta3sc::Diag::expected_argument);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_argument);
     }
 }
 
@@ -366,7 +382,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema undefined command")
 {
     build_sema("UNDEFINED_COMMAND 1 x 3.0 4");
     REQUIRE(sema.validate() == std::nullopt);
-    CHECK(consume_diag().message == gta3sc::Diag::undefined_command);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::syntax::diag::undefined_command);
 }
 
 TEST_CASE_FIXTURE(SemaFixture, "sema valid command")
@@ -423,16 +440,20 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INT parameter")
     {
         build_sema("VAR_INT x\nSET_VAR_INT x x\nSET_VAR_INT x y");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_integer);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_integer);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_integer);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_integer);
     }
 
     SUBCASE("invalid INT param - string constant")
     {
         build_sema("VAR_INT x\nSET_VAR_INT x ON\nSET_VAR_INT x CHEETAH");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_integer);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_integer);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_integer);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_integer);
     }
 }
 
@@ -452,16 +473,20 @@ TEST_CASE_FIXTURE(SemaFixture, "sema FLOAT parameter")
     {
         build_sema("VAR_FLOAT x\nSET_VAR_FLOAT x x\nSET_VAR_FLOAT x y");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_float);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_float);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_float);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_float);
     }
 
     SUBCASE("invalid FLOAT param - string constant")
     {
         build_sema("VAR_FLOAT x\nSET_VAR_FLOAT x ON\nSET_VAR_FLOAT x CHEETAH");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_float);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_float);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_float);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_float);
     }
 }
 
@@ -497,7 +522,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema TEXT_LABEL parameter")
     {
         build_sema("PRINT_HELP 1234");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_text_label);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_text_label);
     }
 
     SUBCASE("invalid TEXT_LABEL param - not variable")
@@ -507,21 +533,22 @@ TEST_CASE_FIXTURE(SemaFixture, "sema TEXT_LABEL parameter")
                    "PRINT_HELP $]\n"
                    "PRINT_HELP $a\n");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message
-              == gta3sc::Diag::expected_varname_after_dollar);
-        CHECK(consume_diag().message
-              == gta3sc::Diag::expected_varname_after_dollar);
-        CHECK(consume_diag().message
-              == gta3sc::Diag::expected_varname_after_dollar);
-        CHECK(consume_diag().message == gta3sc::Diag::undefined_variable);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_varname_after_dollar);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_varname_after_dollar);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_varname_after_dollar);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::undefined_variable);
     }
 
     SUBCASE("invalid TEXT_LABEL param - global string constant")
     {
         build_sema("PRINT_HELP ON");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message
-              == gta3sc::Diag::cannot_use_string_constant_here);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::cannot_use_string_constant_here);
     }
 
     SUBCASE("valid TEXT_LABEL param - non-global string constant")
@@ -563,14 +590,16 @@ TEST_CASE_FIXTURE(SemaFixture, "sema LABEL parameter")
     {
         build_sema("laBel1: GOTO lAbel2");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::undefined_label);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::undefined_label);
     }
 
     SUBCASE("invalid LABEL param - not identifier")
     {
         build_sema("laBel1: GOTO 1234");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_label);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_label);
     }
 }
 
@@ -593,8 +622,10 @@ TEST_CASE_FIXTURE(SemaFixture, "sema STRING parameter")
         build_sema("SAVE_STRING_TO_DEBUG_FILE hello\n"
                    "SAVE_STRING_TO_DEBUG_FILE 1234\n");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_string);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_string);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_string);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_string);
     }
 }
 
@@ -622,28 +653,32 @@ TEST_CASE_FIXTURE(SemaFixture, "sema VAR_INT parameter")
     {
         build_sema("SET_VAR_INT 1 1");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_variable);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_variable);
     }
 
     SUBCASE("invalid VAR_INT param - undeclared variable")
     {
         build_sema("SET_VAR_INT x 1");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::undefined_variable);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::undefined_variable);
     }
 
     SUBCASE("invalid VAR_INT param - lvar instead of gvar")
     {
         build_sema("{\nLVAR_INT lvar\nSET_VAR_INT lvar 1\n}");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_gvar_got_lvar);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_gvar_got_lvar);
     }
 
     SUBCASE("invalid VAR_INT param - type mismatch")
     {
         build_sema("{\nVAR_FLOAT g1\nSET_VAR_INT g1 1\n}");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::var_type_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::var_type_mismatch);
     }
 }
 
@@ -672,28 +707,32 @@ TEST_CASE_FIXTURE(SemaFixture, "sema LVAR_INT parameter")
     {
         build_sema("SET_LVAR_INT 1 1");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_variable);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_variable);
     }
 
     SUBCASE("invalid LVAR_INT param - undeclared variable")
     {
         build_sema("SET_LVAR_INT x 1");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::undefined_variable);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::undefined_variable);
     }
 
     SUBCASE("invalid LVAR_INT param - gvar instead of lvar")
     {
         build_sema("{\nVAR_INT gvar\nSET_LVAR_INT gvar 1\n}");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_lvar_got_gvar);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_lvar_got_gvar);
     }
 
     SUBCASE("invalid LVAR_INT param - type mismatch")
     {
         build_sema("{\nLVAR_FLOAT l1\nSET_LVAR_INT l1 1\n}");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::var_type_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::var_type_mismatch);
     }
 }
 
@@ -722,28 +761,32 @@ TEST_CASE_FIXTURE(SemaFixture, "sema VAR_FLOAT parameter")
     {
         build_sema("SET_VAR_FLOAT 1.0 1.0");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_variable);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_variable);
     }
 
     SUBCASE("invalid VAR_FLOAT param - undeclared variable")
     {
         build_sema("SET_VAR_FLOAT x 1.0");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::undefined_variable);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::undefined_variable);
     }
 
     SUBCASE("invalid VAR_FLOAT param - lvar instead of gvar")
     {
         build_sema("{\nLVAR_FLOAT lvar\nSET_VAR_FLOAT lvar 1.0\n}");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_gvar_got_lvar);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_gvar_got_lvar);
     }
 
     SUBCASE("invalid VAR_FLOAT param - type mismatch")
     {
         build_sema("{\nVAR_INT g1\nSET_VAR_FLOAT g1 1.0\n}");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::var_type_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::var_type_mismatch);
     }
 }
 
@@ -772,28 +815,32 @@ TEST_CASE_FIXTURE(SemaFixture, "sema LVAR_FLOAT parameter")
     {
         build_sema("SET_LVAR_FLOAT 1.0 1.0");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_variable);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_variable);
     }
 
     SUBCASE("invalid LVAR_FLOAT param - undeclared variable")
     {
         build_sema("SET_LVAR_FLOAT x 1.0");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::undefined_variable);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::undefined_variable);
     }
 
     SUBCASE("invalid LVAR_FLOAT param - gvar instead of lvar")
     {
         build_sema("{\nVAR_FLOAT gvar\nSET_LVAR_FLOAT gvar 1.0\n}");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_lvar_got_gvar);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_lvar_got_gvar);
     }
 
     SUBCASE("invalid LVAR_FLOAT param - type mismatch")
     {
         build_sema("{\nLVAR_INT l1\nSET_LVAR_FLOAT l1 1.0\n}");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::var_type_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::var_type_mismatch);
     }
 }
 
@@ -820,28 +867,32 @@ TEST_CASE_FIXTURE(SemaFixture, "sema VAR_TEXT_LABEL parameter")
     {
         build_sema("SET_VAR_TEXT_LABEL 1234 TEXT");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_variable);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_variable);
     }
 
     SUBCASE("invalid VAR_TEXT_LABEL param - undeclared variable")
     {
         build_sema("SET_VAR_TEXT_LABEL x TEXT");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::undefined_variable);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::undefined_variable);
     }
 
     SUBCASE("invalid VAR_TEXT_LABEL param - lvar instead of gvar")
     {
         build_sema("{\nLVAR_TEXT_LABEL lvar\nSET_VAR_TEXT_LABEL lvar TEXT\n}");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_gvar_got_lvar);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_gvar_got_lvar);
     }
 
     SUBCASE("invalid VAR_TEXT_LABEL param - type mismatch")
     {
         build_sema("{\nVAR_INT g1\nSET_VAR_TEXT_LABEL g1 TEXT\n}");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::var_type_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::var_type_mismatch);
     }
 }
 
@@ -868,28 +919,32 @@ TEST_CASE_FIXTURE(SemaFixture, "sema LVAR_TEXT_LABEL parameter")
     {
         build_sema("SET_LVAR_TEXT_LABEL 1234 TEXT");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_variable);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_variable);
     }
 
     SUBCASE("invalid LVAR_TEXT_LABEL param - undeclared variable")
     {
         build_sema("SET_LVAR_TEXT_LABEL x TEXT");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::undefined_variable);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::undefined_variable);
     }
 
     SUBCASE("invalid LVAR_TEXT_LABEL param - gvar instead of lvar")
     {
         build_sema("{\nVAR_TEXT_LABEL gvar\nSET_LVAR_TEXT_LABEL gvar TEXT\n}");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_lvar_got_gvar);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_lvar_got_gvar);
     }
 
     SUBCASE("invalid LVAR_TEXT_LABEL param - type mismatch")
     {
         build_sema("{\nLVAR_FLOAT l1\nSET_LVAR_TEXT_LABEL l1 TEXT\n}");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::var_type_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::var_type_mismatch);
     }
 }
 
@@ -918,29 +973,32 @@ TEST_CASE_FIXTURE(SemaFixture, "sema OUTPUT_INT parameter")
     {
         build_sema("GENERATE_RANDOM_INT_IN_RANGE 0 10 1234");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_variable);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_variable);
     }
 
     SUBCASE("invalid OUTPUT_INT param - undeclared variable")
     {
         build_sema("GENERATE_RANDOM_INT_IN_RANGE 0 10 x");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::undefined_variable);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::undefined_variable);
     }
 
     SUBCASE("invalid OUTPUT_INT param - type mismatch")
     {
         build_sema("VAR_FLOAT x\nGENERATE_RANDOM_INT_IN_RANGE 0 10 x");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::var_type_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::var_type_mismatch);
     }
 
     SUBCASE("invalid OUTPUT_INT param - global string constant")
     {
         build_sema("VAR_INT ON\nGENERATE_RANDOM_INT_IN_RANGE 0 10 ON");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message
-              == gta3sc::Diag::cannot_use_string_constant_here);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::cannot_use_string_constant_here);
     }
 }
 
@@ -969,29 +1027,32 @@ TEST_CASE_FIXTURE(SemaFixture, "sema OUTPUT_FLOAT parameter")
     {
         build_sema("GENERATE_RANDOM_FLOAT_IN_RANGE 0.0 1.0 1234");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::expected_variable);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::expected_variable);
     }
 
     SUBCASE("invalid OUTPUT_FLOAT param - undeclared variable")
     {
         build_sema("GENERATE_RANDOM_FLOAT_IN_RANGE 0.0 1.0 x");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::undefined_variable);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::undefined_variable);
     }
 
     SUBCASE("invalid OUTPUT_FLOAT param - type mismatch")
     {
         build_sema("VAR_INT x\nGENERATE_RANDOM_FLOAT_IN_RANGE 0.0 1.0 x");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::var_type_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::var_type_mismatch);
     }
 
     SUBCASE("invalid OUTPUT_FLOAT param - global string constant")
     {
         build_sema("VAR_FLOAT ON\nGENERATE_RANDOM_FLOAT_IN_RANGE 0.0 1.0 ON");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message
-              == gta3sc::Diag::cannot_use_string_constant_here);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::cannot_use_string_constant_here);
     }
 }
 
@@ -1071,28 +1132,32 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_INT parameter")
     {
         build_sema("WAIT 1.0");
         REQUIRE(sema.validate() == std::nullopt);
-        REQUIRE(consume_diag().message == gta3sc::Diag::expected_input_int);
+        REQUIRE(consume_diag().descriptor
+                == &gta3sc::syntax::diag::expected_input_int);
     }
 
     SUBCASE("invalid INPUT_INT param - string literal")
     {
         build_sema("WAIT \"Hello\"");
         REQUIRE(sema.validate() == std::nullopt);
-        REQUIRE(consume_diag().message == gta3sc::Diag::expected_input_int);
+        REQUIRE(consume_diag().descriptor
+                == &gta3sc::syntax::diag::expected_input_int);
     }
 
     SUBCASE("invalid INPUT_INT param - undeclared variable")
     {
         build_sema("WAIT x");
         REQUIRE(sema.validate() == std::nullopt);
-        REQUIRE(consume_diag().message == gta3sc::Diag::undefined_variable);
+        REQUIRE(consume_diag().descriptor
+                == &gta3sc::syntax::diag::undefined_variable);
     }
 
     SUBCASE("invalid INPUT_INT param - mistyped variable")
     {
         build_sema("VAR_FLOAT x\nWAIT x");
         REQUIRE(sema.validate() == std::nullopt);
-        REQUIRE(consume_diag().message == gta3sc::Diag::var_type_mismatch);
+        REQUIRE(consume_diag().descriptor
+                == &gta3sc::syntax::diag::var_type_mismatch);
     }
 
     SUBCASE("invalid INPUT_INT param - non-global string constant")
@@ -1100,7 +1165,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_INT parameter")
         build_sema("WAIT PEDTYPE_MEDIC");
         auto ir = sema.validate();
         REQUIRE(ir == std::nullopt);
-        REQUIRE(consume_diag().message == gta3sc::Diag::undefined_variable);
+        REQUIRE(consume_diag().descriptor
+                == &gta3sc::syntax::diag::undefined_variable);
     }
 
     SUBCASE("invalid INPUT_INT param - non-enum string constant")
@@ -1108,8 +1174,10 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_INT parameter")
         build_sema("VAR_INT x\nCREATE_CHAR MEDIC ON 0.0 0.0 0.0 x");
         auto ir = sema.validate();
         REQUIRE(ir == std::nullopt);
-        REQUIRE(consume_diag().message == gta3sc::Diag::undefined_variable);
-        REQUIRE(consume_diag().message == gta3sc::Diag::undefined_variable);
+        REQUIRE(consume_diag().descriptor
+                == &gta3sc::syntax::diag::undefined_variable);
+        REQUIRE(consume_diag().descriptor
+                == &gta3sc::syntax::diag::undefined_variable);
     }
 }
 
@@ -1148,7 +1216,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_FLOAT parameter")
     {
         build_sema("VAR_FLOAT x\nGENERATE_RANDOM_FLOAT_IN_RANGE 0 2.0 x");
         REQUIRE(sema.validate() == std::nullopt);
-        REQUIRE(consume_diag().message == gta3sc::Diag::expected_input_float);
+        REQUIRE(consume_diag().descriptor
+                == &gta3sc::syntax::diag::expected_input_float);
     }
 
     SUBCASE("invalid INPUT_FLOAT param - string literal")
@@ -1156,14 +1225,16 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_FLOAT parameter")
         build_sema(
                 "VAR_FLOAT x\nGENERATE_RANDOM_FLOAT_IN_RANGE 0.0 \"Hello\" x");
         REQUIRE(sema.validate() == std::nullopt);
-        REQUIRE(consume_diag().message == gta3sc::Diag::expected_input_float);
+        REQUIRE(consume_diag().descriptor
+                == &gta3sc::syntax::diag::expected_input_float);
     }
 
     SUBCASE("invalid INPUT_FLOAT param - undeclared variable")
     {
         build_sema("VAR_FLOAT x\nGENERATE_RANDOM_FLOAT_IN_RANGE x y x");
         REQUIRE(sema.validate() == std::nullopt);
-        REQUIRE(consume_diag().message == gta3sc::Diag::undefined_variable);
+        REQUIRE(consume_diag().descriptor
+                == &gta3sc::syntax::diag::undefined_variable);
     }
 
     SUBCASE("invalid INPUT_FLOAT param - mistyped variable")
@@ -1171,15 +1242,16 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_FLOAT parameter")
         build_sema(
                 "VAR_FLOAT x\nVAR_INT y\nGENERATE_RANDOM_FLOAT_IN_RANGE x y x");
         REQUIRE(sema.validate() == std::nullopt);
-        REQUIRE(consume_diag().message == gta3sc::Diag::var_type_mismatch);
+        REQUIRE(consume_diag().descriptor
+                == &gta3sc::syntax::diag::var_type_mismatch);
     }
 
     SUBCASE("invalid INPUT_FLOAT param - global string constant")
     {
         build_sema("VAR_FLOAT ON x\nGENERATE_RANDOM_FLOAT_IN_RANGE 0.0 ON x");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message
-              == gta3sc::Diag::cannot_use_string_constant_here);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::cannot_use_string_constant_here);
     }
 }
 
@@ -1256,28 +1328,32 @@ TEST_CASE_FIXTURE(SemaFixture, "sema INPUT_OPT parameter")
     {
         build_sema("label1: START_NEW_SCRIPT label1 \"Hello\"");
         REQUIRE(sema.validate() == std::nullopt);
-        REQUIRE(consume_diag().message == gta3sc::Diag::expected_input_opt);
+        REQUIRE(consume_diag().descriptor
+                == &gta3sc::syntax::diag::expected_input_opt);
     }
 
     SUBCASE("invalid INPUT_OPT param - undeclared variable")
     {
         build_sema("label1: START_NEW_SCRIPT label1 x");
         REQUIRE(sema.validate() == std::nullopt);
-        REQUIRE(consume_diag().message == gta3sc::Diag::undefined_variable);
+        REQUIRE(consume_diag().descriptor
+                == &gta3sc::syntax::diag::undefined_variable);
     }
 
     SUBCASE("invalid INPUT_OPT param - mistyped variable")
     {
         build_sema("VAR_TEXT_LABEL var\nlabel1: START_NEW_SCRIPT label1 var");
         REQUIRE(sema.validate() == std::nullopt);
-        REQUIRE(consume_diag().message == gta3sc::Diag::var_type_mismatch);
+        REQUIRE(consume_diag().descriptor
+                == &gta3sc::syntax::diag::var_type_mismatch);
     }
 
     SUBCASE("invalid INPUT_OPT param - non-global string constant")
     {
         build_sema("label1: START_NEW_SCRIPT label1 MEDIC");
         REQUIRE(sema.validate() == std::nullopt);
-        REQUIRE(consume_diag().message == gta3sc::Diag::undefined_variable);
+        REQUIRE(consume_diag().descriptor
+                == &gta3sc::syntax::diag::undefined_variable);
     }
 }
 
@@ -1332,47 +1408,50 @@ TEST_CASE_FIXTURE(SemaFixture, "sema validate subscript")
     {
         build_sema("VAR_INT x\nSET_VAR_INT x[0] 0\n");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message
-              == gta3sc::Diag::subscript_but_var_is_not_array);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::subscript_but_var_is_not_array);
     }
 
     SUBCASE("invalid variable subscript - not array")
     {
         build_sema("VAR_INT x\nSET_VAR_INT x[0] 0\n");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message
-              == gta3sc::Diag::subscript_but_var_is_not_array);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::subscript_but_var_is_not_array);
     }
 
     SUBCASE("invalid variable subscript - out of bounds")
     {
         build_sema("VAR_INT x[10]\nSET_VAR_INT x[10] 0\nSET_VAR_INT x[99] 0\n");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::subscript_out_of_range);
-        CHECK(consume_diag().message == gta3sc::Diag::subscript_out_of_range);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::subscript_out_of_range);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::subscript_out_of_range);
     }
 
     SUBCASE("invalid variable subscript - subscript var undeclared")
     {
         build_sema("VAR_INT x[10]\nSET_VAR_INT x[y] 0\n");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::undefined_variable);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::undefined_variable);
     }
 
     SUBCASE("invalid variable subscript - subscript var is not int")
     {
         build_sema("VAR_INT x[10]\nVAR_FLOAT y\nSET_VAR_INT x[y] 0\n");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message
-              == gta3sc::Diag::subscript_var_must_be_int);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::subscript_var_must_be_int);
     }
 
     SUBCASE("invalid variable subscript - subscript var is array")
     {
         build_sema("VAR_INT x[10]\nVAR_INT y[10]\nSET_VAR_INT x[y] 0\n");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message
-              == gta3sc::Diag::subscript_var_must_not_be_array);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::subscript_var_must_not_be_array);
     }
 }
 
@@ -1383,7 +1462,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema too few arguments")
     {
         build_sema("VAR_INT ");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::too_few_arguments);
+        CHECK(consume_diag().descriptor ==
+    &gta3sc::syntax::diag::too_few_arguments);
     }
     */
 
@@ -1391,7 +1471,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema too few arguments")
     {
         build_sema("START_NEW_SCRIPT ");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::too_few_arguments);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::too_few_arguments);
     }
 
     SUBCASE("START_NEW_SCRIPT with single arg")
@@ -1404,7 +1485,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema too few arguments")
     {
         build_sema("GENERATE_RANDOM_INT_IN_RANGE 10");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::too_few_arguments);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::too_few_arguments);
     }
 }
 
@@ -1436,8 +1518,10 @@ TEST_CASE_FIXTURE(SemaFixture, "sema too many arguments")
     {
         build_sema("WAIT 10 11\nWAIT 10 11 12 13 14 15 16 17\n");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::too_many_arguments);
-        CHECK(consume_diag().message == gta3sc::Diag::too_many_arguments);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::too_many_arguments);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::too_many_arguments);
     }
 }
 
@@ -1522,27 +1606,36 @@ TEST_CASE_FIXTURE(SemaFixture, "sema alternators")
     {
         build_sema("VAR_INT x\nABS ON\nABS CHEETAH\nSET x INVAL_CONST");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
-        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
-        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::alternator_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::alternator_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::alternator_mismatch);
     }
 
     SUBCASE("no alternative match - wrong number of arguments")
     {
         build_sema("VAR_INT x\nABS x x\nABS");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
-        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::alternator_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::alternator_mismatch);
     }
 
     SUBCASE("no alternative match - literal in variable only")
     {
         build_sema("ABS 10\nABS 1.0\nABS x\nABS \"Hello\"");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
-        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
-        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
-        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::alternator_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::alternator_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::alternator_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::alternator_mismatch);
     }
 
     SUBCASE("no alternative match - local in global only")
@@ -1553,8 +1646,10 @@ TEST_CASE_FIXTURE(SemaFixture, "sema alternators")
                    "ACCEPTS_ONLY_GLOBAL_VAR y\n"
                    "ACCEPTS_ONLY_GLOBAL_VAR z\n}");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
-        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::alternator_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::alternator_mismatch);
     }
 
     SUBCASE("no alternative match - global in local only")
@@ -1565,8 +1660,10 @@ TEST_CASE_FIXTURE(SemaFixture, "sema alternators")
                    "ACCEPTS_ONLY_LOCAL_VAR y\n"
                    "ACCEPTS_ONLY_LOCAL_VAR z\n}");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
-        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::alternator_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::alternator_mismatch);
     }
 
     SUBCASE("no alternative match - text label variable in int/float only")
@@ -1574,8 +1671,10 @@ TEST_CASE_FIXTURE(SemaFixture, "sema alternators")
         build_sema("{\nVAR_TEXT_LABEL x\nLVAR_TEXT_LABEL y\n"
                    "ABS x\nABS y\n}");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
-        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::alternator_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::alternator_mismatch);
     }
 
     SUBCASE("no alternative match - types mismatch")
@@ -1587,11 +1686,16 @@ TEST_CASE_FIXTURE(SemaFixture, "sema alternators")
                    "SET 2.0 f\n"
                    "SET ON 1\n}");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
-        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
-        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
-        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
-        CHECK(consume_diag().message == gta3sc::Diag::alternator_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::alternator_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::alternator_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::alternator_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::alternator_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::alternator_mismatch);
     }
 }
 
@@ -1636,10 +1740,14 @@ TEST_CASE_FIXTURE(SemaFixture, "sema entities")
                    "SET_CAR_HEADING x 0.0\n"    // NONE instead of CAR
                    "SET_CHAR_HEADING y 0.0\n"); // NONE instead of CHAR
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::var_entity_type_mismatch);
-        CHECK(consume_diag().message == gta3sc::Diag::var_entity_type_mismatch);
-        CHECK(consume_diag().message == gta3sc::Diag::var_entity_type_mismatch);
-        CHECK(consume_diag().message == gta3sc::Diag::var_entity_type_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::var_entity_type_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::var_entity_type_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::var_entity_type_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::var_entity_type_mismatch);
     }
 
     SUBCASE("invalid entity usage - reinitialization")
@@ -1649,7 +1757,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema entities")
                    "CREATE_CHAR PEDTYPE_MEDIC MEDIC 0.0 0.0 0.0 ped\n"
                    "CREATE_CHAR PEDTYPE_MEDIC MEDIC 0.0 0.0 0.0 car\n"); // BAD
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::var_entity_type_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::var_entity_type_mismatch);
     }
 
     SUBCASE("valid entity assignment")
@@ -1697,10 +1806,14 @@ TEST_CASE_FIXTURE(SemaFixture, "sema entities")
                    "SET ped2 x\n"    // PED = NONE, BAD
                    "SET ped2 x\n");  // CAR = NONE, BAD
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::var_entity_type_mismatch);
-        CHECK(consume_diag().message == gta3sc::Diag::var_entity_type_mismatch);
-        CHECK(consume_diag().message == gta3sc::Diag::var_entity_type_mismatch);
-        CHECK(consume_diag().message == gta3sc::Diag::var_entity_type_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::var_entity_type_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::var_entity_type_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::var_entity_type_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::var_entity_type_mismatch);
     }
 
     SUBCASE("entities propagates through arrays")
@@ -1761,8 +1874,10 @@ TEST_CASE_FIXTURE(SemaFixture, "sema hardcoded SCRIPT_NAME")
                    "SCRIPT_NAME FIFTH\nSCRIPT_NAME SIXTH\n"
                    "SCRIPT_NAME SEVENTH\nSCRIPT_NAME WORLD\n");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::duplicate_script_name);
-        CHECK(consume_diag().message == gta3sc::Diag::duplicate_script_name);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::duplicate_script_name);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::duplicate_script_name);
     }
 
     SUBCASE("SCRIPT_NAME with text label variable") // unspecified in the spec
@@ -1785,8 +1900,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema hardcoded START_NEW_SCRIPT")
     {
         build_sema("label1: START_NEW_SCRIPT label1 10 20 30");
         REQUIRE(sema.validate() == std::nullopt);
-        REQUIRE(consume_diag().message
-                == gta3sc::Diag::target_label_not_within_scope);
+        REQUIRE(consume_diag().descriptor
+                == &gta3sc::syntax::diag::target_label_not_within_scope);
     }
 
     SUBCASE("valid - more target vars than arguments")
@@ -1801,12 +1916,12 @@ TEST_CASE_FIXTURE(SemaFixture, "sema hardcoded START_NEW_SCRIPT")
         build_sema("{\nLVAR_INT x y\nlabel1: START_NEW_SCRIPT label1 10 20 30 "
                    "40 50\n}");
         REQUIRE(sema.validate() == std::nullopt);
-        REQUIRE(consume_diag().message
-                == gta3sc::Diag::target_scope_not_enough_vars);
-        REQUIRE(consume_diag().message
-                == gta3sc::Diag::target_scope_not_enough_vars);
-        REQUIRE(consume_diag().message
-                == gta3sc::Diag::target_scope_not_enough_vars);
+        REQUIRE(consume_diag().descriptor
+                == &gta3sc::syntax::diag::target_scope_not_enough_vars);
+        REQUIRE(consume_diag().descriptor
+                == &gta3sc::syntax::diag::target_scope_not_enough_vars);
+        REQUIRE(consume_diag().descriptor
+                == &gta3sc::syntax::diag::target_scope_not_enough_vars);
     }
 
     SUBCASE("valid - passing integers")
@@ -1828,8 +1943,10 @@ TEST_CASE_FIXTURE(SemaFixture, "sema hardcoded START_NEW_SCRIPT")
         build_sema("{\nLVAR_TEXT_LABEL a1 a2\nlabel1: START_NEW_SCRIPT label1 "
                    "TEXT a2\n}");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::undefined_variable);
-        CHECK(consume_diag().message == gta3sc::Diag::var_type_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::undefined_variable);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::var_type_mismatch);
     }
 
     SUBCASE("valid - passing variables")
@@ -1847,16 +1964,16 @@ TEST_CASE_FIXTURE(SemaFixture, "sema hardcoded START_NEW_SCRIPT")
                    "label1: START_NEW_SCRIPT label1 i1 f1 1.0 f1 i1 ON 10\n"
                    "}\n");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message
-              == gta3sc::Diag::target_var_type_mismatch); // f1
-        CHECK(consume_diag().message
-              == gta3sc::Diag::target_var_type_mismatch); // 1.0
-        CHECK(consume_diag().message
-              == gta3sc::Diag::target_var_type_mismatch); // i1
-        CHECK(consume_diag().message
-              == gta3sc::Diag::target_var_type_mismatch); // ON
-        CHECK(consume_diag().message
-              == gta3sc::Diag::target_var_type_mismatch); // 10
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::target_var_type_mismatch); // f1
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::target_var_type_mismatch); // 1.0
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::target_var_type_mismatch); // i1
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::target_var_type_mismatch); // ON
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::target_var_type_mismatch); // 10
     }
 
     SUBCASE("valid - passing entity type forward")
@@ -1881,7 +1998,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema hardcoded START_NEW_SCRIPT")
                    "CREATE_CAR CHEETAH 0.0 0.0 0.0 car\n"
                    "START_NEW_SCRIPT label1 car\n");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::var_entity_type_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::var_entity_type_mismatch);
     }
 
     SUBCASE("invalid - passing wrong entity type backwards")
@@ -1895,8 +2013,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema hardcoded START_NEW_SCRIPT")
                    "CREATE_CHAR PEDTYPE_MEDIC MEDIC 0.0 0.0 0.0 ped\n"
                    "START_NEW_SCRIPT label1 ped\n");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message
-              == gta3sc::Diag::target_var_entity_type_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::target_var_entity_type_mismatch);
     }
 
     SUBCASE("invalid - passing wrong entity type forward")
@@ -1909,7 +2027,8 @@ TEST_CASE_FIXTURE(SemaFixture, "sema hardcoded START_NEW_SCRIPT")
                    "SET_CAR_HEADING local_car 0.0\n"
                    "}\n");
         REQUIRE(sema.validate() == std::nullopt);
-        CHECK(consume_diag().message == gta3sc::Diag::var_entity_type_mismatch);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::var_entity_type_mismatch);
     }
 }
 
@@ -1986,14 +2105,16 @@ TEST_CASE_FIXTURE(SemaFixture, "sema used objects")
     {
         build_sema("VAR_INT x\nCREATE_OBJECT NOT_LEVEL_MODEL 0.0 0.0 0.0 x");
         REQUIRE(sema.validate() == std::nullopt);
-        REQUIRE(consume_diag().message == gta3sc::Diag::undefined_variable);
+        REQUIRE(consume_diag().descriptor
+                == &gta3sc::syntax::diag::undefined_variable);
     }
 
     SUBCASE("level model does not affect DEFAULTMODEL params")
     {
         build_sema("VAR_INT x\nCREATE_CAR LEVEL_MODEL 0.0 0.0 0.0 x");
         REQUIRE(sema.validate() == std::nullopt);
-        REQUIRE(consume_diag().message == gta3sc::Diag::undefined_variable);
+        REQUIRE(consume_diag().descriptor
+                == &gta3sc::syntax::diag::undefined_variable);
     }
 
     SUBCASE("level models do not affect the namespace of symbols seen by var "
@@ -2136,16 +2257,20 @@ TEST_CASE_FIXTURE(SemaFixture, "local timers")
     {
         build_sema("VAR_INT timera timerb");
         REQUIRE(sema.validate() == std::nullopt);
-        REQUIRE(consume_diag().message == gta3sc::Diag::duplicate_var_timer);
-        REQUIRE(consume_diag().message == gta3sc::Diag::duplicate_var_timer);
+        REQUIRE(consume_diag().descriptor
+                == &gta3sc::syntax::diag::duplicate_var_timer);
+        REQUIRE(consume_diag().descriptor
+                == &gta3sc::syntax::diag::duplicate_var_timer);
     }
 
     SUBCASE("cannot declare local variable with name of timers")
     {
         build_sema("{\nLVAR_INT timera timerb\n}");
         REQUIRE(sema.validate() == std::nullopt);
-        REQUIRE(consume_diag().message == gta3sc::Diag::duplicate_var_timer);
-        REQUIRE(consume_diag().message == gta3sc::Diag::duplicate_var_timer);
+        REQUIRE(consume_diag().descriptor
+                == &gta3sc::syntax::diag::duplicate_var_timer);
+        REQUIRE(consume_diag().descriptor
+                == &gta3sc::syntax::diag::duplicate_var_timer);
     }
 
     SUBCASE("timer ids are at the end of the scope")

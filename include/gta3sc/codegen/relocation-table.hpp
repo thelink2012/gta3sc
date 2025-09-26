@@ -5,6 +5,7 @@
 namespace gta3sc
 {
 class DiagnosticHandler;
+class DiagnosticDescriptor;
 } // namespace gta3sc
 
 namespace gta3sc::codegen
@@ -109,8 +110,8 @@ public:
     ///
     /// Returns whether insertion took place i.e. `false` if the file has been
     /// already registered in the table.
-    auto insert_file_loc(const SymbolTable::File& file, AbsoluteOffset offset)
-            -> bool;
+    auto insert_file_loc(const SymbolTable::File& file,
+                         AbsoluteOffset offset) -> bool;
 
     /// Registers an offset that needs relocation (i.e a label reference).
     ///
@@ -137,9 +138,9 @@ public:
     ///
     /// In case relocation isn't possible, `std::nullopt` is returned and
     /// a diagnostic is produced in `diagman`.
-    [[nodiscard]] auto relocate(const FixupEntry& entry,
-                                DiagnosticHandler& diagman) const
-            -> std::optional<RelativeOffset>;
+    [[nodiscard]] auto
+    relocate(const FixupEntry& entry,
+             DiagnosticHandler& diagman) const -> std::optional<RelativeOffset>;
 
     /// Computes the relocated offset for the given relocation entry.
     ///
@@ -148,9 +149,9 @@ public:
     ///
     /// In case relocation isn't possible, `std::nullopt` is returned and
     /// a diagnostic is produced in `diagman`.
-    [[nodiscard]] auto relocate(const FileFixupEntry& entry,
-                                DiagnosticHandler& diagman) const
-            -> std::optional<RelativeOffset>;
+    [[nodiscard]] auto
+    relocate(const FileFixupEntry& entry,
+             DiagnosticHandler& diagman) const -> std::optional<RelativeOffset>;
 
     /// Obtains a view to the fixup table entries.
     [[nodiscard]] auto fixup_table() const noexcept -> FixupTableView
@@ -195,9 +196,8 @@ private:
     is_in_main_segment(const SymbolTable::File& file) noexcept -> bool;
 
     /// Gets the offset for the start of the segment of the given file.
-    [[nodiscard]] auto
-    segment_base_for(const SymbolTable::File& file) const noexcept
-            -> AbsoluteOffset;
+    [[nodiscard]] auto segment_base_for(
+            const SymbolTable::File& file) const noexcept -> AbsoluteOffset;
 
     /// Resizes `label_def_table` such that it can hold the given label.
     void resize_label_def_table(const SymbolTable::Label& label);
@@ -212,3 +212,9 @@ private:
     FileFixupTable m_file_fixup_table;
 };
 } // namespace gta3sc::codegen
+
+namespace gta3sc::codegen::diag
+{
+extern const DiagnosticDescriptor label_at_local_zero_offset;
+extern const DiagnosticDescriptor label_ref_across_segments;
+} // namespace gta3sc::codegen::diag

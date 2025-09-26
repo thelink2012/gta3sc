@@ -1,8 +1,124 @@
-#include "charconv.hpp"
+#include <charconv>
+#include <gta3sc/diagnostics.hpp>
 #include <gta3sc/syntax/sema.hpp>
 using namespace std::literals::string_view_literals;
 
 // gta3script-specs 7fe565c767ee85fb8c99b594b3b3d280aa1b1c80
+
+namespace gta3sc::syntax::diag
+{
+// Sema-specific diagnostics
+const DiagnosticDescriptor duplicate_var_lvar(
+        DiagnosticSeverity::error,
+        "Local variable name already used as global variable", "TODO");
+const DiagnosticDescriptor duplicate_var_string_constant(
+        DiagnosticSeverity::error,
+        "Variable name already used as string constant", "TODO");
+const DiagnosticDescriptor undefined_label(DiagnosticSeverity::error,
+                                           "Undefined label", "TODO");
+const DiagnosticDescriptor alternator_mismatch(DiagnosticSeverity::error,
+                                               "Alternator mismatch", "TODO");
+const DiagnosticDescriptor undefined_command(DiagnosticSeverity::error,
+                                             "Undefined command", "TODO");
+const DiagnosticDescriptor expected_text_label(DiagnosticSeverity::error,
+                                               "Expected text label", "TODO");
+const DiagnosticDescriptor cannot_use_string_constant_here(
+        DiagnosticSeverity::error, "Cannot use string constant here", "TODO");
+const DiagnosticDescriptor expected_input_int(DiagnosticSeverity::error,
+                                              "Expected input int", "TODO");
+const DiagnosticDescriptor expected_input_float(DiagnosticSeverity::error,
+                                                "Expected input float", "TODO");
+const DiagnosticDescriptor expected_input_opt(DiagnosticSeverity::error,
+                                              "Expected input opt", "TODO");
+const DiagnosticDescriptor expected_integer(DiagnosticSeverity::error,
+                                            "Expected integer", "TODO");
+const DiagnosticDescriptor expected_float(DiagnosticSeverity::error,
+                                          "Expected float", "TODO");
+const DiagnosticDescriptor expected_label(DiagnosticSeverity::error,
+                                          "Expected label", "TODO");
+const DiagnosticDescriptor expected_string(DiagnosticSeverity::error,
+                                           "Expected string", "TODO");
+const DiagnosticDescriptor expected_variable(DiagnosticSeverity::error,
+                                             "Expected variable", "TODO");
+const DiagnosticDescriptor
+        expected_varname_after_dollar(DiagnosticSeverity::error,
+                                      "Expected variable name after dollar",
+                                      "TODO");
+const DiagnosticDescriptor undefined_variable(DiagnosticSeverity::error,
+                                              "Undefined variable", "TODO");
+const DiagnosticDescriptor
+        expected_gvar_got_lvar(DiagnosticSeverity::error,
+                               "Expected global variable got local variable",
+                               "TODO");
+const DiagnosticDescriptor
+        expected_lvar_got_gvar(DiagnosticSeverity::error,
+                               "Expected local variable got global variable",
+                               "TODO");
+const DiagnosticDescriptor var_type_mismatch(DiagnosticSeverity::error,
+                                             "Variable type mismatch", "TODO");
+const DiagnosticDescriptor
+        subscript_but_var_is_not_array(DiagnosticSeverity::error,
+                                       "Subscript but variable is not array",
+                                       "TODO");
+const DiagnosticDescriptor subscript_out_of_range(DiagnosticSeverity::error,
+                                                  "Subscript out of range",
+                                                  "TODO");
+const DiagnosticDescriptor
+        subscript_var_must_be_int(DiagnosticSeverity::error,
+                                  "Subscript variable must be of integer type",
+                                  "TODO");
+const DiagnosticDescriptor
+        subscript_var_must_not_be_array(DiagnosticSeverity::error,
+                                        "Subscript variable must not be array",
+                                        "TODO");
+const DiagnosticDescriptor
+        var_entity_type_mismatch(DiagnosticSeverity::error,
+                                 "Variable entity type mismatch", "TODO");
+const DiagnosticDescriptor duplicate_script_name(DiagnosticSeverity::error,
+                                                 "Duplicate script name",
+                                                 "TODO");
+const DiagnosticDescriptor
+        target_label_not_within_scope(DiagnosticSeverity::error,
+                                      "Target label not within scope", "TODO");
+const DiagnosticDescriptor target_scope_not_enough_vars(
+        DiagnosticSeverity::error, "Not enough input variables in target scope",
+        "TODO");
+const DiagnosticDescriptor
+        target_var_type_mismatch(DiagnosticSeverity::error,
+                                 "Target variable type mismatch", "TODO");
+const DiagnosticDescriptor
+        target_var_entity_type_mismatch(DiagnosticSeverity::error,
+                                        "Target variable entity type mismatch",
+                                        "TODO");
+const DiagnosticDescriptor duplicate_label(DiagnosticSeverity::error,
+                                           "Duplicate label", "TODO");
+const DiagnosticDescriptor var_decl_subscript_must_be_literal(
+        DiagnosticSeverity::error,
+        "Variable declaration subscript must be literal", "TODO");
+const DiagnosticDescriptor var_decl_subscript_must_be_nonzero(
+        DiagnosticSeverity::error,
+        "Variable declaration subscript must be nonzero", "TODO");
+const DiagnosticDescriptor
+        var_decl_outside_of_scope(DiagnosticSeverity::error,
+                                  "Local variable declaration outside of scope",
+                                  "TODO");
+const DiagnosticDescriptor
+        duplicate_var_timer(DiagnosticSeverity::error,
+                            "Variable name already used as timer name", "TODO");
+const DiagnosticDescriptor
+        duplicate_var_global(DiagnosticSeverity::error,
+                             "Variable name already used as global variable",
+                             "TODO");
+const DiagnosticDescriptor
+        duplicate_var_in_scope(DiagnosticSeverity::error,
+                               "Local variable name already used in scope",
+                               "TODO");
+const DiagnosticDescriptor expected_subscript(DiagnosticSeverity::error,
+                                              "Expected subscript", "TODO");
+const DiagnosticDescriptor
+        subscript_must_be_positive(DiagnosticSeverity::error,
+                                   "Subscript must be positive", "TODO");
+} // namespace gta3sc::syntax::diag
 
 namespace gta3sc::syntax
 {
@@ -128,11 +244,11 @@ auto Sema::discover_declarations_pass() -> bool
                    && symrepo->lookup_var(var.name(),
                                           SymbolTable::global_scope))
                 {
-                    report(var.source(), Diag::duplicate_var_lvar);
+                    report(var.source(), diag::duplicate_var_lvar);
                 }
 
                 if(cmdman->find_constant_any_means(var.name()))
-                    report(var.source(), Diag::duplicate_var_string_constant);
+                    report(var.source(), diag::duplicate_var_string_constant);
             }
         }
     }
@@ -222,7 +338,7 @@ auto Sema::validate_label_def(const ParserIR::LabelDef& label_def)
     {
         // This is impossible! All the labels in the input IR were previously
         // defined in `discover_declarations_pass`.
-        report(label_def.source(), Diag::undefined_label);
+        report(label_def.source(), diag::undefined_label);
         return nullptr;
     }
     return sym_label;
@@ -243,7 +359,7 @@ auto Sema::validate_command(const ParserIR::Command& command)
                                });
         if(it == alternator->end())
         {
-            report(command.source(), Diag::alternator_mismatch);
+            report(command.source(), diag::alternator_mismatch);
             return nullptr;
         }
 
@@ -256,7 +372,7 @@ auto Sema::validate_command(const ParserIR::Command& command)
         command_def = cmdman->find_command(command.name());
         if(!command_def)
         {
-            report(command.source(), Diag::undefined_command);
+            report(command.source(), diag::undefined_command);
             return nullptr;
         }
     }
@@ -289,13 +405,13 @@ auto Sema::validate_command(const ParserIR::Command& command)
     if(arg_it != command.args().end())
     {
         failed = true;
-        report(command.source(), Diag::too_many_arguments)
+        report(command.source(), diag::too_many_arguments)
                 .args(expected_args, got_args);
     }
     else if(param_it != command_def->params().end() && !param_it->is_optional())
     {
         failed = true;
-        report(command.source(), Diag::too_few_arguments)
+        report(command.source(), diag::too_few_arguments)
                 .args(expected_args, got_args);
     }
 
@@ -340,7 +456,7 @@ auto Sema::validate_argument(const CommandTable::ParamDef& param,
         {
             if(arg.type() != ParserIR::Argument::Type::IDENTIFIER)
             {
-                report(arg.source(), Diag::expected_text_label);
+                report(arg.source(), diag::expected_text_label);
                 return nullptr;
             }
 
@@ -348,7 +464,7 @@ auto Sema::validate_argument(const CommandTable::ParamDef& param,
 
             if(cmdman->find_constant(CommandTable::global_enum, identifier))
             {
-                report(arg.source(), Diag::cannot_use_string_constant_here);
+                report(arg.source(), diag::cannot_use_string_constant_here);
                 return nullptr;
             }
 
@@ -432,7 +548,7 @@ auto Sema::validate_argument(const CommandTable::ParamDef& param,
                 }
                 default:
                 {
-                    report(arg.source(), Diag::expected_input_int);
+                    report(arg.source(), diag::expected_input_int);
                     return nullptr;
                 }
             }
@@ -451,14 +567,14 @@ auto Sema::validate_argument(const CommandTable::ParamDef& param,
                                              *arg.as_identifier()))
                     {
                         report(arg.source(),
-                               Diag::cannot_use_string_constant_here);
+                               diag::cannot_use_string_constant_here);
                         return nullptr;
                     }
                     return validate_var_ref(param, arg);
                 }
                 default:
                 {
-                    report(arg.source(), Diag::expected_input_float);
+                    report(arg.source(), diag::expected_input_float);
                     return nullptr;
                 }
             }
@@ -487,7 +603,7 @@ auto Sema::validate_argument(const CommandTable::ParamDef& param,
                 }
                 default:
                 {
-                    report(arg.source(), Diag::expected_input_opt);
+                    report(arg.source(), diag::expected_input_opt);
                     return nullptr;
                 }
             }
@@ -499,7 +615,7 @@ auto Sema::validate_argument(const CommandTable::ParamDef& param,
                && cmdman->find_constant(CommandTable::global_enum,
                                         *arg.as_identifier()))
             {
-                report(arg.source(), Diag::cannot_use_string_constant_here);
+                report(arg.source(), diag::cannot_use_string_constant_here);
                 return nullptr;
             }
             return validate_var_ref(param, arg);
@@ -520,7 +636,7 @@ auto Sema::validate_integer_literal(
     if(const auto integer = arg.as_int())
         value = *integer;
     else
-        report(arg.source(), Diag::expected_integer);
+        report(arg.source(), diag::expected_integer);
 
     return SemaIR::create_int(value, arg.source(), allocator);
 }
@@ -538,7 +654,7 @@ auto Sema::validate_float_literal(
     if(const auto floating = arg.as_float())
         value = *floating;
     else
-        report(arg.source(), Diag::expected_float);
+        report(arg.source(), diag::expected_float);
 
     return SemaIR::create_float(value, arg.source(), allocator);
 }
@@ -554,7 +670,7 @@ auto Sema::validate_text_label(
     if(const auto ident = arg.as_identifier())
         value = *ident;
     else
-        report(arg.source(), Diag::expected_text_label);
+        report(arg.source(), diag::expected_text_label);
 
     return SemaIR::create_text_label(value, arg.source(), allocator);
 }
@@ -567,14 +683,14 @@ auto Sema::validate_label([[maybe_unused]] const CommandTable::ParamDef& param,
 
     if(arg.type() != ParserIR::Argument::Type::IDENTIFIER)
     {
-        report(arg.source(), Diag::expected_label);
+        report(arg.source(), diag::expected_label);
         return nullptr;
     }
 
     const auto* sym_label = symrepo->lookup_label(*arg.as_identifier());
     if(!sym_label)
     {
-        report(arg.source(), Diag::undefined_label);
+        report(arg.source(), diag::undefined_label);
         return nullptr;
     }
 
@@ -589,7 +705,7 @@ auto Sema::validate_string_literal(
 
     if(arg.type() != ParserIR::Argument::Type::STRING)
     {
-        report(arg.source(), Diag::expected_string);
+        report(arg.source(), diag::expected_string);
         return nullptr;
     }
 
@@ -606,7 +722,7 @@ auto Sema::validate_var_ref(const CommandTable::ParamDef& param,
 
     if(arg.type() != ParserIR::Argument::Type::IDENTIFIER)
     {
-        report(arg.source(), Diag::expected_variable);
+        report(arg.source(), diag::expected_variable);
         return nullptr;
     }
 
@@ -621,7 +737,7 @@ auto Sema::validate_var_ref(const CommandTable::ParamDef& param,
 
         if(arg_ident.size() == 1 || arg_ident[1] == '[' || arg_ident[1] == ']')
         {
-            report(arg.source(), Diag::expected_varname_after_dollar);
+            report(arg.source(), diag::expected_varname_after_dollar);
             return nullptr; // cannot recover because of parse_var_ref
         }
 
@@ -635,7 +751,7 @@ auto Sema::validate_var_ref(const CommandTable::ParamDef& param,
     sym_var = lookup_var_lvar(var_name);
     if(!sym_var)
     {
-        report(var_source, Diag::undefined_variable);
+        report(var_source, diag::undefined_variable);
         return nullptr;
     }
 
@@ -646,21 +762,21 @@ auto Sema::validate_var_ref(const CommandTable::ParamDef& param,
         if(!analyzing_repeat_command) // REPEAT hardcodes the acceptance
         {                             // of LVAR_INTs parameters
             failed = true;
-            report(var_source, Diag::expected_gvar_got_lvar);
+            report(var_source, diag::expected_gvar_got_lvar);
         }
     }
     else if(is_lvar_param(param.type)
             && sym_var->scope() == SymbolTable::global_scope)
     {
         failed = true;
-        report(var_source, Diag::expected_lvar_got_gvar);
+        report(var_source, diag::expected_lvar_got_gvar);
     }
 
     // Check whether the type of the variable matches the parameter.
     if(!matches_var_type(param.type, sym_var->type()))
     {
         failed = true;
-        report(var_source, Diag::var_type_mismatch);
+        report(var_source, diag::var_type_mismatch);
     }
 
     // An array variable name which is not followed by a subscript
@@ -676,7 +792,7 @@ auto Sema::validate_var_ref(const CommandTable::ParamDef& param,
     if(subscript && !sym_var->is_array())
     {
         failed = true;
-        report(var_source, Diag::subscript_but_var_is_not_array);
+        report(var_source, diag::subscript_but_var_is_not_array);
     }
 
     // The program is ill-formed if the array subscript uses a negative
@@ -689,7 +805,7 @@ auto Sema::validate_var_ref(const CommandTable::ParamDef& param,
                || subscript->literal >= sym_var->dimensions().value_or(1))
             {
                 failed = true;
-                report(subscript->source, Diag::subscript_out_of_range);
+                report(subscript->source, diag::subscript_out_of_range);
                 subscript->literal = 0; // recover
             }
         }
@@ -701,20 +817,20 @@ auto Sema::validate_var_ref(const CommandTable::ParamDef& param,
         if(!sym_subscript)
         {
             failed = true;
-            report(subscript->source, Diag::undefined_variable);
+            report(subscript->source, diag::undefined_variable);
             subscript->literal = 0; // recover
         }
         else if(sym_subscript->type() != SymbolTable::VarType::INT)
         {
             failed = true;
-            report(subscript->source, Diag::subscript_var_must_be_int);
+            report(subscript->source, diag::subscript_var_must_be_int);
             sym_subscript = nullptr; // recover
             subscript->literal = 0;  // recover
         }
         else if(sym_subscript->is_array())
         {
             failed = true;
-            report(subscript->source, Diag::subscript_var_must_not_be_array);
+            report(subscript->source, diag::subscript_var_must_not_be_array);
             sym_subscript = nullptr; // recover
             subscript->literal = 0;  // recover
         }
@@ -731,7 +847,7 @@ auto Sema::validate_var_ref(const CommandTable::ParamDef& param,
         if(var_entity_type(*sym_var) != param.entity_type)
         {
             failed = true;
-            report(var_source, Diag::var_entity_type_mismatch);
+            report(var_source, diag::var_entity_type_mismatch);
         }
     }
 
@@ -778,7 +894,7 @@ auto Sema::validate_set(const SemaIR::Command& command) -> bool
             }
             else if(lhs_entity_type != rhs_entity_type)
             {
-                report(command.source(), Diag::var_entity_type_mismatch)
+                report(command.source(), diag::var_entity_type_mismatch)
                         .range(command.arg(0).source())
                         .range(command.arg(1).source());
                 return false;
@@ -801,7 +917,7 @@ auto Sema::validate_script_name(const SemaIR::Command& command) -> bool
                                 seen_script_names.end(), *name);
             if(it != seen_script_names.end())
             {
-                report(command.arg(0).source(), Diag::duplicate_script_name);
+                report(command.arg(0).source(), diag::duplicate_script_name);
                 return false;
             }
             else
@@ -826,7 +942,7 @@ auto Sema::validate_start_new_script(const SemaIR::Command& command) -> bool
             if(target_label->scope() == SymbolTable::global_scope)
             {
                 report(command.arg(0).source(),
-                       Diag::target_label_not_within_scope);
+                       diag::target_label_not_within_scope);
                 return false;
             }
 
@@ -887,7 +1003,7 @@ auto Sema::validate_target_scope_vars(SemaIR::ArgumentView::iterator begin,
         if(target_var == nullptr)
         {
             failed = true;
-            report(arg.source(), Diag::target_scope_not_enough_vars);
+            report(arg.source(), diag::target_scope_not_enough_vars);
         }
         else
         {
@@ -903,7 +1019,7 @@ auto Sema::validate_target_scope_vars(SemaIR::ArgumentView::iterator begin,
                 if(target_vars[i]->type() != SymbolTable::VarType::INT)
                 {
                     failed = true;
-                    report(arg.source(), Diag::target_var_type_mismatch);
+                    report(arg.source(), diag::target_var_type_mismatch);
                 }
             }
             else if(arg.pun_as_float())
@@ -911,7 +1027,7 @@ auto Sema::validate_target_scope_vars(SemaIR::ArgumentView::iterator begin,
                 if(target_vars[i]->type() != SymbolTable::VarType::FLOAT)
                 {
                     failed = true;
-                    report(arg.source(), Diag::target_var_type_mismatch);
+                    report(arg.source(), diag::target_var_type_mismatch);
                 }
             }
             else if(arg.as_text_label())
@@ -919,7 +1035,7 @@ auto Sema::validate_target_scope_vars(SemaIR::ArgumentView::iterator begin,
                 if(target_vars[i]->type() != SymbolTable::VarType::TEXT_LABEL)
                 {
                     failed = true;
-                    report(arg.source(), Diag::target_var_type_mismatch);
+                    report(arg.source(), diag::target_var_type_mismatch);
                 }
             }
             else if(const auto var_ref = arg.as_var_ref())
@@ -928,7 +1044,7 @@ auto Sema::validate_target_scope_vars(SemaIR::ArgumentView::iterator begin,
                 if(target_vars[i]->type() != source_var.type())
                 {
                     failed = true;
-                    report(arg.source(), Diag::target_var_type_mismatch);
+                    report(arg.source(), diag::target_var_type_mismatch);
                 }
                 else if(var_entity_type(*target_vars[i]) == EntityId{0}
                         && var_entity_type(source_var) != EntityId{0})
@@ -940,13 +1056,13 @@ auto Sema::validate_target_scope_vars(SemaIR::ArgumentView::iterator begin,
                         != var_entity_type(source_var))
                 {
                     failed = true;
-                    report(arg.source(), Diag::target_var_entity_type_mismatch);
+                    report(arg.source(), diag::target_var_entity_type_mismatch);
                 }
             }
             else
             {
                 failed = true;
-                report(arg.source(), Diag::internal_compiler_error);
+                report(arg.source(), gta3sc::diag::internal_compiler_error);
             }
         }
     }
@@ -963,7 +1079,7 @@ void Sema::declare_label(const ParserIR::LabelDef& label_def)
                                                   label_def.source());
        !inserted)
     {
-        report(label_def.source(), Diag::duplicate_label);
+        report(label_def.source(), diag::duplicate_label);
     }
 }
 
@@ -977,7 +1093,7 @@ void Sema::declare_variable(const ParserIR::Command& command,
 
         if(arg.type() != ParserIR::Argument::Type::IDENTIFIER)
         {
-            report(arg.source(), Diag::expected_identifier);
+            report(arg.source(), diag::expected_identifier);
             continue;
         }
 
@@ -986,19 +1102,19 @@ void Sema::declare_variable(const ParserIR::Command& command,
 
         if(subscript && !subscript->literal)
         {
-            report(subscript->source, Diag::var_decl_subscript_must_be_literal);
+            report(subscript->source, diag::var_decl_subscript_must_be_literal);
             subscript->literal = 1; // recover
         }
 
         if(subscript && *subscript->literal <= 0)
         {
-            report(subscript->source, Diag::var_decl_subscript_must_be_nonzero);
+            report(subscript->source, diag::var_decl_subscript_must_be_nonzero);
             subscript->literal = 1; // recover
         }
 
         if(var_scope_id == no_local_scope)
         {
-            report(arg.source(), Diag::var_decl_outside_of_scope);
+            report(arg.source(), diag::var_decl_outside_of_scope);
             var_scope_id = SymbolTable::global_scope; // recover
         }
 
@@ -1008,7 +1124,7 @@ void Sema::declare_variable(const ParserIR::Command& command,
 
         if(var_name == varname_timera || var_name == varname_timerb)
         {
-            report(var_source, Diag::duplicate_var_timer);
+            report(var_source, diag::duplicate_var_timer);
         }
         else if(auto [var, inserted] = symrepo->insert_var(
                         var_name, var_scope_id, type, subscript_literal,
@@ -1016,20 +1132,22 @@ void Sema::declare_variable(const ParserIR::Command& command,
                 !inserted)
         {
             if(var_scope_id == SymbolTable::global_scope)
-                report(var_source, Diag::duplicate_var_global);
+                report(var_source, diag::duplicate_var_global);
             else
-                report(var_source, Diag::duplicate_var_in_scope);
+                report(var_source, diag::duplicate_var_in_scope);
         }
     }
 }
 
-auto Sema::report(SourceLocation source, Diag message) -> DiagnosticBuilder
+auto Sema::report(SourceLocation source,
+                  const DiagnosticDescriptor& message) -> Diagnostic::Builder
 {
     this->report_count++;
     return diag->report(source, message);
 }
 
-auto Sema::report(SourceRange source, Diag message) -> DiagnosticBuilder
+auto Sema::report(SourceRange source,
+                  const DiagnosticDescriptor& message) -> Diagnostic::Builder
 {
     return report(source.begin, message).range(source);
 }
@@ -1301,8 +1419,8 @@ auto Sema::is_matching_alternative(const ParserIR::Command& command,
     return true;
 }
 
-auto Sema::parse_var_ref(std::string_view identifier, SourceRange source)
-        -> VarRef
+auto Sema::parse_var_ref(std::string_view identifier,
+                         SourceRange source) -> VarRef
 {
     // subscript := '[' (variable_name | integer) ']' ;
     // variable := variable_name [ subscript ] ;
@@ -1329,7 +1447,7 @@ auto Sema::parse_var_ref(std::string_view identifier, SourceRange source)
         const auto it_open_pos = std::distance(identifier.begin(), it_open);
         if(*it_open == ']')
         {
-            report(source.begin + it_open_pos, Diag::expected_word).args("[");
+            report(source.begin + it_open_pos, diag::expected_word).args("[");
             // Recovery strategy: Assume *it == ']'
         }
 
@@ -1339,7 +1457,7 @@ auto Sema::parse_var_ref(std::string_view identifier, SourceRange source)
 
         if(it_close == identifier.end() || *it_close == '[')
         {
-            report(source.begin + it_close_pos, Diag::expected_word).args("]");
+            report(source.begin + it_close_pos, diag::expected_word).args("]");
             // Recovery strategy: Assume *it_close == ']'
         }
 
@@ -1349,7 +1467,7 @@ auto Sema::parse_var_ref(std::string_view identifier, SourceRange source)
 
         if(std::distance(it_open, it_close) <= 1)
         {
-            report(source.begin + it_open_pos + 1, Diag::expected_subscript);
+            report(source.begin + it_open_pos + 1, diag::expected_subscript);
             // Recovery strategy: Assume there is no subscript.
             subscript = std::nullopt;
         }
@@ -1382,7 +1500,7 @@ auto Sema::parse_var_ref(std::string_view identifier, SourceRange source)
 
         if(subval.front() == '-')
         {
-            report(subscript->source, Diag::subscript_must_be_positive);
+            report(subscript->source, diag::subscript_must_be_positive);
             // Recovery strategy: Assume there is no subscript.
             subscript = std::nullopt;
         }
@@ -1392,12 +1510,12 @@ auto Sema::parse_var_ref(std::string_view identifier, SourceRange source)
             {
                 int32_t value{};
 
-                if(auto [_, ec] = util::from_chars(&*subval.begin(),
-                                                   &*subval.end(), value);
+                if(auto [_, ec] = std::from_chars(&*subval.begin(),
+                                                  &*subval.end(), value);
                    ec != std::errc())
                 {
                     assert(ec == std::errc::result_out_of_range);
-                    report(subscript->source, Diag::integer_literal_too_big);
+                    report(subscript->source, diag::integer_literal_too_big);
                     // Recovery strategy: Assume there is no subscript.
                     subscript = std::nullopt;
                 }
@@ -1408,7 +1526,7 @@ auto Sema::parse_var_ref(std::string_view identifier, SourceRange source)
             }
             else
             {
-                report(subscript->source, Diag::expected_integer);
+                report(subscript->source, diag::expected_integer);
                 // Recovery strategy: Assume there is no subscript.
                 subscript = std::nullopt;
             }

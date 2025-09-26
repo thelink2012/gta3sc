@@ -1,6 +1,6 @@
 #include <cmath>
 #include <gta3sc/codegen/trilogy/emitter.hpp>
-using gta3sc::util::bit_cast;
+using std::bit_cast;
 
 namespace gta3sc::codegen::trilogy
 {
@@ -180,6 +180,17 @@ auto CodeEmitter::emit_raw_u32(uint32_t value) -> CodeEmitter&
 
     buffer[buffer_pos + 3] = bit_cast<std::byte>(
             static_cast<uint8_t>((value & 0xFF000000U) >> 24U));
+
+    return *this;
+}
+
+auto CodeEmitter::emit_fill(std::byte value, size_t count) -> CodeEmitter&
+{
+    const auto buffer_pos = this->buffer.size();
+    this->buffer.resize(buffer_pos + count);
+    this->curr_offset += count;
+
+    std::fill_n(buffer.begin() + buffer_pos, count, value);
 
     return *this;
 }

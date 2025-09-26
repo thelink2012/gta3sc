@@ -143,14 +143,14 @@ public:
         return reverse_iterator(end());
     }
 
-    [[nodiscard]] constexpr auto rbegin() const noexcept
-            -> const_reverse_iterator
+    [[nodiscard]] constexpr auto
+    rbegin() const noexcept -> const_reverse_iterator
     {
         return const_reverse_iterator(end());
     }
 
-    [[nodiscard]] constexpr auto crbegin() const noexcept
-            -> const_reverse_iterator
+    [[nodiscard]] constexpr auto
+    crbegin() const noexcept -> const_reverse_iterator
     {
         return rbegin();
     }
@@ -165,8 +165,8 @@ public:
         return const_reverse_iterator(begin());
     }
 
-    [[nodiscard]] constexpr auto crend() const noexcept
-            -> const_reverse_iterator
+    [[nodiscard]] constexpr auto
+    crend() const noexcept -> const_reverse_iterator
     {
         return rend();
     }
@@ -218,8 +218,8 @@ public:
     /// Inserts the given `node` before `pos`.
     ///
     /// The given node must not be part of any list.
-    constexpr auto insert(const_iterator pos, reference node) noexcept
-            -> iterator
+    constexpr auto insert(const_iterator pos,
+                          reference node) noexcept -> iterator
     {
         algorithm::circular_list::insert(*pos.unconst(), node);
         return iterator(node);
@@ -266,8 +266,8 @@ public:
 
     /// Unlinks the range `[first, last)` from the container and returns an
     /// iterator following the last element removed.
-    constexpr auto erase(const_iterator first, const_iterator last) noexcept
-            -> iterator
+    constexpr auto erase(const_iterator first,
+                         const_iterator last) noexcept -> iterator
     {
         algorithm::circular_list::erase(*first.unconst(), *last.unconst());
         return last.unconst();

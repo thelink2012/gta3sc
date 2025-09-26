@@ -10,6 +10,48 @@
 #include <pugixml.hpp>
 using namespace std::string_view_literals;
 
+namespace gta3sc::config::diag
+{
+// Config XML diagnostics
+const DiagnosticDescriptor
+        xml_missing_required_attr(DiagnosticSeverity::error,
+                                  "XML missing required attribute", "TODO");
+const DiagnosticDescriptor xml_empty_attr(DiagnosticSeverity::error,
+                                          "XML empty attribute", "TODO");
+const DiagnosticDescriptor xml_unknown_node(DiagnosticSeverity::error,
+                                            "XML unknown node", "TODO");
+const DiagnosticDescriptor xml_parse_failed(DiagnosticSeverity::error,
+                                            "XML parse failed", "TODO");
+const DiagnosticDescriptor xml_invalid_root_element(DiagnosticSeverity::error,
+                                                    "XML invalid root element",
+                                                    "TODO");
+const DiagnosticDescriptor xml_import_too_deep(DiagnosticSeverity::error,
+                                               "XML import too deep", "TODO");
+const DiagnosticDescriptor xml_invalid_param_type(DiagnosticSeverity::error,
+                                                  "XML invalid parameter type",
+                                                  "TODO");
+const DiagnosticDescriptor
+        xml_opt_must_be_last_param(DiagnosticSeverity::error,
+                                   "XML optional parameter must be last",
+                                   "TODO");
+const DiagnosticDescriptor xml_security_import_filesystem_traversal(
+        DiagnosticSeverity::error, "XML security: import filesystem traversal",
+        "TODO");
+const DiagnosticDescriptor xml_import_failed_to_determine_game_config(
+        DiagnosticSeverity::error, "XML import failed to determine game config",
+        "TODO");
+const DiagnosticDescriptor
+        xml_invalid_constant_value(DiagnosticSeverity::error,
+                                   "XML invalid constant value", "TODO");
+const DiagnosticDescriptor xml_invalid_handled_without_id(
+        DiagnosticSeverity::error, "XML invalid handled without ID", "TODO");
+const DiagnosticDescriptor xml_invalid_command_id(DiagnosticSeverity::error,
+                                                  "XML invalid command ID",
+                                                  "TODO");
+const DiagnosticDescriptor xml_expected_boolean(DiagnosticSeverity::error,
+                                                "XML expected boolean", "TODO");
+} // namespace gta3sc::config::diag
+
 // Configuration files are in XML.
 // Schema can be found at
 // https://github.com/GTAmodding/gta3script-config/blob/gta3sc-rewrite/schema.rnc.
@@ -29,12 +71,13 @@ using namespace gta3sc;
 class ConfigLoader
 {
 public:
-    /// See \ref gta3sc::load_config for more information.
+    /// See \ref gta3sc::config::load_config for more information.
     ///
-    /// \param root_path The root path of the game configs, or empty if imports are not allowed.
-    /// \param fileman The file manager to use to load files or nullptr if imports are not allowed.
-    /// \param diagman The diagnostic handler to use to report errors.
-    /// \param builder The builder to use to build the command table.
+    /// \param root_path The root path of the game configs, or empty if imports
+    /// are not allowed. \param fileman The file manager to use to load files or
+    /// nullptr if imports are not allowed. \param diagman The diagnostic
+    /// handler to use to report errors. \param builder The builder to use to
+    /// build the command table.
     ConfigLoader(const std::filesystem::path& root_path, SourceManager* fileman,
                  DiagnosticHandler& diagman, CommandTable::Builder& builder) :
         builder(builder),
@@ -179,7 +222,7 @@ auto load_config(const std::filesystem::path& root_path,
     if(!config_file)
     {
         diagman.report(SourceManager::no_source_loc,
-                       Diag::config_xml_could_not_open_file)
+                       gta3sc::diag::could_not_open_file)
                 .args(config_path.generic_string());
         return std::move(builder);
     }
@@ -204,7 +247,7 @@ auto load_config(const SourceFile& config_file, DiagnosticHandler& diagman,
     // Return the same rvalue reference as given as input.
     return std::move(builder);
 }
-} // namespace gta3sc
+} // namespace gta3sc::config
 
 namespace
 {
@@ -236,7 +279,7 @@ void ConfigLoader::report_missing_required_attr(const SourceFile& config_file,
                                                 std::string_view attr_name)
 {
     diagman.report(xml_location(config_file, node),
-                   Diag::config_xml_missing_required_attr)
+                   config::diag::xml_missing_required_attr)
             .args(attr_name);
 }
 
@@ -244,7 +287,8 @@ void ConfigLoader::report_empty_attr(const SourceFile& config_file,
                                      const pugi::xml_node& node,
                                      std::string_view attr_name)
 {
-    diagman.report(xml_location(config_file, node), Diag::config_xml_empty_attr)
+    diagman.report(xml_location(config_file, node),
+                   config::diag::xml_empty_attr)
             .args(attr_name);
 }
 
@@ -252,7 +296,7 @@ void ConfigLoader::report_unknown_node(const SourceFile& config_file,
                                        const pugi::xml_node& node)
 {
     diagman.report(xml_location(config_file, node),
-                   Diag::config_xml_unknown_node)
+                   config::diag::xml_unknown_node)
             .args(node.name());
 }
 
@@ -260,7 +304,7 @@ void ConfigLoader::report_parse_error(const SourceFile& config_file,
                                       ptrdiff_t offset, const char* description)
 {
     diagman.report(xml_location(config_file, offset),
-                   Diag::config_xml_parse_failed)
+                   config::diag::xml_parse_failed)
             .args(description);
 }
 
@@ -268,7 +312,7 @@ void ConfigLoader::report_invalid_root_element(const SourceFile& config_file,
                                                const pugi::xml_node& root)
 {
     diagman.report(xml_location(config_file, root),
-                   Diag::config_xml_invalid_root_element)
+                   config::diag::xml_invalid_root_element)
             .args(root ? root.name() : "");
 }
 
@@ -276,7 +320,7 @@ void ConfigLoader::report_import_too_deep(const SourceFile& config_file,
                                           const pugi::xml_node& node)
 {
     diagman.report(xml_location(config_file, node),
-                   Diag::config_xml_import_too_deep);
+                   config::diag::xml_import_too_deep);
 }
 
 void ConfigLoader::report_invalid_param_type(const SourceFile& config_file,
@@ -284,7 +328,7 @@ void ConfigLoader::report_invalid_param_type(const SourceFile& config_file,
                                              const char* type_value)
 {
     diagman.report(xml_location(config_file, node),
-                   Diag::config_xml_invalid_param_type)
+                   config::diag::xml_invalid_param_type)
             .args(type_value);
 }
 
@@ -292,7 +336,7 @@ void ConfigLoader::report_opt_param_not_last(const SourceFile& config_file,
                                              const pugi::xml_node& node)
 {
     diagman.report(xml_location(config_file, node),
-                   Diag::config_xml_opt_must_be_last_param);
+                   config::diag::xml_opt_must_be_last_param);
 }
 
 void ConfigLoader::report_import_security_error(const SourceFile& config_file,
@@ -300,7 +344,7 @@ void ConfigLoader::report_import_security_error(const SourceFile& config_file,
                                                 const char* from_value)
 {
     diagman.report(xml_location(config_file, node),
-                   Diag::config_xml_security_import_filesystem_traversal)
+                   config::diag::xml_security_import_filesystem_traversal)
             .args(from_value);
 }
 
@@ -308,7 +352,7 @@ void ConfigLoader::report_import_game_config_error(
         const SourceFile& config_file, const pugi::xml_node& node)
 {
     diagman.report(xml_location(config_file, node),
-                   Diag::config_xml_import_failed_to_determine_game_config);
+                   config::diag::xml_import_failed_to_determine_game_config);
 }
 
 void ConfigLoader::report_could_not_open_file(const SourceFile& config_file,
@@ -316,7 +360,7 @@ void ConfigLoader::report_could_not_open_file(const SourceFile& config_file,
                                               std::string_view path)
 {
     diagman.report(xml_location(config_file, node),
-                   Diag::config_xml_could_not_open_file)
+                   gta3sc::diag::could_not_open_file)
             .args(path);
 }
 
@@ -325,7 +369,7 @@ void ConfigLoader::report_invalid_constant_value(const SourceFile& config_file,
                                                  const char* value)
 {
     diagman.report(xml_location(config_file, node),
-                   Diag::config_xml_invalid_constant_value)
+                   config::diag::xml_invalid_constant_value)
             .args(value);
 }
 
@@ -333,7 +377,7 @@ void ConfigLoader::report_invalid_handled_without_id(
         const SourceFile& config_file, const pugi::xml_node& node)
 {
     diagman.report(xml_location(config_file, node),
-                   Diag::config_xml_invalid_handled_without_id);
+                   config::diag::xml_invalid_handled_without_id);
 }
 
 void ConfigLoader::report_invalid_command_id(const SourceFile& config_file,
@@ -341,7 +385,7 @@ void ConfigLoader::report_invalid_command_id(const SourceFile& config_file,
                                              const char* id_value)
 {
     diagman.report(xml_location(config_file, node),
-                   Diag::config_xml_invalid_command_id)
+                   config::diag::xml_invalid_command_id)
             .args(id_value);
 }
 
@@ -350,7 +394,7 @@ void ConfigLoader::report_expected_boolean(const SourceFile& config_file,
                                            const char* value)
 {
     diagman.report(xml_location(config_file, node),
-                   Diag::config_xml_expected_boolean)
+                   config::diag::xml_expected_boolean)
             .args(value);
 }
 
@@ -717,7 +761,7 @@ void ConfigLoader::process_command(const SourceFile& config_file,
     auto [command, _] = builder.insert_command(toupper(name.value()));
     assert(command != nullptr);
 
-    util::span<CommandTable::ParamDef> param_defs;
+    std::span<CommandTable::ParamDef> param_defs;
 
     // Process parameters if present
     if(auto params = node.child("Params"))

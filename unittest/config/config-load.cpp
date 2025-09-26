@@ -33,7 +33,7 @@ TEST_CASE_FIXTURE(LoadConfigFixture,
     </Commands>
 </GTA3Script>)");
 
-    auto builder = gta3sc::load_config(
+    auto builder = gta3sc::config::load_config(
             root_test_dir, root_test_dir / "config.xml", sourceman, diagman,
             gta3sc::CommandTable::Builder(&arena));
     builder.insert_command("TEST_CMD2");
@@ -61,9 +61,9 @@ TEST_CASE_FIXTURE(LoadConfigFixture,
     </Commands>
 </GTA3Script>)");
 
-    auto table = gta3sc::load_config(root_test_dir,
-                                     root_test_dir / "config.xml", sourceman,
-                                     diagman, gta3sc::ArenaAllocator<>(&arena));
+    auto table = gta3sc::config::load_config(
+            root_test_dir, root_test_dir / "config.xml", sourceman, diagman,
+            gta3sc::ArenaAllocator<>(&arena));
 
     CHECK(diags.empty());
 
@@ -81,8 +81,8 @@ TEST_CASE_FIXTURE(ConfigFixture, "load_config with in-memory file")
     </Commands>
 </GTA3Script>)");
 
-    auto builder = gta3sc::load_config(source, diagman,
-                                       gta3sc::CommandTable::Builder(&arena));
+    auto builder = gta3sc::config::load_config(
+            source, diagman, gta3sc::CommandTable::Builder(&arena));
     builder.insert_command("TEST_CMD2");
     auto table = std::move(builder).build();
 
@@ -95,25 +95,23 @@ TEST_CASE_FIXTURE(ConfigFixture, "load_config with in-memory file")
 
 TEST_CASE_FIXTURE(LoadConfigFixture, "load_config with non-existent file")
 {
-    auto table = gta3sc::load_config(root_test_dir,
-                                     root_test_dir / "nonexistent.xml",
-                                     sourceman, diagman,
-                                     gta3sc::CommandTable::Builder(&arena))
+    auto table = gta3sc::config::load_config(
+                         root_test_dir, root_test_dir / "nonexistent.xml",
+                         sourceman, diagman,
+                         gta3sc::CommandTable::Builder(&arena))
                          .build();
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_xml_could_not_open_file);
+    CHECK(consume_diag().descriptor == &gta3sc::diag::could_not_open_file);
 }
 
 TEST_CASE_FIXTURE(LoadConfigFixture,
                   "load_config in allocator overload and non-existent file")
 {
-    auto table = gta3sc::load_config(
+    auto table = gta3sc::config::load_config(
             root_test_dir, root_test_dir / "nonexistent.xml", sourceman,
             diagman, gta3sc::ArenaAllocator<>(&arena));
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_xml_could_not_open_file);
+    CHECK(consume_diag().descriptor == &gta3sc::diag::could_not_open_file);
 }

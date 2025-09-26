@@ -39,14 +39,11 @@ public:
     /// Finds a model in the repository.
     ///
     /// Returns the model definition or `nullptr` if not found.
-    [[nodiscard]] auto find_model(std::string_view name) const noexcept
-            -> const ModelDef*;
+    [[nodiscard]] auto
+    find_model(std::string_view name) const noexcept -> const ModelDef*;
 
     /// Returns the number of models in the table.
-    [[nodiscard]] auto size() const noexcept -> size_t
-    {
-        return models.size();
-    }
+    [[nodiscard]] auto size() const noexcept -> size_t { return models.size(); }
 
 private:
     using ModelMap

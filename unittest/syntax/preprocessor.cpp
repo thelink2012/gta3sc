@@ -114,7 +114,8 @@ TEST_CASE_FIXTURE(PreprocessorFixture,
 {
     build_pp("foo/*/ this is a block \n comment \n ");
     REQUIRE(drain() == "foo\n\n");
-    REQUIRE(consume_diag().message == gta3sc::Diag::unterminated_comment);
+    REQUIRE(consume_diag().descriptor
+            == &gta3sc::syntax::diag::unterminated_comment);
 }
 
 TEST_CASE_FIXTURE(PreprocessorFixture, "complicated character stream")

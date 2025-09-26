@@ -9,8 +9,8 @@ template<typename Container, template<typename> typename IteratorAdaptor
 class ContainerView
 {
 private:
-    using container_const_iterator = decltype(
-            std::cbegin(std::declval<Container>()));
+    using container_const_iterator = decltype(std::cbegin(
+            std::declval<Container>()));
 
 public:
     using iterator = iterator_adaptor::Iterator<

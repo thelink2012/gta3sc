@@ -1,8 +1,8 @@
 #pragma once
 #include <gta3sc/util/arena.hpp>
 #include <gta3sc/util/intrusive-forward-list-node.hpp>
-#include <gta3sc/util/span.hpp>
 #include <optional>
+#include <span>
 #include <string_view>
 #include <unordered_map>
 
@@ -111,8 +111,8 @@ public:
     /// The given name must be in uppercase or no command will be found.
     ///
     /// Returns a pointer to the command information or `nullptr` if not found.
-    auto find_command(std::string_view name) const noexcept
-            -> const CommandDef*;
+    auto
+    find_command(std::string_view name) const noexcept -> const CommandDef*;
 
     /// Finds the alternator with the specified name.
     ///
@@ -180,24 +180,24 @@ private:
     using EntityMap = std::unordered_map<std::string_view, EntityId>;
 
     /// Static version of `this->find_command(name)`.
-    static auto find_command(const CommandMap& commands_map,
-                             std::string_view name) noexcept
-            -> const CommandDef*;
+    static auto
+    find_command(const CommandMap& commands_map,
+                 std::string_view name) noexcept -> const CommandDef*;
 
     /// Static version of `this->find_alternator(name)`.
-    static auto find_alternator(const AlternatorMap& alternators_map,
-                                std::string_view name) noexcept
-            -> const AlternatorDef*;
+    static auto
+    find_alternator(const AlternatorMap& alternators_map,
+                    std::string_view name) noexcept -> const AlternatorDef*;
 
     /// Static version of `this->find_enumeration(name)`.
-    static auto find_enumeration(const EnumMap& enums_map,
-                                 std::string_view name) noexcept
-            -> std::optional<EnumId>;
+    static auto
+    find_enumeration(const EnumMap& enums_map,
+                     std::string_view name) noexcept -> std::optional<EnumId>;
 
     /// Static version of `this->find_constant(enum_id, name)`.
-    static auto find_constant(const ConstantMap& constants_map, EnumId enum_id,
-                              std::string_view name) noexcept
-            -> const ConstantDef*;
+    static auto
+    find_constant(const ConstantMap& constants_map, EnumId enum_id,
+                  std::string_view name) noexcept -> const ConstantDef*;
 
     /// Static version of `this->find_constant_any_means(name)`.
     static auto find_constant_any_means(const ConstantMap& constants_map,
@@ -205,9 +205,9 @@ private:
             -> const ConstantDef*;
 
     /// Static version of `this->find_entity_type(name)`.
-    static auto find_entity_type(const EntityMap& entities_map,
-                                 std::string_view name) noexcept
-            -> std::optional<EntityId>;
+    static auto
+    find_entity_type(const EntityMap& entities_map,
+                     std::string_view name) noexcept -> std::optional<EntityId>;
 
 private:
     CommandMap commands_map;
@@ -264,7 +264,7 @@ public:
     }
 
     /// Returns the parameters of the command.
-    [[nodiscard]] auto params() const noexcept -> util::span<const ParamDef>
+    [[nodiscard]] auto params() const noexcept -> std::span<const ParamDef>
     {
         return m_params;
     }
@@ -310,7 +310,7 @@ public:
 private:
     friend class CommandTable::Builder;
     std::string_view m_name;
-    util::span<const ParamDef> m_params;
+    std::span<const ParamDef> m_params;
     std::optional<int16_t> m_target_id;
     bool m_target_handled{};
 };
@@ -419,8 +419,8 @@ public:
     auto build() && -> CommandTable;
 
     /// Behaves the same as `CommandTable::find_command`.
-    auto find_command(std::string_view name) const noexcept
-            -> const CommandDef*;
+    auto
+    find_command(std::string_view name) const noexcept -> const CommandDef*;
 
     /// Behaves the same as `CommandTable::find_command`.
     auto find_command(std::string_view name) noexcept -> CommandDef*;
@@ -484,8 +484,8 @@ public:
     /// of same name already exists, does nothing.
     ///
     /// Returns the alternator and whether insertion took place.
-    auto insert_alternator(std::string_view name)
-            -> std::pair<AlternatorDef*, bool>;
+    auto
+    insert_alternator(std::string_view name) -> std::pair<AlternatorDef*, bool>;
 
     /// Inserts a command alternative into a given alternator.
     ///
@@ -551,7 +551,7 @@ void CommandTable::Builder::set_command_params(CommandDef& command,
         a_params = allocator.allocate_object<ParamDef>(params_size);
         std::uninitialized_copy(params_begin, params_end, a_params);
     }
-    command.m_params = util::span(a_params, params_size);
+    command.m_params = std::span(a_params, params_size);
 }
 
 template<typename RandomAccessIterator>

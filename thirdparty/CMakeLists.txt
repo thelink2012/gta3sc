@@ -1,7 +1,6 @@
 # Disable static analysis / lint on third-party code
 set(CMAKE_CXX_CLANG_TIDY "")
 
-add_subdirectory(span-lite EXCLUDE_FROM_ALL)
 add_subdirectory(pugixml EXCLUDE_FROM_ALL)
 
 if(BUILD_TESTING)

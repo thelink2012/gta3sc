@@ -12,8 +12,8 @@ TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
 </GTA3Script>)");
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_xml_missing_required_attr);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::config::diag::xml_missing_required_attr);
 }
 
 TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
@@ -27,8 +27,8 @@ TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
 </GTA3Script>)");
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_xml_missing_required_attr);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::config::diag::xml_missing_required_attr);
 }
 
 TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
@@ -42,8 +42,8 @@ TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
 </GTA3Script>)");
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_xml_invalid_command_id);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::config::diag::xml_invalid_command_id);
 }
 
 TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
@@ -95,8 +95,8 @@ TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
 </GTA3Script>)");
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_xml_invalid_command_id);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::config::diag::xml_invalid_command_id);
 }
 
 TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
@@ -130,8 +130,10 @@ TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
 </GTA3Script>)");
 
     REQUIRE(diags.size() == 2);
-    CHECK(consume_diag().message == gta3sc::Diag::config_xml_expected_boolean);
-    CHECK(consume_diag().message == gta3sc::Diag::config_xml_expected_boolean);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::config::diag::xml_expected_boolean);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::config::diag::xml_expected_boolean);
 }
 
 TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
@@ -202,8 +204,8 @@ TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
 </GTA3Script>)");
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_xml_invalid_handled_without_id);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::config::diag::xml_invalid_handled_without_id);
 }
 
 TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
@@ -275,8 +277,8 @@ TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
 </GTA3Script>)");
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_xml_invalid_command_id);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::config::diag::xml_invalid_command_id);
 }
 
 TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
@@ -290,8 +292,8 @@ TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
 </GTA3Script>)");
 
     REQUIRE(!diags.empty());
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_xml_invalid_command_id);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::config::diag::xml_invalid_command_id);
 }
 
 TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
@@ -348,8 +350,8 @@ TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
     REQUIRE(diags.size() == 42);
     for(int i = 0; i < 42; ++i)
     {
-        CHECK(consume_diag().message
-              == gta3sc::Diag::config_xml_invalid_command_id);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::config::diag::xml_invalid_command_id);
     }
 }
 
@@ -419,12 +421,12 @@ TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
 </GTA3Script>)");
 
     REQUIRE(diags.size() == 3);
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_xml_invalid_command_id);
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_xml_invalid_command_id);
-    CHECK(consume_diag().message
-          == gta3sc::Diag::config_xml_invalid_command_id);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::config::diag::xml_invalid_command_id);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::config::diag::xml_invalid_command_id);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::config::diag::xml_invalid_command_id);
 }
 
 TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,

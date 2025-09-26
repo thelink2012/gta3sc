@@ -1,8 +1,8 @@
 #pragma once
 #include <algorithm>
+#include <cassert>
 #include <functional>
 #include <gta3sc/sourceman.hpp>
-#include <memory>
 #include <variant>
 #include <vector>
 
@@ -13,162 +13,235 @@ enum class Category : uint8_t;
 
 namespace gta3sc
 {
-class DiagnosticHandler;
-class DiagnosticBuilder;
-
-enum class Diag : uint32_t  // NOLINT(performance-enum-size)
+/// Severity of a diagnostic.
+///
+/// The enumeration is ordered from least to most severe.
+enum class DiagnosticSeverity : uint8_t
 {
-    internal_compiler_error,
-    cannot_nest_scopes,
-    cannot_mix_andor,
-    cannot_use_string_constant_here,
-    too_many_conditions,
-    too_few_arguments,  // %0 => int (expected), %1 => int (got)
-    too_many_arguments, // %0 => int (expected), %1 => int (got)
-    expected_token,     // %0 => Category
-    expected_word,      // %0 => string
-    expected_words,     // %0 => vector<string>
-    expected_command,
-    expected_require_command,
-    expected_mission_start_at_top,
-    expected_argument,
-    expected_identifier,
-    expected_integer,
-    expected_float,
-    expected_text_label,
-    expected_label,
-    expected_string,
-    expected_input_int,
-    expected_input_float,
-    expected_input_opt,
-    expected_variable,
-    expected_subscript,
-    expected_varname_after_dollar,
-    expected_gvar_got_lvar,
-    expected_lvar_got_gvar,
-    expected_conditional_expression,
-    expected_conditional_operator,
-    expected_assignment_operator,
-    expected_ternary_operator,
-    unexpected_special_name, // %0 => string
-    invalid_char,
-    invalid_filename,
-    invalid_expression,
-    invalid_expression_unassociative, // %0 => Category
-    unterminated_comment,
-    unterminated_string_literal,
-    integer_literal_too_big,
-    float_literal_too_big,
-    limit_block_comments,
-    duplicate_var_global,
-    duplicate_var_in_scope,
-    duplicate_var_lvar,
-    duplicate_var_string_constant,
-    duplicate_label,
-    duplicate_script_name,
-    duplicate_var_timer,
-    var_decl_outside_of_scope,
-    var_decl_subscript_must_be_literal,
-    var_decl_subscript_must_be_nonzero,
-    var_type_mismatch,
-    var_entity_type_mismatch,
-    subscript_must_be_positive,
-    subscript_out_of_range,
-    subscript_but_var_is_not_array,
-    subscript_var_must_be_int,
-    subscript_var_must_not_be_array,
-    undefined_label,
-    undefined_command,
-    undefined_variable,
-    alternator_mismatch,
-    target_label_not_within_scope,
-    target_scope_not_enough_vars,
-    target_var_type_mismatch,
-    target_var_entity_type_mismatch,
-    codegen_label_at_local_zero_offset,
-    codegen_label_ref_across_segments,
-    codegen_target_does_not_support_command,
-    config_xml_could_not_open_file,   // %0 => string (filepath)
-    config_xml_parse_failed,          // %0 => string (error description)
-    config_xml_invalid_root_element,  // %0 => string (got)
-    config_xml_invalid_version,       // %0 => string (got)
-    config_xml_import_too_deep,
-    config_xml_missing_required_attr, // %0 => string (attribute name)
-    config_xml_empty_attr,            // %0 => string (attribute name)
-    config_xml_invalid_command_id,    // %0 => string (value)
-    config_xml_expected_boolean,      // %0 => string (got)
-    config_xml_invalid_param_type,    // %0 => string (got)
-    config_xml_security_import_filesystem_traversal, // %0 => string (got)
-    config_xml_unknown_node,          // %0 => string (got)
-    config_xml_invalid_constant_value, // %0 => string (value)
-    config_xml_import_failed_to_determine_game_config,
-    config_xml_invalid_handled_without_id,
-    config_xml_opt_must_be_last_param,
-    config_models_invalid_ide_line,
-    config_models_could_not_open_file, // %0 => string
+    info,
+    warning,
+    error
 };
 
-/// Information about a diagnostic.
+/// Describes a diagnostic.
+///
+/// Descriptors are essentially the unique identifier of a diagnostic.
+///
+/// Instances MUST be created in static (global) storage because they are stored
+/// as pointers in a diagnostic and the descriptor must outlive the diagnostics.
+class DiagnosticDescriptor
+{
+public:
+    /// \param default_severity The severity of the diagnostic if not overriden
+    /// by the compiler driver.
+    /// \param title A short title for the diagnostic.
+    /// \param message_format The message to be formatted (`std::format`-style)
+    /// on diagnostic.
+    DiagnosticDescriptor(DiagnosticSeverity default_severity,
+                         std::string_view title,
+                         std::string_view message_format) :
+        default_severity_(default_severity),
+        title_(title),
+        message_format_(message_format)
+    {}
+
+    DiagnosticDescriptor(const DiagnosticDescriptor&) = delete;
+    auto
+    operator=(const DiagnosticDescriptor&) -> DiagnosticDescriptor& = delete;
+
+    DiagnosticDescriptor(DiagnosticDescriptor&&) noexcept = delete;
+    auto operator=(DiagnosticDescriptor&&) noexcept
+            -> DiagnosticDescriptor& = delete;
+
+    auto default_severity() const -> DiagnosticSeverity
+    {
+        return default_severity_;
+    }
+    auto title() const -> std::string_view { return title_; }
+    auto message_format() const -> std::string_view { return message_format_; }
+
+private:
+    DiagnosticSeverity default_severity_;
+    std::string_view title_;
+    std::string_view message_format_;
+};
+
+/// A diagnostic, such as a compiler error/warning, alongside location and
+/// context.
 struct Diagnostic
 {
     using Arg = std::variant<int64_t, syntax::Category, std::string,
                              std::vector<std::string>>;
 
-    Diag message; ///< The diagnostic message.
-    SourceLocation
-            location; ///< Location from where the diagnostic was reported.
-    std::vector<SourceRange> ranges; ///< Locations related to the diagnostic.
-    std::vector<Arg> args;           ///< Arguments for formatting the message.
+    /// The diagnostic descriptor.
+    const DiagnosticDescriptor* descriptor;
+    /// Location from where the diagnostic was reported.
+    SourceLocation location;
+    /// Locations related to the diagnostic.
+    std::vector<SourceRange> ranges;
+    /// Arguments for formatting the message.
+    std::vector<Arg> args;
 
-    explicit Diagnostic(SourceLocation location, Diag message) noexcept :
-        message(message), location(location)
+    Diagnostic(SourceLocation location,
+               const DiagnosticDescriptor& descriptor) noexcept :
+        descriptor(&descriptor), location(location)
     {}
+
+public:
+    class Builder;
 };
 
-/// Helper class to construct a `Diagnostic`.
+/// An abstract diagnostic handler.
 ///
-/// Upon destruction, this class hands the produced diagnostic to the
-/// diagnostic handler given in the constructor.
-class DiagnosticBuilder
+/// Diagnostics are reported and treated through derived handlers. Once
+/// reported, a diagnostic is passed to an abstract emit method that can treat
+/// it however it wants. For example, it may ignore the error entirely or print
+/// it into a output stream.
+class DiagnosticHandler
 {
 public:
-    explicit DiagnosticBuilder(SourceLocation loc, Diag message,
-                               DiagnosticHandler& handler) :
-        handler(&handler), diag(std::make_unique<Diagnostic>(loc, message))
+    DiagnosticHandler() noexcept = default;
+
+    DiagnosticHandler(const DiagnosticHandler&) = delete;
+    auto operator=(const DiagnosticHandler&) -> DiagnosticHandler& = delete;
+
+    DiagnosticHandler(DiagnosticHandler&&) noexcept = default;
+    auto
+    operator=(DiagnosticHandler&&) noexcept -> DiagnosticHandler& = default;
+
+    virtual ~DiagnosticHandler() = default;
+
+    /// Sends a diagnostic upstream.
+    virtual void emit(Diagnostic) = 0;
+
+    /// Reports a diagnostic to this handler.
+    ///
+    /// Returns a diagnostic builder that will emit the diagnostic to this
+    /// handler upon destruction.
+    ///
+    /// \example
+    /// ```cpp
+    /// handler.report(location, diagnostic1).range(range).args(...);
+    /// // automatically emits the diagnostic1 to the handler
+    /// handler.report(location, diagnostic2);
+    /// // automatically emits the diagnostic2 to the handler
+    /// ```
+    auto report(SourceLocation loc,
+                const DiagnosticDescriptor& descriptor) noexcept
+            -> Diagnostic::Builder;
+};
+
+/// A diagnostic handler that sends the diagnostic to a function callback.
+class CallbackDiagnosticHandler : public DiagnosticHandler
+{
+public:
+    /// Callback function prototype.
+    using CallbackFunction = std::function<void(Diagnostic)>;
+
+    CallbackDiagnosticHandler() noexcept = default;
+
+    /// \param callback Function to send the diagnostic to.
+    explicit CallbackDiagnosticHandler(CallbackFunction callback) noexcept :
+        callback(std::move(callback))
     {}
 
-    /// Hands the diagnostic to the handler.
-    ~DiagnosticBuilder() noexcept;
+    /// Sends a diagnostic upstream.
+    void emit(Diagnostic diag) override { callback(std::move(diag)); }
 
-    DiagnosticBuilder(const DiagnosticBuilder&) = delete;
-    auto operator=(const DiagnosticBuilder&) -> DiagnosticBuilder& = delete;
+    /// Sets a new callback to be called at diagnostic emission.
+    void set_callback(CallbackFunction callback)
+    {
+        this->callback = std::move(callback);
+    }
 
-    DiagnosticBuilder(DiagnosticBuilder&&) noexcept = default;
-    auto operator=(DiagnosticBuilder&&) noexcept
-            -> DiagnosticBuilder& = default;
+private:
+    CallbackFunction callback;
+};
+
+/// Helpful builder for diagnostics.
+///
+/// Provides an easy and idiomatic way to build a \ref Diagnostic.
+///
+/// The builder can either be used to build a \ref Diagnostic directly or to
+/// push it to a \ref DiagnosticHandler. In the former case, you just need to
+/// call \ref build().
+///
+/// To target a \ref DiagnosticHandler, you must pass it in the constructor and
+/// let the destructor push it to the handler. No need to call \ref build().
+class Diagnostic::Builder
+{
+public:
+    /// Constructor used to build a \ref Diagnostic directly.
+    ///
+    /// At the end of the chain you must call \ref build().
+    Builder(SourceLocation loc, const DiagnosticDescriptor& descriptor) :
+        diag(loc, descriptor)
+    {}
+
+    /// Constructor used to build a \ref Diagnostic and push it to a \ref
+    /// DiagnosticHandler.
+    ///
+    /// Don't call \ref build() at the end of the chain. Let the destructor push
+    /// it to the handler.
+    Builder(SourceLocation loc, const DiagnosticDescriptor& descriptor,
+            DiagnosticHandler& target) :
+        Builder(loc, descriptor)
+    {
+        this->target = &target;
+    }
+
+    Builder(const Builder&) = delete;
+    auto operator=(const Builder&) -> Builder& = delete;
+
+    Builder(Builder&& other) noexcept :
+        target(std::exchange(other.target, nullptr)),
+        diag(std::move(other.diag))
+    {}
+
+    auto operator=(Builder&& other) noexcept -> Builder&
+    {
+        this->diag = std::move(other.diag);
+        this->target = std::exchange(other.target, nullptr);
+        return *this;
+    }
+
+    ~Builder();
+
+    /// Builds the diagnostic and returns it.
+    ///
+    /// \note Not supported if the builder was constructed with a \ref
+    /// DiagnosticHandler target.
+    auto build() && -> Diagnostic
+    {
+        assert(this->target == nullptr);
+        this->target = nullptr; // disable target on destructor
+        return std::move(diag);
+    }
 
     /// Adds a source range to provide more context to the diagnostic.
-    auto range(SourceRange range) && -> DiagnosticBuilder&&
+    auto range(SourceRange range) && -> Builder&&
     {
-        diag->ranges.push_back(range);
+        diag.ranges.push_back(range);
         return std::move(*this);
     }
 
     /// Adds an argument to the diagnostic.
     template<typename Arg, typename... Args>
-    auto args(Arg&& arg, Args&&... args) && -> DiagnosticBuilder&&
+    auto args(Arg&& arg, Args&&... args) && -> Builder&&
     {
         // auto args(Args&&... args) =>
         //  ((void)diag->args.push_back(convert(std::forward<Args>(args))), ...)
         //
         // The line you see above using fold expressions crashes MSVC, thus we
         // use recursion instead to append the arguments to the diagnostic.
-        diag->args.push_back(convert(std::forward<Arg>(arg)));
+        //
+        /// TODO has it been fixed there?
+        diag.args.push_back(convert(std::forward<Arg>(arg)));
         return std::move(*this).args(std::forward<Args>(args)...);
     }
 
     /// Adds an argument to the diagnostic.
-    auto args() && -> DiagnosticBuilder&& { return std::move(*this); }
+    auto args() && -> Builder&& { return std::move(*this); }
 
 private:
     template<typename T>
@@ -198,53 +271,23 @@ private:
     }
 
 private:
-    DiagnosticHandler*
-            handler; ///< The handler that will receive the diagnostic.
-    std::unique_ptr<Diagnostic> diag; ///< Diagnostic being constructed.
+    DiagnosticHandler* target{}; ///< Optional handler that will receive the
+                                 ///< diagnostic on build.
+    Diagnostic diag;             ///< Diagnostic being constructed.
 };
 
-/// A diagnostic handler.
-///
-/// Diagnostics are reported and treated through this handler. Once reported, a
-/// diagnostic is passed to an emitter (a function callback) responsible to
-/// treat it. It may do anything, like ignore the error entirely or print
-/// it into a stream.
-class DiagnosticHandler
+inline auto DiagnosticHandler::report(
+        SourceLocation loc,
+        const DiagnosticDescriptor& descriptor) noexcept -> Diagnostic::Builder
 {
-public:
-    using Emitter = std::function<void(const Diagnostic&)>;
-
-public:
-    explicit DiagnosticHandler(Emitter emitter) noexcept :
-        emitter(std::move(emitter))
-    {}
-
-    DiagnosticHandler(const DiagnosticHandler&) = delete;
-    auto operator=(const DiagnosticHandler&) -> DiagnosticHandler& = delete;
-
-    DiagnosticHandler(DiagnosticHandler&&) noexcept = default;
-    auto operator=(DiagnosticHandler&&) noexcept
-            -> DiagnosticHandler& = default;
-
-    ~DiagnosticHandler() noexcept = default;
-
-    /// Helper function to facilitate the construction of a `DiagnosticBuilder`.
-    auto report(SourceLocation loc, Diag message) -> DiagnosticBuilder
-    {
-        return DiagnosticBuilder(loc, message, *this);
-    }
-
-    /// Sets a new emitter to be called at diagnostic emission.
-    void set_emitter(Emitter emitter) { this->emitter = std::move(emitter); }
-
-protected:
-    friend class DiagnosticBuilder;
-    void emit(std::unique_ptr<Diagnostic> diag);
-
-private:
-    Emitter emitter;
-};
-
-// The builder must be a small object.
-static_assert(sizeof(DiagnosticBuilder) <= 2 * sizeof(size_t));
+    return Diagnostic::Builder(loc, descriptor, *this);
+}
 } // namespace gta3sc
+
+// Generic diagnostics used across multiple modules
+namespace gta3sc::diag
+{
+extern const DiagnosticDescriptor internal_compiler_error;
+extern const DiagnosticDescriptor
+        could_not_open_file; // %0 => string (filepath)
+} // namespace gta3sc::diag

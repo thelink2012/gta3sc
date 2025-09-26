@@ -16,7 +16,10 @@ using std::back_inserter;
 
 TEST_CASE_FIXTURE(CodeEmitterFixture, "initial emitter state")
 {
-    SUBCASE("emitter offset is zero") { REQUIRE(CodeEmitter().offset() == 0); }
+    SUBCASE("emitter offset is zero")
+    {
+        REQUIRE(CodeEmitter().offset() == 0);
+    }
 
     SUBCASE("internal buffer is empty")
     {
@@ -192,7 +195,10 @@ TEST_CASE_FIXTURE(CodeEmitterFixture, "emit end-of-argument-list")
         REQUIRE(output == std::vector{std::byte{0}});
     }
 
-    SUBCASE("increases offset by 1") { REQUIRE(emitter.offset() == 1); }
+    SUBCASE("increases offset by 1")
+    {
+        REQUIRE(emitter.offset() == 1);
+    }
 }
 
 TEST_CASE_FIXTURE(CodeEmitterFixture, "emit 8-bit integer argument")
@@ -207,7 +213,10 @@ TEST_CASE_FIXTURE(CodeEmitterFixture, "emit 8-bit integer argument")
         REQUIRE(output == std::vector{std::byte{0x04}, std::byte{0x01}});
     }
 
-    SUBCASE("increases offset by 2") { REQUIRE(emitter.offset() == 2); }
+    SUBCASE("increases offset by 2")
+    {
+        REQUIRE(emitter.offset() == 2);
+    }
 
     SUBCASE("negative 8-bit value uses two-complement representation")
     {
@@ -231,7 +240,10 @@ TEST_CASE_FIXTURE(CodeEmitterFixture, "emit 16-bit integer argument")
                                std::byte{0x00}});
     }
 
-    SUBCASE("increases offset by 3") { REQUIRE(emitter.offset() == 3); }
+    SUBCASE("increases offset by 3")
+    {
+        REQUIRE(emitter.offset() == 3);
+    }
 
     SUBCASE("negative 16-bit value uses two-complement representation")
     {
@@ -258,7 +270,10 @@ TEST_CASE_FIXTURE(CodeEmitterFixture, "emit 32-bit integer argument")
                                std::byte{0x00}});
     }
 
-    SUBCASE("increases offset by 5") { REQUIRE(emitter.offset() == 5); }
+    SUBCASE("increases offset by 5")
+    {
+        REQUIRE(emitter.offset() == 5);
+    }
 
     SUBCASE("negative 32-bit value uses two-complement representation")
     {
@@ -580,7 +595,10 @@ TEST_CASE_FIXTURE(CodeEmitterFixture, "emit local-variable index")
                                std::byte{0x00}});
     }
 
-    SUBCASE("increases offset by 3") { REQUIRE(emitter.offset() == 3); }
+    SUBCASE("increases offset by 3")
+    {
+        REQUIRE(emitter.offset() == 3);
+    }
 }
 
 TEST_CASE_FIXTURE(CodeEmitterFixture, "emit global-variable offset")
@@ -597,7 +615,10 @@ TEST_CASE_FIXTURE(CodeEmitterFixture, "emit global-variable offset")
                                std::byte{0x00}});
     }
 
-    SUBCASE("increases offset by 3") { REQUIRE(emitter.offset() == 3); }
+    SUBCASE("increases offset by 3")
+    {
+        REQUIRE(emitter.offset() == 3);
+    }
 }
 
 TEST_CASE_FIXTURE(CodeEmitterFixture, "emit raw byte")
@@ -612,7 +633,10 @@ TEST_CASE_FIXTURE(CodeEmitterFixture, "emit raw byte")
         REQUIRE(output == std::vector{std::byte{1}});
     }
 
-    SUBCASE("increases offset by 1") { REQUIRE(emitter.offset() == 1); }
+    SUBCASE("increases offset by 1")
+    {
+        REQUIRE(emitter.offset() == 1);
+    }
 }
 
 TEST_CASE_FIXTURE(CodeEmitterFixture, "emit raw unsigned 8-bit value")
@@ -627,7 +651,10 @@ TEST_CASE_FIXTURE(CodeEmitterFixture, "emit raw unsigned 8-bit value")
         REQUIRE(output == std::vector{std::byte{1}});
     }
 
-    SUBCASE("increases offset by 1") { REQUIRE(emitter.offset() == 1); }
+    SUBCASE("increases offset by 1")
+    {
+        REQUIRE(emitter.offset() == 1);
+    }
 }
 
 TEST_CASE_FIXTURE(CodeEmitterFixture, "emit raw signed 8-bit value")
@@ -642,7 +669,10 @@ TEST_CASE_FIXTURE(CodeEmitterFixture, "emit raw signed 8-bit value")
         REQUIRE(output == std::vector{std::byte{0x01}});
     }
 
-    SUBCASE("increases offset by 1") { REQUIRE(emitter.offset() == 1); }
+    SUBCASE("increases offset by 1")
+    {
+        REQUIRE(emitter.offset() == 1);
+    }
 
     SUBCASE("negative 8-bit value uses two-complement representation")
     {
@@ -664,7 +694,10 @@ TEST_CASE_FIXTURE(CodeEmitterFixture, "emit raw unsigned 16-bit value")
         REQUIRE(output == std::vector{std::byte{0x01}, std::byte{0x00}});
     }
 
-    SUBCASE("increases offset by 2") { REQUIRE(emitter.offset() == 2); }
+    SUBCASE("increases offset by 2")
+    {
+        REQUIRE(emitter.offset() == 2);
+    }
 }
 
 TEST_CASE_FIXTURE(CodeEmitterFixture, "emit raw signed 16-bit value")
@@ -679,7 +712,10 @@ TEST_CASE_FIXTURE(CodeEmitterFixture, "emit raw signed 16-bit value")
         REQUIRE(output == std::vector{std::byte{0x01}, std::byte{0x00}});
     }
 
-    SUBCASE("increases offset by 2") { REQUIRE(emitter.offset() == 2); }
+    SUBCASE("increases offset by 2")
+    {
+        REQUIRE(emitter.offset() == 2);
+    }
 
     SUBCASE("negative 16-bit value uses two-complement representation")
     {
@@ -703,7 +739,10 @@ TEST_CASE_FIXTURE(CodeEmitterFixture, "emit raw unsigned 32-bit value")
                                std::byte{0x01}, std::byte{0x00}});
     }
 
-    SUBCASE("increases offset by 4") { REQUIRE(emitter.offset() == 4); }
+    SUBCASE("increases offset by 4")
+    {
+        REQUIRE(emitter.offset() == 4);
+    }
 }
 
 TEST_CASE_FIXTURE(CodeEmitterFixture, "emit raw signed 32-bit value")
@@ -720,7 +759,10 @@ TEST_CASE_FIXTURE(CodeEmitterFixture, "emit raw signed 32-bit value")
                                std::byte{0x01}, std::byte{0x00}});
     }
 
-    SUBCASE("increases offset by 4") { REQUIRE(emitter.offset() == 4); }
+    SUBCASE("increases offset by 4")
+    {
+        REQUIRE(emitter.offset() == 4);
+    }
 
     SUBCASE("negative 32-bit value uses two-complement representation")
     {

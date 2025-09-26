@@ -1,5 +1,6 @@
 #pragma once
 #include "../with-diagnostic-fixture.hpp"
+#include "../with-source-fixture.hpp"
 #include <ostream>
 
 // FIXME I don't feel it's good to include this here but are doing so
@@ -9,7 +10,9 @@
 
 namespace gta3sc::test::syntax
 {
-class SyntaxFixture : public WithDiagnosticFixture
+class SyntaxFixture
+    : public WithDiagnosticFixture
+    , public WithSourceFixture
 {
 public:
     SyntaxFixture() = default;
@@ -19,14 +22,26 @@ public:
 namespace gta3sc
 {
 // TODO can we improve this using internal methods?
-inline auto operator<<(std::ostream& os, const Diag& message) -> std::ostream&
+
+inline auto operator<<(std::ostream& os,
+                       const DiagnosticDescriptor* descriptor) -> std::ostream&
 {
-    os << "Diag(" << static_cast<uint32_t>(message) << ")";
+    os << "DiagnosticDescriptor(" << &descriptor;
+    if(descriptor)
+        os << "," << descriptor->title();
+    os << ")";
     return os;
 }
 
-inline auto operator==(const Diagnostic::Arg& lhs, gta3sc::syntax::Category rhs)
-        -> bool
+inline auto operator<<(std::ostream& os,
+                       const DiagnosticDescriptor& descriptor) -> std::ostream&
+{
+    os << &descriptor;
+    return os;
+}
+
+inline auto operator==(const Diagnostic::Arg& lhs,
+                       gta3sc::syntax::Category rhs) -> bool
 {
     return lhs == gta3sc::Diagnostic::Arg(rhs);
 }
@@ -36,8 +51,8 @@ inline auto operator==(const Diagnostic::Arg& lhs, std::string rhs) -> bool
     return lhs == gta3sc::Diagnostic::Arg(std::move(rhs));
 }
 
-inline auto operator==(const Diagnostic::Arg& lhs, std::vector<std::string> rhs)
-        -> bool
+inline auto operator==(const Diagnostic::Arg& lhs,
+                       std::vector<std::string> rhs) -> bool
 {
     return lhs == gta3sc::Diagnostic::Arg(std::move(rhs));
 }
@@ -47,8 +62,8 @@ namespace gta3sc
 {
 // TODO improve these by having std::formatter specializations on lib
 
-inline auto operator<<(std::ostream& os, const ParserIR::Argument& arg)
-        -> std::ostream&
+inline auto operator<<(std::ostream& os,
+                       const ParserIR::Argument& arg) -> std::ostream&
 {
     auto visitor = [&os](const auto& value) {
         if constexpr(std::is_same_v<std::decay_t<decltype(value)>,
@@ -62,15 +77,15 @@ inline auto operator<<(std::ostream& os, const ParserIR::Argument& arg)
     return os;
 }
 
-inline auto operator<<(std::ostream& os, const ParserIR::LabelDef& label_def)
-        -> std::ostream&
+inline auto operator<<(std::ostream& os,
+                       const ParserIR::LabelDef& label_def) -> std::ostream&
 {
     os << label_def.name() << ':';
     return os;
 }
 
-inline auto operator<<(std::ostream& os, const ParserIR::Command& command)
-        -> std::ostream&
+inline auto operator<<(std::ostream& os,
+                       const ParserIR::Command& command) -> std::ostream&
 {
     if(command.not_flag())
         os << "NOT ";
@@ -95,8 +110,8 @@ inline auto operator<<(std::ostream& os, const ParserIR& ir) -> std::ostream&
     return os;
 }
 
-inline auto operator<<(std::ostream& os, const LinkedIR<ParserIR>& ir_list)
-        -> std::ostream&
+inline auto operator<<(std::ostream& os,
+                       const LinkedIR<ParserIR>& ir_list) -> std::ostream&
 {
     for(const auto& ir : ir_list)
         os << ir << '\n';
