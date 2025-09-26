@@ -18,6 +18,7 @@ add_library(gta3sc
   syntax/lowering/repeat-stmt-rewriter.cpp
   codegen/storage-table.cpp
   codegen/relocation-table.cpp
+  codegen/relocator.cpp
   codegen/trilogy/emitter.cpp
   codegen/trilogy/codegen.cpp
   codegen/trilogy/multifile-codegen.cpp

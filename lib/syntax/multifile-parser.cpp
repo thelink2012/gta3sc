@@ -98,10 +98,7 @@ auto MultifileParser::load_file(const SymbolTable::File& file)
         if(!source_file)
         {
             diag->report(gta3sc::SourceManager::no_source_loc,
-                         gta3sc::Diag::
-                                 config_xml_could_not_open_file) // TODO diag
-                                                                 // not a xml
-                                                                 // error
+                         gta3sc::diag::could_not_open_file)
                     .args(main_script_path.generic_string());
             return std::nullopt;
         }

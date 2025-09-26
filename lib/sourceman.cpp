@@ -13,7 +13,6 @@
 #include <string_view>
 #include <system_error>
 #include <utility>
-
 namespace gta3sc
 {
 auto SourceManager::iequal(std::string_view lhs,
@@ -45,7 +44,7 @@ auto SourceManager::scan_directory(const std::filesystem::path& dir) -> bool
                     .path = path});
         }
     }
-    return !!ec;
+    return !ec;
 }
 
 auto SourceManager::load_file(std::string_view filename)
