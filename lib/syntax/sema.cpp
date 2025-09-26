@@ -369,6 +369,11 @@ auto Sema::validate_command(const ParserIR::Command& command)
     }
     else
     {
+        // FIXME this should be done before in the lowering pass
+        /*if(command.name() == "MISSION_START"sv
+           || command.name() == "MISSION_END"sv)
+            return SemaIR::Builder(allocator).build_command();*/
+
         command_def = cmdman->find_command(command.name());
         if(!command_def)
         {
@@ -680,6 +685,18 @@ auto Sema::validate_label([[maybe_unused]] const CommandTable::ParamDef& param,
         -> ArenaPtr<const SemaIR::Argument>
 {
     assert(param.type == ParamType::LABEL);
+
+    // TODO find a proper way to handle this
+    /*if(arg.type() == ParserIR::Argument::Type::FILENAME)
+    {
+        const auto* sym_file = symrepo->lookup_file(*arg.as_filename());
+        if(!sym_file)
+        {
+            report(arg.source(), diag::expected_label);
+            return nullptr;
+        }
+        return SemaIR::create_filename(*sym_file, arg.source(), allocator);
+    }*/
 
     if(arg.type() != ParserIR::Argument::Type::IDENTIFIER)
     {

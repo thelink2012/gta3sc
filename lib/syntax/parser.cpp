@@ -698,7 +698,11 @@ auto Parser::parse_statement_list(
                 // Since the special name checking was disabled, we now
                 // have to make sure we do not allow any other special name
                 // other than the ones in `stop_when`.
-                if(is_special_name(command.name(), false))
+                // TODO FIXME gosub_file and other requires may appear
+                if(is_special_name(command.name(), false)
+                   /*&& command.name() != command_gosub_file
+                   && command.name() != command_launch_mission
+                   && command.name() != command_load_and_launch_mission*/)
                 {
                     report_special_name(command.source());
                     return std::nullopt;
