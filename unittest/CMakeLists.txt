@@ -7,6 +7,7 @@ add_executable(gta3sc_unittest
     syntax/lowering/repeat-stmt-rewriter.cpp
     codegen/storage-table.cpp
     codegen/relocation-table.cpp
+    codegen/relocator.cpp
     codegen/trilogy/emitter.cpp
     codegen/trilogy/codegen.cpp
     config/config-fixture.hpp
