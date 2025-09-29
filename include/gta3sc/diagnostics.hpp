@@ -222,7 +222,7 @@ public:
         diag.args.push_back(convert(std::forward<Arg>(arg)));
         return std::move(*this).args(std::forward<Args>(args)...);
     }
-    
+
     auto args() && -> Builder&&
     {
         // Sink of recursion
