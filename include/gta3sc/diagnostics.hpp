@@ -129,10 +129,17 @@ public:
     auto report(SourceLocation loc,
                 const DiagnosticDescriptor& descriptor) noexcept
             -> Diagnostic::Builder;
+
+    /// Same as \ref report(SourceLocation, const DiagnosticDescriptor&) but
+    /// taking the location from the given range and adding the range to the
+    /// diagnostic.
+    auto report(SourceRange range,
+                const DiagnosticDescriptor& descriptor) noexcept
+            -> Diagnostic::Builder;
 };
 
 /// A diagnostic handler that sends the diagnostic to a function callback.
-class CallbackDiagnosticHandler : public DiagnosticHandler
+class CallbackDiagnosticHandler final : public DiagnosticHandler
 {
 public:
     /// Callback function prototype.
@@ -174,9 +181,7 @@ public:
     /// Constructor used to build a \ref Diagnostic directly.
     ///
     /// At the end of the chain you must call \ref build().
-    Builder(SourceLocation loc, const DiagnosticDescriptor& descriptor) :
-        diag(loc, descriptor)
-    {}
+    Builder(SourceLocation loc, const DiagnosticDescriptor& descriptor);
 
     /// Constructor used to build a \ref Diagnostic and push it to a \ref
     /// DiagnosticHandler.
@@ -184,26 +189,13 @@ public:
     /// Don't call \ref build() at the end of the chain. Let the destructor push
     /// it to the handler.
     Builder(SourceLocation loc, const DiagnosticDescriptor& descriptor,
-            DiagnosticHandler& target) :
-        Builder(loc, descriptor)
-    {
-        this->target = &target;
-    }
+            DiagnosticHandler& target);
 
     Builder(const Builder&) = delete;
     auto operator=(const Builder&) -> Builder& = delete;
 
-    Builder(Builder&& other) noexcept :
-        target(std::exchange(other.target, nullptr)),
-        diag(std::move(other.diag))
-    {}
-
-    auto operator=(Builder&& other) noexcept -> Builder&
-    {
-        this->diag = std::move(other.diag);
-        this->target = std::exchange(other.target, nullptr);
-        return *this;
-    }
+    Builder(Builder&& other) noexcept;
+    auto operator=(Builder&& other) noexcept -> Builder&;
 
     ~Builder();
 
@@ -211,19 +203,10 @@ public:
     ///
     /// \note Not supported if the builder was constructed with a \ref
     /// DiagnosticHandler target.
-    auto build() && -> Diagnostic
-    {
-        assert(this->target == nullptr);
-        this->target = nullptr; // disable target on destructor
-        return std::move(diag);
-    }
+    auto build() && -> Diagnostic;
 
     /// Adds a source range to provide more context to the diagnostic.
-    auto range(SourceRange range) && -> Builder&&
-    {
-        diag.ranges.push_back(range);
-        return std::move(*this);
-    }
+    auto range(SourceRange range) && -> Builder&&;
 
     /// Adds an argument to the diagnostic.
     template<typename Arg, typename... Args>
@@ -239,36 +222,16 @@ public:
         diag.args.push_back(convert(std::forward<Arg>(arg)));
         return std::move(*this).args(std::forward<Args>(args)...);
     }
-
-    /// Adds an argument to the diagnostic.
-    auto args() && -> Builder&& { return std::move(*this); }
+    
+    auto args() && -> Builder&&
+    {
+        // Sink of recursion
+        return std::move(*this);
+    }
 
 private:
     template<typename T>
-    static auto convert(T&& arg) -> Diagnostic::Arg
-    {
-        using Ty = std::decay_t<T>;
-        if constexpr(std::is_same_v<Ty, std::string_view>)
-        {
-            return std::string(arg);
-        }
-        else if constexpr(std::is_same_v<Ty, std::vector<std::string_view>>)
-        {
-            std::vector<std::string> vec(arg.size());
-            std::transform(arg.begin(), arg.end(), vec.begin(),
-                           [](const auto& view) { return view; });
-            return vec;
-        }
-        else if constexpr(std::is_integral_v<Ty>)
-        {
-            return Diagnostic::Arg(std::in_place_type_t<int64_t>(),
-                                   std::forward<T>(arg));
-        }
-        else
-        {
-            return std::forward<T>(arg);
-        }
-    }
+    static auto convert(T&& arg) -> Diagnostic::Arg;
 
 private:
     DiagnosticHandler* target{}; ///< Optional handler that will receive the
@@ -282,6 +245,76 @@ inline auto DiagnosticHandler::report(
 {
     return Diagnostic::Builder(loc, descriptor, *this);
 }
+
+inline auto DiagnosticHandler::report(
+        SourceRange range,
+        const DiagnosticDescriptor& descriptor) noexcept -> Diagnostic::Builder
+{
+    return report(range.begin, descriptor).range(range);
+}
+
+inline Diagnostic::Builder::Builder(SourceLocation loc,
+                                    const DiagnosticDescriptor& descriptor) :
+    diag(loc, descriptor)
+{}
+
+inline Diagnostic::Builder::Builder(SourceLocation loc,
+                                    const DiagnosticDescriptor& descriptor,
+                                    DiagnosticHandler& target) :
+    Builder(loc, descriptor)
+{
+    this->target = &target;
+}
+
+inline Diagnostic::Builder::Builder(Builder&& other) noexcept :
+    target(std::exchange(other.target, nullptr)), diag(std::move(other.diag))
+{}
+
+inline auto Diagnostic::Builder::operator=(Builder&& other) noexcept -> Builder&
+{
+    this->diag = std::move(other.diag);
+    this->target = std::exchange(other.target, nullptr);
+    return *this;
+}
+
+inline auto Diagnostic::Builder::build() && -> Diagnostic
+{
+    assert(this->target == nullptr);
+    this->target = nullptr; // disable target on destructor
+    return std::move(diag);
+}
+
+inline auto Diagnostic::Builder::range(SourceRange range) && -> Builder&&
+{
+    diag.ranges.push_back(range);
+    return std::move(*this);
+}
+
+template<typename T>
+inline auto Diagnostic::Builder::convert(T&& arg) -> Diagnostic::Arg
+{
+    using Ty = std::decay_t<T>;
+    if constexpr(std::is_same_v<Ty, std::string_view>)
+    {
+        return std::string(arg);
+    }
+    else if constexpr(std::is_same_v<Ty, std::vector<std::string_view>>)
+    {
+        std::vector<std::string> vec(arg.size());
+        std::transform(arg.begin(), arg.end(), vec.begin(),
+                       [](const auto& view) { return view; });
+        return vec;
+    }
+    else if constexpr(std::is_integral_v<Ty>)
+    {
+        return Diagnostic::Arg(std::in_place_type_t<int64_t>(),
+                               std::forward<T>(arg));
+    }
+    else
+    {
+        return std::forward<T>(arg);
+    }
+}
 } // namespace gta3sc
 
 // Generic diagnostics used across multiple modules
@@ -290,4 +323,8 @@ namespace gta3sc::diag
 extern const DiagnosticDescriptor internal_compiler_error;
 extern const DiagnosticDescriptor
         could_not_open_file; // %0 => string (filepath)
+/// Unlike could_not_open_file, there could be multiple reasons for a file not
+/// being able to be loaded.
+extern const DiagnosticDescriptor
+        could_not_load_file; // %0 => string (filename)
 } // namespace gta3sc::diag
