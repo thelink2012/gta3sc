@@ -62,8 +62,17 @@ public:
     [[nodiscard]] auto
     var_index(const SymbolTable::Variable& var) const noexcept -> IndexType;
 
+    /// Returns the index past the last allocated variable.
+    ///
+    /// That is, if there was a new variable to be allocated, this would be its
+    /// index.
+    ///
+    /// Disregards timer variables.
+    [[nodiscard]] auto top_var_index() const noexcept -> IndexType;
+
 private:
     std::vector<IndexType> index_for_vars;
+    IndexType next_var_index{};
 };
 
 /// Table holding information about storage of variables in multiple scopes.
@@ -124,6 +133,13 @@ public:
     /// symbol table.
     [[nodiscard]] auto
     var_index(const SymbolTable::Variable& var) const noexcept -> IndexType;
+
+    /// Returns the index past the last allocated variable.
+    ///
+    /// That is, if there was a new variable to be allocated, this would be its
+    /// index.
+    [[nodiscard]] auto
+    top_var_index(SymbolTable::ScopeId scope) const noexcept -> IndexType;
 
 private:
     std::vector<LocalStorageTable> table_for_scopes;

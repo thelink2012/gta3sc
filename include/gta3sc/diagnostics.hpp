@@ -129,6 +129,13 @@ public:
     auto report(SourceLocation loc,
                 const DiagnosticDescriptor& descriptor) noexcept
             -> Diagnostic::Builder;
+
+    /// Same as \ref report(SourceLocation, const DiagnosticDescriptor&) but
+    /// taking the location from the given range and adding the range to the
+    /// diagnostic.
+    auto report(SourceRange range,
+                const DiagnosticDescriptor& descriptor) noexcept
+            -> Diagnostic::Builder;
 };
 
 /// A diagnostic handler that sends the diagnostic to a function callback.
@@ -281,6 +288,13 @@ inline auto DiagnosticHandler::report(
         const DiagnosticDescriptor& descriptor) noexcept -> Diagnostic::Builder
 {
     return Diagnostic::Builder(loc, descriptor, *this);
+}
+
+inline auto DiagnosticHandler::report(
+        SourceRange range,
+        const DiagnosticDescriptor& descriptor) noexcept -> Diagnostic::Builder
+{
+    return report(range.begin, descriptor).range(range);
 }
 } // namespace gta3sc
 
