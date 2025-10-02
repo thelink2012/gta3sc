@@ -103,10 +103,18 @@ TEST_CASE_FIXTURE(LocalStorageTableFixture, "basic storage")
 {
     const auto first_storage_index = default_options.first_storage_index;
 
+    SUBCASE("empty table returns first storage index for top_var_index")
+    {
+        const auto table = make_storage_table();
+        REQUIRE(table.top_var_index() == first_storage_index);
+    }
+
     SUBCASE("storage starts from first storage index")
     {
         const auto& var0 = make_var(VarType::INT);
-        REQUIRE(make_storage_table().var_index(var0) == first_storage_index);
+        const auto table = make_storage_table();
+        REQUIRE(table.var_index(var0) == first_storage_index);
+        REQUIRE(table.top_var_index() == first_storage_index + 1);
     }
 
     SUBCASE("integer takes a single index of storage")
@@ -116,6 +124,7 @@ TEST_CASE_FIXTURE(LocalStorageTableFixture, "basic storage")
         const auto table = make_storage_table();
         REQUIRE(table.var_index(var0) == first_storage_index);
         REQUIRE(table.var_index(var1) == first_storage_index + 1);
+        REQUIRE(table.top_var_index() == first_storage_index + 2);
     }
 
     SUBCASE("float variable takes a single index of storage")
@@ -125,15 +134,19 @@ TEST_CASE_FIXTURE(LocalStorageTableFixture, "basic storage")
         const auto table = make_storage_table();
         REQUIRE(table.var_index(var0) == first_storage_index);
         REQUIRE(table.var_index(var1) == first_storage_index + 1);
+        REQUIRE(table.top_var_index() == first_storage_index + 2);
     }
 
     SUBCASE("text label variable takes two indices of storage")
     {
         const auto& var0 = make_var(VarType::TEXT_LABEL);
         const auto& var1 = make_var(VarType::INT);
+        const auto& var2 = make_var(VarType::TEXT_LABEL);
         const auto table = make_storage_table();
         REQUIRE(table.var_index(var0) == first_storage_index);
         REQUIRE(table.var_index(var1) == first_storage_index + 2);
+        REQUIRE(table.var_index(var2) == first_storage_index + 3);
+        REQUIRE(table.top_var_index() == first_storage_index + 5);
     }
 }
 
@@ -149,6 +162,7 @@ TEST_CASE_FIXTURE(LocalStorageTableFixture, "array storage")
         const auto table = make_storage_table();
         REQUIRE(table.var_index(var0) == first_storage_index);
         REQUIRE(table.var_index(var1) == first_storage_index + var0_dim);
+        REQUIRE(table.top_var_index() == first_storage_index + var0_dim + 1);
     }
 
     SUBCASE("floating-point array takes N times the storage of the non-array")
@@ -158,15 +172,21 @@ TEST_CASE_FIXTURE(LocalStorageTableFixture, "array storage")
         const auto table = make_storage_table();
         REQUIRE(table.var_index(var0) == first_storage_index);
         REQUIRE(table.var_index(var1) == first_storage_index + var0_dim);
+        REQUIRE(table.top_var_index() == first_storage_index + var0_dim + 1);
     }
 
     SUBCASE("text label array takes 2N times the storage of the non-array")
     {
         const auto& var0 = make_var(VarType::TEXT_LABEL, var0_dim);
         const auto& var1 = make_var(VarType::INT);
+        const auto& var2 = make_var(VarType::TEXT_LABEL, 2);
         const auto table = make_storage_table();
         REQUIRE(table.var_index(var0) == first_storage_index);
         REQUIRE(table.var_index(var1) == first_storage_index + 2 * var0_dim);
+        REQUIRE(table.var_index(var2)
+                == first_storage_index + 2 * var0_dim + 1);
+        REQUIRE(table.top_var_index()
+                == first_storage_index + 2 * var0_dim + 1 + 2 * 2);
     }
 }
 
@@ -180,7 +200,9 @@ TEST_CASE_FIXTURE(LocalStorageTableFixture, "storage limits")
     SUBCASE("storage is limited by maximum integer variables")
     {
         const auto& last_var = make_n_vars(max_num_int_vars, VarType::INT);
-        REQUIRE(make_storage_table().var_index(last_var) == max_var_index);
+        const auto table = make_storage_table();
+        REQUIRE(table.var_index(last_var) == max_var_index);
+        REQUIRE(table.top_var_index() == max_var_index + 1);
         make_var(VarType::INT);
         fail_to_make_storage_table();
     }
@@ -188,7 +210,9 @@ TEST_CASE_FIXTURE(LocalStorageTableFixture, "storage limits")
     SUBCASE("storage is limited by maximum float variables")
     {
         const auto& last_var = make_n_vars(max_num_float_vars, VarType::FLOAT);
-        REQUIRE(make_storage_table().var_index(last_var) == max_var_index);
+        const auto table = make_storage_table();
+        REQUIRE(table.var_index(last_var) == max_var_index);
+        REQUIRE(table.top_var_index() == max_var_index + 1);
         make_var(VarType::INT);
         fail_to_make_storage_table();
     }
@@ -197,8 +221,9 @@ TEST_CASE_FIXTURE(LocalStorageTableFixture, "storage limits")
     {
         const auto& last_text_label_var = make_n_vars(max_num_text_label_vars,
                                                       VarType::TEXT_LABEL);
-        REQUIRE(make_storage_table().var_index(last_text_label_var)
-                == max_var_index - 1);
+        const auto table = make_storage_table();
+        REQUIRE(table.var_index(last_text_label_var) == max_var_index - 1);
+        REQUIRE(table.top_var_index() == max_var_index - 1 + 2);
         make_var(VarType::INT);
         fail_to_make_storage_table();
     }
@@ -215,7 +240,9 @@ TEST_CASE_FIXTURE(LocalStorageTableFixture, "storage limits with arrays")
             "variables")
     {
         const auto& last_var = make_var(VarType::INT, max_num_int_vars);
-        REQUIRE(make_storage_table().var_index(last_var) == 2);
+        const auto table = make_storage_table();
+        REQUIRE(table.var_index(last_var) == 2);
+        REQUIRE(table.top_var_index() == 2 + max_num_int_vars);
     }
 
     SUBCASE("cannot make integer array with index size off maximum integer "
@@ -228,7 +255,9 @@ TEST_CASE_FIXTURE(LocalStorageTableFixture, "storage limits with arrays")
     SUBCASE("can make float array with index size of maximum float variables")
     {
         const auto& last_var = make_var(VarType::FLOAT, max_num_float_vars);
-        REQUIRE(make_storage_table().var_index(last_var) == 2);
+        const auto table = make_storage_table();
+        REQUIRE(table.var_index(last_var) == 2);
+        REQUIRE(table.top_var_index() == 2 + max_num_float_vars);
     }
 
     SUBCASE("cannot make float array with index size off maximum float "
@@ -243,7 +272,9 @@ TEST_CASE_FIXTURE(LocalStorageTableFixture, "storage limits with arrays")
     {
         const auto& last_var = make_var(VarType::TEXT_LABEL,
                                         max_num_text_label_vars);
-        REQUIRE(make_storage_table().var_index(last_var) == 2);
+        const auto table = make_storage_table();
+        REQUIRE(table.var_index(last_var) == 2);
+        REQUIRE(table.top_var_index() == 2 + 2 * max_num_text_label_vars);
     }
 
     SUBCASE("cannot make text label array with index size off maximum text "
@@ -308,8 +339,9 @@ TEST_CASE_FIXTURE(LocalStorageTableFixture, "storage with timers")
                 }}};
 
         const auto& var0 = make_var(VarType::INT);
-        REQUIRE(make_storage_table(options).var_index(var0)
-                == first_storage_index + 1);
+        const auto table = make_storage_table(options);
+        REQUIRE(table.var_index(var0) == first_storage_index + 1);
+        REQUIRE(table.top_var_index() == first_storage_index + 2);
     }
 
     SUBCASE("timer at middle index is skipped correctly")
@@ -323,10 +355,10 @@ TEST_CASE_FIXTURE(LocalStorageTableFixture, "storage with timers")
 
         const auto& var0 = make_var(VarType::INT);
         const auto& var1 = make_var(VarType::INT);
-        REQUIRE(make_storage_table(options).var_index(var0)
-                == first_storage_index);
-        REQUIRE(make_storage_table(options).var_index(var1)
-                == first_storage_index + 2);
+        const auto table = make_storage_table(options);
+        REQUIRE(table.var_index(var0) == first_storage_index);
+        REQUIRE(table.var_index(var1) == first_storage_index + 2);
+        REQUIRE(table.top_var_index() == first_storage_index + 3);
     }
 
     SUBCASE("timer at last index is skipped correctly")
@@ -339,8 +371,10 @@ TEST_CASE_FIXTURE(LocalStorageTableFixture, "storage with timers")
                 }}};
 
         const auto& var0 = make_var(VarType::INT);
-        REQUIRE(make_storage_table(options).var_index(var0)
-                == first_storage_index);
+        const auto table = make_storage_table(options);
+        REQUIRE(table.var_index(var0) == first_storage_index);
+        REQUIRE(table.top_var_index()
+                == first_storage_index + 1); // doesn't include timer
         make_var(VarType::INT);
         fail_to_make_storage_table(options);
     }
@@ -370,6 +404,7 @@ TEST_CASE_FIXTURE(LocalStorageTableFixture, "storage with timers")
         REQUIRE(table.var_index(timerb) == first_storage_index + 2);
         REQUIRE(table.var_index(var1) == first_storage_index + 3);
         REQUIRE(table.var_index(var2) == first_storage_index + 4);
+        REQUIRE(table.top_var_index() == first_storage_index + 5);
     }
 
     SUBCASE("timer index may be outside the storage range")
@@ -388,6 +423,24 @@ TEST_CASE_FIXTURE(LocalStorageTableFixture, "storage with timers")
         const auto table = make_storage_table(options);
         REQUIRE(table.var_index(var0) == first_storage_index);
         REQUIRE(table.var_index(timera) == first_storage_index + 10);
+        REQUIRE(table.top_var_index() == first_storage_index + 1);
+    }
+
+    SUBCASE("empty table with timer")
+    {
+        const auto& timera = make_var(VarType::INT);
+        const LocalStorageTable::Options options{
+                .first_storage_index = first_storage_index,
+                .max_storage_index = first_storage_index,
+                .timers = {LocalStorageTable::TimerOptions{
+                        .index = first_storage_index,
+                        .name = timera.name(),
+                }}};
+
+        const auto table = make_storage_table(options);
+        REQUIRE(table.var_index(timera) == first_storage_index);
+        REQUIRE(table.top_var_index()
+                == first_storage_index); // doesn't include timer
     }
 }
 
@@ -422,4 +475,18 @@ TEST_CASE_FIXTURE(StorageTableFixture, "storage with multiple scopes")
     REQUIRE(table.var_index(lvar0_scope2) == first_lvar_storage_index);
     REQUIRE(table.var_index(lvar1_scope2) == first_lvar_storage_index + 1);
     REQUIRE(table.var_index(timera_scope2) == timera_storage_index);
+
+    // Test top_var_index for each scope
+    REQUIRE(table.top_var_index(scope0) == first_gvar_storage_index + 2);
+    REQUIRE(table.top_var_index(scope1) == first_lvar_storage_index + 2);
+    REQUIRE(table.top_var_index(scope2) == first_lvar_storage_index + 2);
+}
+
+TEST_CASE_FIXTURE(StorageTableFixture, "empty storage table")
+{
+    SUBCASE("empty table returns top_var_index as zero for global scope")
+    {
+        const auto table = StorageTable();
+        REQUIRE(table.top_var_index(SymbolTable::global_scope) == 0);
+    }
 }

@@ -648,3 +648,55 @@ TEST_CASE_FIXTURE(CodeGenFixture,
         REQUIRE(output == expected);
     }
 }
+
+TEST_CASE_FIXTURE(CodeGenFixture, "offset methods")
+{
+    const auto& return_command = find_command("RETURN");
+
+    SUBCASE("offsets when base is zero")
+    {
+        const auto& file = codegen_file();
+        const auto storage_table = make_storage_table();
+        std::vector<std::byte> output;
+
+        auto codegen = CodeGen(file, 0, storage_table, diagman);
+
+        REQUIRE(codegen.relative_offset() == 0);
+        REQUIRE(codegen.absolute_offset() == 0);
+
+        codegen.generate(
+                *SemaIR::Builder(&arena).command(return_command).build(),
+                reloc_table, std::back_inserter(output));
+
+        REQUIRE(codegen.relative_offset() == 2);
+        REQUIRE(codegen.absolute_offset() == 2);
+
+        codegen.generate(
+                *SemaIR::Builder(&arena).command(return_command).build(),
+                reloc_table, std::back_inserter(output));
+
+        REQUIRE(codegen.relative_offset() == 4);
+        REQUIRE(codegen.absolute_offset() == 4);
+    }
+
+    SUBCASE("offsets when base is non-zero")
+    {
+        constexpr auto base_offset = 999;
+
+        const auto& file = codegen_file();
+        const auto storage_table = make_storage_table();
+        std::vector<std::byte> output;
+
+        auto codegen = CodeGen(file, base_offset, storage_table, diagman);
+
+        REQUIRE(codegen.absolute_offset() == base_offset);
+        REQUIRE(codegen.relative_offset() == 0);
+
+        codegen.generate(
+                *SemaIR::Builder(&arena).command(return_command).build(),
+                reloc_table, std::back_inserter(output));
+
+        REQUIRE(codegen.relative_offset() == 2);
+        REQUIRE(codegen.absolute_offset() == base_offset + 2);
+    }
+}

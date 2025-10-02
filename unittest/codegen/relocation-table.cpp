@@ -354,3 +354,31 @@ TEST_CASE_FIXTURE(RelocationTableFixture,
     insert_fixup_entry(mission_file, file_ref_offset);
     REQUIRE(relocate_one_from_file_fixup_table() == mission_file_offset);
 }
+
+TEST_CASE_FIXTURE(RelocationTableFixture, "is_in_main_segment")
+{
+    SUBCASE("main file is in main segment")
+    {
+        const auto& main_file = make_file(FileType::main);
+        REQUIRE(RelocationTable::is_in_main_segment(main_file) == true);
+    }
+
+    SUBCASE("main extension file is in main segment")
+    {
+        const auto& main_extension_file = make_file(FileType::main_extension);
+        REQUIRE(RelocationTable::is_in_main_segment(main_extension_file)
+                == true);
+    }
+
+    SUBCASE("subscript file is in main segment")
+    {
+        const auto& subscript_file = make_file(FileType::subscript);
+        REQUIRE(RelocationTable::is_in_main_segment(subscript_file) == true);
+    }
+
+    SUBCASE("mission file is not in main segment")
+    {
+        const auto& mission_file = make_file(FileType::mission);
+        REQUIRE(RelocationTable::is_in_main_segment(mission_file) == false);
+    }
+}

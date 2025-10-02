@@ -29,13 +29,14 @@ namespace gta3sc::codegen::trilogy
 /// The bytecode is output into an `OutputIterator` and any necessary relocation
 /// information (such as label offsets and label references) are registered
 /// in a `RelocationTable`. This table must later on be scanned to perform
-/// relocation of label references through the bytecode.
+/// relocation of label references through the bytecode. \see Relocator
+/// for details on how to perform relocation.
 ///
-/// This code generator is headerless, please use `MultifileCodeGen` if
+/// This code generator is headerless, please use \ref MultifileCodeGen if
 /// the generation of a header is necessary.
 ///
 /// For emitting bytecode having no concern to language semantics, use
-/// `CodeEmitter`.
+/// \ref CodeEmitter.
 class CodeGen
 {
 public:

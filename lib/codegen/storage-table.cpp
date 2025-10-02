@@ -46,6 +46,11 @@ auto LocalStorageTable::var_index(
     return index_for_vars[var.id()];
 }
 
+auto LocalStorageTable::top_var_index() const noexcept -> IndexType
+{
+    return next_var_index;
+}
+
 auto LocalStorageTable::from_symbols(
         const SymbolTable& symtable, SymbolTable::ScopeId scope_id,
         const Options& options) noexcept -> std::optional<LocalStorageTable>
@@ -98,6 +103,7 @@ auto LocalStorageTable::from_symbols(
         }
     }
 
+    storage.next_var_index = current_index;
     return storage;
 }
 
@@ -107,6 +113,17 @@ auto StorageTable::var_index(const SymbolTable::Variable& var) const noexcept
     const auto table_idx = to_integer(var.scope());
     assert(table_idx < table_for_scopes.size());
     return table_for_scopes[table_idx].var_index(var);
+}
+
+auto StorageTable::top_var_index(SymbolTable::ScopeId scope) const noexcept
+        -> IndexType
+{
+    if(table_for_scopes.empty() && scope == SymbolTable::global_scope)
+        return 0;
+
+    const auto table_idx = to_integer(scope);
+    assert(table_idx < table_for_scopes.size());
+    return table_for_scopes[table_idx].top_var_index();
 }
 
 auto StorageTable::from_symbols(const SymbolTable& symtable,
