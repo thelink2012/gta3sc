@@ -13,9 +13,11 @@ add_library(gta3sc
   syntax/preprocessor.cpp
   syntax/scanner.cpp
   syntax/parser.cpp
+  syntax/multifile-parser.cpp
   syntax/sema.cpp
   syntax/multifile-parser.cpp
   syntax/lowering/repeat-stmt-rewriter.cpp
+  syntax/visitor/required-files-visitor.cpp
   codegen/storage-table.cpp
   codegen/relocation-table.cpp
   codegen/relocator.cpp

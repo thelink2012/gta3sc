@@ -7,6 +7,8 @@ const DiagnosticDescriptor internal_compiler_error(DiagnosticSeverity::error,
                                                    "TODO");
 const DiagnosticDescriptor could_not_open_file(DiagnosticSeverity::error,
                                                "Could not open file", "TODO");
+const DiagnosticDescriptor could_not_load_file(DiagnosticSeverity::error,
+                                               "Could not load file", "TODO");
 } // namespace gta3sc::diag
 
 namespace gta3sc

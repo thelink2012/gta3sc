@@ -1,4 +1,5 @@
 #pragma once
+#include <gta3sc/ir/linked-ir.hpp>
 
 namespace gta3sc
 {
@@ -26,5 +27,15 @@ public:
     operator=(InstructionVisitor&&) noexcept -> InstructionVisitor& = default;
 
     virtual auto visit(const IRType&) -> Result = 0;
+
+    /// Calls \ref visit for each instruction in the given IR.
+    void visit_each(const LinkedIR<IRType>&);
 };
+
+template<typename IR, typename TResult>
+inline void InstructionVisitor<IR, TResult>::visit_each(const LinkedIR<IR>& ir)
+{
+    for(const auto& line : ir)
+        visit(line);
+}
 } // namespace gta3sc
