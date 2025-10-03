@@ -23,6 +23,7 @@ auto SourceManager::iequal(std::string_view lhs,
 
 auto SourceManager::scan_directory(const std::filesystem::path& dir) -> bool
 {
+    // TODO allow symlink (see follow_directory_symlink param for iterator)
     std::error_code ec;
     for(const auto& entry :
         std::filesystem::recursive_directory_iterator(dir, ec))

@@ -85,7 +85,8 @@ protected:
 
     auto make_storage_table() -> StorageTable
     {
-        return StorageTable::from_symbols(symtable, StorageTable::Options())
+        return StorageTable::from_symbols(symtable, StorageTable::Options(),
+                                          diagman)
                 .value();
     }
 

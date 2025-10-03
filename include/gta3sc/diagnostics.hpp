@@ -136,13 +136,6 @@ public:
     auto report(SourceRange range,
                 const DiagnosticDescriptor& descriptor) noexcept
             -> Diagnostic::Builder;
-
-    /// Same as \ref report(SourceLocation, const DiagnosticDescriptor&) but
-    /// taking the location from the given range and adding the range to the
-    /// diagnostic.
-    auto report(SourceRange range,
-                const DiagnosticDescriptor& descriptor) noexcept
-            -> Diagnostic::Builder;
 };
 
 /// A diagnostic handler that sends the diagnostic to a function callback.

@@ -3,6 +3,12 @@
 #include <gta3sc/ir/symbol-table.hpp>
 #include <vector>
 
+namespace gta3sc
+{
+class DiagnosticHandler;
+class DiagnosticDescriptor;
+} // namespace gta3sc
+
 namespace gta3sc::codegen
 {
 /// Table holding information about storage of variables in a scope.
@@ -49,10 +55,11 @@ public:
     /// symbol table.
     ///
     /// Returns the storage table or `std::nullopt` in case not enough storage
-    /// is available for the given variables.
-    [[nodiscard]] static auto from_symbols(const SymbolTable& symtable,
-                                           SymbolTable::ScopeId scope_id,
-                                           const Options& options) noexcept
+    /// is available for the given variables, in which case a diagnostic is
+    /// also reported.
+    [[nodiscard]] static auto
+    from_symbols(const SymbolTable& symtable, SymbolTable::ScopeId scope_id,
+                 const Options& options, DiagnosticHandler& diag) noexcept
             -> std::optional<LocalStorageTable>;
 
     /// Returns the index for the given variable.
@@ -118,10 +125,11 @@ public:
     /// the given symbol table.
     ///
     /// Returns the storage table or `std::nullopt` in case not enough
-    /// storage is available for the given variables.
-    [[nodiscard]] static auto from_symbols(const SymbolTable& symtable,
-                                           const Options& options) noexcept
-            -> std::optional<StorageTable>;
+    /// storage is available for the given variables, in which case
+    /// a diagnostic is also reported.
+    [[nodiscard]] static auto from_symbols(
+            const SymbolTable& symtable, const Options& options,
+            DiagnosticHandler& diag) noexcept -> std::optional<StorageTable>;
 
     /// Returns the index for the given variable.
     ///
@@ -145,3 +153,9 @@ private:
     std::vector<LocalStorageTable> table_for_scopes;
 };
 } // namespace gta3sc::codegen
+
+namespace gta3sc::codegen::diag
+{
+extern const DiagnosticDescriptor
+        not_enough_storage_for_var; // %0 => int (max index)
+} // namespace gta3sc::codegen::diag

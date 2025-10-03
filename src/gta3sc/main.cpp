@@ -1,12 +1,12 @@
 #include <filesystem>
 #include <gta3sc/command-table.hpp>
+#include <gta3sc/config/config.hpp>
+#include <gta3sc/config/models.hpp>
 #include <gta3sc/diagnostics.hpp>
 #include <gta3sc/driver/compilation.hpp>
 #include <gta3sc/model-table.hpp>
 #include <gta3sc/sourceman.hpp>
 #include <gta3sc/util/arena.hpp>
-#include <gta3sc/config/models.hpp>
-#include <gta3sc/config/config.hpp>
 #include <print>
 
 using namespace gta3sc;
@@ -70,21 +70,21 @@ int main()
         if(!file_manager.scan_directory(input_scripts_dir))
         {
             // TODO diag
-            std::fprintf(stderr, "error: compilation failed 1\n");
+            std::println(stderr, "error: compilation failed");
             return 1;
         }
     }
 
     ////////////// COMPILATION START //////////////
 
+    std::vector<std::byte> output;
     gta3sc::driver::Compilation compilation(
             input_file, command_table, model_table, file_manager, diag_manager);
-    if(!compilation.compile())
+    if(!compilation.compile({&output}))
     {
-        std::fprintf(stderr, "error: compilation failed 2\n");
+        std::println(stderr, "error: compilation failed");
         return 1;
     }
-    auto output = std::move(compilation.output); // TODO output inteface
 
     ////////////// COMPILATION END //////////////
 
@@ -95,17 +95,17 @@ int main()
     if(!fout)
     {
         // TODO diag
-        std::fprintf(stderr, "error: compilation failed 3\n");
+        std::println(stderr, "error: compilation failed");
         return 1;
     }
     if(std::fwrite(output.data(), 1, output.size(), fout) != output.size())
     {
         // TODO diag
-        std::fprintf(stderr, "error: compilation failed 4\n");
+        std::println(stderr, "error: compilation failed");
         return 1;
     }
     std::fclose(fout);
 
-    std::printf("SUCCESS!\n");
+    std::println("SUCCESS!");
     return 0;
 }

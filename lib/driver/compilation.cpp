@@ -49,64 +49,35 @@ auto Compilation::sema(LinkedIR<ParserIR> input_ir)
 {
     syntax::Sema sema(std::move(input_ir), symbol_table, *command_table,
                       *model_table, *diag_manager, sema_ir_arena.get());
-
-    auto sema_ir = sema.validate();
-    if(!sema_ir)
-        return std::nullopt;
-
-    return sema_ir;
+    return sema.validate();
 }
 
-auto Compilation::codegen(const LinkedIR<SemaIR>& input_ir) -> bool
+auto Compilation::codegen(LinkedIR<SemaIR> input_ir, Result result) -> bool
 {
+    assert(result.target_main_scm != nullptr);
+    auto& output_main_scm = *result.target_main_scm;
+
     const auto storage_options = codegen::StorageTable::Options{};
-    auto storage_table = codegen::StorageTable::from_symbols(symbol_table,
-                                                             storage_options);
+    auto storage_table = codegen::StorageTable::from_symbols(
+            symbol_table, storage_options, *diag_manager);
     if(!storage_table)
-    {
-        // TODO diagman emit not enough storage for variables!?
         return false;
-    }
 
     codegen::RelocationTable reloc_table(symbol_table);
 
     codegen::trilogy::MultifileCodeGen codegen(symbol_table, *storage_table,
                                                *diag_manager);
-
-    if(!codegen.generate_header_stubs(output))
+    if(!codegen.generate(input_ir, reloc_table, output_main_scm))
         return false;
 
-    auto next_file = codegen.generate_first_file(input_ir, reloc_table, output);
-    while(next_file && next_file->file)
-    {
-        next_file = codegen.generate_next_file(
-                *next_file->file, next_file->next_ir, input_ir.end(),
-                reloc_table, output);
-    }
-
-    if(!next_file)
-        return false;
-
-    assert(next_file->file == nullptr);
-
-    if(!codegen.generate_headers(reloc_table, output))
-        return false;
-
-    // TODO improve relocation so its done in steps i.e.
-    //   first relocate main segment
-    //   then relocate each mission
-    //   ...
-    //   on each step discard the registered fixups in the reloc table.
-    //   this will save memory.
-    //   needs to improve the Relocator interface for this.
-    gta3sc::codegen::Relocator relocator(output);
+    codegen::Relocator relocator(output_main_scm);
     if(!relocator.relocate(reloc_table, *diag_manager))
         return false;
 
     return true;
 }
 
-bool Compilation::compile()
+bool Compilation::compile(Result result)
 {
     auto parser_ir = parse();
     if(!parser_ir)
@@ -122,11 +93,35 @@ bool Compilation::compile()
 
     // No longer need the parser IR allocated data since we dropped the
     // parser IR into the sema scope in the previous step.
-    parser_ir_arena.reset();
+    parser_ir_arena->release();
 
-    if(!codegen(*sema_ir))
+    if(!codegen(std::move(*sema_ir), std::move(result)))
         return false;
+
+    // No longer need the sema IR allocated data since we code generated it.
+    sema_ir_arena->release();
+    symbol_arena->release();
+    symbol_table = SymbolTable(symbol_arena.get());
 
     return true;
 }
 } // namespace gta3sc::driver
+
+// TODO unit test
+
+// TODO improve relocation so its done in steps i.e.
+//   first gen + relocate main segment
+//   then gen + relocate each mission individually
+//   ...
+//   on each step discard the registered fixups in the reloc table.
+//   this will save memory.
+//   needs to improve the Relocator interface for this.
+
+// TODO add AbstractCompilation -> Compilation
+//                              -> DecoratedCompilation -> ...
+//    maybe I'll need to think about a pipeline and subinterfaces
+//    like analyzer (where I only need the IR as output, not codegen)
+//    think about it further
+
+// TODO the output interface could be improved to allow for the output
+//      to be written in steps instead of a entire std::vector<std::byte>
