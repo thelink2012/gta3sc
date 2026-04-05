@@ -4,6 +4,8 @@ add_executable(gta3sc_unittest
     syntax/scanner.cpp
     syntax/parser.cpp
     syntax/sema.cpp
+    syntax/multifile-parser.cpp
+    syntax/visitor/required-files-visitor.cpp
     syntax/lowering/repeat-stmt-rewriter.cpp
     codegen/storage-table.cpp
     codegen/relocation-table.cpp

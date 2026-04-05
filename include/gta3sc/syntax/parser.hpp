@@ -172,10 +172,13 @@ private:
     [[nodiscard]] auto iequal(std::string_view lhs,
                               std::string_view rhs) const -> bool;
 
-    /// Checks whether the specified name is a command name used by
-    /// the language grammar for special purposes (e.g. 'REPEAT', `VAR_INT`).
-    [[nodiscard]] auto is_special_name(std::string_view name,
-                                       bool check_var_decl) const -> bool;
+    /// Returns whether `name` is treated as a reserved command word.
+    ///
+    /// If `check_var_decl_and_file_import` is false, variable-declaration
+    /// commands and multifile imports are not considered special.
+    [[nodiscard]] auto
+    is_special_name(std::string_view name,
+                    bool check_var_decl_and_file_import) const -> bool;
 
     /// Checks whether the given command name is a variable declaration.
     [[nodiscard]] auto is_var_decl_command(std::string_view name) const -> bool;
@@ -212,8 +215,8 @@ private:
     //
     // The parameter named `allow_special_name` specifies whether it may
     // parse a command statement with special command names. Please see
-    // `is_special_name` for details. Note variable declarations are
-    // whitelisted in the check.
+    // `is_special_name` for which command names are rejected in this
+    // context.
     //
     // The methods returns a ParserIR instance when only a single command is
     // returned. Otherwise, a LinkedIR is used.
