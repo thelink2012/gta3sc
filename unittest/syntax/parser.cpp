@@ -57,6 +57,23 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing an empty main script file")
     REQUIRE(ir->empty());
 }
 
+TEST_CASE_FIXTURE(ParserFixture,
+                  "parsing multifile import commands in main script file")
+{
+    build_parser("LAUNCH_MISSION a.sc\n"
+                 "GOSUB_FILE lbl b.sc\n"
+                 "LOAD_AND_LAUNCH_MISSION c.sc\n");
+    
+    auto ir = parser.parse_main_script_file();
+    REQUIRE(ir != std::nullopt);
+    REQUIRE(size(*ir) == 3);
+
+    auto it = ir->begin();
+    CHECK(it->command().name() == "LAUNCH_MISSION");
+    CHECK((++it)->command().name() == "GOSUB_FILE");
+    CHECK((++it)->command().name() == "LOAD_AND_LAUNCH_MISSION");
+}
+
 TEST_CASE_FIXTURE(ParserFixture, "parsing a label definition")
 {
     build_parser("laBEL:\n"

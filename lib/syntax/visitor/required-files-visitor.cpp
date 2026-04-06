@@ -57,5 +57,3 @@ void CallbackRequiredFilesVisitor::visit_require(
     callback(command, arg, file_type);
 }
 } // namespace gta3sc::syntax
-
-// TODO unit test

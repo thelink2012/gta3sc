@@ -2,11 +2,9 @@
 #include <gta3sc/codegen/storage-table.hpp>
 #include <gta3sc/codegen/trilogy/codegen.hpp>
 #include <gta3sc/codegen/trilogy/multifile-codegen.hpp>
-#include <print>
+#include <optional>
 #include <string_view>
 using namespace std::literals::string_view_literals;
-
-// TODO unit test
 
 namespace
 {
@@ -200,7 +198,7 @@ bool MultifileCodeGen::generate_mission_header(
     for(const auto& file_loc : reloc_table.files())
     {
         if(is_mission_file(*file_loc.file))
-            mission_script_offsets[file_loc.file->id()] = file_loc.offset;
+            mission_script_offsets[file_loc.file->type_id()] = file_loc.offset;
     }
 
     for(const auto& offset : mission_script_offsets)
@@ -254,8 +252,8 @@ auto MultifileCodeGen::generate_next_file(
 
     CodeGen codegen(file, current_multifile_offset, *storage, *diag);
 
+    NextFile result{nullptr, max_ir};
     auto output_iter = std::back_inserter(output);
-    bool has_error = false;
 
     const auto offset_before_script = current_multifile_offset;
 
@@ -264,16 +262,13 @@ auto MultifileCodeGen::generate_next_file(
         if(auto next_file = detect_file_label(*ir); next_file)
         {
             assert(next_file != &file);
-            return NextFile{next_file, std::next(ir)};
+            result = NextFile{next_file, std::next(ir)};
+            break;
         }
-
-        const auto prev_output_size = output.size();
 
         if(auto result_it = codegen.generate(*ir, reloc_table, output_iter);
            result_it)
             output_iter = *result_it;
-        else
-            has_error = true;
 
         // TODO should we check for overflow? in CodeGen maybe?
         current_multifile_offset = codegen.absolute_offset();
@@ -288,10 +283,7 @@ auto MultifileCodeGen::generate_next_file(
                                                current_multifile_offset
                                                        - offset_before_script);
 
-    if(has_error)
-        return std::nullopt;
-
-    return NextFile{nullptr, max_ir};
+    return {result};
 }
 
 auto MultifileCodeGen::detect_file_label(const SemaIR& line)

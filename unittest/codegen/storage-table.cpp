@@ -1,4 +1,3 @@
-#include "../with-diagnostic-fixture.hpp"
 #include <doctest/doctest.h>
 #include <gta3sc/codegen/storage-table.hpp>
 
@@ -6,12 +5,11 @@ using gta3sc::SourceManager;
 using gta3sc::SymbolTable;
 using gta3sc::codegen::LocalStorageTable;
 using gta3sc::codegen::StorageTable;
-using gta3sc::test::WithDiagnosticFixture;
 using VarType = gta3sc::SymbolTable::VarType;
 
 namespace
 {
-class BaseStorageTableFixture : public WithDiagnosticFixture
+class BaseStorageTableFixture
 {
 public:
     BaseStorageTableFixture() : symtable(&arena) {}
@@ -65,7 +63,7 @@ public:
             -> LocalStorageTable
     {
         auto table = LocalStorageTable::from_symbols(
-                symtable, SymbolTable::global_scope, options, diagman);
+                symtable, SymbolTable::global_scope, options);
         REQUIRE(table != std::nullopt);
         return std::move(table).value();
     }
@@ -78,12 +76,8 @@ public:
     void fail_to_make_storage_table(const LocalStorageTable::Options& options)
     {
         auto table = LocalStorageTable::from_symbols(
-                symtable, SymbolTable::global_scope, options, diagman);
+                symtable, SymbolTable::global_scope, options);
         REQUIRE(table == std::nullopt);
-        REQUIRE(!diags.empty());
-        REQUIRE(consume_diag().descriptor
-                == &gta3sc::codegen::diag::not_enough_storage_for_var);
-        REQUIRE(diags.empty());
     }
 
     void fail_to_make_storage_table()
@@ -98,7 +92,7 @@ public:
     auto
     make_storage_table(const StorageTable::Options& options) -> StorageTable
     {
-        auto table = StorageTable::from_symbols(symtable, options, diagman);
+        auto table = StorageTable::from_symbols(symtable, options);
         REQUIRE(table != std::nullopt);
         return std::move(table).value();
     }

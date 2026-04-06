@@ -35,8 +35,8 @@ bool MultifileParser::ParseQueueItem::operator<(
         const ParseQueueItem& other) const
 {
     if(file->type() == other.file->type())
-        return file->type_id() < other.file->type_id();
-    return file->type() < other.file->type();
+        return file->type_id() > other.file->type_id();
+    return file->type() > other.file->type();
 }
 
 MultifileParser::MultifileParser(std::filesystem::path main_script_path,
@@ -232,5 +232,3 @@ void MultifileParser::push_required_files(const LinkedIR<ParserIR>& ir)
     }).visit_each(ir);
 }
 } // namespace gta3sc::syntax
-
-// TODO unit test

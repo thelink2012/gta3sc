@@ -4,6 +4,7 @@
 #include <gta3sc/diagnostics.hpp>
 #include <gta3sc/ir/linked-ir.hpp>
 #include <gta3sc/ir/sema-ir.hpp>
+#include <optional>
 
 namespace gta3sc::codegen
 {
@@ -62,8 +63,9 @@ public:
     /// \ref generate_next_file for each file in the IR, and finally
     /// \ref generate_headers to fill the header data.
     ///
-    /// \returns whether generation was successful. In case of an error,
-    /// errors are reported to the diagnostic handler.
+    /// \returns whether generation was successful. Recoverable errors are
+    /// ignored and reported to the diagnostic handler. Returns false only
+    /// for unrecoverable errors.
     bool generate(const LinkedIR<SemaIR>& ir, RelocationTable& reloc_table,
                   std::vector<std::byte>& output);
 
@@ -117,8 +119,8 @@ public:
     /// \param output the output vector to fill with bytecode.
     ///
     /// \returns a `NextFile` describing the next file to be generated or
-    /// `std::nullopt` in case of an error. In case of an error, errors are
-    /// reported to the diagnostic handler.
+    /// `std::nullopt` in case of an unrecoverable error. Please check
+    /// the diagnostic handler for all errors.
     auto generate_next_file(const SymbolTable::File& file,
                             LinkedIR<SemaIR>::const_iterator next_ir,
                             LinkedIR<SemaIR>::const_iterator max_ir,

@@ -7,21 +7,21 @@ namespace gta3sc::codegen
 bool Relocator::relocate(RelocationTable& reloc_table,
                          DiagnosticHandler& diagman) const
 {
-    // TODO keep going after an error
+    bool has_error = false;
 
     for(const auto& entry : reloc_table.fixup_table())
     {
         if(!relocate(reloc_table, entry, diagman))
-            return false;
+            has_error = true;
     }
 
     for(const auto& entry : reloc_table.file_fixup_table())
     {
         if(!relocate(reloc_table, entry, diagman))
-            return false;
+            has_error = true;
     }
 
-    return true;
+    return !has_error;
 }
 
 bool Relocator::relocate(RelocationTable& reloc_table,
@@ -32,7 +32,8 @@ bool Relocator::relocate(RelocationTable& reloc_table,
     if(!offset)
         return false;
 
-    return relocate(*output, entry.offset, *offset);
+    relocate(*bytecode, entry.offset, *offset);
+    return true;
 }
 
 bool Relocator::relocate(RelocationTable& reloc_table,
@@ -43,29 +44,30 @@ bool Relocator::relocate(RelocationTable& reloc_table,
     if(!offset)
         return false;
 
-    return relocate(*output, entry.offset, *offset);
+    relocate(*bytecode, entry.offset, *offset);
+    return true;
 }
 
-bool Relocator::relocate(std::vector<std::byte>& output, uint32_t at,
-                         int32_t target_value)
+void Relocator::relocate(std::vector<std::byte>& bytecode, uint32_t at,
+                         int32_t target)
 {
-    if(output.size() < at + 4)
-        return false; // TODO diag?
+    assert(bytecode.size() >= at + 4);
 
     // Same code as Emitter::emit_raw_i32.
 
-    output[at] = bit_cast<std::byte>(
-            static_cast<uint8_t>(target_value & 0x000000FFU));
+    bytecode[at] = bit_cast<std::byte>(
+            static_cast<uint8_t>(target & 0x000000FFU));
 
-    output[at + 1] = bit_cast<std::byte>(
-            static_cast<uint8_t>((target_value & 0x0000FF00U) >> 8U));
+    bytecode[at + 1] = bit_cast<std::byte>(
+            static_cast<uint8_t>((target & 0x0000FF00U) >> 8U));
 
-    output[at + 2] = bit_cast<std::byte>(
-            static_cast<uint8_t>((target_value & 0x00FF0000U) >> 16U));
+    bytecode[at + 2] = bit_cast<std::byte>(
+            static_cast<uint8_t>((target & 0x00FF0000U) >> 16U));
 
-    output[at + 3] = bit_cast<std::byte>(
-            static_cast<uint8_t>((target_value & 0xFF000000U) >> 24U));
-
-    return true;
+    bytecode[at + 3] = bit_cast<std::byte>(
+            static_cast<uint8_t>((target & 0xFF000000U) >> 24U));
 }
 } // namespace gta3sc::codegen
+
+// TODO provide a more lazy relocation interface such that we can relocate
+// missions one by one instead of having to relocate the entire multifile.

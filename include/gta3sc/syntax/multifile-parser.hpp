@@ -123,6 +123,8 @@ private:
 struct MultifileParser::ParseQueueItem
 {
     const gta3sc::SymbolTable::File* file;
+
+    /// Inverted `(type, type_id)` ordering for \c std::priority_queue.
     bool operator<(const ParseQueueItem& other) const;
 };
 } // namespace gta3sc::syntax

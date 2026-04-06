@@ -58,8 +58,8 @@ auto Compilation::codegen(LinkedIR<SemaIR> input_ir, Result result) -> bool
     auto& output_main_scm = *result.target_main_scm;
 
     const auto storage_options = codegen::StorageTable::Options{};
-    auto storage_table = codegen::StorageTable::from_symbols(
-            symbol_table, storage_options, *diag_manager);
+    auto storage_table = codegen::StorageTable::from_symbols(symbol_table,
+                                                             storage_options);
     if(!storage_table)
         return false;
 

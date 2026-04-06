@@ -1,12 +1,5 @@
+#include <functional>
 #include <gta3sc/codegen/storage-table.hpp>
-#include <gta3sc/diagnostics.hpp>
-
-namespace gta3sc::codegen::diag
-{
-const DiagnosticDescriptor
-        not_enough_storage_for_var(DiagnosticSeverity::error,
-                                   "Not enough storage for variable", "TODO");
-} // namespace gta3sc::codegen::diag
 
 namespace gta3sc::codegen
 {
@@ -60,8 +53,7 @@ auto LocalStorageTable::top_var_index() const noexcept -> IndexType
 
 auto LocalStorageTable::from_symbols(
         const SymbolTable& symtable, SymbolTable::ScopeId scope_id,
-        const Options& options,
-        DiagnosticHandler& diag) noexcept -> std::optional<LocalStorageTable>
+        const Options& options) noexcept -> std::optional<LocalStorageTable>
 {
     LocalStorageTable storage;
 
@@ -107,11 +99,7 @@ auto LocalStorageTable::from_symbols(
 
             current_index += num_indices_for_var(var);
             if(current_index > max_var_index + 1)
-            {
-                diag.report(var.source(), diag::not_enough_storage_for_var)
-                        .args(max_var_index + 1);
                 return std::nullopt;
-            }
         }
     }
 
@@ -138,34 +126,28 @@ auto StorageTable::top_var_index(SymbolTable::ScopeId scope) const noexcept
     return table_for_scopes[table_idx].top_var_index();
 }
 
-auto StorageTable::from_symbols(
-        const SymbolTable& symtable, const Options& options,
-        DiagnosticHandler& diag) noexcept -> std::optional<StorageTable>
+auto StorageTable::from_symbols(const SymbolTable& symtable,
+                                const Options& options) noexcept
+        -> std::optional<StorageTable>
 {
     StorageTable storage;
     storage.table_for_scopes.reserve(symtable.num_scopes());
-
-    bool has_error = false;
 
     for(uint32_t i = 0; i < symtable.num_scopes(); ++i)
     {
         const SymbolTable::ScopeId scope_id{i};
 
         if(auto local_table = LocalStorageTable::from_symbols(
-                   symtable, scope_id, options_for_scope(scope_id, options),
-                   diag);
+                   symtable, scope_id, options_for_scope(scope_id, options));
            local_table)
         {
             storage.table_for_scopes.emplace_back(std::move(*local_table));
         }
         else
         {
-            has_error = true;
+            return std::nullopt;
         }
     }
-
-    if(has_error)
-        return std::nullopt;
 
     return storage;
 }

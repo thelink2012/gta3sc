@@ -136,19 +136,25 @@ auto Parser::report_special_name(SourceRange source) -> Diagnostic::Builder
 }
 
 auto Parser::is_special_name(std::string_view name,
-                             bool check_var_decl) const -> bool
+                             bool check_var_decl_and_file_import) const -> bool
 {
-    if(check_var_decl && is_var_decl_command(name))
-        return true;
+    if(check_var_decl_and_file_import)
+    {
+        if(is_var_decl_command(name))
+            return true;
+        if(name == command_gosub_file 
+            || name == command_launch_mission
+            || name == command_load_and_launch_mission)
+            return true;
+    }
+
     return (name == "{" || name == "}" || name == "NOT" || name == "AND"
             || name == "OR" || name == command_if || name == command_ifnot
             || name == command_else || name == command_endif
             || name == command_while || name == command_whilenot
             || name == command_endwhile || name == command_repeat
-            || name == command_endrepeat || name == command_gosub_file
-            || name == command_launch_mission
-            || name == command_load_and_launch_mission
-            || name == command_mission_start || name == command_mission_end);
+            || name == command_endrepeat || name == command_mission_start
+            || name == command_mission_end);
 }
 
 auto Parser::is_var_decl_command(std::string_view name) const -> bool

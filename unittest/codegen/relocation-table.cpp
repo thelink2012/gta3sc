@@ -1,80 +1,18 @@
+#include "relocation-fixture.hpp"
 #include <doctest/doctest.h>
 #include <gta3sc/codegen/relocation-table.hpp>
 #include <gta3sc/diagnostics.hpp>
-#include <queue>
 
-using gta3sc::ArenaMemoryResource;
-using gta3sc::CallbackDiagnosticHandler;
 using gta3sc::DiagnosticDescriptor;
-using gta3sc::SourceManager;
-using gta3sc::SymbolTable;
 using gta3sc::codegen::RelocationTable;
+using gta3sc::test::codegen::RelocationFixture;
 using FileType = gta3sc::SymbolTable::FileType;
 
 namespace
 {
-class RelocationTableFixture
+class RelocationTableFixture : public RelocationFixture
 {
 public:
-    RelocationTableFixture() :
-        diagman([this](const auto& diag) { diags.push(diag); }),
-        symtable(&arena)
-    {}
-
-    RelocationTableFixture(const RelocationTableFixture&) = delete;
-    auto operator=(const RelocationTableFixture&)
-            -> RelocationTableFixture& = delete;
-
-    RelocationTableFixture(RelocationTableFixture&&) = delete;
-    auto
-    operator=(RelocationTableFixture&&) -> RelocationTableFixture& = delete;
-
-    ~RelocationTableFixture() { CHECK(diags.empty()); }
-
-    auto make_label() -> const SymbolTable::Label&
-    {
-        const auto [label, inserted] = symtable.insert_label(
-                std::to_string(next_label_id++), SymbolTable::global_scope,
-                SourceManager::no_source_range);
-        REQUIRE(inserted);
-        return *label;
-    }
-
-    auto make_file(FileType type) -> const SymbolTable::File&
-    {
-        const auto [file, inserted] = symtable.insert_file(
-                std::to_string(next_file_id++), type,
-                SourceManager::no_source_range);
-        REQUIRE(inserted);
-        return *file;
-    }
-
-    void insert_label_loc(const SymbolTable::Label& label,
-                          const SymbolTable::File& file,
-                          RelocationTable::AbsoluteOffset offset)
-    {
-        REQUIRE(reloc_table.insert_label_loc(label, file, offset));
-    }
-
-    void insert_file_loc(const SymbolTable::File& file,
-                         RelocationTable::AbsoluteOffset offset)
-    {
-        REQUIRE(reloc_table.insert_file_loc(file, offset));
-    }
-
-    void insert_fixup_entry(const SymbolTable::Label& label,
-                            const SymbolTable::File& origin,
-                            RelocationTable::AbsoluteOffset offset)
-    {
-        reloc_table.insert_fixup_entry(label, origin, offset);
-    }
-
-    void insert_fixup_entry(const SymbolTable::File& file,
-                            RelocationTable::AbsoluteOffset offset)
-    {
-        reloc_table.insert_fixup_entry(file, offset);
-    }
-
     auto relocate_one_from_fixup_table() -> RelocationTable::RelativeOffset
     {
         const auto view = reloc_table.fixup_table();
@@ -98,19 +36,8 @@ public:
         const auto view = reloc_table.fixup_table();
         REQUIRE(view.size() == 1);
         REQUIRE(reloc_table.relocate(view.front(), diagman) == std::nullopt);
-        REQUIRE(!diags.empty());
-        REQUIRE(diags.front().descriptor == &reason);
-        diags.pop();
+        REQUIRE(consume_diag().descriptor == &reason);
     }
-
-private:
-    ArenaMemoryResource arena;
-    CallbackDiagnosticHandler diagman;
-    SymbolTable symtable;
-    RelocationTable reloc_table;
-    uint32_t next_label_id{};
-    uint32_t next_file_id{};
-    std::queue<gta3sc::Diagnostic> diags;
 };
 } // namespace
 
