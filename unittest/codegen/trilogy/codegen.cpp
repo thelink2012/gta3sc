@@ -1,11 +1,8 @@
-#include "../../command-manager-fixture.hpp"
-#include "../../with-diagnostic-fixture.hpp"
+#include "common-codegen-fixture.hpp"
 #include <doctest/doctest.h>
-#include <gta3sc/codegen/storage-table.hpp>
 #include <gta3sc/codegen/trilogy/codegen.hpp>
 #include <gta3sc/diagnostics.hpp>
 
-using gta3sc::ArenaMemoryResource;
 using gta3sc::CallbackDiagnosticHandler;
 using gta3sc::CommandTable;
 using gta3sc::LinkedIR;
@@ -18,76 +15,17 @@ using gta3sc::codegen::RelocationTable;
 using gta3sc::codegen::StorageTable;
 using gta3sc::codegen::trilogy::CodeEmitter;
 using gta3sc::codegen::trilogy::CodeGen;
-using gta3sc::test::CommandTableFixture;
-using gta3sc::test::WithDiagnosticFixture;
+using gta3sc::test::codegen::trilogy::CommonCodeGenFixture;
 
 namespace
 {
-class CodeGenFixture
-    : public CommandTableFixture
-    , public WithDiagnosticFixture
+class CodeGenFixture : public CommonCodeGenFixture
 {
 public:
-    CodeGenFixture() : symtable(&arena) {}
-
-    CodeGenFixture(const CodeGenFixture&) = delete;
-    auto operator=(const CodeGenFixture&) -> CodeGenFixture& = delete;
-
-    CodeGenFixture(CodeGenFixture&&) = delete;
-    auto operator=(CodeGenFixture&&) -> CodeGenFixture& = delete;
-
     ~CodeGenFixture() { CHECK(diags.empty()); }
 
 protected:
     auto make_scope() -> SymbolTable::ScopeId { return symtable.new_scope(); }
-
-    auto make_lvar(VarType var_type, SymbolTable::ScopeId scope_id)
-            -> const SymbolTable::Variable&
-    {
-        const auto [var, inserted] = symtable.insert_var(
-                std::to_string(next_symbol_id++), scope_id, var_type,
-                std::nullopt, SourceManager::no_source_range);
-        REQUIRE(inserted);
-        return *var;
-    }
-
-    auto make_var(VarType var_type) -> const SymbolTable::Variable&
-    {
-        return make_lvar(var_type, SymbolTable::global_scope);
-    }
-
-    auto make_label() -> const SymbolTable::Label&
-    {
-        const auto [label, inserted] = symtable.insert_label(
-                std::to_string(next_symbol_id++), SymbolTable::global_scope,
-                SourceManager::no_source_range);
-        REQUIRE(inserted);
-        return *label;
-    }
-
-    auto make_file(FileType file_type) -> const SymbolTable::File&
-    {
-        const auto [file, inserted] = symtable.insert_file(
-                std::to_string(next_symbol_id++), file_type,
-                SourceManager::no_source_range);
-        REQUIRE(inserted);
-        return *file;
-    }
-
-    auto make_used_object() -> const SymbolTable::UsedObject&
-    {
-        const auto [uobj, inserted] = symtable.insert_used_object(
-                std::to_string(next_symbol_id++),
-                SourceManager::no_source_range);
-        REQUIRE(inserted);
-        return *uobj;
-    }
-
-    auto make_storage_table() -> StorageTable
-    {
-        return StorageTable::from_symbols(symtable, StorageTable::Options())
-                .value();
-    }
 
     template<typename IR>
     auto generate_code(uint32_t multifile_offset,
@@ -133,24 +71,6 @@ protected:
         REQUIRE(result == std::nullopt);
     }
 
-    auto find_command(std::string_view name) -> const CommandTable::CommandDef&
-    {
-        const auto command = cmdman.find_command(name);
-        REQUIRE(command != nullptr);
-        return *command;
-    }
-
-    auto find_constant(std::string_view enum_name,
-                       std::string_view constant_name)
-            -> const CommandTable::ConstantDef&
-    {
-        const auto enum_id = cmdman.find_enumeration(enum_name);
-        REQUIRE(enum_id != std::nullopt);
-        const auto constant = cmdman.find_constant(*enum_id, constant_name);
-        REQUIRE(constant != nullptr);
-        return *constant;
-    }
-
     auto codegen_file() -> const SymbolTable::File&
     {
         constexpr std::string_view test_filename = "A.SC";
@@ -159,14 +79,6 @@ protected:
         CHECK(file != nullptr);
         return *file;
     }
-
-protected:
-    ArenaMemoryResource arena;   // NOLINT: Protected data is controlled
-    RelocationTable reloc_table; // NOLINT: within this file.
-
-private:
-    uint32_t next_symbol_id{};
-    SymbolTable symtable;
 };
 } // namespace
 
@@ -646,5 +558,57 @@ TEST_CASE_FIXTURE(CodeGenFixture,
                          .build());
 
         REQUIRE(output == expected);
+    }
+}
+
+TEST_CASE_FIXTURE(CodeGenFixture, "offset methods")
+{
+    const auto& return_command = find_command("RETURN");
+
+    SUBCASE("offsets when base is zero")
+    {
+        const auto& file = codegen_file();
+        const auto storage_table = make_storage_table();
+        std::vector<std::byte> output;
+
+        auto codegen = CodeGen(file, 0, storage_table, diagman);
+
+        REQUIRE(codegen.relative_offset() == 0);
+        REQUIRE(codegen.absolute_offset() == 0);
+
+        codegen.generate(
+                *SemaIR::Builder(&arena).command(return_command).build(),
+                reloc_table, std::back_inserter(output));
+
+        REQUIRE(codegen.relative_offset() == 2);
+        REQUIRE(codegen.absolute_offset() == 2);
+
+        codegen.generate(
+                *SemaIR::Builder(&arena).command(return_command).build(),
+                reloc_table, std::back_inserter(output));
+
+        REQUIRE(codegen.relative_offset() == 4);
+        REQUIRE(codegen.absolute_offset() == 4);
+    }
+
+    SUBCASE("offsets when base is non-zero")
+    {
+        constexpr auto base_offset = 999;
+
+        const auto& file = codegen_file();
+        const auto storage_table = make_storage_table();
+        std::vector<std::byte> output;
+
+        auto codegen = CodeGen(file, base_offset, storage_table, diagman);
+
+        REQUIRE(codegen.absolute_offset() == base_offset);
+        REQUIRE(codegen.relative_offset() == 0);
+
+        codegen.generate(
+                *SemaIR::Builder(&arena).command(return_command).build(),
+                reloc_table, std::back_inserter(output));
+
+        REQUIRE(codegen.relative_offset() == 2);
+        REQUIRE(codegen.absolute_offset() == base_offset + 2);
     }
 }

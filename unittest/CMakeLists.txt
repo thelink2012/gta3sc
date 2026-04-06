@@ -12,6 +12,7 @@ add_executable(gta3sc_unittest
     codegen/relocator.cpp
     codegen/trilogy/emitter.cpp
     codegen/trilogy/codegen.cpp
+    codegen/trilogy/multifile-codegen.cpp
     config/config-fixture.hpp
     config/config-alternator.cpp
     config/config-commands.cpp

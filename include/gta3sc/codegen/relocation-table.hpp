@@ -153,6 +153,13 @@ public:
     relocate(const FileFixupEntry& entry,
              DiagnosticHandler& diagman) const -> std::optional<RelativeOffset>;
 
+    /// Checks whether the given file is in the main segment.
+    ///
+    /// A file is in the main segment if it's possible to reach the file through
+    /// the use of an absolute offset.
+    [[nodiscard]] static auto
+    is_in_main_segment(const SymbolTable::File& file) noexcept -> bool;
+
     /// Obtains a view to the fixup table entries.
     [[nodiscard]] auto fixup_table() const noexcept -> FixupTableView
     {
@@ -187,13 +194,6 @@ private:
     [[nodiscard]] static auto
     is_in_same_segment(const SymbolTable::File& filea,
                        const SymbolTable::File& fileb) noexcept -> bool;
-
-    /// Checks whether the given file is in the main segment.
-    ///
-    /// A file is in the main segment if it's possible to reach the file through
-    /// the use of an absolute offset.
-    [[nodiscard]] static auto
-    is_in_main_segment(const SymbolTable::File& file) noexcept -> bool;
 
     /// Gets the offset for the start of the segment of the given file.
     [[nodiscard]] auto segment_base_for(

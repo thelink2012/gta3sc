@@ -29,13 +29,14 @@ namespace gta3sc::codegen::trilogy
 /// The bytecode is output into an `OutputIterator` and any necessary relocation
 /// information (such as label offsets and label references) are registered
 /// in a `RelocationTable`. This table must later on be scanned to perform
-/// relocation of label references through the bytecode.
+/// relocation of label references through the bytecode. \see Relocator
+/// for details on how to perform relocation.
 ///
-/// This code generator is headerless, please use `MultifileCodeGen` if
+/// This code generator is headerless, please use \ref MultifileCodeGen if
 /// the generation of a header is necessary.
 ///
 /// For emitting bytecode having no concern to language semantics, use
-/// `CodeEmitter`.
+/// \ref CodeEmitter.
 class CodeGen
 {
 public:
@@ -88,6 +89,12 @@ public:
     auto generate(const LinkedIR<SemaIR>& ir, RelocationTable& reloc_table,
                   OutputIterator output_iter) -> std::optional<OutputIterator>;
 
+    /// Returns the current absolute offset in the generated code.
+    auto absolute_offset() const noexcept -> AbsoluteOffset;
+
+    /// Returns the current relative offset in the generated code.
+    auto relative_offset() const noexcept -> RelativeOffset;
+
 private:
     // The methods below generate code for the element given as first parameter
     // using `emitter` and returns an boolean on whether the generation was
@@ -133,6 +140,16 @@ private:
     AbsoluteOffset base_offset;
     CodeEmitter emitter;
 };
+
+inline auto CodeGen::absolute_offset() const noexcept -> AbsoluteOffset
+{
+    return base_offset + emitter.offset();
+}
+
+inline auto CodeGen::relative_offset() const noexcept -> RelativeOffset
+{
+    return emitter.offset();
+}
 
 template<typename OutputIterator>
 inline auto

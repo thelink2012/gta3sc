@@ -1,4 +1,5 @@
 #include "../../stringification.hpp"
+#include <algorithm>
 #include <cmath>
 #include <doctest/doctest.h>
 #include <gta3sc/codegen/trilogy/emitter.hpp>
@@ -828,6 +829,58 @@ TEST_CASE_FIXTURE(CodeEmitterFixture, "emit raw bytes")
         emitter.emit_raw_bytes(raw_seq.begin(), raw_seq.end(), 100);
         CHECK(raw_seq.size() != 100);
         REQUIRE(emitter.offset() == 100);
+    }
+}
+
+TEST_CASE_FIXTURE(CodeEmitterFixture, "emit fill")
+{
+    SUBCASE("fill with count zero does not change offset")
+    {
+        CodeEmitter emitter;
+
+        emitter.emit_fill(std::byte{0xAB}, 0);
+
+        REQUIRE(emitter.offset() == 0);
+
+        std::vector<std::byte> output;
+        emitter.drain(back_inserter(output));
+
+        REQUIRE(output.empty());
+    }
+
+    SUBCASE("fill emits byte repeated N times and increases offset")
+    {
+        CodeEmitter emitter;
+        constexpr size_t n = 5;
+
+        emitter.emit_fill(std::byte{0xCD}, n);
+
+        REQUIRE(emitter.offset() == n);
+
+        std::vector<std::byte> output;
+        emitter.drain(back_inserter(output));
+
+        REQUIRE(output.size() == n);
+
+        REQUIRE(std::all_of(output.begin(), output.end(),
+                            [](std::byte b) { return b == std::byte{0xCD}; }));
+    }
+
+    SUBCASE("fill accumulates after other emissions")
+    {
+        CodeEmitter emitter;
+
+        emitter.emit_raw_byte(std::byte{1});
+        emitter.emit_fill(std::byte{0xEF}, 3);
+
+        REQUIRE(emitter.offset() == 4);
+
+        std::vector<std::byte> output;
+        emitter.drain(back_inserter(output));
+
+        REQUIRE(output
+                == std::vector{std::byte{1}, std::byte{0xEF}, std::byte{0xEF},
+                               std::byte{0xEF}});
     }
 }
 

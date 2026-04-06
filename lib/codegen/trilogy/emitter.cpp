@@ -184,6 +184,17 @@ auto CodeEmitter::emit_raw_u32(uint32_t value) -> CodeEmitter&
     return *this;
 }
 
+auto CodeEmitter::emit_fill(std::byte value, size_t count) -> CodeEmitter&
+{
+    const auto buffer_pos = this->buffer.size();
+    this->buffer.resize(buffer_pos + count);
+    this->curr_offset += count;
+
+    std::fill_n(buffer.begin() + buffer_pos, count, value);
+
+    return *this;
+}
+
 auto CodeEmitter::float_to_q11_4(float value) const -> int16_t
 {
     // https://en.wikipedia.org/wiki/Q_(number_format)

@@ -130,6 +130,9 @@ public:
     auto emit_raw_bytes(RandomAccessIterator begin,
                         RandomAccessIterator end) -> CodeEmitter&;
 
+    /// Emits a given byte value `count` times.
+    auto emit_fill(std::byte value, size_t count) -> CodeEmitter&;
+
 private:
     /// Converts a floating-point into an Q11.4 fixed-point.
     ///
