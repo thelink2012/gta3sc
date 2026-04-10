@@ -74,6 +74,8 @@ auto Compilation::codegen(LinkedIR<SemaIR> input_ir, Result result) -> bool
     if(!relocator.relocate(reloc_table, *diag_manager))
         return false;
 
+    // TODO check for diagman errors before returning true?
+
     return true;
 }
 
