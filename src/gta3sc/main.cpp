@@ -14,7 +14,6 @@ using namespace gta3sc;
 // TODO
 //   - lower MISSION_START/END
 //   - sema handle filename
-//   - parser handle gosub_file etc in parse stmt list
 
 // TODO is it a problem if we have MAIN.sc as the main file and then
 // MAIN/MAIN.sc as another file?

@@ -1,5 +1,6 @@
 add_executable(gta3sc_unittest
     with-temp-dir-fixture.cpp
+    driver/compilation.cpp
     syntax/preprocessor.cpp
     syntax/scanner.cpp
     syntax/parser.cpp

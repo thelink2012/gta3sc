@@ -1,5 +1,5 @@
 add_executable(gta3sc-cli main.cpp)
 set_target_properties(gta3sc-cli PROPERTIES OUTPUT_NAME gta3sc)
-target_compile_features(gta3sc-cli PUBLIC cxx_std_20)
+target_compile_features(gta3sc-cli PUBLIC cxx_std_26)
 target_link_libraries(gta3sc-cli gta3sc gta3sc-config)
 target_compile_options(gta3sc-cli PRIVATE ${GTA3SC_PEDANTIC_COMPILE_OPTIONS})

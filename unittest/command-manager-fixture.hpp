@@ -81,6 +81,12 @@ private:
         add_command(builder, "SCRIPT_NAME", {ParamDef{ParamType::TEXT_LABEL}});
         add_command(builder, "PRINT_HELP", {ParamDef{ParamType::TEXT_LABEL}});
         add_command(builder, "LAUNCH_MISSION", {ParamDef{ParamType::LABEL}});
+        add_command(builder, "GOSUB_FILE",
+                    {ParamDef{ParamType::LABEL}, ParamDef{ParamType::LABEL}});
+        add_command(builder, "LOAD_AND_LAUNCH_MISSION",
+                    {ParamDef{ParamType::LABEL}});
+        add_command(builder, "LOAD_AND_LAUNCH_MISSION_INTERNAL",
+                    {ParamDef{ParamType::INPUT_INT}});
         add_command(
                 builder, "START_NEW_SCRIPT",
                 {ParamDef{ParamType::LABEL}, ParamDef{ParamType::INPUT_OPT}});
@@ -267,6 +273,9 @@ private:
         set_command_id(builder, "GOTO", 2);
         set_command_id(builder, "START_NEW_SCRIPT", 79);
         set_command_id(builder, "LAUNCH_MISSION", 215);
+        set_command_id(builder, "GOSUB_FILE", 717);
+        set_command_id(builder, "LOAD_AND_LAUNCH_MISSION", 1046);
+        set_command_id(builder, "LOAD_AND_LAUNCH_MISSION_INTERNAL", 1047);
         set_command_id(builder, "DO_FADE", 362);
         set_command_id(builder, "SET_TIME_SCALE", 349);
         set_command_id(builder, "PRINT_HELP", 997);
