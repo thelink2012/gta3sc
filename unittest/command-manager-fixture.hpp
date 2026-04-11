@@ -81,6 +81,10 @@ private:
         add_command(builder, "SCRIPT_NAME", {ParamDef{ParamType::TEXT_LABEL}});
         add_command(builder, "PRINT_HELP", {ParamDef{ParamType::TEXT_LABEL}});
         add_command(builder, "LAUNCH_MISSION", {ParamDef{ParamType::LABEL}});
+        add_command(builder, "LOAD_AND_LAUNCH_MISSION",
+                    {ParamDef{ParamType::LABEL}});
+        add_command(builder, "LOAD_AND_LAUNCH_MISSION_INTERNAL",
+                    {ParamDef{ParamType::INT}});
         add_command(
                 builder, "START_NEW_SCRIPT",
                 {ParamDef{ParamType::LABEL}, ParamDef{ParamType::INPUT_OPT}});

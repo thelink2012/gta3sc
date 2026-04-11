@@ -6,6 +6,7 @@ add_executable(gta3sc_unittest
     syntax/sema.cpp
     syntax/multifile-parser.cpp
     syntax/visitor/required-files-visitor.cpp
+    syntax/lowering/load-and-launch-mission-rewriter.cpp
     syntax/lowering/repeat-stmt-rewriter.cpp
     syntax/lowering/mission-stmt-rewriter.cpp
     syntax/lowering/stats-rewriter.cpp

@@ -692,20 +692,33 @@ auto Sema::validate_label([[maybe_unused]] const CommandTable::ParamDef& param,
 {
     assert(param.type == ParamType::LABEL);
 
-    if(arg.type() != ParserIR::Argument::Type::IDENTIFIER)
+    if(arg.type() == ParserIR::Argument::Type::IDENTIFIER)
+    {
+        const auto* sym_label = symrepo->lookup_label(*arg.as_identifier());
+        if(!sym_label)
+        {
+            report(arg.source(), diag::undefined_label);
+            return nullptr;
+        }
+
+        return SemaIR::create_label(*sym_label, arg.source(), allocator);
+    }
+    else if(arg.type() == ParserIR::Argument::Type::FILENAME)
+    {
+        const auto* sym_file = symrepo->lookup_file(*arg.as_filename());
+        if(!sym_file)
+        {
+            report(arg.source(), diag::undefined_label);
+            return nullptr;
+        }
+
+        return SemaIR::create_filename(*sym_file, arg.source(), allocator);
+    }
+    else
     {
         report(arg.source(), diag::expected_label);
         return nullptr;
     }
-
-    const auto* sym_label = symrepo->lookup_label(*arg.as_identifier());
-    if(!sym_label)
-    {
-        report(arg.source(), diag::undefined_label);
-        return nullptr;
-    }
-
-    return SemaIR::create_label(*sym_label, arg.source(), allocator);
 }
 
 auto Sema::validate_string_literal(

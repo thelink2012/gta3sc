@@ -601,6 +601,28 @@ TEST_CASE_FIXTURE(SemaFixture, "sema LABEL parameter")
         CHECK(consume_diag().descriptor
               == &gta3sc::syntax::diag::expected_label);
     }
+
+    SUBCASE("valid LABEL param - FILENAME argument")
+    {
+        symrepo.insert_file("MISSION.SC",
+                            gta3sc::SymbolTable::FileType::mission,
+                            gta3sc::SourceManager::no_source_range);
+        build_sema("LOAD_AND_LAUNCH_MISSION mission.sc");
+
+        auto ir = sema.validate();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(ir->front().command().arg(0).as_filename()
+                == symrepo.lookup_file("MISSION.SC"));
+    }
+
+    SUBCASE("invalid LABEL param - FILENAME argument - file not in symbol "
+            "table")
+    {
+        build_sema("LOAD_AND_LAUNCH_MISSION mission.sc");
+        REQUIRE(sema.validate() == std::nullopt);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::undefined_label);
+    }
 }
 
 TEST_CASE_FIXTURE(SemaFixture, "sema STRING parameter")
