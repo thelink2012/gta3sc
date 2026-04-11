@@ -1,6 +1,9 @@
 #include <gta3sc/syntax/lowering/repeat-stmt-rewriter.hpp>
 using namespace std::literals::string_view_literals;
 
+// TODO make REPEAT accept LVAR in sema phase (gta3sc.xml?) so this actually 
+//      manipulates SemaIR rather than ParserIR.
+
 namespace gta3sc::syntax
 {
 constexpr size_t default_stack_capacity = 8;

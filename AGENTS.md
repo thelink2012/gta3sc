@@ -6,26 +6,28 @@ You are an experienced compiler engineer and C++ expert.
 
 You are working on **gta3sc**, a compiler and library for **GTA3Script** — the imperative scripting language used for mission scripts in GTA III era titles.
 
-This repository’s active integration branch is **`gta3sc-rewrite`**, a rewrite of an older codebase. The branch **`master`** holds a **different, much older** codebase with an enormous and irrelevant diff for this work: do not reference it, diff against it, or reason about it when working here.
+This repository’s active integration branch is `**gta3sc-rewrite`**, a rewrite of an older codebase. The branch `**master**` holds a **different, much older** codebase with an enormous and irrelevant diff for this work: do not reference it, diff against it, or reason about it when working here.
 
-High-level design and rationale of the project: see [`DESIGN.adoc`](DESIGN.adoc).
+High-level design and rationale of the project: see `[DESIGN.adoc](DESIGN.adoc)`.
 
 ## Compiler pipeline (where code lives)
 
 Paths are relative to `include/gta3sc/` and `lib/` unless noted.
 
-| Phase | Headers (include) | Sources (lib) |
-|-------|-------------------|----------------|
-| Preprocessor | `syntax/preprocessor.hpp` | `syntax/preprocessor.cpp` |
-| Scanner | `syntax/scanner.hpp` | `syntax/scanner.cpp` |
-| Parser | `syntax/parser.hpp`, `syntax/multifile-parser.hpp` | `syntax/parser.cpp`, `syntax/multifile-parser.cpp` |
-| Semantic analysis | `syntax/sema.hpp` | `syntax/sema.cpp` |
-| Lowering | `syntax/lowering/*.hpp*` | `syntax/lowering/*.cpp` |
-| Code generation (Trilogy) | `codegen/trilogy/codegen.hpp`, `codegen/trilogy/emitter.hpp` | `codegen/trilogy/codegen.cpp`, `codegen/trilogy/emitter.cpp` |
-| IR | `ir/parser-ir.hpp`, `ir/sema-ir.hpp`, `ir/symbol-table.hpp` | `ir/parser-ir.cpp`, `ir/sema-ir.cpp`, `ir/symbol-table.cpp` |
-| Config | `config/config.hpp`, `config/models.hpp` | `config/config.cpp`, `config/models.cpp` |
-| Support | `command-table.hpp`, `model-table.hpp`, `sourceman.hpp`, `diagnostics.hpp` | matching `.cpp` at `lib/` root |
-| Utilities | `util/arena.hpp`, `util/intrusive-*.hpp`, and other `util/*.hpp` | `util/arena.cpp`, `util/name-generator.cpp`, … |
+
+| Phase                     | Headers (include)                                                          | Sources (lib)                                                |
+| ------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Preprocessor              | `syntax/preprocessor.hpp`                                                  | `syntax/preprocessor.cpp`                                    |
+| Scanner                   | `syntax/scanner.hpp`                                                       | `syntax/scanner.cpp`                                         |
+| Parser                    | `syntax/parser.hpp`, `syntax/multifile-parser.hpp`                         | `syntax/parser.cpp`, `syntax/multifile-parser.cpp`           |
+| Semantic analysis         | `syntax/sema.hpp`                                                          | `syntax/sema.cpp`                                            |
+| Lowering                  | `syntax/lowering/*.hpp*`                                                   | `syntax/lowering/*.cpp`                                      |
+| Code generation (Trilogy) | `codegen/trilogy/codegen.hpp`, `codegen/trilogy/emitter.hpp`               | `codegen/trilogy/codegen.cpp`, `codegen/trilogy/emitter.cpp` |
+| IR                        | `ir/parser-ir.hpp`, `ir/sema-ir.hpp`, `ir/symbol-table.hpp`                | `ir/parser-ir.cpp`, `ir/sema-ir.cpp`, `ir/symbol-table.cpp`  |
+| Config                    | `config/config.hpp`, `config/models.hpp`                                   | `config/config.cpp`, `config/models.cpp`                     |
+| Support                   | `command-table.hpp`, `model-table.hpp`, `sourceman.hpp`, `diagnostics.hpp` | matching `.cpp` at `lib/` root                               |
+| Utilities                 | `util/arena.hpp`, `util/intrusive-*.hpp`, and other `util/*.hpp`           | `util/arena.cpp`, `util/name-generator.cpp`, …               |
+
 
 `gta3sc-config` is a separate CMake target used to load XML config via pugixml; see `lib/CMakeLists.txt`.
 
@@ -45,7 +47,7 @@ Paths are relative to `include/gta3sc/` and `lib/` unless noted.
 
 ## Build and test
 
-Prefer **`Debug`** for agent work on the compiler itself: assertions stay enabled and stack traces are clearer. Compiler-output performance for mission scripts is not the bottleneck here.
+Prefer `**Debug`** for agent work on the compiler itself: assertions stay enabled and stack traces are clearer. Compiler-output performance for mission scripts is not the bottleneck here.
 
 **Main checkout:** submodules and a `build/` directory are often already set up—try building first; run setup only if needed.
 
@@ -93,8 +95,28 @@ cmake --build build-analysis 2>&1 | grep -E "warning:|error:"
 
 These URLs are fetchable when you need detail beyond this repo:
 
-- **Language spec:** https://gtamodding.github.io/gta3script-specs/
-- **Bytecode / SCM instructions:** https://gtamods.com/wiki/SCM_Instruction
+- **Language spec:** [https://gtamodding.github.io/gta3script-specs/](https://gtamodding.github.io/gta3script-specs/)
+- **Bytecode / SCM instructions:** [https://gtamods.com/wiki/SCM_Instruction](https://gtamods.com/wiki/SCM_Instruction)
+
+## Feature implementation order
+
+When implementing a feature — especially during the planning phase — follow this sequence:
+
+1. **Define the interface** (`.hpp`): types, function signatures, and doc comments. This forces clear thinking about the API before any implementation details are committed.
+2. **Write the unit test cases** (`unittest/`): cover the intended behaviour from the perspective of a caller. Tests at this stage describe *what* the feature should do, not *how*.
+3. **Write the implementation** (`.cpp`): make the tests pass.
+4. **Revisit the tests for edge cases**: implementation often reveals corner cases (error paths, boundary values, unexpected interactions) that weren't obvious up front. Add targeted test cases for these before considering the feature done.
+
+This order applies to both interactive and autonomous sessions.
+
+### Unit test readability
+
+Test code is read far more often than it is written. Keep it easy to follow:
+
+- **Don't over-comment.** If the test code is clear, comments add noise rather than value. Omit them unless something genuinely non-obvious needs explaining.
+- **Use blank lines to separate the given / when / then parts.** Set up, action, and assertions should breathe — don't compress everything into a dense block.
+
+The goal is that any developer can read a failing test and immediately understand what was being tested and why it failed.
 
 ## Workflow rules
 
@@ -119,7 +141,7 @@ Behaviour depends on whether the session is **interactive** or **autonomous**.
 ## Git
 
 - **Integration base branch:** `gta3sc-rewrite` (not `main`). Treat “merge target”, “mainline”, and similar as this branch unless stated otherwise.
-- **`master`:** unrelated legacy tree — ignore for this repo’s development.
+- `**master`:** unrelated legacy tree — ignore for this repo’s development.
 - **Feature branches:** use prefix `gta3sc-rewrite-branches/`.
 
 ### Opening a PR (autonomous)
@@ -139,3 +161,4 @@ gh pr create \
 EOF
 )"
 ```
+
