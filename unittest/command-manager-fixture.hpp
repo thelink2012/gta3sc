@@ -263,6 +263,25 @@ private:
         add_command(builder, "COMMAND_WITHOUT_ID",
                     {ParamDef{ParamType::INPUT_INT}});
 
+        add_command(builder, "CREATE_COLLECTABLE1",
+                    {ParamDef{ParamType::INPUT_FLOAT},
+                     ParamDef{ParamType::INPUT_FLOAT},
+                     ParamDef{ParamType::INPUT_FLOAT}});
+        add_command(builder, "SET_COLLECTABLE1_TOTAL",
+                    {ParamDef{ParamType::INPUT_INT}});
+        add_command(builder, "PLAYER_MADE_PROGRESS",
+                    {ParamDef{ParamType::INPUT_INT}});
+        add_command(builder, "SET_PROGRESS_TOTAL", {ParamDef{ParamType::INT}});
+        add_command(builder, "SET_TOTAL_NUMBER_OF_MISSIONS",
+                    {ParamDef{ParamType::INPUT_INT}});
+        add_command(builder, "REGISTER_MISSION_PASSED",
+                    {ParamDef{ParamType::TEXT_LABEL}});
+        add_command(builder, "REGISTER_ODDJOB_MISSION_PASSED", {});
+        add_command(builder, "SET_MISSION_RESPECT_TOTAL",
+                    {ParamDef{ParamType::INT}});
+        add_command(builder, "AWARD_PLAYER_MISSION_RESPECT",
+                    {ParamDef{ParamType::INPUT_INT}});
+
         set_command_id(builder, "WAIT", 1);
         set_command_id(builder, "GOTO", 2);
         set_command_id(builder, "START_NEW_SCRIPT", 79);

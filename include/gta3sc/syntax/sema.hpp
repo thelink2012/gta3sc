@@ -16,7 +16,7 @@ namespace gta3sc::syntax
 /// It receives the intermediate representation of the parser as input, checks
 /// whether it is semantically valid, and if so, outputs a intermediate
 /// representation guaranted to be semantically valid. It also discovers and
-/// inserts names into a symbol repository along the process.
+/// inserts names and stats counters into a symbol repository along the process.
 ///
 /// The output IR is as close as possible to the input IR. That is, no
 /// rewriting whatsoever is performed on the arguments (e.g. the argument to
@@ -71,6 +71,10 @@ private:
 
     /// Performs a pass in the input IR to check whether it is valid.
     auto check_semantics_pass() -> std::optional<LinkedIR<SemaIR>>;
+
+    /// Updates stats counters in the symbol repository for dependency commands
+    /// such as `CREATE_COLLECTABLE1`.
+    void update_stats_counters(const SemaIR::Command& command);
 
     // The following methods checks the semantic validity a specific portion
     // of the input IR and tries to produces a output IR.
@@ -258,6 +262,11 @@ private:
     const CommandTable::AlternatorDef* alternator_set{};
     const CommandTable::CommandDef* command_script_name{};
     const CommandTable::CommandDef* command_start_new_script{};
+    const CommandTable::CommandDef* command_create_collectable1{};
+    const CommandTable::CommandDef* command_player_made_progress{};
+    const CommandTable::CommandDef* command_register_mission_passed{};
+    const CommandTable::CommandDef* command_register_oddjob_mission_passed{};
+    const CommandTable::CommandDef* command_award_player_mission_respect{};
 
     std::optional<CommandTable::EnumId> model_enum;
     std::optional<CommandTable::EnumId> defaultmodel_enum;

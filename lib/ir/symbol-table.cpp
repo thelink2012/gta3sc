@@ -146,4 +146,44 @@ auto SymbolTable::insert_used_object(std::string_view name, SourceRange source)
 
     return {iter->second, true};
 }
+
+void SymbolTable::add_collectable1(uint32_t n) noexcept
+{
+    m_collectable1_total += n;
+}
+
+void SymbolTable::add_progress(uint32_t n) noexcept
+{
+    m_progress_total += n;
+}
+
+void SymbolTable::add_mission(uint32_t n) noexcept
+{
+    m_mission_total += n;
+}
+
+void SymbolTable::add_mission_respect(uint32_t n) noexcept
+{
+    m_mission_respect_total += n;
+}
+
+auto SymbolTable::collectable1_total() const noexcept -> uint32_t
+{
+    return m_collectable1_total;
+}
+
+auto SymbolTable::progress_total() const noexcept -> uint32_t
+{
+    return m_progress_total;
+}
+
+auto SymbolTable::mission_total() const noexcept -> uint32_t
+{
+    return m_mission_total;
+}
+
+auto SymbolTable::mission_respect_total() const noexcept -> uint32_t
+{
+    return m_mission_respect_total;
+}
 } // namespace gta3sc

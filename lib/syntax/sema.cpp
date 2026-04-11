@@ -268,6 +268,16 @@ auto Sema::check_semantics_pass() -> std::optional<LinkedIR<SemaIR>>
     this->alternator_set = cmdman->find_alternator("SET"sv);
     this->command_script_name = cmdman->find_command("SCRIPT_NAME"sv);
     this->command_start_new_script = cmdman->find_command("START_NEW_SCRIPT"sv);
+    this->command_create_collectable1 = cmdman->find_command(
+            "CREATE_COLLECTABLE1"sv);
+    this->command_player_made_progress = cmdman->find_command(
+            "PLAYER_MADE_PROGRESS"sv);
+    this->command_register_mission_passed = cmdman->find_command(
+            "REGISTER_MISSION_PASSED"sv);
+    this->command_register_oddjob_mission_passed = cmdman->find_command(
+            "REGISTER_ODDJOB_MISSION_PASSED"sv);
+    this->command_award_player_mission_respect = cmdman->find_command(
+            "AWARD_PLAYER_MISSION_RESPECT"sv);
 
     this->model_enum = cmdman->find_enumeration("MODEL");
     this->defaultmodel_enum = cmdman->find_enumeration("DEFAULTMODEL");
@@ -419,6 +429,7 @@ auto Sema::validate_command(const ParserIR::Command& command)
 
     if(!failed)
     {
+        update_stats_counters(*result);
         if(!validate_hardcoded_command(*result))
             failed = true;
     }
@@ -861,6 +872,27 @@ auto Sema::validate_var_ref(const CommandTable::ParamDef& param,
                                        arg_source, allocator);
     else
         return SemaIR::create_variable(*sym_var, arg_source, allocator);
+}
+
+void Sema::update_stats_counters(const SemaIR::Command& command)
+{
+    const auto& command_def = command.def();
+
+    if(&command_def == command_create_collectable1)
+        return symrepo->add_collectable1(1);
+    if(&command_def == command_register_mission_passed
+       || &command_def == command_register_oddjob_mission_passed)
+        return symrepo->add_mission(1);
+
+    if(command.num_args() < 1)
+        return;
+
+    const uint32_t addend = command.arg(0).as_int().value_or(0);
+
+    if(&command_def == command_player_made_progress)
+        symrepo->add_progress(addend);
+    else if(&command_def == command_award_player_mission_respect)
+        symrepo->add_mission_respect(addend);
 }
 
 auto Sema::validate_hardcoded_command(const SemaIR::Command& command) -> bool

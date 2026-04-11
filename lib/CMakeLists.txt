@@ -17,6 +17,7 @@ add_library(gta3sc
   syntax/sema.cpp
   syntax/lowering/repeat-stmt-rewriter.cpp
   syntax/lowering/mission-stmt-rewriter.cpp
+  syntax/lowering/stats-rewriter.cpp
   syntax/visitor/required-files-visitor.cpp
   codegen/storage-table.cpp
   codegen/relocation-table.cpp

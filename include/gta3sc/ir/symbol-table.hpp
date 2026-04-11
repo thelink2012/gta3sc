@@ -199,6 +199,30 @@ public:
     auto insert_used_object(std::string_view name, SourceRange source)
             -> std::pair<const UsedObject*, bool>;
 
+    /// Adds `n` to the running total of `CREATE_COLLECTABLE1`.
+    void add_collectable1(uint32_t n) noexcept;
+
+    /// Adds `n` to the running total of `PLAYER_MADE_PROGRESS`.
+    void add_progress(uint32_t n) noexcept;
+
+    /// Adds `n` to the running total of mission-registration commands.
+    void add_mission(uint32_t n) noexcept;
+
+    /// Adds `n` to the running total of `AWARD_PLAYER_MISSION_RESPECT`.
+    void add_mission_respect(uint32_t n) noexcept;
+
+    /// Returns the running total of `CREATE_COLLECTABLE1`.
+    [[nodiscard]] auto collectable1_total() const noexcept -> uint32_t;
+
+    /// Returns the running total of `PLAYER_MADE_PROGRESS`.
+    [[nodiscard]] auto progress_total() const noexcept -> uint32_t;
+
+    /// Returns the running total of mission-registration commands.
+    [[nodiscard]] auto mission_total() const noexcept -> uint32_t;
+
+    /// Returns the running total of `AWARD_PLAYER_MISSION_RESPECT`.
+    [[nodiscard]] auto mission_respect_total() const noexcept -> uint32_t;
+
 private:
     template<typename T>
     using SymbolMap = std::unordered_map<std::string_view, ArenaPtr<const T>>;
@@ -208,6 +232,10 @@ private:
     SymbolMap<Label> m_labels;
     SymbolMap<File> m_files;
     uint32_t m_num_files_of_type[4]{};
+    uint32_t m_collectable1_total{0};
+    uint32_t m_progress_total{0};
+    uint32_t m_mission_total{0};
+    uint32_t m_mission_respect_total{0};
     SymbolMap<UsedObject> m_used_objects;
     std::vector<SymbolMap<Variable>> m_scopes;
 };
