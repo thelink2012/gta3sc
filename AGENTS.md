@@ -6,50 +6,38 @@ You are an experienced compiler engineer and C++ expert.
 
 You are working on **gta3sc**, a compiler and library for **GTA3Script** — the imperative scripting language used for mission scripts in GTA III era titles.
 
-This repository’s active integration branch is `**gta3sc-rewrite`**, a rewrite of an older codebase. The branch `**master**` holds a **different, much older** codebase with an enormous and irrelevant diff for this work: do not reference it, diff against it, or reason about it when working here.
+The active integration branch is **`gta3sc-rewrite`**. The branch **`master`** holds a different, older codebase — do not reference or diff against it.
 
-High-level design and rationale of the project: see `[DESIGN.adoc](DESIGN.adoc)`.
+High-level design and rationale: see [`DESIGN.adoc`](DESIGN.adoc).
 
-## Compiler pipeline (where code lives)
+## Compiler pipeline
 
 Paths are relative to `include/gta3sc/` and `lib/` unless noted.
 
+| Phase | Headers (include) | Sources (lib) |
+|-------|-------------------|----------------|
+| Preprocessor | `syntax/preprocessor.hpp` | `syntax/preprocessor.cpp` |
+| Scanner | `syntax/scanner.hpp` | `syntax/scanner.cpp` |
+| Parser | `syntax/parser.hpp`, `syntax/multifile-parser.hpp` | `syntax/parser.cpp`, `syntax/multifile-parser.cpp` |
+| Semantic analysis | `syntax/sema.hpp` | `syntax/sema.cpp` |
+| Lowering | `syntax/lowering/*.hpp` | `syntax/lowering/*.cpp` |
+| Code generation (Trilogy) | `codegen/trilogy/codegen.hpp`, `codegen/trilogy/emitter.hpp` | `codegen/trilogy/codegen.cpp`, `codegen/trilogy/emitter.cpp` |
+| IR | `ir/parser-ir.hpp`, `ir/sema-ir.hpp`, `ir/symbol-table.hpp` | `ir/parser-ir.cpp`, `ir/sema-ir.cpp`, `ir/symbol-table.cpp` |
+| Config | `config/config.hpp`, `config/models.hpp` | `config/config.cpp`, `config/models.cpp` |
+| Support | `command-table.hpp`, `model-table.hpp`, `sourceman.hpp`, `diagnostics.hpp` | matching `.cpp` at `lib/` root |
+| Utilities | `util/arena.hpp`, `util/intrusive-*.hpp`, and other `util/*.hpp` | `util/arena.cpp`, `util/name-generator.cpp`, … |
 
-| Phase                     | Headers (include)                                                          | Sources (lib)                                                |
-| ------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| Preprocessor              | `syntax/preprocessor.hpp`                                                  | `syntax/preprocessor.cpp`                                    |
-| Scanner                   | `syntax/scanner.hpp`                                                       | `syntax/scanner.cpp`                                         |
-| Parser                    | `syntax/parser.hpp`, `syntax/multifile-parser.hpp`                         | `syntax/parser.cpp`, `syntax/multifile-parser.cpp`           |
-| Semantic analysis         | `syntax/sema.hpp`                                                          | `syntax/sema.cpp`                                            |
-| Lowering                  | `syntax/lowering/*.hpp*`                                                   | `syntax/lowering/*.cpp`                                      |
-| Code generation (Trilogy) | `codegen/trilogy/codegen.hpp`, `codegen/trilogy/emitter.hpp`               | `codegen/trilogy/codegen.cpp`, `codegen/trilogy/emitter.cpp` |
-| IR                        | `ir/parser-ir.hpp`, `ir/sema-ir.hpp`, `ir/symbol-table.hpp`                | `ir/parser-ir.cpp`, `ir/sema-ir.cpp`, `ir/symbol-table.cpp`  |
-| Config                    | `config/config.hpp`, `config/models.hpp`                                   | `config/config.cpp`, `config/models.cpp`                     |
-| Support                   | `command-table.hpp`, `model-table.hpp`, `sourceman.hpp`, `diagnostics.hpp` | matching `.cpp` at `lib/` root                               |
-| Utilities                 | `util/arena.hpp`, `util/intrusive-*.hpp`, and other `util/*.hpp`           | `util/arena.cpp`, `util/name-generator.cpp`, …               |
-
-
-`gta3sc-config` is a separate CMake target used to load XML config via pugixml; see `lib/CMakeLists.txt`.
-
-## Repository layout
-
-- `include/gta3sc/` — public API headers
-- `lib/` — library implementation (`gta3sc`, `gta3sc-config`)
-- `unittest/` — unit tests (doctest)
-- `thirdparty/` — vendored **doctest** (tests), **pugixml** (config XML)
-- `src/` — **not implemented yet** (planned CLI driver; root CMake does not add it)
+`gta3sc-config` is a separate CMake target (pugixml-based config loading); see `lib/CMakeLists.txt`. Source under `src/` is not implemented yet (planned CLI driver).
 
 ## Implementation status
 
 **Present:** preprocessor, scanner, parser, multifile parser, semantic analysis, repeat-stmt lowering, Trilogy codegen and emitter, config loading, model table, command table, symbol table, source manager, diagnostics, storage/relocation tables, arena allocator, intrusive list IR wiring, required-files visitor.
 
-**Not done yet:** CLI under `src/`, all lowering steps, compiler driver, lit/integration tests, install script (see `README.md` TODOs for human-facing backlog).
+**Not done yet:** CLI under `src/`, all lowering steps, compiler driver, lit/integration tests, install script.
 
 ## Build and test
 
-Prefer `**Debug`** for agent work on the compiler itself: assertions stay enabled and stack traces are clearer. Compiler-output performance for mission scripts is not the bottleneck here.
-
-**Main checkout:** submodules and a `build/` directory are often already set up—try building first; run setup only if needed.
+Prefer **`Debug`**: assertions stay enabled and stack traces are clearer.
 
 **Fresh worktree** (no `build/`, submodules may be empty):
 
@@ -74,7 +62,7 @@ cmake --build build --target gta3sc_unittest
 
 ## clang-tidy
 
-`GTA3SC_ANALYSIS=ON` runs clang-tidy on every TU during the build and is **too slow for normal iteration**. Do not enable it while editing in a tight loop. Follow `.clang-tidy` conventions while coding; run analysis **once** when the change set is ready (e.g. before opening a PR):
+`GTA3SC_ANALYSIS=ON` is **too slow for normal iteration** — run it once when the change set is ready to land:
 
 ```bash
 cmake -S . -B build-analysis -DCMAKE_BUILD_TYPE=Debug -DGTA3SC_ANALYSIS=ON
@@ -93,30 +81,22 @@ cmake --build build-analysis 2>&1 | grep -E "warning:|error:"
 
 ## External references
 
-These URLs are fetchable when you need detail beyond this repo:
-
-- **Language spec:** [https://gtamodding.github.io/gta3script-specs/](https://gtamodding.github.io/gta3script-specs/)
-- **Bytecode / SCM instructions:** [https://gtamods.com/wiki/SCM_Instruction](https://gtamods.com/wiki/SCM_Instruction)
+- **Language spec:** https://gtamodding.github.io/gta3script-specs/
+- **Bytecode / SCM instructions:** https://gtamods.com/wiki/SCM_Instruction
 
 ## Feature implementation order
 
 When implementing a feature — especially during the planning phase — follow this sequence:
 
-1. **Define the interface** (`.hpp`): types, function signatures, and doc comments. This forces clear thinking about the API before any implementation details are committed.
-2. **Write the unit test cases** (`unittest/`): cover the intended behaviour from the perspective of a caller. Tests at this stage describe *what* the feature should do, not *how*.
+1. **Define the interface** (`.hpp`): types, function signatures, doc comments.
+2. **Write unit test cases** (`unittest/`): cover intended behaviour from the caller's perspective.
 3. **Write the implementation** (`.cpp`): make the tests pass.
-4. **Revisit the tests for edge cases**: implementation often reveals corner cases (error paths, boundary values, unexpected interactions) that weren't obvious up front. Add targeted test cases for these before considering the feature done.
-
-This order applies to both interactive and autonomous sessions.
+4. **Revisit tests for edge cases**: implementation reveals corner cases — add targeted tests before considering the feature done.
 
 ### Unit test readability
 
-Test code is read far more often than it is written. Keep it easy to follow:
-
-- **Don't over-comment.** If the test code is clear, comments add noise rather than value. Omit them unless something genuinely non-obvious needs explaining.
-- **Use blank lines to separate the given / when / then parts.** Set up, action, and assertions should breathe — don't compress everything into a dense block.
-
-The goal is that any developer can read a failing test and immediately understand what was being tested and why it failed.
+- **Don't over-comment.** Clear test code doesn't need narration; omit comments unless something is genuinely non-obvious.
+- **Use blank lines to separate given / when / then.** Setup, action, and assertions should breathe — don't compress them into a dense block.
 
 ## Workflow rules
 
@@ -127,38 +107,17 @@ Behaviour depends on whether the session is **interactive** or **autonomous**.
 - Ask clarifying questions if context is insufficient.
 - Do **one** task at a time; ask for feedback before the next.
 - If asked what is missing in an implementation or test, **confirm** with the user before writing code.
-- Run `clang-format` on generated/edited C++ before finishing the task.
 
 ### Autonomous / worktree (no live user)
 
-- Resolve reasonable ambiguities with judgment; **document** decisions in the PR body.
+- Resolve reasonable ambiguities with judgment; **document** notable decisions (e.g. in commit messages).
 - Finish the **full** assigned task before stopping.
 - `clang-format` all modified C/C++ before commit.
-- Run the **full** unit test binary and fix failures before opening a PR.
-- Run the **clang-tidy** delivery check above before PR (fix or justify issues).
-- Open a PR with base `gta3sc-rewrite` (see Git section).
+- Run the **full** unit test binary and fix failures before considering the work done.
+- Run the clang-tidy delivery check when the change is ready to land (fix or justify issues).
 
 ## Git
 
-- **Integration base branch:** `gta3sc-rewrite` (not `main`). Treat “merge target”, “mainline”, and similar as this branch unless stated otherwise.
-- `**master`:** unrelated legacy tree — ignore for this repo’s development.
+- **Integration base branch:** `gta3sc-rewrite` (not `main`). Treat "merge target", "mainline", and similar as this branch unless stated otherwise.
+- **`master`:** unrelated legacy tree — ignore for this repo's development.
 - **Feature branches:** use prefix `gta3sc-rewrite-branches/`.
-
-### Opening a PR (autonomous)
-
-```bash
-gh pr create \
-  --base gta3sc-rewrite \
-  --title "<concise title using feat/fix/chore/etc prefix>" \
-  --body "$(cat <<'EOF'
-## Summary
-- <what was implemented and why>
-- <notable decisions or trade-offs>
-
-## Testing
-- All unit tests pass (`gta3sc_unittest`)
-- <any manual verification steps>
-EOF
-)"
-```
-
