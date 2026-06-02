@@ -3564,7 +3564,7 @@
         <Arg Type="FLOAT" Desc="Z Coord"/>
         <Arg Type="FLOAT"/>
         <Arg Type="FLOAT"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="GARAGE"/>
         <Arg Type="INT" Out="true" Entity="GARAGE"/>
       </Args>
     </Command>
