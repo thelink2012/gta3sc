@@ -358,6 +358,7 @@ public:
     optional<const Command&> cleo_return;
     optional<const Command&> terminate_this_custom_script;
     optional<const Command&> goto_;
+    optional<const Command&> goto_if_true;
     optional<const Command&> goto_if_false;
     optional<const Command&> andor;
     optional<const Command&> register_streamed_script_internal;

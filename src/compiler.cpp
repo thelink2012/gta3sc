@@ -147,10 +147,16 @@ void CompilerContext::compile_statement(const SyntaxTree& node, bool not_flag)
             compile_scope(node);
             break;
         case NodeType::IF:
-            compile_if(node);
+            compile_if(node, false);
+            break;
+        case NodeType::IFNOT:
+            compile_if(node, true);
             break;
         case NodeType::WHILE:
-            compile_while(node);
+            compile_while(node, false);
+            break;
+        case NodeType::WHILENOT:
+            compile_while(node, true);
             break;
         case NodeType::REPEAT:
             compile_repeat(node);
@@ -200,13 +206,13 @@ void CompilerContext::compile_scope(const SyntaxTree& scope_node)
     compile_statements(scope_node.child(0));
 }
 
-void CompilerContext::compile_if(const SyntaxTree& if_node)
+void CompilerContext::compile_if(const SyntaxTree& if_node, bool not_flag)
 {
     if(if_node.child_count() == 3) // [conds, case_true, else]
     {
         auto else_ptr = make_internal_label();
         auto end_ptr  = make_internal_label();
-        compile_conditions(if_node.child(0), else_ptr);
+        compile_conditions(if_node.child(0), else_ptr, not_flag);
         compile_statements(if_node.child(1));
         compile_command(*this->commands.goto_, { end_ptr });
         compile_label(else_ptr);
@@ -216,13 +222,13 @@ void CompilerContext::compile_if(const SyntaxTree& if_node)
     else // [conds, case_true]
     {
         auto end_ptr = make_internal_label();
-        compile_conditions(if_node.child(0), end_ptr);
+        compile_conditions(if_node.child(0), end_ptr, not_flag);
         compile_statements(if_node.child(1));
         compile_label(end_ptr);
     }
 }
 
-void CompilerContext::compile_while(const SyntaxTree& while_node)
+void CompilerContext::compile_while(const SyntaxTree& while_node, bool not_flag)
 {
     auto beg_ptr = make_internal_label();
     auto end_ptr = make_internal_label();
@@ -230,7 +236,7 @@ void CompilerContext::compile_while(const SyntaxTree& while_node)
     loop_stack.emplace_back(LoopInfo { beg_ptr, end_ptr });
 
     compile_label(beg_ptr);
-    compile_conditions(while_node.child(0), end_ptr);
+    compile_conditions(while_node.child(0), end_ptr, not_flag);
     compile_statements(while_node.child(1));
     compile_command(*this->commands.goto_, { beg_ptr });
     compile_label(end_ptr);
@@ -598,7 +604,7 @@ void CompilerContext::compile_condition(const SyntaxTree& node, bool not_flag)
     }
 }
 
-void CompilerContext::compile_conditions(const SyntaxTree& conds_node, const shared_ptr<Label>& else_ptr)
+void CompilerContext::compile_conditions(const SyntaxTree& conds_node, const shared_ptr<Label>& else_ptr, bool not_flag)
 {
     auto compile_multi_andor = [this](const auto& conds_node, size_t op)
     {
@@ -631,7 +637,7 @@ void CompilerContext::compile_conditions(const SyntaxTree& conds_node, const sha
             Unreachable();
     }
 
-    compile_command(*this->commands.goto_if_false, { else_ptr });
+    compile_command(not_flag ? *this->commands.goto_if_true : *this->commands.goto_if_false, { else_ptr });
 }
 
 auto CompilerContext::get_args(const Command& command, const std::vector<any>& params) -> ArgList

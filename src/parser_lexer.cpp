@@ -626,9 +626,19 @@ static void lex_line(LexerContext& lexer, const char* source_data, size_t begin_
             it = push_token(*opt_first_token, Token::IF);
             had_keycommand = true;
         }
+        else if(lex_istokeq(*opt_first_token, "IFNOT"))
+        {
+            it = push_token(*opt_first_token, Token::IFNOT);
+            had_keycommand = true;
+        }
         else if(lex_istokeq(*opt_first_token, "WHILE"))
         {
             it = push_token(*opt_first_token, Token::WHILE);
+            had_keycommand = true;
+        }
+        else if(lex_istokeq(*opt_first_token, "WHILENOT"))
+        {
+            it = push_token(*opt_first_token, Token::WHILENOT);
             had_keycommand = true;
         }
     }
