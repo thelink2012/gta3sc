@@ -222,9 +222,11 @@ private:
 
     void compile_scope(const SyntaxTree& scope_node);
 
-    void compile_if(const SyntaxTree& if_node, bool not_flag);
+    void compile_if(const SyntaxTree& if_node);
+    void compile_ifnot(const SyntaxTree& ifnot_node);
 
-    void compile_while(const SyntaxTree& while_node, bool not_flag);
+    void compile_while(const SyntaxTree& while_node);
+    void compile_whilenot(const SyntaxTree& whilenot_node);
 
     void compile_repeat(const SyntaxTree& repeat_node);
 
