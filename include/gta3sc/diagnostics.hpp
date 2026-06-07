@@ -61,6 +61,7 @@ public:
     auto message_format() const -> std::string_view { return message_format_; }
 
 private:
+    // TODO: normalize to m_ prefix or no suffix to match other domain objects
     DiagnosticSeverity default_severity_;
     std::string_view title_;
     std::string_view message_format_;
