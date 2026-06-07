@@ -31,9 +31,9 @@ Paths are relative to `include/gta3sc/` and `lib/` unless noted.
 
 ## Implementation status
 
-**Present:** preprocessor, scanner, parser, multifile parser, semantic analysis, repeat-stmt lowering, Trilogy codegen and emitter, config loading, model table, command table, symbol table, source manager, diagnostics, storage/relocation tables, arena allocator, intrusive list IR wiring, required-files visitor.
+**Present:** preprocessor, scanner, parser, multifile parser, semantic analysis, all planned lowering passes (ParserIR and SemaIR — see [`plans/all-lowering.md`](plans/all-lowering.md)), Trilogy codegen and emitter (including multifile codegen), config loading, model table, command table, symbol table, source manager, diagnostics, storage/relocation tables, arena allocator, intrusive list IR wiring, required-files visitor.
 
-**Not done yet:** CLI under `src/`, all lowering steps, compiler driver, lit/integration tests, install script.
+**Not done yet:** CLI under `src/`, compiler driver (wire parse → lowering → sema → lowering → codegen; no rewrite applicator or pass orchestration yet), lit/integration tests, install script.
 
 ## Build and test
 
