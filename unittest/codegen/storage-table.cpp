@@ -1,7 +1,7 @@
 #include <doctest/doctest.h>
 #include <gta3sc/codegen/storage-table.hpp>
 
-using gta3sc::SourceManager;
+using gta3sc::no_file_range;
 using gta3sc::SymbolTable;
 using gta3sc::codegen::LocalStorageTable;
 using gta3sc::codegen::StorageTable;
@@ -22,7 +22,7 @@ public:
     {
         const auto [var, inserted] = symtable.insert_var(
                 std::to_string(next_symbol_id++), scope_id, var_type,
-                dimensions, SourceManager::no_source_range);
+                dimensions, no_file_range);
         REQUIRE(inserted);
         return *var;
     }

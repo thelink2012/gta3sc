@@ -2,7 +2,6 @@
 #include <cstring>
 #include <doctest/doctest.h>
 #include <gta3sc/diagnostics.hpp>
-#include <gta3sc/sourceman.hpp>
 #include <queue>
 
 namespace gta3sc::test

@@ -2,12 +2,16 @@ add_library(gta3sc
   command-table.cpp
   model-table.cpp
   diagnostics.cpp
-  sourceman.cpp
+  source-manager.cpp
   ir/parser-ir.cpp
   ir/sema-ir.cpp
   ir/symbol-table.cpp
   util/arena.cpp
   util/name-generator.cpp
+  filesystem/file-pool.cpp
+  filesystem/resolver/script-path-resolver.cpp
+  filesystem/resolver/relative-path-resolver.cpp
+  filesystem/resolver/relative-insensitive-path-resolver.cpp
   config/models.cpp
   syntax/diagnostics.cpp
   syntax/preprocessor.cpp

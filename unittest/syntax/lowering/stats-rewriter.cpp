@@ -33,8 +33,8 @@ TEST_CASE_FIXTURE(StatsRewriterFixture, "StatsRewriter")
                                       total_count, &arena);
         const auto rewrite_result = rewriter.visit(
                 *SemaIR::Builder(&arena)
-                         .command(*total_cmd, SemaIR::Builder::no_source)
-                         .arg_int(0, SemaIR::Builder::no_source)
+                         .command(*total_cmd, SemaIR::Builder::no_range)
+                         .arg_int(0, SemaIR::Builder::no_range)
                          .build());
         REQUIRE(rewrite_result);
         REQUIRE(rewrite_result->front().command().arg(0).as_int()
@@ -46,8 +46,8 @@ TEST_CASE_FIXTURE(StatsRewriterFixture, "StatsRewriter")
         auto rewriter = StatsRewriter(total_cmd, total_count, &arena);
         const auto rewrite_result = rewriter.visit(
                 *SemaIR::Builder(&arena)
-                         .command(*total_cmd, SemaIR::Builder::no_source)
-                         .arg_int(0, SemaIR::Builder::no_source)
+                         .command(*total_cmd, SemaIR::Builder::no_range)
+                         .arg_int(0, SemaIR::Builder::no_range)
                          .build());
         REQUIRE(rewrite_result);
         REQUIRE(rewrite_result->front().command().arg(0).as_int()
@@ -59,8 +59,8 @@ TEST_CASE_FIXTURE(StatsRewriterFixture, "StatsRewriter")
         auto rewriter = StatsRewriter(nullptr, total_count, &arena);
         REQUIRE(!rewriter.visit(
                 *SemaIR::Builder(&arena)
-                         .command(*total_cmd, SemaIR::Builder::no_source)
-                         .arg_int(0, SemaIR::Builder::no_source)
+                         .command(*total_cmd, SemaIR::Builder::no_range)
+                         .arg_int(0, SemaIR::Builder::no_range)
                          .build()));
     }
 
@@ -70,8 +70,8 @@ TEST_CASE_FIXTURE(StatsRewriterFixture, "StatsRewriter")
                                       &arena);
         REQUIRE(!rewriter.visit(
                 *SemaIR::Builder(&arena)
-                         .command(*total_cmd, SemaIR::Builder::no_source)
-                         .arg_int(0, SemaIR::Builder::no_source)
+                         .command(*total_cmd, SemaIR::Builder::no_range)
+                         .arg_int(0, SemaIR::Builder::no_range)
                          .build()));
     }
 
@@ -82,8 +82,8 @@ TEST_CASE_FIXTURE(StatsRewriterFixture, "StatsRewriter")
         auto rewriter = StatsRewriter(total_cmd, total_count, &arena);
         REQUIRE(!rewriter.visit(
                 *SemaIR::Builder(&arena)
-                         .command(*wait_cmd, SemaIR::Builder::no_source)
-                         .arg_int(0, SemaIR::Builder::no_source)
+                         .command(*wait_cmd, SemaIR::Builder::no_range)
+                         .arg_int(0, SemaIR::Builder::no_range)
                          .build()));
     }
 
@@ -92,7 +92,7 @@ TEST_CASE_FIXTURE(StatsRewriterFixture, "StatsRewriter")
         auto rewriter = StatsRewriter(total_cmd, 5, &arena);
         REQUIRE(!rewriter.visit(
                 *SemaIR::Builder(&arena)
-                         .command(*total_cmd, SemaIR::Builder::no_source)
+                         .command(*total_cmd, SemaIR::Builder::no_range)
                          .build()));
     }
 
@@ -101,8 +101,8 @@ TEST_CASE_FIXTURE(StatsRewriterFixture, "StatsRewriter")
         auto rewriter = StatsRewriter(total_cmd, total_count, &arena);
         REQUIRE(!rewriter.visit(
                 *SemaIR::Builder(&arena)
-                         .command(*total_cmd, SemaIR::Builder::no_source)
-                         .arg_int(7, SemaIR::Builder::no_source)
+                         .command(*total_cmd, SemaIR::Builder::no_range)
+                         .arg_int(7, SemaIR::Builder::no_range)
                          .build()));
     }
 
@@ -111,8 +111,8 @@ TEST_CASE_FIXTURE(StatsRewriterFixture, "StatsRewriter")
         auto rewriter = StatsRewriter(total_cmd, 5, &arena);
         REQUIRE(!rewriter.visit(
                 *SemaIR::Builder(&arena)
-                         .command(*total_cmd, SemaIR::Builder::no_source)
-                         .arg_text_label("FOO", SemaIR::Builder::no_source)
+                         .command(*total_cmd, SemaIR::Builder::no_range)
+                         .arg_text_label("FOO", SemaIR::Builder::no_range)
                          .build()));
     }
 
@@ -121,7 +121,7 @@ TEST_CASE_FIXTURE(StatsRewriterFixture, "StatsRewriter")
         const auto label = symrepo.insert_label(
                                           "MYLABEL",
                                           gta3sc::SymbolTable::global_scope,
-                                          SemaIR::Builder::no_source)
+                                          SemaIR::Builder::no_range)
                                    .first;
         REQUIRE(label != nullptr);
 
@@ -130,8 +130,8 @@ TEST_CASE_FIXTURE(StatsRewriterFixture, "StatsRewriter")
         const auto rewrite_result = rewriter.visit(
                 *SemaIR::Builder(&arena)
                          .label(label)
-                         .command(*total_cmd, SemaIR::Builder::no_source)
-                         .arg_int(0, SemaIR::Builder::no_source)
+                         .command(*total_cmd, SemaIR::Builder::no_range)
+                         .arg_int(0, SemaIR::Builder::no_range)
                          .build());
         REQUIRE(rewrite_result);
 
@@ -146,10 +146,10 @@ TEST_CASE_FIXTURE(StatsRewriterFixture, "StatsRewriter")
 
         const auto rewrite_result = rewriter.visit(
                 *SemaIR::Builder(&arena)
-                         .command(*total_cmd, SemaIR::Builder::no_source)
-                         .arg_int(0, SemaIR::Builder::no_source)
-                         .arg_int(99, SemaIR::Builder::no_source)
-                         .arg_int(100, SemaIR::Builder::no_source)
+                         .command(*total_cmd, SemaIR::Builder::no_range)
+                         .arg_int(0, SemaIR::Builder::no_range)
+                         .arg_int(99, SemaIR::Builder::no_range)
+                         .arg_int(100, SemaIR::Builder::no_range)
                          .build());
         REQUIRE(rewrite_result);
 
@@ -173,8 +173,8 @@ TEST_CASE_FIXTURE(StatsRewriterFixture, "rewriting SET_COLLECTABLE1_TOTAL")
                                                               &arena);
         const auto rewrite_result = rewriter.visit(
                 *SemaIR::Builder(&arena)
-                         .command(*total_cmd, SemaIR::Builder::no_source)
-                         .arg_int(0, SemaIR::Builder::no_source)
+                         .command(*total_cmd, SemaIR::Builder::no_range)
+                         .arg_int(0, SemaIR::Builder::no_range)
                          .build());
         REQUIRE(rewrite_result);
         REQUIRE(rewrite_result->front().command().arg(0).as_int() == 3);
@@ -193,8 +193,8 @@ TEST_CASE_FIXTURE(StatsRewriterFixture, "rewriting SET_PROGRESS_TOTAL")
                                                           &arena);
         const auto rewrite_result = rewriter.visit(
                 *SemaIR::Builder(&arena)
-                         .command(*total_cmd, SemaIR::Builder::no_source)
-                         .arg_int(0, SemaIR::Builder::no_source)
+                         .command(*total_cmd, SemaIR::Builder::no_range)
+                         .arg_int(0, SemaIR::Builder::no_range)
                          .build());
         REQUIRE(rewrite_result);
         REQUIRE(rewrite_result->front().command().arg(0).as_int() == 8);
@@ -214,8 +214,8 @@ TEST_CASE_FIXTURE(StatsRewriterFixture,
                                                          &arena);
         const auto rewrite_result = rewriter.visit(
                 *SemaIR::Builder(&arena)
-                         .command(*total_cmd, SemaIR::Builder::no_source)
-                         .arg_int(0, SemaIR::Builder::no_source)
+                         .command(*total_cmd, SemaIR::Builder::no_range)
+                         .arg_int(0, SemaIR::Builder::no_range)
                          .build());
         REQUIRE(rewrite_result);
         REQUIRE(rewrite_result->front().command().arg(0).as_int() == 2);
@@ -234,8 +234,8 @@ TEST_CASE_FIXTURE(StatsRewriterFixture, "rewriting SET_MISSION_RESPECT_TOTAL")
                 cmdman, symrepo, &arena);
         const auto rewrite_result = rewriter.visit(
                 *SemaIR::Builder(&arena)
-                         .command(*total_cmd, SemaIR::Builder::no_source)
-                         .arg_int(0, SemaIR::Builder::no_source)
+                         .command(*total_cmd, SemaIR::Builder::no_range)
+                         .arg_int(0, SemaIR::Builder::no_range)
                          .build());
         REQUIRE(rewrite_result);
         REQUIRE(rewrite_result->front().command().arg(0).as_int() == 8);

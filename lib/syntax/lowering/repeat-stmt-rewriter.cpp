@@ -104,7 +104,7 @@ auto RepeatStmtRewriter::visit_endrepeat(const ParserIR& line) -> Result
                      .build()});
 }
 
-auto RepeatStmtRewriter::generate_loop_label(SourceRange source)
+auto RepeatStmtRewriter::generate_loop_label(FileRange source)
         -> const ParserIR::LabelDef*
 {
     namegen->generate(namegen_buffer);

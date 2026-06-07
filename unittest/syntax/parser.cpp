@@ -26,7 +26,7 @@ protected:
 
 private:
     static auto
-    make_parser(gta3sc::SourceFile source, gta3sc::DiagnosticHandler& diagman,
+    make_parser(gta3sc::FileEntryRef source, gta3sc::DiagnosticHandler& diagman,
                 gta3sc::ArenaMemoryResource& arena) -> gta3sc::syntax::Parser
     {
         auto pp = gta3sc::syntax::Preprocessor(std::move(source), diagman);

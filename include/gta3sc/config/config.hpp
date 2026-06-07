@@ -1,14 +1,7 @@
 #pragma once
 #include <filesystem>
 #include <gta3sc/command-table.hpp>
-
-namespace gta3sc
-{
-class SourceManager;
-class SourceFile;
-class DiagnosticDescriptor;
-class DiagnosticHandler;
-} // namespace gta3sc
+#include <gta3sc/fwd.hpp>
 
 namespace gta3sc::config
 {
@@ -27,13 +20,13 @@ namespace gta3sc::config
 /// \param root_path The root path of the game configs i.e. configs are
 /// usually located at `root_path/<game>/config.xml`.
 /// \param config_path The path to the `config.xml` file.
-/// \param fileman file manager used to load files with diagnostic support.
+/// \param file_pool file pool used to load files with diagnostic support.
 /// \param diagman diagnostic handler to report errors to.
 /// \param builder results will be added to this builder.
 /// \return the builder with the configurations added in.
 auto load_config(const std::filesystem::path& root_path,
-                 const std::filesystem::path& config_path,
-                 SourceManager& fileman, DiagnosticHandler& diagman,
+                 const std::filesystem::path& config_path, FilePool& file_pool,
+                 DiagnosticHandler& diagman,
                  CommandTable::Builder&& builder) -> CommandTable::Builder&&;
 
 /// Same as `load_config` but returns a `CommandTable` instead of
@@ -41,17 +34,17 @@ auto load_config(const std::filesystem::path& root_path,
 ///
 /// See the other overload for more information.
 auto load_config(const std::filesystem::path& root_path,
-                 const std::filesystem::path& config_path,
-                 SourceManager& fileman, DiagnosticHandler& diagman,
+                 const std::filesystem::path& config_path, FilePool& file_pool,
+                 DiagnosticHandler& diagman,
                  ArenaAllocator<> allocator) -> CommandTable;
 
-/// Same as `load_config` but uses a loaded `SourceFile` instead of a path.
+/// Same as `load_config` but uses a loaded file instead of a path.
 ///
 /// Importing other configs from within a config are not supported in this
 /// overload.
 ///
 /// See the other overload for more information.
-auto load_config(const SourceFile& config_file, DiagnosticHandler& diagman,
+auto load_config(const FileEntryRef& config_file, DiagnosticHandler& diagman,
                  CommandTable::Builder&& builder) -> CommandTable::Builder&&;
 } // namespace gta3sc::config
 

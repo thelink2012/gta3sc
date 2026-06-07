@@ -142,7 +142,7 @@ auto Sema::validate() -> std::optional<LinkedIR<SemaIR>>
 auto Sema::discover_declarations_pass() -> bool
 {
     assert(report_count == 0);
-    SourceRange scope_enter_source{};
+    FileRange scope_enter_source{};
     this->current_scope = no_local_scope;
 
     for(auto& line : parser_ir)
@@ -189,7 +189,7 @@ auto Sema::discover_declarations_pass() -> bool
                 assert(inserted_timera && inserted_timerb);
 
                 this->current_scope = no_local_scope;
-                scope_enter_source = SourceRange{};
+                scope_enter_source = FileRange{};
             }
             else if(line.command().name() == "VAR_INT"sv)
             {
@@ -751,7 +751,7 @@ auto Sema::validate_var_ref(const CommandTable::ParamDef& param,
     }
 
     std::string_view arg_ident = *arg.as_identifier();
-    SourceRange arg_source = arg.source();
+    FileRange arg_source = arg.source();
 
     // For TEXT_LABEL parameters, the identifier begins with a dollar
     // character and its suffix references a variable of text label type.
@@ -1184,14 +1184,14 @@ void Sema::declare_variable(const ParserIR::Command& command,
     }
 }
 
-auto Sema::report(SourceLocation source,
+auto Sema::report(FileLoc source,
                   const DiagnosticDescriptor& message) -> Diagnostic::Builder
 {
     this->report_count++;
     return diag->report(source, message);
 }
 
-auto Sema::report(SourceRange source,
+auto Sema::report(FileRange source,
                   const DiagnosticDescriptor& message) -> Diagnostic::Builder
 {
     return report(source.begin, message).range(source);
@@ -1465,7 +1465,7 @@ auto Sema::is_matching_alternative(const ParserIR::Command& command,
 }
 
 auto Sema::parse_var_ref(std::string_view identifier,
-                         SourceRange source) -> VarRef
+                         FileRange source) -> VarRef
 {
     // subscript := '[' (variable_name | integer) ']' ;
     // variable := variable_name [ subscript ] ;
@@ -1476,7 +1476,7 @@ auto Sema::parse_var_ref(std::string_view identifier,
     // contain brackets in its name).
 
     std::string_view var_name;
-    SourceRange var_source;
+    FileRange var_source;
     std::optional<VarSubscript> subscript;
 
     const auto is_bracket = [](char c) { return c == '[' || c == ']'; };

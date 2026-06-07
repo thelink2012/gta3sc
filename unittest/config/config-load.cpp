@@ -3,7 +3,7 @@
 #include <filesystem>
 #include <gta3sc/command-table.hpp>
 #include <gta3sc/config/config.hpp>
-#include <gta3sc/sourceman.hpp>
+#include <gta3sc/source-manager.hpp>
 #include <gta3sc/util/arena.hpp>
 using namespace std::string_view_literals;
 using namespace gta3sc::test;

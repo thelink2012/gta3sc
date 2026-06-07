@@ -24,7 +24,7 @@ Paths are relative to `include/gta3sc/` and `lib/` unless noted.
 | Code generation (Trilogy) | `codegen/trilogy/codegen.hpp`, `codegen/trilogy/emitter.hpp` | `codegen/trilogy/codegen.cpp`, `codegen/trilogy/emitter.cpp` |
 | IR | `ir/parser-ir.hpp`, `ir/sema-ir.hpp`, `ir/symbol-table.hpp` | `ir/parser-ir.cpp`, `ir/sema-ir.cpp`, `ir/symbol-table.cpp` |
 | Config | `config/config.hpp`, `config/models.hpp` | `config/config.cpp`, `config/models.cpp` |
-| Support | `command-table.hpp`, `model-table.hpp`, `sourceman.hpp`, `diagnostics.hpp` | matching `.cpp` at `lib/` root |
+| Support | `command-table.hpp`, `model-table.hpp`, `source-manager.hpp`, `diagnostics.hpp` | matching `.cpp` at `lib/` root |
 | Utilities | `util/arena.hpp`, `util/intrusive-*.hpp`, and other `util/*.hpp` | `util/arena.cpp`, `util/name-generator.cpp`, … |
 
 `gta3sc-config` is a separate CMake target (pugixml-based config loading); see `lib/CMakeLists.txt`. Source under `src/` is not implemented yet (planned CLI driver).

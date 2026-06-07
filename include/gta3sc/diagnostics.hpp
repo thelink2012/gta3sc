@@ -1,8 +1,13 @@
 #pragma once
 #include <algorithm>
 #include <cassert>
+#include <cstdint>
 #include <functional>
-#include <gta3sc/sourceman.hpp>
+#include <gta3sc/filesystem/file-location.hpp>
+#include <gta3sc/fwd.hpp>
+#include <string>
+#include <string_view>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -77,13 +82,13 @@ struct Diagnostic
     /// The diagnostic descriptor.
     const DiagnosticDescriptor* descriptor;
     /// Location from where the diagnostic was reported.
-    SourceLocation location;
+    FileLoc location;
     /// Locations related to the diagnostic.
-    std::vector<SourceRange> ranges;
+    std::vector<FileRange> ranges;
     /// Arguments for formatting the message.
     std::vector<Arg> args;
 
-    Diagnostic(SourceLocation location,
+    Diagnostic(FileLoc location,
                const DiagnosticDescriptor& descriptor) noexcept :
         descriptor(&descriptor), location(location)
     {}
@@ -127,14 +132,13 @@ public:
     /// handler.report(location, diagnostic2);
     /// // automatically emits the diagnostic2 to the handler
     /// ```
-    auto report(SourceLocation loc,
-                const DiagnosticDescriptor& descriptor) noexcept
+    auto report(FileLoc loc, const DiagnosticDescriptor& descriptor) noexcept
             -> Diagnostic::Builder;
 
-    /// Same as \ref report(SourceLocation, const DiagnosticDescriptor&) but
+    /// Same as \ref report(FileLoc, const DiagnosticDescriptor&) but
     /// taking the location from the given range and adding the range to the
     /// diagnostic.
-    auto report(SourceRange range,
+    auto report(FileRange range,
                 const DiagnosticDescriptor& descriptor) noexcept
             -> Diagnostic::Builder;
 };
@@ -182,14 +186,14 @@ public:
     /// Constructor used to build a \ref Diagnostic directly.
     ///
     /// At the end of the chain you must call \ref build().
-    Builder(SourceLocation loc, const DiagnosticDescriptor& descriptor);
+    Builder(FileLoc loc, const DiagnosticDescriptor& descriptor);
 
     /// Constructor used to build a \ref Diagnostic and push it to a \ref
     /// DiagnosticHandler.
     ///
     /// Don't call \ref build() at the end of the chain. Let the destructor push
     /// it to the handler.
-    Builder(SourceLocation loc, const DiagnosticDescriptor& descriptor,
+    Builder(FileLoc loc, const DiagnosticDescriptor& descriptor,
             DiagnosticHandler& target);
 
     Builder(const Builder&) = delete;
@@ -207,7 +211,7 @@ public:
     auto build() && -> Diagnostic;
 
     /// Adds a source range to provide more context to the diagnostic.
-    auto range(SourceRange range) && -> Builder&&;
+    auto range(FileRange range) && -> Builder&&;
 
     /// Adds an argument to the diagnostic.
     template<typename Arg, typename... Args>
@@ -241,25 +245,25 @@ private:
 };
 
 inline auto DiagnosticHandler::report(
-        SourceLocation loc,
+        FileLoc loc,
         const DiagnosticDescriptor& descriptor) noexcept -> Diagnostic::Builder
 {
     return Diagnostic::Builder(loc, descriptor, *this);
 }
 
 inline auto DiagnosticHandler::report(
-        SourceRange range,
+        FileRange range,
         const DiagnosticDescriptor& descriptor) noexcept -> Diagnostic::Builder
 {
     return report(range.begin, descriptor).range(range);
 }
 
-inline Diagnostic::Builder::Builder(SourceLocation loc,
+inline Diagnostic::Builder::Builder(FileLoc loc,
                                     const DiagnosticDescriptor& descriptor) :
     diag(loc, descriptor)
 {}
 
-inline Diagnostic::Builder::Builder(SourceLocation loc,
+inline Diagnostic::Builder::Builder(FileLoc loc,
                                     const DiagnosticDescriptor& descriptor,
                                     DiagnosticHandler& target) :
     Builder(loc, descriptor)
@@ -285,7 +289,7 @@ inline auto Diagnostic::Builder::build() && -> Diagnostic
     return std::move(diag);
 }
 
-inline auto Diagnostic::Builder::range(SourceRange range) && -> Builder&&
+inline auto Diagnostic::Builder::range(FileRange range) && -> Builder&&
 {
     diag.ranges.push_back(range);
     return std::move(*this);

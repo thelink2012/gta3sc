@@ -1,6 +1,7 @@
 #include "../with-diagnostic-fixture.hpp"
 #include "../with-source-fixture.hpp"
 #include "../with-temp-dir-fixture.hpp"
+#include <gta3sc/filesystem/path-resolver.hpp>
 #include <gta3sc/model-table.hpp>
 
 namespace gta3sc::test::config
@@ -37,6 +38,12 @@ public:
     }
 
 protected:
+    [[nodiscard]] auto
+    make_path_resolver() const -> gta3sc::filesystem::RelativePathResolver
+    {
+        return gta3sc::filesystem::RelativePathResolver(root_test_dir);
+    }
+
     ArenaMemoryResource arena;
 };
 } // namespace gta3sc::test::config

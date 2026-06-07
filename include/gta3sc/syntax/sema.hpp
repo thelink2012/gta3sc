@@ -163,14 +163,14 @@ private:
     ///
     /// Compare `report_count` before and after the call to check success.
     auto parse_var_ref(std::string_view identifier,
-                       SourceRange source) -> VarRef;
+                       FileRange source) -> VarRef;
 
     /// Reports an invalid situation and increments `report_count`.
-    auto report(SourceLocation source,
+    auto report(FileLoc source,
                 const DiagnosticDescriptor& message) -> Diagnostic::Builder;
 
     /// Reports an invalid situation and increments `report_count`.
-    auto report(SourceRange source,
+    auto report(FileRange source,
                 const DiagnosticDescriptor& message) -> Diagnostic::Builder;
 
     /// Lookups a variable in the global scope as well as in
@@ -222,7 +222,7 @@ private:
     {
         std::string_view
                 value; ///< Either an integer or variable name in the subscript.
-        SourceRange source; ///< The range of the subscript.
+        FileRange source; ///< The range of the subscript.
         std::optional<int32_t>
                 literal; ///< The integer literal in the subscript if any.
     };
@@ -230,7 +230,7 @@ private:
     struct VarRef
     {
         std::string_view name; ///< The name of the variable.
-        SourceRange source;    ///< The range of the name of the variable.
+        FileRange source;    ///< The range of the name of the variable.
         std::optional<VarSubscript> subscript; ///< The subscript if any.
     };
 

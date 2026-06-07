@@ -105,7 +105,7 @@ auto RelocationTable::relocate(const FixupEntry& entry,
     {
         // TODO this should have a front-end checking equivalent 'cause we do
         // not have code locations here
-        diagman.report(SourceManager::no_source_loc,
+        diagman.report(no_file_loc,
                        diag::label_ref_across_segments);
         return std::nullopt;
     }

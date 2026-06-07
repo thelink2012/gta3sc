@@ -4,7 +4,7 @@
 #include <filesystem>
 #include <gta3sc/diagnostics.hpp>
 #include <gta3sc/ir/parser-ir.hpp>
-#include <gta3sc/sourceman.hpp>
+#include <gta3sc/source-manager.hpp>
 #include <gta3sc/syntax/multifile-parser.hpp>
 #include <gta3sc/syntax/parser.hpp>
 #include <gta3sc/util/arena.hpp>
@@ -55,6 +55,11 @@ protected:
                 main_path, symrepo, sourceman, diagman,
                 gta3sc::ArenaAllocator<>(&arena));
     }
+
+    void scan_directory()
+    {
+        REQUIRE(sourceman.scan_directory(root_test_dir));
+    }
 };
 } // namespace gta3sc::test::syntax
 
@@ -64,7 +69,7 @@ using FileType = gta3sc::SymbolTable::FileType;
 TEST_CASE_FIXTURE(MultifileParserFixture, "has_next_file initially true")
 {
     create_test_file("main.sc", "");
-    sourceman.scan_directory(root_test_dir);
+    scan_directory();
 
     auto parser = make_parser(root_test_dir / "main.sc");
 
@@ -74,7 +79,7 @@ TEST_CASE_FIXTURE(MultifileParserFixture, "has_next_file initially true")
 TEST_CASE_FIXTURE(MultifileParserFixture, "has_next_file false after parse")
 {
     create_test_file("main.sc", "");
-    sourceman.scan_directory(root_test_dir);
+    scan_directory();
 
     auto parser = make_parser(root_test_dir / "main.sc");
 
@@ -85,7 +90,7 @@ TEST_CASE_FIXTURE(MultifileParserFixture, "has_next_file false after parse")
 TEST_CASE_FIXTURE(MultifileParserFixture, "empty main file")
 {
     create_test_file("main.sc", "");
-    sourceman.scan_directory(root_test_dir);
+    scan_directory();
 
     auto parser = make_parser(root_test_dir / "main.sc");
     auto ir = parser.parse();
@@ -103,7 +108,7 @@ TEST_CASE_FIXTURE(MultifileParserFixture, "empty main file")
 
 TEST_CASE_FIXTURE(MultifileParserFixture, "main file missing")
 {
-    sourceman.scan_directory(root_test_dir);
+    scan_directory();
 
     auto parser = make_parser(root_test_dir / "main.sc");
 
@@ -115,7 +120,7 @@ TEST_CASE_FIXTURE(MultifileParserFixture, "main file missing")
 TEST_CASE_FIXTURE(MultifileParserFixture, "ancillary file missing")
 {
     create_test_file("main.sc", "LAUNCH_MISSION sub.sc\n");
-    sourceman.scan_directory(root_test_dir);
+    scan_directory();
 
     auto parser = make_parser(root_test_dir / "main.sc");
 
@@ -128,7 +133,7 @@ TEST_CASE_FIXTURE(MultifileParserFixture, "GOSUB_FILE extension")
 {
     create_test_file("main.sc", "GOSUB_FILE label ext.sc\n");
     create_test_file("ext.sc", "");
-    sourceman.scan_directory(root_test_dir);
+    scan_directory();
 
     auto parser = make_parser(root_test_dir / "main.sc");
     auto ir = parser.parse();
@@ -149,7 +154,7 @@ TEST_CASE_FIXTURE(MultifileParserFixture, "LAUNCH_MISSION subscript")
 {
     create_test_file("main.sc", "LAUNCH_MISSION sub.sc\n");
     create_test_file("sub.sc", subscript_shell);
-    sourceman.scan_directory(root_test_dir);
+    scan_directory();
 
     auto parser = make_parser(root_test_dir / "main.sc");
     auto ir = parser.parse();
@@ -170,7 +175,7 @@ TEST_CASE_FIXTURE(MultifileParserFixture, "LOAD_AND_LAUNCH_MISSION mission")
 {
     create_test_file("main.sc", "LOAD_AND_LAUNCH_MISSION miss.sc\n");
     create_test_file("miss.sc", subscript_shell);
-    sourceman.scan_directory(root_test_dir);
+    scan_directory();
 
     auto parser = make_parser(root_test_dir / "main.sc");
     auto ir = parser.parse();
@@ -193,7 +198,7 @@ TEST_CASE_FIXTURE(MultifileParserFixture,
     create_test_file("main.sc", "LAUNCH_MISSION a.sc\nLAUNCH_MISSION b.sc\n");
     create_test_file("a.sc", subscript_shell);
     create_test_file("b.sc", subscript_shell);
-    sourceman.scan_directory(root_test_dir);
+    scan_directory();
 
     auto parser = make_parser(root_test_dir / "main.sc");
     auto ir = parser.parse();
@@ -214,7 +219,7 @@ TEST_CASE_FIXTURE(MultifileParserFixture,
                      "LAUNCH_MISSION sub.sc\nGOSUB_FILE label ext.sc\n");
     create_test_file("sub.sc", subscript_shell);
     create_test_file("ext.sc", "");
-    sourceman.scan_directory(root_test_dir);
+    scan_directory();
 
     auto parser = make_parser(root_test_dir / "main.sc");
     auto ir = parser.parse();
@@ -235,7 +240,7 @@ TEST_CASE_FIXTURE(MultifileParserFixture,
                      "GOSUB_FILE label ext.sc\nLAUNCH_MISSION sub.sc\n");
     create_test_file("sub.sc", subscript_shell);
     create_test_file("ext.sc", "");
-    sourceman.scan_directory(root_test_dir);
+    scan_directory();
 
     auto parser = make_parser(root_test_dir / "main.sc");
     auto ir = parser.parse();
@@ -257,7 +262,7 @@ TEST_CASE_FIXTURE(MultifileParserFixture,
             "LAUNCH_MISSION sub.sc\nLOAD_AND_LAUNCH_MISSION miss.sc\n");
     create_test_file("sub.sc", subscript_shell);
     create_test_file("miss.sc", subscript_shell);
-    sourceman.scan_directory(root_test_dir);
+    scan_directory();
 
     auto parser = make_parser(root_test_dir / "main.sc");
     auto ir = parser.parse();
@@ -278,7 +283,7 @@ TEST_CASE_FIXTURE(MultifileParserFixture,
     create_test_file("sub.sc",
                      "MISSION_START\nGOSUB_FILE lbl ext.sc\nMISSION_END\n"sv);
     create_test_file("ext.sc", "");
-    sourceman.scan_directory(root_test_dir);
+    scan_directory();
 
     auto parser = make_parser(root_test_dir / "main.sc");
     CHECK(parser.parse() == std::nullopt);
@@ -294,7 +299,7 @@ TEST_CASE_FIXTURE(MultifileParserFixture, "unsupported subscript import order")
     create_test_file("miss.sc",
                      "MISSION_START\nLAUNCH_MISSION sub.sc\nMISSION_END\n"sv);
     create_test_file("sub.sc", subscript_shell);
-    sourceman.scan_directory(root_test_dir);
+    scan_directory();
 
     auto parser = make_parser(root_test_dir / "main.sc");
     CHECK(parser.parse() == std::nullopt);
@@ -313,7 +318,7 @@ TEST_CASE_FIXTURE(MultifileParserFixture, "duplicate import same type ignored")
     create_test_file("main.sc",
                      "LAUNCH_MISSION sub.sc\nLAUNCH_MISSION sub.sc\n");
     create_test_file("sub.sc", subscript_shell);
-    sourceman.scan_directory(root_test_dir);
+    scan_directory();
 
     auto parser = make_parser(root_test_dir / "main.sc");
     auto ir = parser.parse();
@@ -331,7 +336,7 @@ TEST_CASE_FIXTURE(MultifileParserFixture, "duplicate import different type")
     create_test_file("main.sc",
                      "LAUNCH_MISSION dup.sc\nLOAD_AND_LAUNCH_MISSION dup.sc\n");
     create_test_file("dup.sc", subscript_shell);
-    sourceman.scan_directory(root_test_dir);
+    scan_directory();
 
     auto parser = make_parser(root_test_dir / "main.sc");
     auto ir = parser.parse();
@@ -354,7 +359,7 @@ TEST_CASE_FIXTURE(MultifileParserFixture, "duplicate import different type")
 TEST_CASE_FIXTURE(MultifileParserFixture, "main parse error")
 {
     create_test_file("main.sc", "\"x\"\n");
-    sourceman.scan_directory(root_test_dir);
+    scan_directory();
 
     auto parser = make_parser(root_test_dir / "main.sc");
     CHECK(parser.parse() == std::nullopt);
@@ -367,7 +372,7 @@ TEST_CASE_FIXTURE(MultifileParserFixture, "ancillary parse error")
 {
     create_test_file("main.sc", "LAUNCH_MISSION sub.sc\n");
     create_test_file("sub.sc", "WAIT 0\n");
-    sourceman.scan_directory(root_test_dir);
+    scan_directory();
 
     auto parser = make_parser(root_test_dir / "main.sc");
     CHECK(parser.parse() == std::nullopt);
@@ -382,7 +387,7 @@ TEST_CASE_FIXTURE(MultifileParserFixture,
 {
     create_test_file("main.sc", "LAUNCH_MISSION a.sc\nLAUNCH_MISSION b.sc\n");
     create_test_file("b.sc", subscript_shell);
-    sourceman.scan_directory(root_test_dir);
+    scan_directory();
 
     auto parser = make_parser(root_test_dir / "main.sc");
     CHECK(parser.parse() == std::nullopt);
@@ -394,7 +399,7 @@ TEST_CASE_FIXTURE(MultifileParserFixture,
 TEST_CASE_FIXTURE(MultifileParserFixture, "main with commands")
 {
     create_test_file("main.sc", "WAIT 0\n");
-    sourceman.scan_directory(root_test_dir);
+    scan_directory();
 
     auto parser = make_parser(root_test_dir / "main.sc");
     auto ir = parser.parse();
@@ -434,7 +439,7 @@ TEST_CASE_FIXTURE(MultifileParserFixture,
     create_test_file("miss_b.sc", "MISSION_START\n"
                                   "WAIT 6\n"
                                   "MISSION_END\n");
-    sourceman.scan_directory(root_test_dir);
+    scan_directory();
 
     auto parser = make_parser(root_test_dir / "main.sc");
 

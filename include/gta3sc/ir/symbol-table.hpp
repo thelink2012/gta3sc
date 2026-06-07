@@ -1,6 +1,6 @@
 #pragma once
 #include <cstdint>
-#include <gta3sc/sourceman.hpp>
+#include <gta3sc/filesystem/file-location.hpp>
 #include <gta3sc/util/arena.hpp>
 #include <gta3sc/util/container-view.hpp>
 #include <gta3sc/util/element-iterator-adaptor.hpp>
@@ -159,7 +159,7 @@ public:
     /// insertion took place.
     auto insert_var(std::string_view name, ScopeId scope_id, VarType type,
                     std::optional<uint16_t> dimensions,
-                    SourceRange source) -> std::pair<const Variable*, bool>;
+                    FileRange source) -> std::pair<const Variable*, bool>;
 
     /// Inserts a label into the symbol table.
     ///
@@ -172,7 +172,7 @@ public:
     /// Returns a pair with the label and a boolean indicating whether any
     /// insertion took place.
     auto insert_label(std::string_view name, ScopeId scope_id,
-                      SourceRange source) -> std::pair<const Label*, bool>;
+                      FileRange source) -> std::pair<const Label*, bool>;
 
     /// Inserts a given file into the symbol table.
     ///
@@ -185,7 +185,7 @@ public:
     /// Retruns a pair with the file and a boolean indicating whether any
     /// insertion took place.
     auto insert_file(std::string_view name, FileType type,
-                     SourceRange source) -> std::pair<const File*, bool>;
+                     FileRange source) -> std::pair<const File*, bool>;
 
     /// Inserts an used object into the symbol table.
     ///
@@ -196,7 +196,7 @@ public:
     ///
     /// Returns a pair with the used object and a boolean indicating whether any
     /// insertion took place.
-    auto insert_used_object(std::string_view name, SourceRange source)
+    auto insert_used_object(std::string_view name, FileRange source)
             -> std::pair<const UsedObject*, bool>;
 
     /// Adds `n` to the running total of `CREATE_COLLECTABLE1`.
@@ -265,7 +265,7 @@ class SymbolTable::Label : public ArenaObj
 {
 public:
     /// Please use `SymbolTable::insert_label` to create one.
-    Label(PrivateTag /*unused*/, std::string_view name, SourceRange source,
+    Label(PrivateTag /*unused*/, std::string_view name, FileRange source,
           SymbolId id, ScopeId scope) noexcept :
         m_name(name), m_source(source), m_id(id), m_scope(scope)
     {}
@@ -277,10 +277,7 @@ public:
     }
 
     /// Returns the source location the label was declared in.
-    [[nodiscard]] auto source() const noexcept -> SourceRange
-    {
-        return m_source;
-    }
+    [[nodiscard]] auto source() const noexcept -> FileRange { return m_source; }
 
     /// Returns the order the label was inserted in the table.
     [[nodiscard]] auto id() const noexcept -> SymbolId { return m_id; }
@@ -290,7 +287,7 @@ public:
 
 private:
     std::string_view m_name;
-    SourceRange m_source;
+    FileRange m_source;
     SymbolId m_id;
     ScopeId m_scope{};
 };
@@ -302,7 +299,7 @@ public:
     using Type = FileType;
 
     /// Please use `SymbolTable::insert_file` to create one.
-    File(PrivateTag /*unused*/, std::string_view name, SourceRange source,
+    File(PrivateTag /*unused*/, std::string_view name, FileRange source,
          SymbolId id, SymbolId type_id, Type type) noexcept :
         m_name(name),
         m_source(source),
@@ -318,10 +315,7 @@ public:
     }
 
     /// Returns the source location the script file was first referred from.
-    [[nodiscard]] auto source() const noexcept -> SourceRange
-    {
-        return m_source;
-    }
+    [[nodiscard]] auto source() const noexcept -> FileRange { return m_source; }
 
     /// Returns the order the script file was inserted in the table.
     [[nodiscard]] auto id() const noexcept -> SymbolId { return m_id; }
@@ -338,7 +332,7 @@ public:
 
 private:
     std::string_view m_name;
-    SourceRange m_source;
+    FileRange m_source;
     SymbolId m_id;
     SymbolId m_type_id;
     Type m_type;
@@ -352,7 +346,7 @@ public:
     using Type = VarType;
 
     /// Please use `SymbolTable::insert_var` to create one.
-    Variable(PrivateTag /*unused*/, std::string_view name, SourceRange source,
+    Variable(PrivateTag /*unused*/, std::string_view name, FileRange source,
              SymbolId id, ScopeId scope, Type type,
              std::optional<uint16_t> dimensions) noexcept :
         m_name(name),
@@ -370,10 +364,7 @@ public:
     }
 
     /// Returns the location the variable was declared in.
-    [[nodiscard]] auto source() const noexcept -> SourceRange
-    {
-        return m_source;
-    }
+    [[nodiscard]] auto source() const noexcept -> FileRange { return m_source; }
 
     /// Returns the order this variable was inserted in its scope.
     [[nodiscard]] auto id() const noexcept -> SymbolId { return m_id; }
@@ -399,7 +390,7 @@ public:
 
 private:
     std::string_view m_name;
-    SourceRange m_source;
+    FileRange m_source;
     SymbolId m_id{};
     ScopeId m_scope{};
     std::optional<uint16_t> m_dim;
@@ -411,7 +402,7 @@ class SymbolTable::UsedObject : public ArenaObj
 {
 public:
     /// Please use `SymbolTable::insert_used_object` to create one.
-    UsedObject(PrivateTag /*unused*/, std::string_view name, SourceRange source,
+    UsedObject(PrivateTag /*unused*/, std::string_view name, FileRange source,
                SymbolId id) noexcept :
         m_name(name), m_source(source), m_id(id)
     {}
@@ -423,17 +414,14 @@ public:
     }
 
     /// Returns the location the object was used for the first time.
-    [[nodiscard]] auto source() const noexcept -> SourceRange
-    {
-        return m_source;
-    }
+    [[nodiscard]] auto source() const noexcept -> FileRange { return m_source; }
 
     /// Returns the order the used object was inserted in the table.
     [[nodiscard]] auto id() const noexcept -> SymbolId { return m_id; }
 
 private:
     std::string_view m_name;
-    SourceRange m_source;
+    FileRange m_source;
     SymbolId m_id{};
 };
 

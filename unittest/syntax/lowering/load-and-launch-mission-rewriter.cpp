@@ -3,8 +3,10 @@
 #include <gta3sc/ir/linked-ir.hpp>
 #include <gta3sc/ir/sema-ir.hpp>
 #include <gta3sc/ir/symbol-table.hpp>
-#include <gta3sc/sourceman.hpp>
+#include <gta3sc/source-manager.hpp>
 #include <gta3sc/syntax/lowering/load-and-launch-mission-rewriter.hpp>
+
+using gta3sc::no_file_range;
 
 class LoadAndLaunchMissionRewriterFixture
     : public gta3sc::test::CommandTableFixture
@@ -20,7 +22,7 @@ public:
     {
         const auto [file, inserted] = symtable.insert_file(
                 name, gta3sc::SymbolTable::FileType::mission,
-                gta3sc::SourceManager::no_source_range);
+                no_file_range);
         REQUIRE(inserted);
         return *file;
     }
@@ -122,7 +124,7 @@ TEST_CASE_FIXTURE(LoadAndLaunchMissionRewriterFixture,
         const auto& mission_file = make_mission_file("mission1.sc");
         const auto [label, label_inserted] = symtable.insert_label(
                 "MYLABEL", gta3sc::SymbolTable::global_scope,
-                gta3sc::SourceManager::no_source_range);
+                no_file_range);
         REQUIRE(label_inserted);
 
         const auto rewrite_result = rewriter.visit(

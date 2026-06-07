@@ -19,21 +19,21 @@ auto ParserIR::create(const LabelDef* label, const Command* command,
     return allocator.new_object<ParserIR>(private_tag, label, command);
 }
 
-auto ParserIR::create_int(int32_t value, SourceRange source,
+auto ParserIR::create_int(int32_t value, FileRange source,
                           ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
     return allocator.new_object<Argument>(private_tag, value, source);
 }
 
-auto ParserIR::create_float(float value, SourceRange source,
+auto ParserIR::create_float(float value, FileRange source,
                             ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
     return allocator.new_object<Argument>(private_tag, value, source);
 }
 
-auto ParserIR::create_identifier(std::string_view name, SourceRange source,
+auto ParserIR::create_identifier(std::string_view name, FileRange source,
                                  ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
@@ -43,7 +43,7 @@ auto ParserIR::create_identifier(std::string_view name, SourceRange source,
     return allocator.new_object<Argument>(private_tag, identifier_obj, source);
 }
 
-auto ParserIR::create_filename(std::string_view name, SourceRange source,
+auto ParserIR::create_filename(std::string_view name, FileRange source,
                                ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
@@ -53,7 +53,7 @@ auto ParserIR::create_filename(std::string_view name, SourceRange source,
     return allocator.new_object<Argument>(private_tag, filename_obj, source);
 }
 
-auto ParserIR::create_string(std::string_view string, SourceRange source,
+auto ParserIR::create_string(std::string_view string, FileRange source,
                              ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
@@ -98,7 +98,7 @@ auto operator!=(const ParserIR::Command& lhs,
     return !(lhs == rhs);
 }
 
-auto ParserIR::LabelDef::create(std::string_view name, SourceRange source,
+auto ParserIR::LabelDef::create(std::string_view name, FileRange source,
                                 ArenaAllocator<> allocator)
         -> ArenaPtr<const LabelDef>
 {
@@ -192,7 +192,7 @@ auto ParserIR::Builder::label(const LabelDef* label_ptr) -> Builder&&
 }
 
 auto ParserIR::Builder::label(std::string_view name,
-                              SourceRange source) -> Builder&&
+                              FileRange source) -> Builder&&
 {
     return this->label(LabelDef::create(name, source, allocator));
 }
@@ -206,7 +206,7 @@ auto ParserIR::Builder::command(const Command* command_ptr) -> Builder&&
 }
 
 auto ParserIR::Builder::command(std::string_view name,
-                                SourceRange source) -> Builder&&
+                                FileRange source) -> Builder&&
 {
     assert(!this->command_ptr && !this->has_command_name);
     this->command_ptr = nullptr;
@@ -244,30 +244,30 @@ auto ParserIR::Builder::arg(const Argument* value) -> Builder&&
     return std::move(*this);
 }
 
-auto ParserIR::Builder::arg_int(int32_t value, SourceRange source) -> Builder&&
+auto ParserIR::Builder::arg_int(int32_t value, FileRange source) -> Builder&&
 {
     return arg(ParserIR::create_int(value, source, allocator));
 }
 
-auto ParserIR::Builder::arg_float(float value, SourceRange source) -> Builder&&
+auto ParserIR::Builder::arg_float(float value, FileRange source) -> Builder&&
 {
     return arg(ParserIR::create_float(value, source, allocator));
 }
 
 auto ParserIR::Builder::arg_ident(std::string_view value,
-                                  SourceRange source) -> Builder&&
+                                  FileRange source) -> Builder&&
 {
     return arg(ParserIR::create_identifier(value, source, allocator));
 }
 
 auto ParserIR::Builder::arg_filename(std::string_view value,
-                                     SourceRange source) -> Builder&&
+                                     FileRange source) -> Builder&&
 {
     return arg(ParserIR::create_filename(value, source, allocator));
 }
 
 auto ParserIR::Builder::arg_string(std::string_view value,
-                                   SourceRange source) -> Builder&&
+                                   FileRange source) -> Builder&&
 {
     return arg(ParserIR::create_string(value, source, allocator));
 }

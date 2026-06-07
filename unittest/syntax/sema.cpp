@@ -43,7 +43,7 @@ public:
 
 private:
     auto
-    make_parser(gta3sc::SourceFile source,
+    make_parser(gta3sc::FileEntryRef source,
                 gta3sc::ArenaMemoryResource& arena) -> gta3sc::syntax::Parser
     {
         auto pp = gta3sc::syntax::Preprocessor(std::move(source), diagman);
@@ -606,7 +606,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema LABEL parameter")
     {
         symrepo.insert_file("MISSION.SC",
                             gta3sc::SymbolTable::FileType::mission,
-                            gta3sc::SourceManager::no_source_range);
+                            gta3sc::no_file_range);
         build_sema("LOAD_AND_LAUNCH_MISSION mission.sc");
 
         auto ir = sema.validate();

@@ -1,6 +1,6 @@
 #pragma once
 #include <cstring>
-#include <gta3sc/sourceman.hpp>
+#include <gta3sc/source-manager.hpp>
 
 namespace gta3sc::test
 {
@@ -17,13 +17,13 @@ public:
     operator=(WithSourceFixture&&) noexcept -> WithSourceFixture& = default;
 
 protected:
-    auto make_source(std::string_view content) -> SourceFile
+    auto make_source(std::string_view content) -> FileEntryRef
     {
         const auto n = content.size();
         auto ptr = std::make_unique<char[]>(n + 1);
         std::memcpy(ptr.get(), content.data(), n);
         ptr[n] = '\0';
-        return sourceman.load_file(std::move(ptr), n).value();
+        return sourceman.load_buffer(std::move(ptr), n + 1).value();
     }
 
     SourceManager sourceman;

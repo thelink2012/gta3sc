@@ -4,7 +4,7 @@
 #include <doctest/doctest.h>
 #include <gta3sc/codegen/relocation-table.hpp>
 #include <gta3sc/codegen/storage-table.hpp>
-#include <gta3sc/sourceman.hpp>
+#include <gta3sc/source-manager.hpp>
 #include <gta3sc/util/arena.hpp>
 #include <optional>
 #include <string>
@@ -36,7 +36,7 @@ protected:
     {
         const auto [var, inserted] = symtable.insert_var(
                 std::to_string(next_symbol_id++), scope_id, var_type,
-                std::nullopt, SourceManager::no_source_range);
+                std::nullopt, no_file_range);
         REQUIRE(inserted);
         return *var;
     }
@@ -50,7 +50,7 @@ protected:
     {
         const auto [label, inserted] = symtable.insert_label(
                 std::to_string(next_symbol_id++), SymbolTable::global_scope,
-                SourceManager::no_source_range);
+                no_file_range);
         REQUIRE(inserted);
         return *label;
     }
@@ -58,8 +58,7 @@ protected:
     auto make_file(SymbolTable::FileType file_type) -> const SymbolTable::File&
     {
         const auto [file, inserted] = symtable.insert_file(
-                std::to_string(next_symbol_id++), file_type,
-                SourceManager::no_source_range);
+                std::to_string(next_symbol_id++), file_type, no_file_range);
         REQUIRE(inserted);
         return *file;
     }
@@ -67,8 +66,7 @@ protected:
     auto make_used_object() -> const SymbolTable::UsedObject&
     {
         const auto [uobj, inserted] = symtable.insert_used_object(
-                std::to_string(next_symbol_id++),
-                SourceManager::no_source_range);
+                std::to_string(next_symbol_id++), no_file_range);
         REQUIRE(inserted);
         return *uobj;
     }

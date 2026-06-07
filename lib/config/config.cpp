@@ -2,7 +2,8 @@
 #include <cstring>
 #include <gta3sc/config/config.hpp>
 #include <gta3sc/diagnostics.hpp>
-#include <gta3sc/sourceman.hpp>
+#include <gta3sc/filesystem/file-pool.hpp>
+#include <gta3sc/source-manager.hpp>
 #include <gta3sc/util/arena.hpp>
 #include <gta3sc/util/ctype.hpp>
 #include <gta3sc/util/memory.hpp>
@@ -74,15 +75,15 @@ public:
     /// See \ref gta3sc::config::load_config for more information.
     ///
     /// \param root_path The root path of the game configs, or empty if imports
-    /// are not allowed. \param fileman The file manager to use to load files or
+    /// are not allowed. \param file_pool The file pool to use to load files or
     /// nullptr if imports are not allowed. \param diagman The diagnostic
     /// handler to use to report errors. \param builder The builder to use to
     /// build the command table.
-    ConfigLoader(const std::filesystem::path& root_path, SourceManager* fileman,
+    ConfigLoader(const std::filesystem::path& root_path, FilePool* file_pool,
                  DiagnosticHandler& diagman, CommandTable::Builder& builder) :
         builder(builder),
         root_path(root_path),
-        fileman(fileman),
+        file_pool(file_pool),
         diagman(diagman)
     {}
 
@@ -93,86 +94,86 @@ public:
     auto operator=(ConfigLoader&&) -> ConfigLoader& = delete;
 
     /// Loads the config file into the builder.
-    void load_config(const SourceFile& config_file);
+    void load_config(const FileEntryRef& config_file);
 
 private:
     // Processing methods
 
-    void process_import(const SourceFile& config_file,
+    void process_import(const FileEntryRef& config_file,
                         const pugi::xml_node& node);
 
-    void process_commands_section(const SourceFile& config_file,
+    void process_commands_section(const FileEntryRef& config_file,
                                   const pugi::xml_node& section);
-    void process_command(const SourceFile& config_file,
+    void process_command(const FileEntryRef& config_file,
                          const pugi::xml_node& node);
-    void process_command_id(const SourceFile& config_file,
+    void process_command_id(const FileEntryRef& config_file,
                             const pugi::xml_node& node);
-    auto process_param_node(const SourceFile& config_file,
+    auto process_param_node(const FileEntryRef& config_file,
                             const pugi::xml_node& param)
             -> std::optional<CommandTable::ParamDef>;
 
-    void process_alternators_section(const SourceFile& config_file,
+    void process_alternators_section(const FileEntryRef& config_file,
                                      const pugi::xml_node& section);
-    void process_alternator_node(const SourceFile& config_file,
+    void process_alternator_node(const FileEntryRef& config_file,
                                  const pugi::xml_node& node);
-    void process_alternative_node(const SourceFile& config_file,
+    void process_alternative_node(const FileEntryRef& config_file,
                                   const pugi::xml_node& node,
                                   CommandTable::AlternatorDef& alternator);
 
-    void process_constants_section(const SourceFile& config_file,
+    void process_constants_section(const FileEntryRef& config_file,
                                    const pugi::xml_node& section);
-    void process_enum_node(const SourceFile& config_file,
+    void process_enum_node(const FileEntryRef& config_file,
                            const pugi::xml_node& enum_node);
-    void process_constant_node(const SourceFile& config_file,
+    void process_constant_node(const FileEntryRef& config_file,
                                const pugi::xml_node& constant_node,
                                CommandTable::EnumId enum_id,
                                int32_t& next_value);
-    auto parse_constant_value(const SourceFile& config_file,
+    auto parse_constant_value(const FileEntryRef& config_file,
                               const pugi::xml_node& constant_node,
                               const char* value_str) -> int32_t;
 
     // Diagnostic report methods
-    void report_missing_required_attr(const SourceFile& config_file,
+    void report_missing_required_attr(const FileEntryRef& config_file,
                                       const pugi::xml_node& node,
                                       std::string_view attr_name);
-    void report_empty_attr(const SourceFile& config_file,
+    void report_empty_attr(const FileEntryRef& config_file,
                            const pugi::xml_node& node,
                            std::string_view attr_name);
-    void report_unknown_node(const SourceFile& config_file,
+    void report_unknown_node(const FileEntryRef& config_file,
                              const pugi::xml_node& node);
-    void report_parse_error(const SourceFile& config_file, ptrdiff_t offset,
+    void report_parse_error(const FileEntryRef& config_file, ptrdiff_t offset,
                             const char* description);
-    void report_invalid_root_element(const SourceFile& config_file,
+    void report_invalid_root_element(const FileEntryRef& config_file,
                                      const pugi::xml_node& root);
-    void report_import_too_deep(const SourceFile& config_file,
+    void report_import_too_deep(const FileEntryRef& config_file,
                                 const pugi::xml_node& node);
-    void report_invalid_param_type(const SourceFile& config_file,
+    void report_invalid_param_type(const FileEntryRef& config_file,
                                    const pugi::xml_node& node,
                                    const char* type_value);
-    void report_opt_param_not_last(const SourceFile& config_file,
+    void report_opt_param_not_last(const FileEntryRef& config_file,
                                    const pugi::xml_node& node);
-    void report_import_security_error(const SourceFile& config_file,
+    void report_import_security_error(const FileEntryRef& config_file,
                                       const pugi::xml_node& node,
                                       const char* from_value);
-    void report_import_game_config_error(const SourceFile& config_file,
+    void report_import_game_config_error(const FileEntryRef& config_file,
                                          const pugi::xml_node& node);
-    void report_could_not_open_file(const SourceFile& config_file,
+    void report_could_not_open_file(const FileEntryRef& config_file,
                                     const pugi::xml_node& node,
                                     std::string_view path);
-    void report_invalid_constant_value(const SourceFile& config_file,
+    void report_invalid_constant_value(const FileEntryRef& config_file,
                                        const pugi::xml_node& node,
                                        const char* value);
-    void report_invalid_handled_without_id(const SourceFile& config_file,
+    void report_invalid_handled_without_id(const FileEntryRef& config_file,
                                            const pugi::xml_node& node);
-    void report_invalid_command_id(const SourceFile& config_file,
+    void report_invalid_command_id(const FileEntryRef& config_file,
                                    const pugi::xml_node& node,
                                    const char* id_value);
-    void report_expected_boolean(const SourceFile& config_file,
+    void report_expected_boolean(const FileEntryRef& config_file,
                                  const pugi::xml_node& node, const char* value);
 
     // Other utilities
     auto
-    determine_import_path(const char* from, const SourceFile& config_file,
+    determine_import_path(const char* from, const FileEntryRef& config_file,
                           const pugi::xml_node& node) -> std::filesystem::path;
 
     /// Converts a string to uppercase.
@@ -189,7 +190,7 @@ private:
 private:
     CommandTable::Builder& builder;
     const std::filesystem::path& root_path;
-    SourceManager* fileman;
+    FilePool* file_pool;
     DiagnosticHandler& diagman;
     ArenaMemoryResource scratchpad;
     uint8_t import_depth{0};
@@ -202,41 +203,40 @@ private:
 namespace gta3sc::config
 {
 auto load_config(const std::filesystem::path& root_path,
-                 const std::filesystem::path& config_path,
-                 SourceManager& fileman, DiagnosticHandler& diagman,
+                 const std::filesystem::path& config_path, FilePool& file_pool,
+                 DiagnosticHandler& diagman,
                  ArenaAllocator<> allocator) -> CommandTable
 {
     CommandTable::Builder builder(allocator);
-    return load_config(root_path, config_path, fileman, diagman,
+    return load_config(root_path, config_path, file_pool, diagman,
                        std::move(builder))
             .build();
 }
 
 auto load_config(const std::filesystem::path& root_path,
-                 const std::filesystem::path& config_path,
-                 SourceManager& fileman, DiagnosticHandler& diagman,
+                 const std::filesystem::path& config_path, FilePool& file_pool,
+                 DiagnosticHandler& diagman,
                  CommandTable::Builder&& builder) -> CommandTable::Builder&&
 {
-    // Load the config file into the source manager
-    auto config_file = fileman.load_file(config_path);
+    // Load the config file into the file pool
+    auto config_file = file_pool.load_file(config_path);
     if(!config_file)
     {
-        diagman.report(SourceManager::no_source_loc,
-                       gta3sc::diag::could_not_open_file)
+        diagman.report(no_file_loc, gta3sc::diag::could_not_open_file)
                 .args(config_path.generic_string());
         return std::move(builder);
     }
 
     // TODO page out the config file when done
 
-    ConfigLoader loader(root_path, &fileman, diagman, builder);
+    ConfigLoader loader(root_path, &file_pool, diagman, builder);
     loader.load_config(*config_file);
 
     // Return the same rvalue reference as given as input.
     return std::move(builder);
 }
 
-auto load_config(const SourceFile& config_file, DiagnosticHandler& diagman,
+auto load_config(const FileEntryRef& config_file, DiagnosticHandler& diagman,
                  CommandTable::Builder&& builder) -> CommandTable::Builder&&
 {
     std::filesystem::path null_path;
@@ -251,16 +251,15 @@ auto load_config(const SourceFile& config_file, DiagnosticHandler& diagman,
 
 namespace
 {
-auto xml_location(const SourceFile& config_file,
-                  ptrdiff_t offset) -> SourceLocation
+auto xml_location(const FileEntryRef& config_file,
+                  ptrdiff_t offset) -> FileLoc
 {
-    return offset > 0
-                   ? config_file.location_of(config_file.code_data() + offset)
-                   : SourceManager::no_source_loc;
+    return offset > 0 ? config_file.location_of(config_file.data() + offset)
+                      : no_file_loc;
 }
 
-auto xml_location(const SourceFile& config_file,
-                  const pugi::xml_node& node) -> SourceLocation
+auto xml_location(const FileEntryRef& config_file,
+                  const pugi::xml_node& node) -> FileLoc
 {
     return xml_location(config_file, node.offset_debug());
 }
@@ -274,7 +273,7 @@ auto parse_boolean(const char* str) -> std::optional<bool>
     return std::nullopt;
 }
 
-void ConfigLoader::report_missing_required_attr(const SourceFile& config_file,
+void ConfigLoader::report_missing_required_attr(const FileEntryRef& config_file,
                                                 const pugi::xml_node& node,
                                                 std::string_view attr_name)
 {
@@ -283,7 +282,7 @@ void ConfigLoader::report_missing_required_attr(const SourceFile& config_file,
             .args(attr_name);
 }
 
-void ConfigLoader::report_empty_attr(const SourceFile& config_file,
+void ConfigLoader::report_empty_attr(const FileEntryRef& config_file,
                                      const pugi::xml_node& node,
                                      std::string_view attr_name)
 {
@@ -292,7 +291,7 @@ void ConfigLoader::report_empty_attr(const SourceFile& config_file,
             .args(attr_name);
 }
 
-void ConfigLoader::report_unknown_node(const SourceFile& config_file,
+void ConfigLoader::report_unknown_node(const FileEntryRef& config_file,
                                        const pugi::xml_node& node)
 {
     diagman.report(xml_location(config_file, node),
@@ -300,7 +299,7 @@ void ConfigLoader::report_unknown_node(const SourceFile& config_file,
             .args(node.name());
 }
 
-void ConfigLoader::report_parse_error(const SourceFile& config_file,
+void ConfigLoader::report_parse_error(const FileEntryRef& config_file,
                                       ptrdiff_t offset, const char* description)
 {
     diagman.report(xml_location(config_file, offset),
@@ -308,7 +307,7 @@ void ConfigLoader::report_parse_error(const SourceFile& config_file,
             .args(description);
 }
 
-void ConfigLoader::report_invalid_root_element(const SourceFile& config_file,
+void ConfigLoader::report_invalid_root_element(const FileEntryRef& config_file,
                                                const pugi::xml_node& root)
 {
     diagman.report(xml_location(config_file, root),
@@ -316,14 +315,14 @@ void ConfigLoader::report_invalid_root_element(const SourceFile& config_file,
             .args(root ? root.name() : "");
 }
 
-void ConfigLoader::report_import_too_deep(const SourceFile& config_file,
+void ConfigLoader::report_import_too_deep(const FileEntryRef& config_file,
                                           const pugi::xml_node& node)
 {
     diagman.report(xml_location(config_file, node),
                    config::diag::xml_import_too_deep);
 }
 
-void ConfigLoader::report_invalid_param_type(const SourceFile& config_file,
+void ConfigLoader::report_invalid_param_type(const FileEntryRef& config_file,
                                              const pugi::xml_node& node,
                                              const char* type_value)
 {
@@ -332,14 +331,14 @@ void ConfigLoader::report_invalid_param_type(const SourceFile& config_file,
             .args(type_value);
 }
 
-void ConfigLoader::report_opt_param_not_last(const SourceFile& config_file,
+void ConfigLoader::report_opt_param_not_last(const FileEntryRef& config_file,
                                              const pugi::xml_node& node)
 {
     diagman.report(xml_location(config_file, node),
                    config::diag::xml_opt_must_be_last_param);
 }
 
-void ConfigLoader::report_import_security_error(const SourceFile& config_file,
+void ConfigLoader::report_import_security_error(const FileEntryRef& config_file,
                                                 const pugi::xml_node& node,
                                                 const char* from_value)
 {
@@ -349,13 +348,13 @@ void ConfigLoader::report_import_security_error(const SourceFile& config_file,
 }
 
 void ConfigLoader::report_import_game_config_error(
-        const SourceFile& config_file, const pugi::xml_node& node)
+        const FileEntryRef& config_file, const pugi::xml_node& node)
 {
     diagman.report(xml_location(config_file, node),
                    config::diag::xml_import_failed_to_determine_game_config);
 }
 
-void ConfigLoader::report_could_not_open_file(const SourceFile& config_file,
+void ConfigLoader::report_could_not_open_file(const FileEntryRef& config_file,
                                               const pugi::xml_node& node,
                                               std::string_view path)
 {
@@ -364,7 +363,7 @@ void ConfigLoader::report_could_not_open_file(const SourceFile& config_file,
             .args(path);
 }
 
-void ConfigLoader::report_invalid_constant_value(const SourceFile& config_file,
+void ConfigLoader::report_invalid_constant_value(const FileEntryRef& config_file,
                                                  const pugi::xml_node& node,
                                                  const char* value)
 {
@@ -374,13 +373,13 @@ void ConfigLoader::report_invalid_constant_value(const SourceFile& config_file,
 }
 
 void ConfigLoader::report_invalid_handled_without_id(
-        const SourceFile& config_file, const pugi::xml_node& node)
+        const FileEntryRef& config_file, const pugi::xml_node& node)
 {
     diagman.report(xml_location(config_file, node),
                    config::diag::xml_invalid_handled_without_id);
 }
 
-void ConfigLoader::report_invalid_command_id(const SourceFile& config_file,
+void ConfigLoader::report_invalid_command_id(const FileEntryRef& config_file,
                                              const pugi::xml_node& node,
                                              const char* id_value)
 {
@@ -389,7 +388,7 @@ void ConfigLoader::report_invalid_command_id(const SourceFile& config_file,
             .args(id_value);
 }
 
-void ConfigLoader::report_expected_boolean(const SourceFile& config_file,
+void ConfigLoader::report_expected_boolean(const FileEntryRef& config_file,
                                            const pugi::xml_node& node,
                                            const char* value)
 {
@@ -398,15 +397,14 @@ void ConfigLoader::report_expected_boolean(const SourceFile& config_file,
             .args(value);
 }
 
-void ConfigLoader::load_config(const SourceFile& config_file)
+void ConfigLoader::load_config(const FileEntryRef& config_file)
 {
     pugi::xml_document doc;
 
     // Copies (and parses) the config file into a internal pugixml buffer.
     // This is necessary because pugixml modifies the buffer as it parses,
     // however we need to keep the original content for pretty diagnostics.
-    if(auto result = doc.load_buffer(config_file.code_data(),
-                                     config_file.code_size());
+    if(auto result = doc.load_buffer(config_file.data(), config_file.size());
        !result)
     {
         report_parse_error(config_file, result.offset, result.description());
@@ -461,10 +459,10 @@ void ConfigLoader::load_config(const SourceFile& config_file)
     }
 }
 
-void ConfigLoader::process_import(const SourceFile& config_file,
+void ConfigLoader::process_import(const FileEntryRef& config_file,
                                   const pugi::xml_node& node)
 {
-    assert(fileman != nullptr);
+    assert(file_pool != nullptr);
     assert(!root_path.empty());
 
     // Get the import name (required)
@@ -491,7 +489,7 @@ void ConfigLoader::process_import(const SourceFile& config_file,
 
     import_path /= name.value();
 
-    auto import_file = fileman->load_file(import_path);
+    auto import_file = file_pool->load_file(import_path);
     if(!import_file)
     {
         report_could_not_open_file(config_file, node,
@@ -507,9 +505,13 @@ void ConfigLoader::process_import(const SourceFile& config_file,
 }
 
 auto ConfigLoader::determine_import_path(
-        const char* from, const SourceFile& config_file,
+        const char* from, const FileEntryRef& config_file,
         const pugi::xml_node& node) -> std::filesystem::path
 {
+    // TODO could we perform path resolution using a PathResolver?
+    //      maybe we could pass a RelativePathResolver as argument to
+    //      load_config, rather than root_path?
+
     assert(from != nullptr);
 
     if(from[0] == '\0')
@@ -580,7 +582,7 @@ auto parse_command_id(std::string_view str) -> std::optional<int16_t>
     return static_cast<int16_t>(value);
 }
 
-void ConfigLoader::process_command_id(const SourceFile& config_file,
+void ConfigLoader::process_command_id(const FileEntryRef& config_file,
                                       const pugi::xml_node& node)
 {
     // Get the Name (required)
@@ -627,7 +629,7 @@ void ConfigLoader::process_command_id(const SourceFile& config_file,
     builder.set_command_id(*command, target_id, handled);
 }
 
-void ConfigLoader::process_commands_section(const SourceFile& config_file,
+void ConfigLoader::process_commands_section(const FileEntryRef& config_file,
                                             const pugi::xml_node& section)
 {
     for(auto node = section.first_child(); node; node = node.next_sibling())
@@ -690,7 +692,7 @@ auto parse_param_type(std::string_view type_str)
     return std::nullopt;
 }
 
-auto ConfigLoader::process_param_node(const SourceFile& config_file,
+auto ConfigLoader::process_param_node(const FileEntryRef& config_file,
                                       const pugi::xml_node& param)
         -> std::optional<CommandTable::ParamDef>
 {
@@ -746,7 +748,7 @@ auto ConfigLoader::process_param_node(const SourceFile& config_file,
             enum_id.value_or(CommandTable::global_enum));
 }
 
-void ConfigLoader::process_command(const SourceFile& config_file,
+void ConfigLoader::process_command(const FileEntryRef& config_file,
                                    const pugi::xml_node& node)
 {
     // Get the command name (required)
@@ -821,7 +823,7 @@ void ConfigLoader::process_command(const SourceFile& config_file,
     builder.set_command_params(*command, param_defs.begin(), param_defs.end());
 }
 
-void ConfigLoader::process_alternators_section(const SourceFile& config_file,
+void ConfigLoader::process_alternators_section(const FileEntryRef& config_file,
                                                const pugi::xml_node& section)
 {
     for(auto node = section.first_child(); node; node = node.next_sibling())
@@ -837,7 +839,7 @@ void ConfigLoader::process_alternators_section(const SourceFile& config_file,
     }
 }
 
-void ConfigLoader::process_alternator_node(const SourceFile& config_file,
+void ConfigLoader::process_alternator_node(const FileEntryRef& config_file,
                                            const pugi::xml_node& node)
 {
     // Get the alternator name (required)
@@ -867,7 +869,7 @@ void ConfigLoader::process_alternator_node(const SourceFile& config_file,
 }
 
 void ConfigLoader::process_alternative_node(
-        const SourceFile& config_file, const pugi::xml_node& node,
+        const FileEntryRef& config_file, const pugi::xml_node& node,
         CommandTable::AlternatorDef& alternator)
 {
     // Get the command name (required)
@@ -891,7 +893,7 @@ void ConfigLoader::process_alternative_node(
     builder.insert_alternative(alternator, *command);
 }
 
-void ConfigLoader::process_constants_section(const SourceFile& config_file,
+void ConfigLoader::process_constants_section(const FileEntryRef& config_file,
                                              const pugi::xml_node& section)
 {
     for(auto node = section.first_child(); node; node = node.next_sibling())
@@ -907,7 +909,7 @@ void ConfigLoader::process_constants_section(const SourceFile& config_file,
     }
 }
 
-auto ConfigLoader::parse_constant_value(const SourceFile& config_file,
+auto ConfigLoader::parse_constant_value(const FileEntryRef& config_file,
                                         const pugi::xml_node& constant_node,
                                         const char* value_cstr) -> int32_t
 {
@@ -996,7 +998,7 @@ auto ConfigLoader::parse_constant_value(const SourceFile& config_file,
     }
 }
 
-void ConfigLoader::process_constant_node(const SourceFile& config_file,
+void ConfigLoader::process_constant_node(const FileEntryRef& config_file,
                                          const pugi::xml_node& constant_node,
                                          CommandTable::EnumId enum_id,
                                          int32_t& next_value)
@@ -1022,7 +1024,7 @@ void ConfigLoader::process_constant_node(const SourceFile& config_file,
     ++next_value;
 }
 
-void ConfigLoader::process_enum_node(const SourceFile& config_file,
+void ConfigLoader::process_enum_node(const FileEntryRef& config_file,
                                      const pugi::xml_node& enum_node)
 {
     // Get the enum name (optional, defaults to global enum)

@@ -23,7 +23,7 @@ auto Preprocessor::is_newline(const char* p) const -> bool
     return *p == '\r' || *p == '\n' || *p == '\0';
 }
 
-auto Preprocessor::source_file() const -> const SourceFile&
+auto Preprocessor::source_file() const -> const FileEntryRef&
 {
     return this->source;
 }
@@ -38,7 +38,7 @@ auto Preprocessor::eof() const -> bool
     return this->end_of_stream;
 }
 
-auto Preprocessor::location() const -> SourceLocation
+auto Preprocessor::location() const -> FileLoc
 {
     return this->source.location_of(this->cursor);
 }

@@ -12,9 +12,24 @@ TEST_CASE_FIXTURE(ModelsTestFixture,
     create_test_file("data/vehicles.ide", R"(cars
 400, landstal, ...
 end)");
-
     auto table = gta3sc::config::load_models_from_level(
-            root_test_dir, root_test_dir / "level.dat", false, sourceman,
+            make_path_resolver(), root_test_dir / "level.dat", false, sourceman,
+            diagman, gta3sc::ArenaAllocator<>(&arena));
+
+    CHECK(diags.empty());
+    CHECK(table.size() == 1);
+    expect_model(table, "LANDSTAL", 400);
+}
+
+TEST_CASE_FIXTURE(ModelsTestFixture,
+                  "load_models_from_level normalizes backslash paths")
+{
+    create_test_file("level.dat", R"(IDE data\vehicles.ide)");
+    create_test_file("data/vehicles.ide", R"(cars
+400, landstal, ...
+end)");
+    auto table = gta3sc::config::load_models_from_level(
+            make_path_resolver(), root_test_dir / "level.dat", false, sourceman,
             diagman, gta3sc::ArenaAllocator<>(&arena));
 
     CHECK(diags.empty());
@@ -26,7 +41,8 @@ TEST_CASE_FIXTURE(ModelsTestFixture,
                   "load_models_from_level with non existent file path")
 {
     auto table = gta3sc::config::load_models_from_level(
-                         root_test_dir, "nonexistent_level.dat", false,
+                         make_path_resolver(),
+                         root_test_dir / "nonexistent_level.dat", false,
                          sourceman, diagman,
                          gta3sc::ModelTable::Builder(&arena))
                          .build();
@@ -51,10 +67,9 @@ end)");
     create_test_file("data/weapons.ide", R"(weap
 321, gun_dildo1, ...
 end)");
-
     auto table = gta3sc::config::load_models_from_level(
-                         root_test_dir, root_test_dir / "level.dat", false,
-                         sourceman, diagman,
+                         make_path_resolver(), root_test_dir / "level.dat",
+                         false, sourceman, diagman,
                          gta3sc::ModelTable::Builder(&arena))
                          .build();
 
@@ -81,10 +96,10 @@ end)");
     create_test_file("weapons.ide", R"(weap
 321, gun_dildo1, ...
 end)");
-
     auto table = gta3sc::config::load_models_from_level(
-                         root_test_dir, root_test_dir / "data/deep/level.dat",
-                         false, sourceman, diagman,
+                         make_path_resolver(),
+                         root_test_dir / "data/deep/level.dat", false,
+                         sourceman, diagman,
                          gta3sc::ModelTable::Builder(&arena))
                          .build();
 
@@ -109,10 +124,9 @@ end)");
     create_test_file("data/objects.ide", R"(objs
 14531, int_zerosrc01, ...
 end)");
-
     auto table = gta3sc::config::load_models_from_level(
-                         root_test_dir, root_test_dir / "level.dat", false,
-                         sourceman, diagman,
+                         make_path_resolver(), root_test_dir / "level.dat",
+                         false, sourceman, diagman,
                          gta3sc::ModelTable::Builder(&arena))
                          .build();
 
@@ -146,10 +160,9 @@ end)");
     create_test_file("data/objects.ide", R"(objs
 14531, int_zerosrc01, ...
 end)");
-
     auto table = gta3sc::config::load_models_from_level(
-                         root_test_dir, root_test_dir / "level.dat", false,
-                         sourceman, diagman,
+                         make_path_resolver(), root_test_dir / "level.dat",
+                         false, sourceman, diagman,
                          gta3sc::ModelTable::Builder(&arena))
                          .build();
 
@@ -176,10 +189,9 @@ end)");
     create_test_file("data/weapons.ide", R"(weap
 321, gun_dildo1, ...
 end)");
-
     auto table = gta3sc::config::load_models_from_level(
-                         root_test_dir, root_test_dir / "level.dat", true,
-                         sourceman, diagman,
+                         make_path_resolver(), root_test_dir / "level.dat",
+                         true, sourceman, diagman,
                          gta3sc::ModelTable::Builder(&arena))
                          .build();
 
@@ -208,10 +220,9 @@ end)");
     create_test_file("data/weapons.ide", R"(weap
 321, gun_dildo1, ...
 end)");
-
     auto table = gta3sc::config::load_models_from_level(
-                         root_test_dir, root_test_dir / "level.dat", false,
-                         sourceman, diagman,
+                         make_path_resolver(), root_test_dir / "level.dat",
+                         false, sourceman, diagman,
                          gta3sc::ModelTable::Builder(&arena))
                          .build();
 
@@ -228,10 +239,9 @@ TEST_CASE_FIXTURE(ModelsTestFixture,
                   "load_models_from_level with empty level file")
 {
     create_test_file("level.dat", "");
-
     auto table = gta3sc::config::load_models_from_level(
-                         root_test_dir, root_test_dir / "level.dat", false,
-                         sourceman, diagman,
+                         make_path_resolver(), root_test_dir / "level.dat",
+                         false, sourceman, diagman,
                          gta3sc::ModelTable::Builder(&arena))
                          .build();
 
@@ -249,10 +259,9 @@ TEST_CASE_FIXTURE(ModelsTestFixture,
    
    # More comments
    )");
-
     auto table = gta3sc::config::load_models_from_level(
-                         root_test_dir, root_test_dir / "level.dat", false,
-                         sourceman, diagman,
+                         make_path_resolver(), root_test_dir / "level.dat",
+                         false, sourceman, diagman,
                          gta3sc::ModelTable::Builder(&arena))
                          .build();
 
@@ -278,10 +287,9 @@ end)");
     create_test_file("data/weapons.ide", R"(weap
 321, gun_dildo1, ...
 end)");
-
     auto table = gta3sc::config::load_models_from_level(
-                         root_test_dir, root_test_dir / "level.dat", false,
-                         sourceman, diagman,
+                         make_path_resolver(), root_test_dir / "level.dat",
+                         false, sourceman, diagman,
                          gta3sc::ModelTable::Builder(&arena))
                          .build();
 
@@ -307,10 +315,9 @@ end)");
     create_test_file("data/objects.ide", R"(objs
 14531, int_zerosrc01, ...
 end)");
-
     auto table = gta3sc::config::load_models_from_level(
-                         root_test_dir, root_test_dir / "level.dat", false,
-                         sourceman, diagman,
+                         make_path_resolver(), root_test_dir / "level.dat",
+                         false, sourceman, diagman,
                          gta3sc::ModelTable::Builder(&arena))
                          .build();
 
@@ -364,10 +371,9 @@ end)");
     create_test_file("data/hand.ide", R"(hand
 5000, hand_model, ...
 end)");
-
     auto table = gta3sc::config::load_models_from_level(
-                         root_test_dir, root_test_dir / "level.dat", false,
-                         sourceman, diagman,
+                         make_path_resolver(), root_test_dir / "level.dat",
+                         false, sourceman, diagman,
                          gta3sc::ModelTable::Builder(&arena))
                          .build();
 
@@ -397,14 +403,13 @@ end)");
 end)");
 
     auto builder = gta3sc::ModelTable::Builder(&arena);
+    builder = gta3sc::config::load_models_from_level(
+            make_path_resolver(), root_test_dir / "level1.dat", false,
+            sourceman, diagman, std::move(builder));
 
     builder = gta3sc::config::load_models_from_level(
-            root_test_dir, root_test_dir / "level1.dat", false, sourceman,
-            diagman, std::move(builder));
-
-    builder = gta3sc::config::load_models_from_level(
-            root_test_dir, root_test_dir / "level2.dat", false, sourceman,
-            diagman, std::move(builder));
+            make_path_resolver(), root_test_dir / "level2.dat", false,
+            sourceman, diagman, std::move(builder));
 
     auto table = std::move(builder).build();
 

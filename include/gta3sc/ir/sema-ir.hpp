@@ -110,22 +110,22 @@ public:
 
     /// Creates an integer argument.
     static auto
-    create_int(int32_t value, SourceRange source,
+    create_int(int32_t value, FileRange source,
                ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     /// Creates a floating-point argument.
     static auto
-    create_float(float value, SourceRange source,
+    create_float(float value, FileRange source,
                  ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     /// Creates a label argument.
     static auto
-    create_label(const SymbolTable::Label& label, SourceRange source,
+    create_label(const SymbolTable::Label& label, FileRange source,
                  ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     // Creates a filename argument.
     static auto
-    create_filename(const SymbolTable::File& filename, SourceRange source,
+    create_filename(const SymbolTable::File& filename, FileRange source,
                     ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     /// Creates a text label argument.
@@ -133,7 +133,7 @@ public:
     /// The text label value is automatically converted to uppercase during the
     /// creation of the object.
     static auto
-    create_text_label(std::string_view value, SourceRange source,
+    create_text_label(std::string_view value, FileRange source,
                       ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     /// Creates a string argument.
@@ -141,37 +141,37 @@ public:
     /// The quotation marks that surrounds the string should not be present
     /// in `string`. The string is not converted to uppercase.
     static auto
-    create_string(std::string_view value, SourceRange source,
+    create_string(std::string_view value, FileRange source,
                   ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     /// Creates a variable reference argument.
     static auto
-    create_variable(const SymbolTable::Variable& var, SourceRange source,
+    create_variable(const SymbolTable::Variable& var, FileRange source,
                     ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     /// Creates an array variable reference argument by using the given integer
     /// index.
     static auto
     create_variable(const SymbolTable::Variable& var, int32_t index,
-                    SourceRange source,
+                    FileRange source,
                     ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     /// Creates an array variable reference argument by using the given variable
     /// index.
     static auto
     create_variable(const SymbolTable::Variable& var,
-                    const SymbolTable::Variable& index, SourceRange source,
+                    const SymbolTable::Variable& index, FileRange source,
                     ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     /// Creates a string constant argument.
     static auto
-    create_constant(const CommandTable::ConstantDef& cdef, SourceRange source,
+    create_constant(const CommandTable::ConstantDef& cdef, FileRange source,
                     ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     /// Creates a used object argument.
     static auto
     create_used_object(const SymbolTable::UsedObject& used_object,
-                       SourceRange source,
+                       FileRange source,
                        ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
 private:
@@ -280,7 +280,7 @@ class SemaIR::Command : public ArenaObj
 {
 public:
     /// Please use `SemaIR::Builder::build_command`.
-    Command(PrivateTag /*unused*/, SourceRange source,
+    Command(PrivateTag /*unused*/, FileRange source,
             const CommandTable::CommandDef& def,
             std::span<const Argument*> args, bool not_flag) noexcept :
         m_source(source), m_def(&def), m_args(args), m_not_flag(not_flag)
@@ -290,7 +290,7 @@ public:
     [[nodiscard]] auto not_flag() const noexcept -> bool { return m_not_flag; }
 
     /// Returns the source code range of this command.
-    [[nodiscard]] auto source() const noexcept -> SourceRange
+    [[nodiscard]] auto source() const noexcept -> FileRange
     {
         return m_source;
     }
@@ -332,7 +332,7 @@ public:
                            const Command& rhs) noexcept -> bool;
 
 private:
-    SourceRange m_source;
+    FileRange m_source;
     const CommandTable::CommandDef* m_def;
     std::span<const Argument*> m_args;
     bool m_not_flag{};
@@ -357,12 +357,12 @@ public:
 public:
     /// Please use `SemaIR` creation methods.
     template<typename T>
-    explicit Argument(PrivateTag /*unused*/, T&& value, SourceRange source) :
+    explicit Argument(PrivateTag /*unused*/, T&& value, FileRange source) :
         m_source(source), m_value(std::forward<T>(value))
     {}
 
     /// Returns the source code range of this argument.
-    [[nodiscard]] auto source() const noexcept -> SourceRange
+    [[nodiscard]] auto source() const noexcept -> FileRange
     {
         return m_source;
     }
@@ -430,7 +430,7 @@ public:
                            const Argument& rhs) noexcept -> bool;
 
 private:
-    SourceRange m_source;
+    FileRange m_source;
     const std::variant<int32_t, float, TextLabel, String, VarRef,
                        const SymbolTable::Label*, const SymbolTable::File*,
                        const SymbolTable::UsedObject*,
@@ -455,7 +455,7 @@ private:
 class SemaIR::Builder
 {
 public:
-    static constexpr SourceRange no_source = SourceManager::no_source_range;
+    static constexpr FileRange no_range = no_file_range;
 
     /// Constructs a builder to create instructions allocating any necessary
     /// data in the given arena.
@@ -482,7 +482,7 @@ public:
 
     /// Sets the instruction in construction to be the specified command.
     auto command(const CommandTable::CommandDef& command_def,
-                 SourceRange source = no_source) -> Builder&&;
+                 FileRange source = no_range) -> Builder&&;
 
     /// Sets the not flag of the command being constructed.
     auto not_flag(bool not_flag_value = true) -> Builder&&;
@@ -491,54 +491,54 @@ public:
     auto arg(const Argument* value) -> Builder&&;
 
     /// Appends the given integer argument to the command in construction.
-    auto arg_int(int32_t value, SourceRange source = no_source) -> Builder&&;
+    auto arg_int(int32_t value, FileRange source = no_range) -> Builder&&;
 
     /// Appends the given float argument to the command in construction.
-    auto arg_float(float value, SourceRange source = no_source) -> Builder&&;
+    auto arg_float(float value, FileRange source = no_range) -> Builder&&;
 
     /// Appends an argument referencing the given label to the command in
     /// construction.
     auto arg_label(const SymbolTable::Label& label,
-                   SourceRange source = no_source) -> Builder&&;
+                   FileRange source = no_range) -> Builder&&;
 
     /// Appends an argument referencing the given filename to the command in
     /// construction.
     auto arg_filename(const SymbolTable::File& filename,
-                      SourceRange source = no_source) -> Builder&&;
+                      FileRange source = no_range) -> Builder&&;
 
     /// Appends the given string argument to the command in construction.
     auto arg_text_label(std::string_view value,
-                        SourceRange source = no_source) -> Builder&&;
+                        FileRange source = no_range) -> Builder&&;
 
     /// Appends the given string argument to the command in construction.
     auto arg_string(std::string_view value,
-                    SourceRange source = no_source) -> Builder&&;
+                    FileRange source = no_range) -> Builder&&;
 
     /// Appends an argument referencing to the given variable to the command in
     /// construction.
     auto arg_var(const SymbolTable::Variable& var,
-                 SourceRange source = no_source) -> Builder&&;
+                 FileRange source = no_range) -> Builder&&;
 
     /// Appends an argument referencing to the given variable and given
     /// array subscript index to the command in construction.
     auto arg_var(const SymbolTable::Variable& var, int32_t index,
-                 SourceRange source = no_source) -> Builder&&;
+                 FileRange source = no_range) -> Builder&&;
 
     /// Appends an argument referencing to the given variable and given
     /// array subscript index to the command in construction.
     auto arg_var(const SymbolTable::Variable& var,
                  const SymbolTable::Variable& index,
-                 SourceRange source = no_source) -> Builder&&;
+                 FileRange source = no_range) -> Builder&&;
 
     /// Appends an argument referencing to the given string constant to the
     /// command in construction.
     auto arg_const(const CommandTable::ConstantDef& cdef,
-                   SourceRange source = no_source) -> Builder&&;
+                   FileRange source = no_range) -> Builder&&;
 
     /// Appends an argument referencing to the given used object to the
     /// command in construction.
     auto arg_object(const SymbolTable::UsedObject& used_object,
-                    SourceRange source = no_source) -> Builder&&;
+                    FileRange source = no_range) -> Builder&&;
 
     /// Tells the builder the amount of arguments that follows.
     ///
@@ -579,7 +579,7 @@ private:
     const Command* command_ptr{};
 
     const CommandTable::CommandDef* command_def{};
-    SourceRange command_source;
+    FileRange command_source;
 
     size_t args_hint = no_args_hint;
     size_t args_capacity = 0;
