@@ -142,7 +142,7 @@ auto Sema::validate() -> std::optional<LinkedIR<SemaIR>>
 auto Sema::discover_declarations_pass() -> bool
 {
     assert(report_count == 0);
-    SourceRange scope_enter_source{};
+    FileRange scope_enter_source{};
     this->current_scope = no_local_scope;
 
     for(auto& line : parser_ir)
@@ -189,7 +189,7 @@ auto Sema::discover_declarations_pass() -> bool
                 assert(inserted_timera && inserted_timerb);
 
                 this->current_scope = no_local_scope;
-                scope_enter_source = SourceRange{};
+                scope_enter_source = FileRange{};
             }
             else if(line.command().name() == "VAR_INT"sv)
             {
@@ -268,6 +268,16 @@ auto Sema::check_semantics_pass() -> std::optional<LinkedIR<SemaIR>>
     this->alternator_set = cmdman->find_alternator("SET"sv);
     this->command_script_name = cmdman->find_command("SCRIPT_NAME"sv);
     this->command_start_new_script = cmdman->find_command("START_NEW_SCRIPT"sv);
+    this->command_create_collectable1 = cmdman->find_command(
+            "CREATE_COLLECTABLE1"sv);
+    this->command_player_made_progress = cmdman->find_command(
+            "PLAYER_MADE_PROGRESS"sv);
+    this->command_register_mission_passed = cmdman->find_command(
+            "REGISTER_MISSION_PASSED"sv);
+    this->command_register_oddjob_mission_passed = cmdman->find_command(
+            "REGISTER_ODDJOB_MISSION_PASSED"sv);
+    this->command_award_player_mission_respect = cmdman->find_command(
+            "AWARD_PLAYER_MISSION_RESPECT"sv);
 
     this->model_enum = cmdman->find_enumeration("MODEL");
     this->defaultmodel_enum = cmdman->find_enumeration("DEFAULTMODEL");
@@ -369,11 +379,6 @@ auto Sema::validate_command(const ParserIR::Command& command)
     }
     else
     {
-        // FIXME this should be done before in the lowering pass
-        /*if(command.name() == "MISSION_START"sv
-           || command.name() == "MISSION_END"sv)
-            return SemaIR::Builder(allocator).build_command();*/
-
         command_def = cmdman->find_command(command.name());
         if(!command_def)
         {
@@ -424,6 +429,7 @@ auto Sema::validate_command(const ParserIR::Command& command)
 
     if(!failed)
     {
+        update_stats_counters(*result);
         if(!validate_hardcoded_command(*result))
             failed = true;
     }
@@ -686,32 +692,33 @@ auto Sema::validate_label([[maybe_unused]] const CommandTable::ParamDef& param,
 {
     assert(param.type == ParamType::LABEL);
 
-    // TODO find a proper way to handle this
-    /*if(arg.type() == ParserIR::Argument::Type::FILENAME)
+    if(arg.type() == ParserIR::Argument::Type::IDENTIFIER)
+    {
+        const auto* sym_label = symrepo->lookup_label(*arg.as_identifier());
+        if(!sym_label)
+        {
+            report(arg.source(), diag::undefined_label);
+            return nullptr;
+        }
+
+        return SemaIR::create_label(*sym_label, arg.source(), allocator);
+    }
+    else if(arg.type() == ParserIR::Argument::Type::FILENAME)
     {
         const auto* sym_file = symrepo->lookup_file(*arg.as_filename());
         if(!sym_file)
         {
-            report(arg.source(), diag::expected_label);
+            report(arg.source(), diag::undefined_label);
             return nullptr;
         }
-        return SemaIR::create_filename(*sym_file, arg.source(), allocator);
-    }*/
 
-    if(arg.type() != ParserIR::Argument::Type::IDENTIFIER)
+        return SemaIR::create_filename(*sym_file, arg.source(), allocator);
+    }
+    else
     {
         report(arg.source(), diag::expected_label);
         return nullptr;
     }
-
-    const auto* sym_label = symrepo->lookup_label(*arg.as_identifier());
-    if(!sym_label)
-    {
-        report(arg.source(), diag::undefined_label);
-        return nullptr;
-    }
-
-    return SemaIR::create_label(*sym_label, arg.source(), allocator);
 }
 
 auto Sema::validate_string_literal(
@@ -744,7 +751,7 @@ auto Sema::validate_var_ref(const CommandTable::ParamDef& param,
     }
 
     std::string_view arg_ident = *arg.as_identifier();
-    SourceRange arg_source = arg.source();
+    FileRange arg_source = arg.source();
 
     // For TEXT_LABEL parameters, the identifier begins with a dollar
     // character and its suffix references a variable of text label type.
@@ -878,6 +885,27 @@ auto Sema::validate_var_ref(const CommandTable::ParamDef& param,
                                        arg_source, allocator);
     else
         return SemaIR::create_variable(*sym_var, arg_source, allocator);
+}
+
+void Sema::update_stats_counters(const SemaIR::Command& command)
+{
+    const auto& command_def = command.def();
+
+    if(&command_def == command_create_collectable1)
+        return symrepo->add_collectable1(1);
+    if(&command_def == command_register_mission_passed
+       || &command_def == command_register_oddjob_mission_passed)
+        return symrepo->add_mission(1);
+
+    if(command.num_args() < 1)
+        return;
+
+    const uint32_t addend = command.arg(0).as_int().value_or(0);
+
+    if(&command_def == command_player_made_progress)
+        symrepo->add_progress(addend);
+    else if(&command_def == command_award_player_mission_respect)
+        symrepo->add_mission_respect(addend);
 }
 
 auto Sema::validate_hardcoded_command(const SemaIR::Command& command) -> bool
@@ -1156,14 +1184,14 @@ void Sema::declare_variable(const ParserIR::Command& command,
     }
 }
 
-auto Sema::report(SourceLocation source,
+auto Sema::report(FileLoc source,
                   const DiagnosticDescriptor& message) -> Diagnostic::Builder
 {
     this->report_count++;
     return diag->report(source, message);
 }
 
-auto Sema::report(SourceRange source,
+auto Sema::report(FileRange source,
                   const DiagnosticDescriptor& message) -> Diagnostic::Builder
 {
     return report(source.begin, message).range(source);
@@ -1437,7 +1465,7 @@ auto Sema::is_matching_alternative(const ParserIR::Command& command,
 }
 
 auto Sema::parse_var_ref(std::string_view identifier,
-                         SourceRange source) -> VarRef
+                         FileRange source) -> VarRef
 {
     // subscript := '[' (variable_name | integer) ']' ;
     // variable := variable_name [ subscript ] ;
@@ -1448,7 +1476,7 @@ auto Sema::parse_var_ref(std::string_view identifier,
     // contain brackets in its name).
 
     std::string_view var_name;
-    SourceRange var_source;
+    FileRange var_source;
     std::optional<VarSubscript> subscript;
 
     const auto is_bracket = [](char c) { return c == '[' || c == ']'; };

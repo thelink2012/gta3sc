@@ -2,12 +2,16 @@ add_library(gta3sc
   command-table.cpp
   model-table.cpp
   diagnostics.cpp
-  sourceman.cpp
+  source-manager.cpp
   ir/parser-ir.cpp
   ir/sema-ir.cpp
   ir/symbol-table.cpp
   util/arena.cpp
   util/name-generator.cpp
+  filesystem/file-pool.cpp
+  filesystem/resolver/script-path-resolver.cpp
+  filesystem/resolver/relative-path-resolver.cpp
+  filesystem/resolver/relative-insensitive-path-resolver.cpp
   config/models.cpp
   syntax/diagnostics.cpp
   syntax/preprocessor.cpp
@@ -15,7 +19,15 @@ add_library(gta3sc
   syntax/parser.cpp
   syntax/multifile-parser.cpp
   syntax/sema.cpp
+  syntax/lowering/instruction-remover.cpp
+  syntax/lowering/load-and-launch-mission-rewriter.cpp
+  syntax/lowering/mission-stmt-rewriter.cpp
   syntax/lowering/repeat-stmt-rewriter.cpp
+  syntax/lowering/if-stmt-rewriter.cpp
+  syntax/lowering/while-stmt-rewriter.cpp
+  syntax/lowering/scope-remover.cpp
+  syntax/lowering/stats-rewriter.cpp
+  syntax/lowering/var-decl-remover.cpp
   syntax/visitor/required-files-visitor.cpp
   codegen/storage-table.cpp
   codegen/relocation-table.cpp

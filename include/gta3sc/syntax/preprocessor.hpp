@@ -1,5 +1,5 @@
 #pragma once
-#include <gta3sc/sourceman.hpp>
+#include <gta3sc/filesystem/file-pool.hpp>
 
 namespace gta3sc
 {
@@ -16,8 +16,8 @@ namespace gta3sc::syntax
 class Preprocessor
 {
 public:
-    explicit Preprocessor(SourceFile source, DiagnosticHandler& diag) :
-        source(std::move(source)), diag(&diag), cursor(this->source.code_data())
+    explicit Preprocessor(FileEntryRef source, DiagnosticHandler& diag) :
+        source(std::move(source)), diag(&diag), cursor(this->source.data())
     {
         // TODO if we move cursor initialization we can make this noexcept
     }
@@ -37,10 +37,10 @@ public:
     [[nodiscard]] auto eof() const -> bool;
 
     /// Gets the current source location.
-    [[nodiscard]] auto location() const -> SourceLocation;
+    [[nodiscard]] auto location() const -> FileLoc;
 
     /// Gets the source file associated with this preprocessor.
-    [[nodiscard]] auto source_file() const -> const SourceFile&;
+    [[nodiscard]] auto source_file() const -> const FileEntryRef&;
 
     /// Gets the diagnostic handler associated with this preprocessor.
     [[nodiscard]] auto diagnostics() const -> DiagnosticHandler&;
@@ -50,7 +50,7 @@ private:
     [[nodiscard]] auto is_newline(const char* p) const -> bool;
 
 private:
-    SourceFile source;
+    FileEntryRef source;
     DiagnosticHandler* diag;
 
     const char* cursor;

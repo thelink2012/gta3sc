@@ -5,7 +5,7 @@
 #include <gta3sc/diagnostics.hpp>
 #include <gta3sc/driver/compilation.hpp>
 #include <gta3sc/model-table.hpp>
-#include <gta3sc/sourceman.hpp>
+#include <gta3sc/source-manager.hpp>
 #include <gta3sc/util/arena.hpp>
 #include <print>
 

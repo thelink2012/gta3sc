@@ -1,4 +1,5 @@
 #include "syntax-fixture.hpp"
+#include <cassert>
 #include <doctest/doctest.h>
 #include <gta3sc/syntax/parser.hpp>
 #include <string>
@@ -26,7 +27,7 @@ protected:
 
 private:
     static auto
-    make_parser(gta3sc::SourceFile source, gta3sc::DiagnosticHandler& diagman,
+    make_parser(gta3sc::FileEntryRef source, gta3sc::DiagnosticHandler& diagman,
                 gta3sc::ArenaMemoryResource& arena) -> gta3sc::syntax::Parser
     {
         auto pp = gta3sc::syntax::Preprocessor(std::move(source), diagman);
@@ -63,7 +64,7 @@ TEST_CASE_FIXTURE(ParserFixture,
     build_parser("LAUNCH_MISSION a.sc\n"
                  "GOSUB_FILE lbl b.sc\n"
                  "LOAD_AND_LAUNCH_MISSION c.sc\n");
-    
+
     auto ir = parser.parse_main_script_file();
     REQUIRE(ir != std::nullopt);
     REQUIRE(size(*ir) == 3);
@@ -1338,6 +1339,8 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a valid AND list")
                  "AND THING_4\n"
                  "AND THING_5\n"
                  "AND THING_6\n"
+                 "AND THING_7\n"
+                 "AND THING_8\n"
                  "    DO_1\n"
                  "    DO_2\n"
                  "ENDIF\n");
@@ -1347,7 +1350,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a valid AND list")
 
     auto it = ir->begin();
     REQUIRE(it->command().name() == "IF");
-    REQUIRE(*it->command().arg(0).as_int() == 5);
+    REQUIRE(*it->command().arg(0).as_int() == 7);
     REQUIRE(it->command().num_args() == 1);
     REQUIRE((++it)->command().name() == "SOMETHING");
     REQUIRE((++it)->command().name() == "OTHER_THING");
@@ -1355,6 +1358,8 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a valid AND list")
     REQUIRE((++it)->command().name() == "THING_4");
     REQUIRE((++it)->command().name() == "THING_5");
     REQUIRE((++it)->command().name() == "THING_6");
+    REQUIRE((++it)->command().name() == "THING_7");
+    REQUIRE((++it)->command().name() == "THING_8");
     REQUIRE((++it)->command().name() == "DO_1");
     REQUIRE((++it)->command().name() == "DO_2");
     REQUIRE((++it)->command().name() == "ENDIF");
@@ -1369,6 +1374,8 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a valid OR list")
                  "OR THING_4\n"
                  "OR THING_5\n"
                  "OR THING_6\n"
+                 "OR THING_7\n"
+                 "OR THING_8\n"
                  "    DO_1\n"
                  "    DO_2\n"
                  "ENDIF\n");
@@ -1378,7 +1385,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a valid OR list")
 
     auto it = ir->begin();
     REQUIRE(it->command().name() == "IF");
-    REQUIRE(*it->command().arg(0).as_int() == 25);
+    REQUIRE(*it->command().arg(0).as_int() == 27);
     REQUIRE(it->command().num_args() == 1);
     REQUIRE((++it)->command().name() == "SOMETHING");
     REQUIRE((++it)->command().name() == "OTHER_THING");
@@ -1386,6 +1393,8 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a valid OR list")
     REQUIRE((++it)->command().name() == "THING_4");
     REQUIRE((++it)->command().name() == "THING_5");
     REQUIRE((++it)->command().name() == "THING_6");
+    REQUIRE((++it)->command().name() == "THING_7");
+    REQUIRE((++it)->command().name() == "THING_8");
     REQUIRE((++it)->command().name() == "DO_1");
     REQUIRE((++it)->command().name() == "DO_2");
     REQUIRE((++it)->command().name() == "ENDIF");
@@ -1441,6 +1450,8 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing too many AND/OR")
                  "OR THING_5\n"
                  "OR THING_6\n"
                  "OR THING_7\n"
+                 "OR THING_8\n"
+                 "OR THING_9\n"
                  "    DO_1\n"
                  "    DO_2\n"
                  "ENDIF\n");

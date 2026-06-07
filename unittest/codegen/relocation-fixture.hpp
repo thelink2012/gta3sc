@@ -6,7 +6,8 @@
 #include <gta3sc/ir/symbol-table.hpp>
 
 using gta3sc::ArenaMemoryResource;
-using gta3sc::SourceManager;
+using ::gta3sc::no_file_loc;
+using ::gta3sc::no_file_range;
 using gta3sc::SymbolTable;
 using gta3sc::codegen::RelocationTable;
 using gta3sc::test::WithDiagnosticFixture;
@@ -29,7 +30,7 @@ public:
     {
         const auto [label, inserted] = symtable.insert_label(
                 std::to_string(next_label_id++), SymbolTable::global_scope,
-                SourceManager::no_source_range);
+                no_file_range);
         REQUIRE(inserted);
         return *label;
     }
@@ -37,8 +38,7 @@ public:
     auto make_file(FileType type) -> const SymbolTable::File&
     {
         const auto [file, inserted] = symtable.insert_file(
-                std::to_string(next_file_id++), type,
-                SourceManager::no_source_range);
+                std::to_string(next_file_id++), type, no_file_range);
         REQUIRE(inserted);
         return *file;
     }

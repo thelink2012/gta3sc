@@ -1,11 +1,15 @@
+/testscript/
 /Testing/
+/plans/
 /build/
 /build-*/
+/build_*/
 /gh-pages/
 /*.html
 /compile_commands.json
 /.clangd
 /.cache
+/plans/
 
 #################
 ## C++

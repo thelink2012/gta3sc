@@ -1,6 +1,6 @@
 #pragma once
 #include <cstdint>
-#include <gta3sc/sourceman.hpp>
+#include <gta3sc/filesystem/file-location.hpp>
 #include <gta3sc/util/arena.hpp>
 #include <gta3sc/util/intrusive-bidirectional-list-node.hpp>
 #include <gta3sc/util/random-access-view.hpp>
@@ -116,12 +116,12 @@ public:
 
     /// Creates an integer argument.
     static auto
-    create_int(int32_t value, SourceRange source,
+    create_int(int32_t value, FileRange source,
                ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     /// Creates a floating-point argument.
     static auto
-    create_float(float value, SourceRange source,
+    create_float(float value, FileRange source,
                  ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     /// Creates an identifier argument.
@@ -129,7 +129,7 @@ public:
     /// The identifier is automatically converted to uppercase during the
     /// creation of the object.
     static auto
-    create_identifier(std::string_view name, SourceRange source,
+    create_identifier(std::string_view name, FileRange source,
                       ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     /// Creates a filename argument.
@@ -137,7 +137,7 @@ public:
     /// The filename is automatically converted to uppercase during the
     /// creation of the object.
     static auto
-    create_filename(std::string_view filename, SourceRange source,
+    create_filename(std::string_view filename, FileRange source,
                     ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
     /// Creates a string argument.
@@ -145,7 +145,7 @@ public:
     /// The quotation marks that surrounds the string should not be present
     /// in `string`. The string is not converted to uppercase.
     static auto
-    create_string(std::string_view string, SourceRange source,
+    create_string(std::string_view string, FileRange source,
                   ArenaAllocator<> allocator) -> ArenaPtr<const Argument>;
 
 private:
@@ -226,16 +226,13 @@ class ParserIR::LabelDef : public ArenaObj
 {
 public:
     /// Please ues `create` instead.
-    LabelDef(PrivateTag /*unused*/, SourceRange source,
+    LabelDef(PrivateTag /*unused*/, FileRange source,
              std::string_view name) noexcept :
         m_source(source), m_name(name)
     {}
 
     /// Returns the source code range of this label definition.
-    [[nodiscard]] auto source() const noexcept -> SourceRange
-    {
-        return m_source;
-    }
+    [[nodiscard]] auto source() const noexcept -> FileRange { return m_source; }
 
     /// Returns the name of the label defined by this.
     [[nodiscard]] auto name() const noexcept -> std::string_view
@@ -252,11 +249,11 @@ public:
     /// Creates a label definition.
     ///
     /// The name of the label is automatically made uppercase.
-    static auto create(std::string_view name, SourceRange source,
+    static auto create(std::string_view name, FileRange source,
                        ArenaAllocator<> allocator) -> ArenaPtr<const LabelDef>;
 
 private:
-    SourceRange m_source;
+    FileRange m_source;
     std::string_view m_name;
 };
 
@@ -264,7 +261,7 @@ class ParserIR::Command : public ArenaObj
 {
 public:
     /// Please use `ParserIR::Builder::build_command`.
-    Command(PrivateTag /*unused*/, SourceRange source, std::string_view name,
+    Command(PrivateTag /*unused*/, FileRange source, std::string_view name,
             std::span<const Argument*> args, bool not_flag) noexcept :
         m_source(source), m_name(name), m_args(args), m_not_flag(not_flag)
     {}
@@ -273,10 +270,7 @@ public:
     [[nodiscard]] auto not_flag() const noexcept -> bool { return m_not_flag; }
 
     /// Returns the source code range of this command.
-    [[nodiscard]] auto source() const noexcept -> SourceRange
-    {
-        return m_source;
-    }
+    [[nodiscard]] auto source() const noexcept -> FileRange { return m_source; }
 
     /// Returns the name of the command.
     [[nodiscard]] auto name() const noexcept -> std::string_view
@@ -315,7 +309,7 @@ public:
                            const Command& rhs) noexcept -> bool;
 
 private:
-    SourceRange m_source;
+    FileRange m_source;
     std::string_view m_name;
     std::span<const Argument*> m_args;
     bool m_not_flag{};
@@ -336,15 +330,12 @@ public:
 public:
     /// Please use `ParserIR` creation methods.
     template<typename T>
-    Argument(PrivateTag /*unused*/, T&& value, SourceRange source) noexcept :
+    Argument(PrivateTag /*unused*/, T&& value, FileRange source) noexcept :
         m_source(source), m_value(std::forward<T>(value))
     {}
 
     /// Returns the source code range of this argument.
-    [[nodiscard]] auto source() const noexcept -> SourceRange
-    {
-        return m_source;
-    }
+    [[nodiscard]] auto source() const noexcept -> FileRange { return m_source; }
 
     /// Returns the type of this argument.
     [[nodiscard]] auto type() const noexcept -> Type
@@ -386,7 +377,7 @@ public:
                            const Argument& rhs) noexcept -> bool;
 
 private:
-    SourceRange m_source;
+    FileRange m_source;
     const std::variant<int32_t, float, Identifier, Filename, String> m_value;
     // FIXME cannot change the order of the variant or type() will break.
 
@@ -408,7 +399,7 @@ private:
 class ParserIR::Builder
 {
 public:
-    static constexpr SourceRange no_source = SourceManager::no_source_range;
+    static constexpr FileRange no_range = no_file_range;
 
     /// Constructs a builder to create instructions allocating any necessary
     /// data in the given arena.
@@ -428,8 +419,7 @@ public:
     auto label(const LabelDef* label_ptr) -> Builder&&;
 
     /// Sets the instruction in construction to define a label.
-    auto label(std::string_view name,
-               SourceRange source = no_source) -> Builder&&;
+    auto label(std::string_view name, FileRange source = no_range) -> Builder&&;
 
     /// Sets the instruction in construction to be the specified command.
     ///
@@ -439,7 +429,7 @@ public:
 
     /// Sets the instruction in construction to be the specified command.
     auto command(std::string_view name,
-                 SourceRange source = no_source) -> Builder&&;
+                 FileRange source = no_range) -> Builder&&;
 
     /// Sets the not flag of the command being constructed.
     auto not_flag(bool not_flag_value = true) -> Builder&&;
@@ -448,22 +438,22 @@ public:
     auto arg(const Argument* value) -> Builder&&;
 
     /// Appends the given integer argument to the command in construction.
-    auto arg_int(int32_t value, SourceRange source = no_source) -> Builder&&;
+    auto arg_int(int32_t value, FileRange source = no_range) -> Builder&&;
 
     /// Appends the given float argument to the command in construction.
-    auto arg_float(float value, SourceRange source = no_source) -> Builder&&;
+    auto arg_float(float value, FileRange source = no_range) -> Builder&&;
 
     /// Appends the given identifier argument to the command in construction.
     auto arg_ident(std::string_view value,
-                   SourceRange source = no_source) -> Builder&&;
+                   FileRange source = no_range) -> Builder&&;
 
     /// Appends the given filename argument to the command in construction.
     auto arg_filename(std::string_view value,
-                      SourceRange source = no_source) -> Builder&&;
+                      FileRange source = no_range) -> Builder&&;
 
     /// Appends the given string argument to the command in construction.
     auto arg_string(std::string_view value,
-                    SourceRange source = no_source) -> Builder&&;
+                    FileRange source = no_range) -> Builder&&;
 
     /// Tells the builder the amount of arguments that follows.
     ///
@@ -504,7 +494,7 @@ private:
     const Command* command_ptr{};
 
     std::string_view command_name;
-    SourceRange command_source;
+    FileRange command_source;
 
     size_t args_hint = no_args_hint;
     size_t args_capacity = 0;

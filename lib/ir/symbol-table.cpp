@@ -55,7 +55,7 @@ auto SymbolTable::lookup_used_object(std::string_view name) const noexcept
 auto SymbolTable::insert_var(
         std::string_view name, ScopeId scope_id,
         SymbolTable::Variable::Type type, std::optional<uint16_t> dimensions,
-        SourceRange source) -> std::pair<const SymbolTable::Variable*, bool>
+        FileRange source) -> std::pair<const SymbolTable::Variable*, bool>
 {
     if(const auto* v = lookup_var(name, scope_id))
         return {v, false};
@@ -81,7 +81,7 @@ auto SymbolTable::insert_var(
 }
 
 auto SymbolTable::insert_label(std::string_view name, ScopeId scope_id,
-                               SourceRange source)
+                               FileRange source)
         -> std::pair<const Label*, bool>
 {
     if(const auto* l = lookup_label(name))
@@ -102,7 +102,7 @@ auto SymbolTable::insert_label(std::string_view name, ScopeId scope_id,
 }
 
 auto SymbolTable::insert_file(std::string_view name, FileType type,
-                              SourceRange source)
+                              FileRange source)
         -> std::pair<const File*, bool>
 {
     if(const auto* f = lookup_file(name))
@@ -127,7 +127,7 @@ auto SymbolTable::insert_file(std::string_view name, FileType type,
     return {iter->second, true};
 }
 
-auto SymbolTable::insert_used_object(std::string_view name, SourceRange source)
+auto SymbolTable::insert_used_object(std::string_view name, FileRange source)
         -> std::pair<const SymbolTable::UsedObject*, bool>
 {
     if(const auto* uobj = lookup_used_object(name))
@@ -145,5 +145,45 @@ auto SymbolTable::insert_used_object(std::string_view name, SourceRange source)
     assert(inserted);
 
     return {iter->second, true};
+}
+
+void SymbolTable::add_collectable1(uint32_t n) noexcept
+{
+    m_collectable1_total += n;
+}
+
+void SymbolTable::add_progress(uint32_t n) noexcept
+{
+    m_progress_total += n;
+}
+
+void SymbolTable::add_mission(uint32_t n) noexcept
+{
+    m_mission_total += n;
+}
+
+void SymbolTable::add_mission_respect(uint32_t n) noexcept
+{
+    m_mission_respect_total += n;
+}
+
+auto SymbolTable::collectable1_total() const noexcept -> uint32_t
+{
+    return m_collectable1_total;
+}
+
+auto SymbolTable::progress_total() const noexcept -> uint32_t
+{
+    return m_progress_total;
+}
+
+auto SymbolTable::mission_total() const noexcept -> uint32_t
+{
+    return m_mission_total;
+}
+
+auto SymbolTable::mission_respect_total() const noexcept -> uint32_t
+{
+    return m_mission_respect_total;
 }
 } // namespace gta3sc

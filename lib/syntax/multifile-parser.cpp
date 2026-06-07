@@ -52,7 +52,7 @@ MultifileParser::MultifileParser(std::filesystem::path main_script_path,
 {
     auto [main_file, _] = symbol_table.insert_file(
             main_file_identifier, SymbolTable::FileType::main,
-            gta3sc::SourceManager::no_source_range);
+            no_file_range);
     parse_queue.emplace(main_file); // insert root of parse queue
 }
 
@@ -128,14 +128,14 @@ auto MultifileParser::parse() -> std::optional<LinkedIR<ParserIR>>
 }
 
 auto MultifileParser::load_file(const SymbolTable::File& file)
-        -> std::optional<SourceFile>
+        -> std::optional<FileEntryRef>
 {
     if(file.type() == SymbolTable::FileType::main)
     {
         auto source_file = source_manager->load_file(main_script_path);
         if(!source_file)
         {
-            diag->report(gta3sc::SourceManager::no_source_loc,
+            diag->report(no_file_loc,
                          gta3sc::diag::could_not_open_file)
                     .args(main_script_path.generic_string());
             return std::nullopt;
@@ -146,7 +146,7 @@ auto MultifileParser::load_file(const SymbolTable::File& file)
     auto source_file = source_manager->load_file(file.name());
     if(!source_file)
     {
-        diag->report(gta3sc::SourceManager::no_source_loc,
+        diag->report(no_file_loc,
                      gta3sc::diag::could_not_load_file)
                 .args(file.name());
         return std::nullopt;
@@ -154,7 +154,7 @@ auto MultifileParser::load_file(const SymbolTable::File& file)
     return source_file;
 }
 
-auto MultifileParser::parse(SourceFile source_file, SymbolTable::FileType type)
+auto MultifileParser::parse(FileEntryRef source_file, SymbolTable::FileType type)
         -> std::optional<LinkedIR<ParserIR>>
 {
     Preprocessor pp(std::move(source_file), *diag);

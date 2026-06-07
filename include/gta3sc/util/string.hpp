@@ -14,6 +14,8 @@ constexpr auto insensitive_equal(std::string_view lhs,
     for(auto lhs_it = lhs.begin(), rhs_it = rhs.begin(), lhs_end = lhs.end();
         lhs_it != lhs_end; ++lhs_it, ++rhs_it)
     {
+        if(*lhs_it == *rhs_it)
+            continue;
         if(util::toupper(*lhs_it) != util::toupper(*rhs_it))
             return false;
     }

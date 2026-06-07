@@ -1,13 +1,23 @@
 add_executable(gta3sc_unittest
     with-temp-dir-fixture.cpp
     driver/compilation.cpp
+    filesystem/file-pool.cpp
+    filesystem/path-resolver/script-path-resolver.cpp
     syntax/preprocessor.cpp
     syntax/scanner.cpp
     syntax/parser.cpp
     syntax/sema.cpp
     syntax/multifile-parser.cpp
     syntax/visitor/required-files-visitor.cpp
+    syntax/lowering/instruction-remover.cpp
+    syntax/lowering/load-and-launch-mission-rewriter.cpp
+    syntax/lowering/mission-stmt-rewriter.cpp
     syntax/lowering/repeat-stmt-rewriter.cpp
+    syntax/lowering/if-stmt-rewriter.cpp
+    syntax/lowering/while-stmt-rewriter.cpp
+    syntax/lowering/scope-remover.cpp
+    syntax/lowering/stats-rewriter.cpp
+    syntax/lowering/var-decl-remover.cpp
     codegen/storage-table.cpp
     codegen/relocation-table.cpp
     codegen/relocator.cpp
@@ -25,6 +35,8 @@ add_executable(gta3sc_unittest
     config/config-root.cpp
     config/models-ide.cpp
     config/models-level.cpp
+    filesystem/path-resolver/relative-path-resolver.cpp
+    filesystem/path-resolver/relative-insensitive-path-resolver.cpp
 )
 target_compile_features(gta3sc_unittest PUBLIC cxx_std_26)
 target_link_libraries(gta3sc_unittest PRIVATE gta3sc gta3sc-config doctest_with_main)

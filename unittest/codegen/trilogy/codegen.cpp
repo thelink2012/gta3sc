@@ -6,6 +6,7 @@
 using gta3sc::CallbackDiagnosticHandler;
 using gta3sc::CommandTable;
 using gta3sc::LinkedIR;
+using gta3sc::no_file_range;
 using gta3sc::SemaIR;
 using gta3sc::SourceManager;
 using gta3sc::SymbolTable;
@@ -75,7 +76,7 @@ protected:
     {
         constexpr std::string_view test_filename = "A.SC";
         const auto [file, _] = symtable.insert_file(
-                test_filename, FileType::main, SourceManager::no_source_range);
+                test_filename, FileType::main, no_file_range);
         CHECK(file != nullptr);
         return *file;
     }

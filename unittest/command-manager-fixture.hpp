@@ -1,6 +1,7 @@
 #pragma once
 #include <doctest/doctest.h>
 #include <gta3sc/command-table.hpp>
+#include <string_view>
 
 namespace gta3sc::test
 {
@@ -68,7 +69,15 @@ private:
         add_command(builder, "{", {});
         add_command(builder, "}", {});
         add_command(builder, "IF", {ParamDef{ParamType::INT}});
+        add_command(builder, "IFNOT", {ParamDef{ParamType::INT}});
+        add_command(builder, "ELSE", {});
         add_command(builder, "ENDIF", {});
+        add_command(builder, "WHILE", {ParamDef{ParamType::INT}});
+        add_command(builder, "WHILENOT", {ParamDef{ParamType::INT}});
+        add_command(builder, "ENDWHILE", {});
+        add_command(builder, "ANDOR", {ParamDef{ParamType::INT}});
+        add_command(builder, "GOTO_IF_FALSE", {ParamDef{ParamType::LABEL}});
+        add_command(builder, "GOTO_IF_TRUE", {ParamDef{ParamType::LABEL}});
         add_command(builder, "REPEAT",
                     {ParamDef{ParamType::INT}, ParamDef{ParamType::VAR_INT}});
         add_command(builder, "ENDREPEAT", {});
@@ -78,6 +87,7 @@ private:
         add_command(builder, "GOTO", {ParamDef{ParamType::LABEL}});
         add_command(builder, "GOSUB", {ParamDef{ParamType::LABEL}});
         add_command(builder, "RETURN", {});
+        add_command(builder, "TERMINATE_THIS_SCRIPT", {});
         add_command(builder, "SCRIPT_NAME", {ParamDef{ParamType::TEXT_LABEL}});
         add_command(builder, "PRINT_HELP", {ParamDef{ParamType::TEXT_LABEL}});
         add_command(builder, "LAUNCH_MISSION", {ParamDef{ParamType::LABEL}});
@@ -86,7 +96,7 @@ private:
         add_command(builder, "LOAD_AND_LAUNCH_MISSION",
                     {ParamDef{ParamType::LABEL}});
         add_command(builder, "LOAD_AND_LAUNCH_MISSION_INTERNAL",
-                    {ParamDef{ParamType::INPUT_INT}});
+                    {ParamDef{ParamType::INT}});
         add_command(
                 builder, "START_NEW_SCRIPT",
                 {ParamDef{ParamType::LABEL}, ParamDef{ParamType::INPUT_OPT}});
@@ -269,8 +279,28 @@ private:
         add_command(builder, "COMMAND_WITHOUT_ID",
                     {ParamDef{ParamType::INPUT_INT}});
 
+        add_command(builder, "CREATE_COLLECTABLE1",
+                    {ParamDef{ParamType::INPUT_FLOAT},
+                     ParamDef{ParamType::INPUT_FLOAT},
+                     ParamDef{ParamType::INPUT_FLOAT}});
+        add_command(builder, "SET_COLLECTABLE1_TOTAL",
+                    {ParamDef{ParamType::INPUT_INT}});
+        add_command(builder, "PLAYER_MADE_PROGRESS",
+                    {ParamDef{ParamType::INPUT_INT}});
+        add_command(builder, "SET_PROGRESS_TOTAL", {ParamDef{ParamType::INT}});
+        add_command(builder, "SET_TOTAL_NUMBER_OF_MISSIONS",
+                    {ParamDef{ParamType::INPUT_INT}});
+        add_command(builder, "REGISTER_MISSION_PASSED",
+                    {ParamDef{ParamType::TEXT_LABEL}});
+        add_command(builder, "REGISTER_ODDJOB_MISSION_PASSED", {});
+        add_command(builder, "SET_MISSION_RESPECT_TOTAL",
+                    {ParamDef{ParamType::INT}});
+        add_command(builder, "AWARD_PLAYER_MISSION_RESPECT",
+                    {ParamDef{ParamType::INPUT_INT}});
+
         set_command_id(builder, "WAIT", 1);
         set_command_id(builder, "GOTO", 2);
+        set_command_id(builder, "TERMINATE_THIS_SCRIPT", 78);
         set_command_id(builder, "START_NEW_SCRIPT", 79);
         set_command_id(builder, "LAUNCH_MISSION", 215);
         set_command_id(builder, "GOSUB_FILE", 717);
@@ -314,6 +344,15 @@ private:
         auto [alternator, _] = builder.insert_alternator(name);
         for(const auto& alternative : alternatives)
             builder.insert_alternative(*alternator, *alternative);
+    }
+
+protected:
+    auto
+    find_command(std::string_view name) const -> const CommandTable::CommandDef&
+    {
+        const auto* cmd = cmdman.find_command(name);
+        REQUIRE(cmd != nullptr);
+        return *cmd;
     }
 
 private:

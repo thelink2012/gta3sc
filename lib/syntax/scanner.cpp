@@ -16,7 +16,7 @@ const DiagnosticDescriptor invalid_char(DiagnosticSeverity::error,
 
 namespace gta3sc::syntax
 {
-auto Scanner::source_file() const -> const SourceFile&
+auto Scanner::source_file() const -> const FileEntryRef&
 {
     return pp.source_file();
 }
@@ -31,7 +31,7 @@ auto Scanner::spelling(const Token& token) const -> std::string_view
     return source_file().view_of(token.source);
 }
 
-auto Scanner::location() const -> SourceLocation
+auto Scanner::location() const -> FileLoc
 {
     auto loc = pp.location();
     if(peek_char)

@@ -8,7 +8,7 @@
 #include <gta3sc/diagnostics.hpp>
 #include <gta3sc/driver/compilation.hpp>
 #include <gta3sc/model-table.hpp>
-#include <gta3sc/sourceman.hpp>
+#include <gta3sc/source-manager.hpp>
 #include <gta3sc/syntax/sema.hpp>
 #include <gta3sc/util/arena.hpp>
 #include <vector>
@@ -28,7 +28,7 @@ class CompilationFixture
 protected:
     auto compile_main(std::vector<std::byte>& output) -> bool
     {
-        sourceman.scan_directory(root_test_dir);
+        REQUIRE(sourceman.scan_directory(root_test_dir));
         return Compilation(root_test_dir / "main.sc", cmdman, modelman,
                            sourceman, diagman)
                 .compile({&output});

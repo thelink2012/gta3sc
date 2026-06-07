@@ -49,7 +49,7 @@ private:
 
     auto visit_repeat(const IRType& line) -> Result;
     auto visit_endrepeat(const IRType& line) -> Result;
-    auto generate_loop_label(SourceRange source) -> const ParserIR::LabelDef*;
+    auto generate_loop_label(FileRange source) -> const ParserIR::LabelDef*;
 
 private:
     ArenaAllocator<> allocator;

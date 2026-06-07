@@ -10,20 +10,20 @@ auto SemaIR::create(const SymbolTable::Label* label, const Command* command,
     return allocator.new_object<SemaIR>(private_tag, label, command);
 }
 
-auto SemaIR::create_int(int32_t value, SourceRange source,
+auto SemaIR::create_int(int32_t value, FileRange source,
                         ArenaAllocator<> allocator) -> ArenaPtr<const Argument>
 {
     return allocator.new_object<Argument>(private_tag, value, source);
 }
 
-auto SemaIR::create_float(float value, SourceRange source,
+auto SemaIR::create_float(float value, FileRange source,
                           ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
     return allocator.new_object<Argument>(private_tag, value, source);
 }
 
-auto SemaIR::create_text_label(std::string_view value, SourceRange source,
+auto SemaIR::create_text_label(std::string_view value, FileRange source,
                                ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
@@ -33,7 +33,7 @@ auto SemaIR::create_text_label(std::string_view value, SourceRange source,
     return allocator.new_object<Argument>(private_tag, text_label_obj, source);
 }
 
-auto SemaIR::create_label(const SymbolTable::Label& label, SourceRange source,
+auto SemaIR::create_label(const SymbolTable::Label& label, FileRange source,
                           ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
@@ -41,13 +41,13 @@ auto SemaIR::create_label(const SymbolTable::Label& label, SourceRange source,
 }
 
 auto SemaIR::create_filename(const SymbolTable::File& filename,
-                             SourceRange source, ArenaAllocator<> allocator)
+                             FileRange source, ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
     return allocator.new_object<Argument>(private_tag, &filename, source);
 }
 
-auto SemaIR::create_string(std::string_view value, SourceRange source,
+auto SemaIR::create_string(std::string_view value, FileRange source,
                            ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
@@ -57,7 +57,7 @@ auto SemaIR::create_string(std::string_view value, SourceRange source,
 }
 
 auto SemaIR::create_variable(const SymbolTable::Variable& var,
-                             SourceRange source, ArenaAllocator<> allocator)
+                             FileRange source, ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
     auto var_obj = VarRef(private_tag, var);
@@ -65,7 +65,7 @@ auto SemaIR::create_variable(const SymbolTable::Variable& var,
 }
 
 auto SemaIR::create_variable(const SymbolTable::Variable& var, int32_t index,
-                             SourceRange source, ArenaAllocator<> allocator)
+                             FileRange source, ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
     auto var_obj = VarRef(private_tag, var, index);
@@ -74,7 +74,7 @@ auto SemaIR::create_variable(const SymbolTable::Variable& var, int32_t index,
 
 auto SemaIR::create_variable(const SymbolTable::Variable& var,
                              const SymbolTable::Variable& index,
-                             SourceRange source, ArenaAllocator<> allocator)
+                             FileRange source, ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
     auto var_obj = VarRef(private_tag, var, index);
@@ -82,14 +82,14 @@ auto SemaIR::create_variable(const SymbolTable::Variable& var,
 }
 
 auto SemaIR::create_constant(const CommandTable::ConstantDef& cdef,
-                             SourceRange source, ArenaAllocator<> allocator)
+                             FileRange source, ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
     return allocator.new_object<Argument>(private_tag, &cdef, source);
 }
 
 auto SemaIR::create_used_object(const SymbolTable::UsedObject& used_object,
-                                SourceRange source, ArenaAllocator<> allocator)
+                                FileRange source, ArenaAllocator<> allocator)
         -> ArenaPtr<const Argument>
 {
     return allocator.new_object<Argument>(private_tag, &used_object, source);
@@ -282,7 +282,7 @@ auto SemaIR::Builder::command(const Command* command_ptr) -> Builder&&
 }
 
 auto SemaIR::Builder::command(const CommandTable::CommandDef& command_def,
-                              SourceRange source) -> Builder&&
+                              FileRange source) -> Builder&&
 {
     assert(!this->command_ptr && !this->has_command_def);
     this->command_ptr = nullptr;
@@ -320,55 +320,55 @@ auto SemaIR::Builder::arg(const Argument* value) -> Builder&&
     return std::move(*this);
 }
 
-auto SemaIR::Builder::arg_int(int32_t value, SourceRange source) -> Builder&&
+auto SemaIR::Builder::arg_int(int32_t value, FileRange source) -> Builder&&
 {
     return arg(SemaIR::create_int(value, source, allocator));
 }
 
-auto SemaIR::Builder::arg_float(float value, SourceRange source) -> Builder&&
+auto SemaIR::Builder::arg_float(float value, FileRange source) -> Builder&&
 {
     return arg(SemaIR::create_float(value, source, allocator));
 }
 
 auto SemaIR::Builder::arg_label(const SymbolTable::Label& label,
-                                SourceRange source) -> Builder&&
+                                FileRange source) -> Builder&&
 {
     return arg(SemaIR::create_label(label, source, allocator));
 }
 
 auto SemaIR::Builder::arg_filename(const SymbolTable::File& filename,
-                                   SourceRange source) -> Builder&&
+                                   FileRange source) -> Builder&&
 {
     return arg(SemaIR::create_filename(filename, source, allocator));
 }
 
 auto SemaIR::Builder::arg_text_label(std::string_view value,
-                                     SourceRange source) -> Builder&&
+                                     FileRange source) -> Builder&&
 {
     return arg(SemaIR::create_text_label(value, source, allocator));
 }
 
 auto SemaIR::Builder::arg_string(std::string_view value,
-                                 SourceRange source) -> Builder&&
+                                 FileRange source) -> Builder&&
 {
     return arg(SemaIR::create_string(value, source, allocator));
 }
 
 auto SemaIR::Builder::arg_var(const SymbolTable::Variable& var,
-                              SourceRange source) -> Builder&&
+                              FileRange source) -> Builder&&
 {
     return arg(SemaIR::create_variable(var, source, allocator));
 }
 
 auto SemaIR::Builder::arg_var(const SymbolTable::Variable& var, int32_t index,
-                              SourceRange source) -> Builder&&
+                              FileRange source) -> Builder&&
 {
     return arg(SemaIR::create_variable(var, index, source, allocator));
 }
 
 auto SemaIR::Builder::arg_var(const SymbolTable::Variable& var,
                               const SymbolTable::Variable& index,
-                              SourceRange source) -> Builder&&
+                              FileRange source) -> Builder&&
 {
     return arg(SemaIR::create_variable(var, index, source, allocator));
 }
@@ -376,13 +376,13 @@ auto SemaIR::Builder::arg_var(const SymbolTable::Variable& var,
 /// Appends an argument referencing to the given string constant to the
 /// command in construction.
 auto SemaIR::Builder::arg_const(const CommandTable::ConstantDef& cdef,
-                                SourceRange source) -> Builder&&
+                                FileRange source) -> Builder&&
 {
     return arg(SemaIR::create_constant(cdef, source, allocator));
 }
 
 auto SemaIR::Builder::arg_object(const SymbolTable::UsedObject& used_object,
-                                 SourceRange source) -> Builder&&
+                                 FileRange source) -> Builder&&
 {
     return arg(SemaIR::create_used_object(used_object, source, allocator));
 }

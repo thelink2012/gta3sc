@@ -36,7 +36,7 @@ enum class Category : uint8_t
 struct Token
 {
     Category category{Category::end_of_line}; ///< Category of this token.
-    SourceRange source;                       ///< Origin of this token.
+    FileRange source;                       ///< Origin of this token.
 };
 
 /// The scanner transforms a stream of characters into a stream of tokens.
@@ -86,10 +86,10 @@ public:
     [[nodiscard]] auto eof() const -> bool;
 
     /// Gets the current location in the character stream.
-    [[nodiscard]] auto location() const -> SourceLocation;
+    [[nodiscard]] auto location() const -> FileLoc;
 
     /// Gets the source file associated with this scanner.
-    [[nodiscard]] auto source_file() const -> const SourceFile&;
+    [[nodiscard]] auto source_file() const -> const FileEntryRef&;
 
     /// Gets the diagnostic handler associated with this scanner.
     [[nodiscard]] auto diagnostics() const -> DiagnosticHandler&;

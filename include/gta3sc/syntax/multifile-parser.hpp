@@ -5,7 +5,7 @@
 #include <gta3sc/ir/linked-ir.hpp>
 #include <gta3sc/ir/parser-ir.hpp>
 #include <gta3sc/ir/symbol-table.hpp>
-#include <gta3sc/sourceman.hpp>
+#include <gta3sc/source-manager.hpp>
 #include <gta3sc/util/arena.hpp>
 #include <optional>
 #include <queue>
@@ -96,9 +96,9 @@ public:
     [[nodiscard]] auto parse() -> std::optional<LinkedIR<ParserIR>>;
 
 private:
-    auto parse(SourceFile source_file,
+    auto parse(FileEntryRef source_file,
                SymbolTable::FileType type) -> std::optional<LinkedIR<ParserIR>>;
-    auto load_file(const SymbolTable::File& file) -> std::optional<SourceFile>;
+    auto load_file(const SymbolTable::File& file) -> std::optional<FileEntryRef>;
 
     void push_required_files(const LinkedIR<ParserIR>& ir);
     void analyze_required_file(const ParserIR::Command& command,

@@ -1,12 +1,12 @@
+#include <cassert>
 #include <filesystem>
 #include <gta3sc/config/models.hpp>
 #include <gta3sc/diagnostics.hpp>
-#include <gta3sc/sourceman.hpp>
+#include <gta3sc/filesystem/file-pool.hpp>
+#include <gta3sc/filesystem/path-resolver.hpp>
 #include <gta3sc/util/ctype.hpp>
+#include <string>
 #include <string_view>
-
-// TODO replace SourceManager (and SourceFile) by FileManager once
-//      sourceman gets refactored.
 
 namespace gta3sc::config::diag
 {
@@ -24,15 +24,14 @@ auto next_line(const char*& cursor, char* output_buf,
 namespace gta3sc::config
 {
 auto load_models_from_ide(const std::filesystem::path& ide_path, bool objs_only,
-                          SourceManager& fileman, DiagnosticHandler& diagman,
+                          FilePool& file_pool, DiagnosticHandler& diagman,
                           ModelTable::Builder&& builder)
         -> ModelTable::Builder&&
 {
-    auto ide_file = fileman.load_file(ide_path);
+    auto ide_file = file_pool.load_file(ide_path);
     if(!ide_file)
     {
-        diagman.report(SourceManager::no_source_loc,
-                       gta3sc::diag::could_not_open_file)
+        diagman.report(no_file_loc, gta3sc::diag::could_not_open_file)
                 .args(ide_path.generic_string());
         return std::move(builder);
     }
@@ -43,28 +42,28 @@ auto load_models_from_ide(const std::filesystem::path& ide_path, bool objs_only,
                                 std::move(builder));
 }
 
-auto load_models_from_level(const std::filesystem::path& root_path,
-                            const std::filesystem::path& level_path,
-                            bool objs_only, SourceManager& fileman,
-                            DiagnosticHandler& diagman,
-                            ArenaAllocator<> allocator) -> ModelTable
+auto load_models_from_level(
+        const gta3sc::filesystem::PathResolver& path_resolver,
+        const std::filesystem::path& level_path, bool objs_only,
+        FilePool& file_pool, DiagnosticHandler& diagman,
+        ArenaAllocator<> allocator) -> ModelTable
 {
-    return load_models_from_level(root_path, level_path, objs_only, fileman,
-                                  diagman, ModelTable::Builder(allocator))
+    return load_models_from_level(path_resolver, level_path, objs_only,
+                                  file_pool, diagman,
+                                  ModelTable::Builder(allocator))
             .build();
 }
 
 auto load_models_from_level(
-        const std::filesystem::path& root_path,
+        const gta3sc::filesystem::PathResolver& path_resolver,
         const std::filesystem::path& level_path, bool objs_only,
-        SourceManager& fileman, DiagnosticHandler& diagman,
+        FilePool& file_pool, DiagnosticHandler& diagman,
         ModelTable::Builder&& builder) -> ModelTable::Builder&&
 {
-    auto level_file = fileman.load_file(level_path);
+    auto level_file = file_pool.load_file(level_path);
     if(!level_file)
     {
-        diagman.report(SourceManager::no_source_loc,
-                       gta3sc::diag::could_not_open_file)
+        diagman.report(no_file_loc, gta3sc::diag::could_not_open_file)
                 .args(level_path.generic_string());
         return std::move(builder);
     }
@@ -73,7 +72,7 @@ auto load_models_from_level(
 
     char line_buf[512];
     size_t line_len{};
-    auto curr_file_cursor = level_file->code_data();
+    auto curr_file_cursor = level_file->data();
 
     for(auto line_cursor_start = curr_file_cursor;
         (line_len = next_line(curr_file_cursor, line_buf, std::size(line_buf)));
@@ -84,40 +83,47 @@ auto load_models_from_level(
         if(!line.starts_with("IDE") || line.size() <= 4)
             continue;
 
-        const auto ide_relative_path = line.substr(4);
-        const auto ide_path = root_path / ide_relative_path;
+        const auto relative_ide_path = line.substr(4);
+        const auto resolved_ide_path = path_resolver.resolve(relative_ide_path);
 
-        // TODO case insensitive load (can reuse code from sourceman?)
-        // TODO replace \\ and / by preffered separator
+        const auto line_loc_start = level_file->location_of(line_cursor_start);
+        const auto line_loc_end = line_loc_start
+                                  + (curr_file_cursor - line_cursor_start);
+        const auto line_range = FileRange{line_loc_start, line_loc_end};
 
-        std::error_code ec;
-        if(!std::filesystem::is_regular_file(ide_path, ec) || ec)
+        if(!resolved_ide_path)
         {
-            auto loc_start = level_file->location_of(line_cursor_start);
-            auto loc_end = loc_start + (curr_file_cursor - line_cursor_start);
-            diagman.report(loc_start, gta3sc::diag::could_not_open_file)
-                    .range(SourceRange{loc_start, loc_end})
-                    .args(ide_path.generic_string());
-
+            diagman.report(line_loc_start, gta3sc::diag::could_not_open_file)
+                    .range(line_range)
+                    .args(relative_ide_path);
             continue;
         }
 
-        load_models_from_ide(ide_path, objs_only, fileman, diagman,
-                             std::move(builder));
+        auto ide_file = file_pool.load_file(*resolved_ide_path);
+        if(!ide_file)
+        {
+            diagman.report(line_loc_start, gta3sc::diag::could_not_open_file)
+                    .range(line_range)
+                    .args(resolved_ide_path->generic_string());
+            continue;
+        }
+
+        load_models_from_ide(*ide_file, objs_only, diagman, std::move(builder));
     }
 
     // Return the same rvalue reference as given as input.
     return std::move(builder);
 }
 
-auto load_models_from_ide(
-        const SourceFile& ide_file, bool objs_only, DiagnosticHandler& diagman,
-        ModelTable::Builder&& builder) -> ModelTable::Builder&&
+auto load_models_from_ide(const FileEntryRef& ide_file, bool objs_only,
+                          DiagnosticHandler& diagman,
+                          ModelTable::Builder&& builder)
+        -> ModelTable::Builder&&
 {
     char line_buf[128];
     bool is_in_section{};
     bool is_readable_section{};
-    auto curr_file_cursor = ide_file.code_data();
+    auto curr_file_cursor = ide_file.data();
 
     size_t line_len{};
     for(auto line_cursor_start = curr_file_cursor;
@@ -152,10 +158,11 @@ auto load_models_from_ide(
         char model_name[64];
         if(std::sscanf(line_buf, "%u %63s", &id, model_name) != 2) // NOLINT
         {
-            auto loc_start = ide_file.location_of(line_cursor_start);
-            auto loc_end = loc_start + (curr_file_cursor - line_cursor_start);
+            const auto loc_start = ide_file.location_of(line_cursor_start);
+            const auto loc_end = loc_start
+                                 + (curr_file_cursor - line_cursor_start);
             diagman.report(loc_start, config::diag::models_invalid_ide_line)
-                    .range(SourceRange{loc_start, loc_end});
+                    .range(FileRange{loc_start, loc_end});
             continue;
         }
 
@@ -189,6 +196,8 @@ constexpr auto is_newline(char c) noexcept -> bool
 ///
 /// Transforms commas and control characters to spaces, trims leading and
 /// trailing spaces, and skips comment lines.
+///
+/// Also transforms '\\' into the platform path separator.
 ///
 /// In case the buffer is not large enough, the line is truncated.
 ///
@@ -225,7 +234,12 @@ auto next_line(const char*& cursor, char* output_buf,
 
     for(; output_end < output_max && !is_newline(*cursor); ++cursor)
     {
-        *output_end++ = is_whitespace(*cursor) ? ' ' : *cursor;
+        if(is_whitespace(*cursor))
+            *output_end++ = ' ';
+        else if(*cursor == '\\')
+            *output_end++ = std::filesystem::path::preferred_separator;
+        else
+            *output_end++ = *cursor;
     }
 
     // skip rest of line in case the output buffer was exhausted

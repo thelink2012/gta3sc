@@ -43,7 +43,7 @@ public:
 
 private:
     auto
-    make_parser(gta3sc::SourceFile source,
+    make_parser(gta3sc::FileEntryRef source,
                 gta3sc::ArenaMemoryResource& arena) -> gta3sc::syntax::Parser
     {
         auto pp = gta3sc::syntax::Preprocessor(std::move(source), diagman);
@@ -600,6 +600,28 @@ TEST_CASE_FIXTURE(SemaFixture, "sema LABEL parameter")
         REQUIRE(sema.validate() == std::nullopt);
         CHECK(consume_diag().descriptor
               == &gta3sc::syntax::diag::expected_label);
+    }
+
+    SUBCASE("valid LABEL param - FILENAME argument")
+    {
+        symrepo.insert_file("MISSION.SC",
+                            gta3sc::SymbolTable::FileType::mission,
+                            gta3sc::no_file_range);
+        build_sema("LOAD_AND_LAUNCH_MISSION mission.sc");
+
+        auto ir = sema.validate();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(ir->front().command().arg(0).as_filename()
+                == symrepo.lookup_file("MISSION.SC"));
+    }
+
+    SUBCASE("invalid LABEL param - FILENAME argument - file not in symbol "
+            "table")
+    {
+        build_sema("LOAD_AND_LAUNCH_MISSION mission.sc");
+        REQUIRE(sema.validate() == std::nullopt);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::syntax::diag::undefined_label);
     }
 }
 
@@ -2290,5 +2312,71 @@ TEST_CASE_FIXTURE(SemaFixture, "local timers")
 
         REQUIRE(timerb != nullptr);
         REQUIRE(timerb->id() == 2);
+    }
+}
+
+TEST_CASE_FIXTURE(SemaFixture, "stats counter")
+{
+    SUBCASE("CREATE_COLLECTABLE1 increments collectable1 total")
+    {
+        build_sema("CREATE_COLLECTABLE1 0.0 0.0 0.0\n"
+                   "CREATE_COLLECTABLE1 0.0 0.0 0.0\n");
+        REQUIRE(sema.validate());
+        REQUIRE(symrepo.collectable1_total() == 2);
+    }
+
+    SUBCASE("PLAYER_MADE_PROGRESS sums progress total")
+    {
+        build_sema("PLAYER_MADE_PROGRESS 5\nPLAYER_MADE_PROGRESS 3\n");
+        REQUIRE(sema.validate());
+        REQUIRE(symrepo.progress_total() == 8);
+    }
+
+    SUBCASE("PLAYER_MADE_PROGRESS with variable adds 0 to progress total")
+    {
+        build_sema("VAR_INT x\nPLAYER_MADE_PROGRESS x\n");
+        REQUIRE(sema.validate());
+        REQUIRE(symrepo.progress_total() == 0);
+    }
+
+    SUBCASE("REGISTER_MISSION_PASSED increments mission total")
+    {
+        build_sema("REGISTER_MISSION_PASSED missname\n");
+        REQUIRE(sema.validate());
+        REQUIRE(symrepo.mission_total() == 1);
+    }
+
+    SUBCASE("REGISTER_ODDJOB_MISSION_PASSED increments mission total")
+    {
+        build_sema("REGISTER_ODDJOB_MISSION_PASSED\n");
+        REQUIRE(sema.validate());
+        REQUIRE(symrepo.mission_total() == 1);
+    }
+
+    SUBCASE("REGISTER_MISSION_PASSED and REGISTER_ODDJOB_MISSION_PASSED "
+            "increment mission total")
+    {
+        build_sema("REGISTER_MISSION_PASSED missname\n"
+                   "REGISTER_ODDJOB_MISSION_PASSED\n"
+                   "REGISTER_MISSION_PASSED missname\n"
+                   "REGISTER_ODDJOB_MISSION_PASSED\n");
+        REQUIRE(sema.validate());
+        REQUIRE(symrepo.mission_total() == 4);
+    }
+
+    SUBCASE("AWARD_PLAYER_MISSION_RESPECT sums mission respect total")
+    {
+        build_sema("AWARD_PLAYER_MISSION_RESPECT 10\n"
+                   "AWARD_PLAYER_MISSION_RESPECT 20\n");
+        REQUIRE(sema.validate());
+        REQUIRE(symrepo.mission_respect_total() == 30);
+    }
+
+    SUBCASE("AWARD_PLAYER_MISSION_RESPECT with variable adds 0 to mission "
+            "respect total")
+    {
+        build_sema("VAR_INT x\nAWARD_PLAYER_MISSION_RESPECT x\n");
+        REQUIRE(sema.validate());
+        REQUIRE(symrepo.mission_respect_total() == 0);
     }
 }

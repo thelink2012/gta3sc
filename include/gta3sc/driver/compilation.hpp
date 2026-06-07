@@ -67,13 +67,10 @@ private:
     /// and a diagnostic is produced.
     auto parse() -> std::optional<LinkedIR<ParserIR>>;
 
-    /// Lowers high-level constructs into low-level ones.
+    /// Lowers high-level parser IR constructs into low-level ones.
     ///
     /// Constructs all IR objects in \ref parser_ir_arena and the symbol table
     /// objects in \ref symbol_arena.
-    ///
-    /// Returns a parser IR if lowering succeeds, otherwise `std::nullopt`
-    /// and a diagnostic is produced.
     auto lower(LinkedIR<ParserIR> ir) -> std::optional<LinkedIR<ParserIR>>;
 
     /// Validates the semantics of the parser IR and produces a sema IR.
@@ -87,6 +84,12 @@ private:
     /// Returns a sema IR if semantics validation succeeds, otherwise
     /// `std::nullopt` and a diagnostic is produced.
     auto sema(LinkedIR<ParserIR> ir) -> std::optional<LinkedIR<SemaIR>>;
+
+    /// Lowers high-level sema IR constructs into low-level ones.
+    ///
+    /// Constructs all IR objects in \ref sema_ir_arena and the symbol table
+    /// objects in \ref symbol_arena.
+    auto lower(LinkedIR<SemaIR> ir) -> std::optional<LinkedIR<SemaIR>>;
 
     /// Code generates the sema IR into a binary stream.
     ///

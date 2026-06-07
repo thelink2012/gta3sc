@@ -104,7 +104,7 @@ auto Parser::eof() const -> bool
     return scanner.eof();
 }
 
-auto Parser::source_file() const -> const SourceFile &
+auto Parser::source_file() const -> const FileEntryRef &
 {
     return scanner.source_file();
 }
@@ -121,13 +121,13 @@ auto Parser::report(const Token &token,
 }
 
 // NOLINTNEXTLINE(readability-make-member-function-const): Produces side-effect
-auto Parser::report(SourceRange source,
+auto Parser::report(FileRange source,
                     const DiagnosticDescriptor &message) -> Diagnostic::Builder
 {
     return diagnostics().report(source.begin, message).range(source);
 }
 
-auto Parser::report_special_name(SourceRange source) -> Diagnostic::Builder
+auto Parser::report_special_name(FileRange source) -> Diagnostic::Builder
 {
     // This method can be specialized to produce a different diagnostic
     // for each special name. Currently we produce a generic message.
@@ -142,9 +142,8 @@ auto Parser::is_special_name(std::string_view name,
     {
         if(is_var_decl_command(name))
             return true;
-        if(name == command_gosub_file 
-            || name == command_launch_mission
-            || name == command_load_and_launch_mission)
+        if(name == command_gosub_file || name == command_launch_mission
+           || name == command_load_and_launch_mission)
             return true;
     }
 
@@ -1000,11 +999,11 @@ auto Parser::parse_conditional_list(ParserIR *op_cond0)
         andor_count = is_and ? num_conds - 1 : 20 + num_conds - 1;
     }
 
-    // The runtime has a soft limit of 6 conditions per list.
+    // The runtime has a soft limit of 8 conditions per list.
     // Unfortunately we cannot ignore this limit during the
     // parsing phrase because the generated IL for ANDOR has
     // this limitation embedded in its first parameter.
-    if(num_conds > 6)
+    if(num_conds > 8)
     {
         report(andor_list.back().command().source(), diag::too_many_conditions);
         return {std::nullopt, 0};
@@ -1346,7 +1345,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
     // FOLLOW(conditional_expression) = {eol, sep 'GOTO'}
 
     Category cats[6];
-    SourceRange spans[6];
+    FileRange spans[6];
     ArenaPtr<const ParserIR::Argument> args[6]{};
 
     size_t num_toks = 0;
@@ -1485,7 +1484,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
 
     auto linked = LinkedIR<ParserIR>();
 
-    const auto src_info = SourceRange(spans[0].begin,
+    const auto src_info = FileRange(spans[0].begin,
                                       spans[num_toks - 1].end - spans[0].begin);
 
     if(num_toks == 2
@@ -1729,7 +1728,7 @@ auto Parser::ensure_mission_start_at_top_of_file() -> bool
 
     bool has_mission_start = is_peek(Category::word, "MISSION_START"sv);
 
-    auto file_contents = source_file().code_view();
+    auto file_contents = source_file().view();
     for(const auto *it = file_contents.begin();
         it != file_contents.end() && has_mission_start; ++it)
     {

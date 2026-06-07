@@ -37,7 +37,7 @@ public:
     ~Parser() noexcept = default;
 
     /// Gets the source file associated with this parser.
-    [[nodiscard]] auto source_file() const -> const SourceFile&;
+    [[nodiscard]] auto source_file() const -> const FileEntryRef&;
 
     /// Gets the diagnostic handler associated with this parser.
     [[nodiscard]] auto diagnostics() const -> DiagnosticHandler&;
@@ -192,11 +192,11 @@ private:
                 const DiagnosticDescriptor& message) -> Diagnostic::Builder;
 
     /// Produces a diagnostic report associated with a given range.
-    auto report(SourceRange source,
+    auto report(FileRange source,
                 const DiagnosticDescriptor& message) -> Diagnostic::Builder;
 
     /// Produces a diagnostic regarding a unexpected grammar name.
-    auto report_special_name(SourceRange source) -> Diagnostic::Builder;
+    auto report_special_name(FileRange source) -> Diagnostic::Builder;
 
     /// Ensures that the rule that the first line of file must be
     /// MISSION_START is correct. Otherwise, produces a diagnostic.

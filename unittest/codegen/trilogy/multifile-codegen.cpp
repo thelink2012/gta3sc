@@ -8,6 +8,7 @@
 #include <utility>
 
 using gta3sc::LinkedIR;
+using gta3sc::no_file_range;
 using gta3sc::SemaIR;
 using gta3sc::SourceManager;
 using gta3sc::SymbolTable;
@@ -51,14 +52,13 @@ protected:
     auto make_file(FileType type, std::string_view basename)
             -> std::pair<const SymbolTable::File&, const SymbolTable::Label&>
     {
-        const auto [file, file_inserted] = symtable.insert_file(
-                basename, type, SourceManager::no_source_range);
+        const auto [file, file_inserted] = symtable.insert_file(basename, type,
+                                                                no_file_range);
         REQUIRE(file_inserted);
 
         const auto label_name = std::string("@@").append(basename);
         const auto [label, label_inserted] = symtable.insert_label(
-                label_name, SymbolTable::global_scope,
-                SourceManager::no_source_range);
+                label_name, SymbolTable::global_scope, no_file_range);
         REQUIRE(label_inserted);
 
         return {*file, *label};
@@ -74,7 +74,7 @@ protected:
     make_used_object(std::string_view name) -> const SymbolTable::UsedObject&
     {
         const auto [uobj, inserted] = symtable.insert_used_object(
-                name, SourceManager::no_source_range);
+                name, no_file_range);
         REQUIRE(inserted);
         return *uobj;
     }
