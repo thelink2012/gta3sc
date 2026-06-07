@@ -1,6 +1,7 @@
 #pragma once
 #include <doctest/doctest.h>
 #include <gta3sc/command-table.hpp>
+#include <string_view>
 
 namespace gta3sc::test
 {
@@ -68,7 +69,12 @@ private:
         add_command(builder, "{", {});
         add_command(builder, "}", {});
         add_command(builder, "IF", {ParamDef{ParamType::INT}});
+        add_command(builder, "IFNOT", {ParamDef{ParamType::INT}});
+        add_command(builder, "ELSE", {});
         add_command(builder, "ENDIF", {});
+        add_command(builder, "ANDOR", {ParamDef{ParamType::INT}});
+        add_command(builder, "GOTO_IF_FALSE", {ParamDef{ParamType::LABEL}});
+        add_command(builder, "GOTO_IF_TRUE", {ParamDef{ParamType::LABEL}});
         add_command(builder, "REPEAT",
                     {ParamDef{ParamType::INT}, ParamDef{ParamType::VAR_INT}});
         add_command(builder, "ENDREPEAT", {});
@@ -328,6 +334,15 @@ private:
         auto [alternator, _] = builder.insert_alternator(name);
         for(const auto& alternative : alternatives)
             builder.insert_alternative(*alternator, *alternative);
+    }
+
+protected:
+    auto
+    find_command(std::string_view name) const -> const CommandTable::CommandDef&
+    {
+        const auto* cmd = cmdman.find_command(name);
+        REQUIRE(cmd != nullptr);
+        return *cmd;
     }
 
 private:

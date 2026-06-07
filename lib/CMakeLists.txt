@@ -23,6 +23,7 @@ add_library(gta3sc
   syntax/lowering/load-and-launch-mission-rewriter.cpp
   syntax/lowering/mission-stmt-rewriter.cpp
   syntax/lowering/repeat-stmt-rewriter.cpp
+  syntax/lowering/if-stmt-rewriter.cpp
   syntax/lowering/scope-remover.cpp
   syntax/lowering/stats-rewriter.cpp
   syntax/lowering/var-decl-remover.cpp

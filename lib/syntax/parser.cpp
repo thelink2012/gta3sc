@@ -999,11 +999,11 @@ auto Parser::parse_conditional_list(ParserIR *op_cond0)
         andor_count = is_and ? num_conds - 1 : 20 + num_conds - 1;
     }
 
-    // The runtime has a soft limit of 6 conditions per list.
+    // The runtime has a soft limit of 8 conditions per list.
     // Unfortunately we cannot ignore this limit during the
     // parsing phrase because the generated IL for ANDOR has
     // this limitation embedded in its first parameter.
-    if(num_conds > 6)
+    if(num_conds > 8)
     {
         report(andor_list.back().command().source(), diag::too_many_conditions);
         return {std::nullopt, 0};

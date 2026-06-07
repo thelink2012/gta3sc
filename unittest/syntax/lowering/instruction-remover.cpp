@@ -3,11 +3,12 @@
 #include <gta3sc/ir/linked-ir.hpp>
 #include <gta3sc/ir/sema-ir.hpp>
 #include <gta3sc/ir/symbol-table.hpp>
-#include <gta3sc/sourceman.hpp>
+#include <gta3sc/source-manager.hpp>
 #include <gta3sc/syntax/lowering/instruction-remover.hpp>
 
 using gta3sc::ArenaMemoryResource;
 using gta3sc::LinkedIR;
+using gta3sc::no_file_range;
 using gta3sc::SemaIR;
 using gta3sc::SourceManager;
 using gta3sc::SymbolTable;
@@ -56,7 +57,7 @@ TEST_CASE_FIXTURE(InstructionRemoverFixture, "unrelated command is not removed")
 TEST_CASE_FIXTURE(InstructionRemoverFixture, "label-only line is not removed")
 {
     const auto [label, inserted] = symtable.insert_label(
-            "LABEL", SymbolTable::global_scope, SourceManager::no_source_range);
+            "LABEL", SymbolTable::global_scope, no_file_range);
     REQUIRE(inserted);
 
     auto rewriter = make_rewriter();
@@ -70,7 +71,7 @@ TEST_CASE_FIXTURE(InstructionRemoverFixture,
                   "unrelated command with label is not removed")
 {
     const auto [label, inserted] = symtable.insert_label(
-            "LABEL", SymbolTable::global_scope, SourceManager::no_source_range);
+            "LABEL", SymbolTable::global_scope, no_file_range);
     REQUIRE(inserted);
 
     const auto wait_cmd = cmdman.find_command("WAIT");
@@ -90,7 +91,7 @@ TEST_CASE_FIXTURE(InstructionRemoverFixture,
                   "removed command with label preserves label")
 {
     const auto [label, inserted] = symtable.insert_label(
-            "LABEL", SymbolTable::global_scope, SourceManager::no_source_range);
+            "LABEL", SymbolTable::global_scope, no_file_range);
     REQUIRE(inserted);
 
     const auto open_cmd = cmdman.find_command("{");

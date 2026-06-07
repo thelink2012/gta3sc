@@ -2,10 +2,11 @@
 #include <doctest/doctest.h>
 #include <gta3sc/ir/sema-ir.hpp>
 #include <gta3sc/ir/symbol-table.hpp>
-#include <gta3sc/sourceman.hpp>
+#include <gta3sc/source-manager.hpp>
 #include <gta3sc/syntax/lowering/var-decl-remover.hpp>
 
 using gta3sc::ArenaMemoryResource;
+using gta3sc::no_file_range;
 using gta3sc::SemaIR;
 using gta3sc::SourceManager;
 using gta3sc::SymbolTable;
@@ -19,7 +20,7 @@ TEST_CASE_FIXTURE(gta3sc::test::CommandTableFixture,
     
     const auto [dummy_var, inserted] = symtable.insert_var(
             "DUMMY", SymbolTable::global_scope, SymbolTable::VarType::INT,
-            std::nullopt, SourceManager::no_source_range);
+            std::nullopt, no_file_range);
     REQUIRE(inserted);
 
     VarDeclRemover rewriter(cmdman, &arena);
