@@ -19,10 +19,13 @@ add_library(gta3sc
   syntax/parser.cpp
   syntax/multifile-parser.cpp
   syntax/sema.cpp
+  syntax/lowering/instruction-remover.cpp
   syntax/lowering/load-and-launch-mission-rewriter.cpp
-  syntax/lowering/repeat-stmt-rewriter.cpp
   syntax/lowering/mission-stmt-rewriter.cpp
+  syntax/lowering/repeat-stmt-rewriter.cpp
+  syntax/lowering/scope-remover.cpp
   syntax/lowering/stats-rewriter.cpp
+  syntax/lowering/var-decl-remover.cpp
   syntax/visitor/required-files-visitor.cpp
   codegen/storage-table.cpp
   codegen/relocation-table.cpp
