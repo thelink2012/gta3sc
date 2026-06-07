@@ -72,6 +72,9 @@ private:
         add_command(builder, "IFNOT", {ParamDef{ParamType::INT}});
         add_command(builder, "ELSE", {});
         add_command(builder, "ENDIF", {});
+        add_command(builder, "WHILE", {ParamDef{ParamType::INT}});
+        add_command(builder, "WHILENOT", {ParamDef{ParamType::INT}});
+        add_command(builder, "ENDWHILE", {});
         add_command(builder, "ANDOR", {ParamDef{ParamType::INT}});
         add_command(builder, "GOTO_IF_FALSE", {ParamDef{ParamType::LABEL}});
         add_command(builder, "GOTO_IF_TRUE", {ParamDef{ParamType::LABEL}});
