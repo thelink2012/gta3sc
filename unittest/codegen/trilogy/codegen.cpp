@@ -223,9 +223,9 @@ TEST_CASE_FIXTURE(CodeGenFixture, "integer argument emits integer data")
 }
 
 TEST_CASE_FIXTURE(CodeGenFixture,
-                  "floating-point argument emits Q11.4 fixed-point data")
+                  "floating-point argument emits IEEE float data")
 {
-    constexpr auto time_scale = 0.3;
+    constexpr auto time_scale = 0.3F;
     const auto& set_time_scale_command = find_command("SET_TIME_SCALE");
     const auto set_time_scale_opcode
             = set_time_scale_command.target_id().value();
@@ -235,7 +235,7 @@ TEST_CASE_FIXTURE(CodeGenFixture,
     std::vector<std::byte> expected;
     CodeEmitter()
             .emit_opcode(set_time_scale_opcode)
-            .emit_q11_4(time_scale)
+            .emit_float(time_scale)
             .drain(std::back_inserter(expected));
 
     const auto output = generate_code(*SemaIR::Builder(&arena)

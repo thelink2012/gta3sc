@@ -276,6 +276,15 @@ private:
 
     /// The entity type for the variables in the program.
     std::vector<std::vector<CommandTable::EntityId>> vars_entity_type;
+
+    /// Maps a global thread-entry label to the local scope opened on the
+    /// line after the label (the usual `label:\n{ ... }` thread pattern).
+    std::unordered_map<std::string_view, SymbolTable::ScopeId>
+            thread_entry_scopes;
+
+    /// When set, the next `{` at global scope opens the thread body for this
+    /// label.
+    std::optional<std::string_view> pending_global_thread_label;
 };
 } // namespace gta3sc::syntax
 

@@ -1,4 +1,6 @@
-#include <cmath>
+#include <algorithm>
+#include <limits>
+
 #include <gta3sc/codegen/trilogy/emitter.hpp>
 using std::bit_cast;
 
@@ -66,17 +68,14 @@ auto CodeEmitter::emit_int(int32_t value) -> CodeEmitter&
     if(value >= std::numeric_limits<int8_t>::min()
        && value <= std::numeric_limits<int8_t>::max())
     {
-        return emit_i8(value);
+        return emit_i8(static_cast<int8_t>(value));
     }
-    else if(value >= std::numeric_limits<int16_t>::min()
-            && value <= std::numeric_limits<int16_t>::max())
+    if(value >= std::numeric_limits<int16_t>::min()
+       && value <= std::numeric_limits<int16_t>::max())
     {
-        return emit_i16(value);
+        return emit_i16(static_cast<int16_t>(value));
     }
-    else
-    {
-        return emit_i32(value);
-    }
+    return emit_i32(value);
 }
 
 auto CodeEmitter::emit_i8(int8_t value) -> CodeEmitter&
@@ -100,10 +99,10 @@ auto CodeEmitter::emit_i32(int32_t value) -> CodeEmitter&
     return *this;
 }
 
-auto CodeEmitter::emit_q11_4(float value) -> CodeEmitter&
+auto CodeEmitter::emit_float(float value) -> CodeEmitter&
 {
     emit_raw_byte(datatype_float);
-    emit_raw_i16(float_to_q11_4(value));
+    emit_raw_u32(bit_cast<uint32_t>(value));
     return *this;
 }
 
@@ -193,37 +192,5 @@ auto CodeEmitter::emit_fill(std::byte value, size_t count) -> CodeEmitter&
     std::fill_n(buffer.begin() + buffer_pos, count, value);
 
     return *this;
-}
-
-auto CodeEmitter::float_to_q11_4(float value) const -> int16_t
-{
-    // https://en.wikipedia.org/wiki/Q_(number_format)
-
-    constexpr float q11_4_min = -2048.0;
-    constexpr float q11_4_max = 2047.9375;
-
-    static_assert(q11_4_min == -0x1p+11F);
-    static_assert(q11_4_max == 0x1.fffcp+10F);
-
-    // According to [conv.fpint] (ISO C++), converting from float to an
-    // integral is undefined behaviour if the truncated floating-point
-    // cannot be represented in the destination type. Therefore, we
-    // have to make sure `value` is within bounds of the destination
-    // type (int16_t) before doing `static_cast`.
-    //
-    // To do this, we ensure the input value is within the bounds of
-    // floating-point numbers representable in Q11.4. Any value
-    // outside the range is transformed to the nearest representable value.
-    value = std::fmax(q11_4_min, value); // filter NaN and out-of-bounds
-    value = std::fmin(q11_4_max, value); // filter out-of-bounds
-
-    // We cast to a 32-bit signed number instead of a 16-bit one just to
-    // ensure the bounds of the fixed-point number with an assert.
-    const auto q11_4 = static_cast<int32_t>(value * 16.0F);
-
-    assert(q11_4 >= std::numeric_limits<int16_t>::min()
-           && q11_4 <= std::numeric_limits<int16_t>::max());
-
-    return static_cast<int16_t>(q11_4);
 }
 } // namespace gta3sc::codegen::trilogy

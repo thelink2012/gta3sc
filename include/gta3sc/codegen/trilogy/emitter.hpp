@@ -79,11 +79,9 @@ public:
     /// Emits a 32-bit integer argument (i.e. datatype byte + 32-bit value).
     auto emit_i32(int32_t value) -> CodeEmitter&;
 
-    /// Emits a Q11.4 fixed-point argument (i.e. datatype byte + 16-bit value).
-    ///
-    /// In case the given floating-point cannot be represented as an Q11.4
-    /// fixed-point number, the nearest representable number is used.
-    auto emit_q11_4(float value) -> CodeEmitter&;
+    /// Emits a 32-bit IEEE floating-point argument (i.e. datatype byte + 32-bit
+    /// value).
+    auto emit_float(float value) -> CodeEmitter&;
 
     /// Emits a global integer/float variable offset (i.e. datatype byte +
     /// 16-bit offset).
@@ -132,13 +130,6 @@ public:
 
     /// Emits a given byte value `count` times.
     auto emit_fill(std::byte value, size_t count) -> CodeEmitter&;
-
-private:
-    /// Converts a floating-point into an Q11.4 fixed-point.
-    ///
-    /// In case the given floating-point is NaN, infinite, or bigger than
-    /// what can be stored in Q11.4, the nearest representable is returned.
-    [[nodiscard]] auto float_to_q11_4(float value) const -> int16_t;
 
 private:
     std::vector<std::byte> buffer;

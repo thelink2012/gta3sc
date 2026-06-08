@@ -526,3 +526,20 @@ TEST_CASE_FIXTURE(ScannerFixture, "scanner with invalid ASCII")
 
     REQUIRE(scanner.eof());
 }
+
+TEST_CASE_FIXTURE(ScannerFixture, "scanner word spelling before CRLF")
+{
+    build_scanner("$g2 = 0.0625\r\n");
+
+    const auto var_token = scanner.next().value();
+    REQUIRE(var_token.category == Category::word);
+    REQUIRE(spelling(var_token) == "$g2");
+    REQUIRE(scanner.next()->category == Category::whitespace);
+    REQUIRE(scanner.next()->category == Category::equal);
+    REQUIRE(scanner.next()->category == Category::whitespace);
+
+    const auto float_token = scanner.next().value();
+    REQUIRE(float_token.category == Category::word);
+    REQUIRE(spelling(float_token) == "0.0625");
+    REQUIRE(scanner.next()->category == Category::end_of_line);
+}

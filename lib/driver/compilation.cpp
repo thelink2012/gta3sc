@@ -79,7 +79,7 @@ auto Compilation::lower(LinkedIR<ParserIR> ir)
     syntax::MissionStmtRewriter mission_rewriter(parser_ir_arena.get());
     ir = apply_rewriter(std::move(ir), mission_rewriter);
 
-    util::NameGenerator namegen("LOWER_");
+    util::NameGenerator namegen("REPEAT_");
     syntax::RepeatStmtRewriter repeat_rewriter(namegen, parser_ir_arena.get());
     return apply_rewriter(std::move(ir), repeat_rewriter);
 }

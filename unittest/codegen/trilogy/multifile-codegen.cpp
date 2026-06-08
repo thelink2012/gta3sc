@@ -209,7 +209,7 @@ TEST_CASE_FIXTURE(MultifileCodeGenFixture, "global var chunk header bytes")
         CodeEmitter()
                 .emit_opcode(0x0002)
                 .emit_i32(8)
-                .emit_raw_byte(std::byte{0})
+                .emit_raw_byte(std::byte{0x6D})
                 .emit_opcode(0x0002) // used-object chunk follows
                 .drain(std::back_inserter(expected_prefix));
 
@@ -231,7 +231,7 @@ TEST_CASE_FIXTURE(MultifileCodeGenFixture, "global var chunk header bytes")
         CodeEmitter()
                 .emit_opcode(0x0002)
                 .emit_i32(16)
-                .emit_raw_byte(std::byte{0})
+                .emit_raw_byte(std::byte{0x6D})
                 .emit_fill(std::byte{0}, 8)
                 .emit_opcode(0x0002) // used-object chunk follows
                 .drain(std::back_inserter(expected_prefix));

@@ -99,6 +99,14 @@ auto CommandTable::find_constant(EnumId enum_id, std::string_view name)
 auto CommandTable::find_constant_any_means(std::string_view name) const noexcept
         -> const ConstantDef*
 {
+    // Legacy find_constant_all checks DEFAULTMODEL first when the same name
+    // exists in multiple enums (e.g. SNIPER in CAMMODE vs DEFAULTMODEL).
+    if(const auto defaultmodel = find_enumeration("DEFAULTMODEL"))
+    {
+        if(const auto* cdef = find_constant(*defaultmodel, name))
+            return cdef;
+    }
+
     return find_constant_any_means(constants_map, name);
 }
 

@@ -285,16 +285,15 @@ TEST_CASE_FIXTURE(SemaFixture, "sema different symbol tables do not collide")
 }
 
 TEST_CASE_FIXTURE(SemaFixture,
-                  "sema variable names collides with string constants")
+                  "sema variable names may shadow string constants")
 {
     build_sema("VAR_INT ON PEDTYPE_CIVMALE\n"
                "{\nLVAR_INT FALSE PEDTYPE_CIVFEMALE\n}");
-    REQUIRE(sema.validate() == std::nullopt);
-    CHECK(consume_diag().descriptor
-          == &gta3sc::syntax::diag::duplicate_var_string_constant);
-    CHECK(consume_diag().descriptor
-          == &gta3sc::syntax::diag::duplicate_var_string_constant);
-    CHECK(diags.empty()); // does not collide with ON/FALSE
+    REQUIRE(sema.validate() != std::nullopt);
+    CHECK(symrepo.lookup_var("ON") != nullptr);
+    CHECK(symrepo.lookup_var("PEDTYPE_CIVMALE") != nullptr);
+    CHECK(symrepo.lookup_var("FALSE", ScopeId{1}) != nullptr);
+    CHECK(symrepo.lookup_var("PEDTYPE_CIVFEMALE", ScopeId{1}) != nullptr);
 }
 
 TEST_CASE_FIXTURE(SemaFixture, "sema using local variable from another scope")
@@ -1918,6 +1917,20 @@ TEST_CASE_FIXTURE(SemaFixture, "sema hardcoded START_NEW_SCRIPT")
         REQUIRE(sema.validate() != std::nullopt);
     }
 
+    SUBCASE("valid - global thread label with no argument passing")
+    {
+        build_sema("entry:\n{\nWAIT 0\n}\nSTART_NEW_SCRIPT entry\n");
+        REQUIRE(sema.validate() != std::nullopt);
+    }
+
+    SUBCASE("valid - global thread label with argument passing")
+    {
+        build_sema("VAR_INT g_x\n"
+                   "entry:\n{\nLVAR_INT a b c\nWAIT 0\n}\n"
+                   "START_NEW_SCRIPT entry 10 ON g_x\n");
+        REQUIRE(sema.validate() != std::nullopt);
+    }
+
     SUBCASE("invalid - label outside of scope")
     {
         build_sema("label1: START_NEW_SCRIPT label1 10 20 30");
@@ -2131,12 +2144,19 @@ TEST_CASE_FIXTURE(SemaFixture, "sema used objects")
                 == &gta3sc::syntax::diag::undefined_variable);
     }
 
-    SUBCASE("level model does not affect DEFAULTMODEL params")
+    SUBCASE("DEFAULTMODEL params resolve level models")
     {
         build_sema("VAR_INT x\nCREATE_CAR LEVEL_MODEL 0.0 0.0 0.0 x");
-        REQUIRE(sema.validate() == std::nullopt);
-        REQUIRE(consume_diag().descriptor
-                == &gta3sc::syntax::diag::undefined_variable);
+
+        auto ir = sema.validate();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(size(*ir) == 2);
+
+        REQUIRE(ir->back().has_command());
+        REQUIRE(ir->back().command().args().size() == 5);
+        REQUIRE(ir->back().command().arg(0).as_used_object());
+        REQUIRE(ir->back().command().arg(0).as_used_object()
+                == symrepo.lookup_used_object("LEVEL_MODEL"));
     }
 
     SUBCASE("level models do not affect the namespace of symbols seen by var "

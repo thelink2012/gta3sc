@@ -370,215 +370,58 @@ TEST_CASE_FIXTURE(CodeEmitterFixture, "emit integer argument")
     }
 }
 
-TEST_CASE_FIXTURE(CodeEmitterFixture, "emit Q11.4 fixed-point argument")
+TEST_CASE_FIXTURE(CodeEmitterFixture, "emit IEEE float argument")
 {
-    constexpr float q11_4_resolution = 0.0625F;
-
     CodeEmitter emitter;
 
-    SUBCASE("emits datatype and 16-bit fixed-point value")
+    SUBCASE("emits datatype and 32-bit float value")
     {
         std::vector<std::byte> output;
-        emitter.emit_q11_4(0.0625).drain(back_inserter(output));
+        emitter.emit_float(0.0625F).drain(back_inserter(output));
         REQUIRE(output
-                == std::vector{std::byte{0x06}, std::byte{0x01},
+                == std::vector{std::byte{0x06}, std::byte{0x00},
+                               std::byte{0x00}, std::byte{0x80},
+                               std::byte{0x3D}});
+    }
+
+    SUBCASE("negative float")
+    {
+        std::vector<std::byte> output;
+        emitter.emit_float(-0.0625F).drain(back_inserter(output));
+        REQUIRE(output
+                == std::vector{std::byte{0x06}, std::byte{0x00},
+                               std::byte{0x00}, std::byte{0x80},
+                               std::byte{0xBD}});
+    }
+
+    SUBCASE("zero")
+    {
+        std::vector<std::byte> output;
+        emitter.emit_float(0.0F).drain(back_inserter(output));
+        REQUIRE(output
+                == std::vector{std::byte{0x06}, std::byte{0x00},
+                               std::byte{0x00}, std::byte{0x00},
                                std::byte{0x00}});
     }
 
-    SUBCASE("negative fixed-point uses two complement")
+    SUBCASE("increases offset by 5")
     {
         std::vector<std::byte> output;
-        emitter.emit_q11_4(-0.0625).drain(back_inserter(output));
-        REQUIRE(output
-                == std::vector{std::byte{0x06}, std::byte{0xFF},
-                               std::byte{0xFF}});
+        emitter.emit_float(1.0F).drain(back_inserter(output));
+        REQUIRE(emitter.offset() == 5);
     }
 
-    SUBCASE("increases offset by 3")
+    SUBCASE("preserves full single-precision range")
     {
         std::vector<std::byte> output;
-        emitter.emit_q11_4(0.0).drain(back_inserter(output));
-        REQUIRE(emitter.offset() == 3);
-    }
-
-    SUBCASE("fixed-point number changes per resolution")
-    {
-        std::vector<std::byte> output;
-
-        CodeEmitter()
-                .emit_q11_4(-3 * q11_4_resolution)
-                .drain(back_inserter(output));
-        REQUIRE(output
-                == std::vector{std::byte{0x06}, std::byte{0xFD},
-                               std::byte{0xFF}});
+        emitter.emit_float(2047.9375F).drain(back_inserter(output));
+        REQUIRE(output.size() == 5);
+        REQUIRE(output[0] == std::byte{0x06});
 
         output.clear();
-        CodeEmitter()
-                .emit_q11_4(-2 * q11_4_resolution)
-                .drain(back_inserter(output));
-        REQUIRE(output
-                == std::vector{std::byte{0x06}, std::byte{0xFE},
-                               std::byte{0xFF}});
-
-        output.clear();
-        CodeEmitter()
-                .emit_q11_4(-1 * q11_4_resolution)
-                .drain(back_inserter(output));
-        REQUIRE(output
-                == std::vector{std::byte{0x06}, std::byte{0xFF},
-                               std::byte{0xFF}});
-
-        output.clear();
-        CodeEmitter()
-                .emit_q11_4(0 * q11_4_resolution)
-                .drain(back_inserter(output));
-        REQUIRE(output
-                == std::vector{std::byte{0x06}, std::byte{0x00},
-                               std::byte{0x00}});
-
-        output.clear();
-        CodeEmitter()
-                .emit_q11_4(1 * q11_4_resolution)
-                .drain(back_inserter(output));
-        REQUIRE(output
-                == std::vector{std::byte{0x06}, std::byte{0x01},
-                               std::byte{0x00}});
-
-        output.clear();
-        CodeEmitter()
-                .emit_q11_4(2 * q11_4_resolution)
-                .drain(back_inserter(output));
-        REQUIRE(output
-                == std::vector{std::byte{0x06}, std::byte{0x02},
-                               std::byte{0x00}});
-
-        output.clear();
-        CodeEmitter()
-                .emit_q11_4(3 * q11_4_resolution)
-                .drain(back_inserter(output));
-        REQUIRE(output
-                == std::vector{std::byte{0x06}, std::byte{0x03},
-                               std::byte{0x00}});
-    }
-
-    SUBCASE("positive floating-points are rounded to the lowest nearest "
-            "fixed-point")
-    {
-        const auto base_float = q11_4_resolution * 8.0F;
-
-        const auto fixedpoint_7 = std::vector{std::byte{0x06}, std::byte{0x07},
-                                              std::byte{0x00}};
-        const auto fixedpoint_8 = std::vector{std::byte{0x06}, std::byte{0x08},
-                                              std::byte{0x00}};
-
-        std::vector<std::byte> output;
-
-        CodeEmitter().emit_q11_4(base_float).drain(back_inserter(output));
-        REQUIRE(output == fixedpoint_8);
-
-        output.clear();
-        CodeEmitter()
-                .emit_q11_4(base_float + (q11_4_resolution / 2))
-                .drain(back_inserter(output));
-        REQUIRE(output == fixedpoint_8);
-
-        output.clear();
-        CodeEmitter()
-                .emit_q11_4(base_float - (q11_4_resolution / 2))
-                .drain(back_inserter(output));
-        REQUIRE(output == fixedpoint_7);
-    }
-
-    SUBCASE("negative floating-points are rounded to the highest nearest "
-            "fixed-point")
-    {
-        const auto base_float = -(q11_4_resolution * 8.0F);
-
-        const auto fixedpoint_minus_7 = std::vector{
-                std::byte{0x06}, std::byte{0xF9}, std::byte{0xFF}};
-        const auto fixedpoint_minus_8 = std::vector{
-                std::byte{0x06}, std::byte{0xF8}, std::byte{0xFF}};
-
-        std::vector<std::byte> output;
-
-        CodeEmitter().emit_q11_4(base_float).drain(back_inserter(output));
-        REQUIRE(output == fixedpoint_minus_8);
-
-        output.clear();
-        CodeEmitter()
-                .emit_q11_4(base_float + (q11_4_resolution / 2))
-                .drain(back_inserter(output));
-        REQUIRE(output == fixedpoint_minus_7);
-
-        output.clear();
-        CodeEmitter()
-                .emit_q11_4(base_float - (q11_4_resolution / 2))
-                .drain(back_inserter(output));
-        REQUIRE(output == fixedpoint_minus_8);
-    }
-
-    SUBCASE("floating-point >2047.9375 cannot be represented in Q11.4 and "
-            "maximum Q11.4 is used")
-    {
-        std::vector<std::byte> output;
-
-        emitter.emit_q11_4(2047.9376).drain(back_inserter(output));
-        REQUIRE(output
-                == std::vector{std::byte{0x06}, std::byte{0xFF},
-                               std::byte{0x7F}});
-
-        output.clear();
-        emitter.emit_q11_4(3000.0).drain(back_inserter(output));
-        REQUIRE(output
-                == std::vector{std::byte{0x06}, std::byte{0xFF},
-                               std::byte{0x7F}});
-
-        output.clear();
-        emitter.emit_q11_4(INFINITY).drain(back_inserter(output));
-        REQUIRE(output
-                == std::vector{std::byte{0x06}, std::byte{0xFF},
-                               std::byte{0x7F}});
-    }
-
-    SUBCASE("floating-point <-2048.0 cannot be represented in Q11.4 and "
-            "minimum Q11.4 is used")
-    {
-        std::vector<std::byte> output;
-
-        emitter.emit_q11_4(-2048.01).drain(back_inserter(output));
-        REQUIRE(output
-                == std::vector{std::byte{0x06}, std::byte{0x00},
-                               std::byte{0x80}});
-
-        output.clear();
-        emitter.emit_q11_4(-3000.0).drain(back_inserter(output));
-        REQUIRE(output
-                == std::vector{std::byte{0x06}, std::byte{0x00},
-                               std::byte{0x80}});
-
-        output.clear();
-        emitter.emit_q11_4(-INFINITY).drain(back_inserter(output));
-        REQUIRE(output
-                == std::vector{std::byte{0x06}, std::byte{0x00},
-                               std::byte{0x80}});
-    }
-
-    SUBCASE("floating-point <=2047.9375 can still be represented in Q11.4")
-    {
-        std::vector<std::byte> output;
-        emitter.emit_q11_4(2047.9375).drain(back_inserter(output));
-        REQUIRE(output
-                == std::vector{std::byte{0x06}, std::byte{0xFF},
-                               std::byte{0x7F}});
-    }
-
-    SUBCASE("floating-point >=-2048.0 can still be represented in Q11.4")
-    {
-        std::vector<std::byte> output;
-        emitter.emit_q11_4(-2048.0).drain(back_inserter(output));
-        REQUIRE(output
-                == std::vector{std::byte{0x06}, std::byte{0x00},
-                               std::byte{0x80}});
+        emitter.emit_float(-2048.0F).drain(back_inserter(output));
+        REQUIRE(output.size() == 5);
+        REQUIRE(output[0] == std::byte{0x06});
     }
 }
 

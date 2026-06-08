@@ -150,6 +150,9 @@ auto Sema::discover_declarations_pass() -> bool
         if(line.has_label())
         {
             declare_label(line.label());
+
+            if(current_scope == no_local_scope)
+                pending_global_thread_label = line.label().name();
         }
 
         if(line.has_command())
@@ -159,6 +162,13 @@ auto Sema::discover_declarations_pass() -> bool
                 assert(current_scope == no_local_scope);
                 this->current_scope = symrepo->new_scope();
                 scope_enter_source = line.command().source();
+
+                if(pending_global_thread_label)
+                {
+                    thread_entry_scopes.emplace(*pending_global_thread_label,
+                                                current_scope);
+                    pending_global_thread_label = std::nullopt;
+                }
 
                 // We need the index of the first local scope in order to
                 // enumerate scopes during `check_semantics_pass`.
@@ -246,9 +256,6 @@ auto Sema::discover_declarations_pass() -> bool
                 {
                     report(var.source(), diag::duplicate_var_lvar);
                 }
-
-                if(cmdman->find_constant_any_means(var.name()))
-                    report(var.source(), diag::duplicate_var_string_constant);
             }
         }
     }
@@ -536,6 +543,24 @@ auto Sema::validate_argument(const CommandTable::ParamDef& param,
                     if(is_object_param(param))
                     {
                         if(const auto* cdef = find_defaultmodel_constant(ident))
+                        {
+                            return SemaIR::create_constant(*cdef, arg.source(),
+                                                           allocator);
+                        }
+                        else if(modelman->find_model(ident))
+                        {
+                            auto [uobj, _] = symrepo->insert_used_object(
+                                    ident, arg.source());
+                            assert(uobj != nullptr);
+                            return SemaIR::create_used_object(
+                                    *uobj, arg.source(), allocator);
+                        }
+                    }
+                    else if(defaultmodel_enum
+                            && param.enum_type == *defaultmodel_enum)
+                    {
+                        if(const auto* cdef = find_defaultmodel_constant(
+                                   ident))
                         {
                             return SemaIR::create_constant(*cdef, arg.source(),
                                                            allocator);
@@ -984,16 +1009,28 @@ auto Sema::validate_start_new_script(const SemaIR::Command& command) -> bool
     {
         if(const auto* target_label = command.arg(0).as_label())
         {
-            if(target_label->scope() == SymbolTable::global_scope)
+            const auto num_passed_vars = command.args().size() - 1;
+
+            if(num_passed_vars == 0)
+                return true;
+
+            SymbolTable::ScopeId target_scope_id = target_label->scope();
+            if(target_scope_id == SymbolTable::global_scope)
             {
-                report(command.arg(0).source(),
-                       diag::target_label_not_within_scope);
-                return false;
+                const auto it = thread_entry_scopes.find(target_label->name());
+                if(it == thread_entry_scopes.end())
+                {
+                    report(command.arg(0).source(),
+                           diag::target_label_not_within_scope);
+                    return false;
+                }
+
+                target_scope_id = it->second;
             }
 
             if(!validate_target_scope_vars(command.args().begin() + 1,
                                            command.args().end(),
-                                           target_label->scope()))
+                                           target_scope_id))
             {
                 return false;
             }

@@ -898,6 +898,30 @@ TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
 }
 
 TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
+                  "find_constant_any_means prefers DEFAULTMODEL")
+{
+    auto table = build_config(R"(<?xml version="1.0" encoding="utf-8"?>
+<GTA3Script Version="2.0">
+    <Constants>
+        <Enum Name="CAMMODE">
+            <Constant Name="FOO"/>
+            <Constant Name="BAR"/>
+            <Constant Name="SNIPER"/>
+        </Enum>
+        <Enum Name="DEFAULTMODEL">
+            <Constant Name="SNIPER" Value="285"/>
+        </Enum>
+    </Constants>
+</GTA3Script>)");
+
+    CHECK(diags.empty());
+
+    const auto* cdef = table.find_constant_any_means("SNIPER"sv);
+    REQUIRE(cdef != nullptr);
+    CHECK(cdef->value() == 285);
+}
+
+TEST_CASE_FIXTURE(gta3sc::test::config::ConfigFixture,
                   "config parse constant with whitespace")
 {
     auto table = build_config(R"(<?xml version="1.0" encoding="utf-8"?>

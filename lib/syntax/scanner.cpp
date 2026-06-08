@@ -88,10 +88,14 @@ auto Scanner::next_filename() -> std::optional<Token>
 
     auto start_pos = this->location();
 
+    FileLoc end_pos{};
     while(is_print(peek_char) && peek_char != '"' && !is_whitespace(peek_char))
+    {
+        end_pos = pp.location();
         this->getc();
+    }
 
-    auto token = Token{Category::word, {start_pos, location()}};
+    auto token = Token{Category::word, {start_pos, end_pos}};
     auto spell = this->spelling(token);
     if(spell.size() >= 3)
     {
@@ -286,11 +290,16 @@ auto Scanner::next() -> std::optional<Token>
                 return std::nullopt;
             }
 
-            this->getc();
-            while(is_word_char(peek_char))
-                this->getc();
+            {
+                FileLoc end_pos{};
+                while(is_word_char(peek_char))
+                {
+                    end_pos = pp.location();
+                    this->getc();
+                }
 
-            return Token{Category::word, {start_pos, location()}};
+                return Token{Category::word, {start_pos, end_pos}};
+            }
     }
     // clang-format on
 }

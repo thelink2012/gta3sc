@@ -139,14 +139,13 @@ public:
     auto find_constant(EnumId enum_id, std::string_view name) const noexcept
             -> const ConstantDef*;
 
-    /// Finds a string constant of certain name in any enumeration (except the
-    /// global enumeration).
+    /// Finds a string constant by name for alternator-matched commands (any
+    /// enumeration except the global enumeration).
     ///
     /// The given name must be in uppercase or no string constant will be found.
     ///
-    /// If multiple string constants exist with the given name, the first one
-    /// to be inserted into the table (during the building process)
-    /// takes precedence over the latter ones.
+    /// When the same name exists in multiple enumerations, `DEFAULTMODEL` is
+    /// preferred (legacy `find_constant_all`; see gta3sc issue #60).
     ///
     /// Returns the string constant information or `nullptr` if not found.
     auto find_constant_any_means(std::string_view name) const noexcept

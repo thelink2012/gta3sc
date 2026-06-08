@@ -24,7 +24,8 @@ IfStmtRewriter::IfStmtRewriter(const CommandTable& cmdtable,
     goto_if_false_def = cmdtable.find_command("GOTO_IF_FALSE");
     goto_if_true_def = cmdtable.find_command("GOTO_IF_TRUE");
 
-    // TODO how to make this visitor work gracefully when some command is missing?
+    // TODO how to make this visitor work gracefully when some command is
+    // missing?
     assert(if_def != nullptr);
     assert(ifnot_def != nullptr);
     assert(else_def != nullptr);
@@ -37,6 +38,43 @@ IfStmtRewriter::IfStmtRewriter(const CommandTable& cmdtable,
 
 auto IfStmtRewriter::visit(const SemaIR& line) -> Result
 {
+    if(!if_stack.empty() && if_stack.back().state == IfStmtState::BRANCH)
+    {
+        auto result = visit_branch(line, if_stack.back());
+
+        if(line.has_command())
+        {
+            if(&line.command().def() == if_def)
+            {
+                if(auto if_result = visit_if(line, false))
+                {
+                    if(result)
+                        result->splice_back(std::move(*if_result));
+                    else
+                        result = std::move(if_result);
+                }
+            }
+            else if(&line.command().def() == ifnot_def)
+            {
+                if(auto if_result = visit_if(line, true))
+                {
+                    if(result)
+                        result->splice_back(std::move(*if_result));
+                    else
+                        result = std::move(if_result);
+                }
+            }
+        }
+
+        if(if_stack.back().state != IfStmtState::CONDS && line.has_command()
+           && &line.command().def() == endif_def)
+        {
+            if_stack.pop_back();
+        }
+
+        return result;
+    }
+
     if(line.has_command())
     {
         if(&line.command().def() == if_def)
@@ -187,13 +225,20 @@ auto IfStmtRewriter::visit_branch(const IRType& line, IfStmt& stmt) -> Result
 
         const auto src = line.has_command() ? line.command().source()
                                             : SemaIR::Builder::no_range;
-        return LinkedIR<SemaIR>(
+        LinkedIR<SemaIR> result = LinkedIR<SemaIR>(
                 {SemaIR::Builder(allocator)
                          .command(*branch_def, src)
                          .arg_label(*stmt.else_label, src)
-                         .build(),
-                 SemaIR::create(line.label_or_null(), line.command_or_null(),
-                                allocator)});
+                         .build()});
+
+        if(line.has_command()
+           && (&line.command().def() == if_def
+               || &line.command().def() == ifnot_def))
+            return result;
+
+        result.splice_back(LinkedIR<SemaIR>({SemaIR::create(
+                line.label_or_null(), line.command_or_null(), allocator)}));
+        return result;
     }
 }
 

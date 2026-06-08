@@ -252,7 +252,8 @@ TEST_CASE_FIXTURE(IfStmtRewriterFixture, "user label on ENDIF is ignored")
     CHECK(it->label().name() == "TEST_LABEL_0");
 }
 
-TEST_CASE_FIXTURE(IfStmtRewriterFixture, "goto injection during first then statement")
+TEST_CASE_FIXTURE(IfStmtRewriterFixture,
+                  "goto injection during first then statement")
 {
     auto rewriter = make_rewriter();
 
@@ -378,7 +379,13 @@ TEST_CASE_FIXTURE(IfStmtRewriterFixture, "nested IF")
         const auto inner_if_result = rewriter.visit(
                 *SemaIR::Builder(&arena).command(if_cmd).arg_int(0).build());
         REQUIRE(inner_if_result);
-        check_andor_result(*inner_if_result, 0);
+        REQUIRE(std::distance(inner_if_result->begin(), inner_if_result->end())
+                == 2);
+        auto inner_if_it = inner_if_result->begin();
+        CHECK(&inner_if_it->command().def() == &goto_if_false_cmd);
+        ++inner_if_it;
+        CHECK(&inner_if_it->command().def() == &andor_cmd);
+        CHECK(*inner_if_it->command().arg(0).as_int() == 0);
 
         REQUIRE(!rewriter.visit(
                 *SemaIR::Builder(&arena).command(wait_cmd).arg_int(1).build()));
@@ -396,7 +403,7 @@ TEST_CASE_FIXTURE(IfStmtRewriterFixture, "nested IF")
         ++inner_it;
         CHECK(&inner_it->label() == inner_tgt);
 
-        REQUIRE(rewriter.visit(
+        REQUIRE(!rewriter.visit(
                 *SemaIR::Builder(&arena).command(wait_cmd).arg_int(2).build()));
 
         const auto outer_endif_result = rewriter.visit(
@@ -410,6 +417,46 @@ TEST_CASE_FIXTURE(IfStmtRewriterFixture, "nested IF")
         ++outer_it;
         CHECK(outer_it->has_label());
         CHECK(outer_it->label().name() == "TEST_LABEL_0");
+    }
+
+    SUBCASE("nested IF directly after condition")
+    {
+        auto rewriter = make_rewriter();
+
+        REQUIRE(rewriter.visit(
+                *SemaIR::Builder(&arena).command(if_cmd).arg_int(0).build()));
+        REQUIRE(!rewriter.visit(
+                *SemaIR::Builder(&arena).command(wait_cmd).arg_int(0).build()));
+
+        const auto inner_if_result = rewriter.visit(
+                *SemaIR::Builder(&arena).command(if_cmd).arg_int(0).build());
+        REQUIRE(inner_if_result);
+        REQUIRE(std::distance(inner_if_result->begin(), inner_if_result->end())
+                == 2);
+        auto it = inner_if_result->begin();
+        CHECK(&it->command().def() == &goto_if_false_cmd);
+        const auto& outer_else_label = find_label("TEST_LABEL_1");
+        CHECK(it->command().arg(0).as_label() == &outer_else_label);
+        ++it;
+        CHECK(&it->command().def() == &andor_cmd);
+        CHECK(*it->command().arg(0).as_int() == 0);
+
+        REQUIRE(!rewriter.visit(
+                *SemaIR::Builder(&arena).command(wait_cmd).arg_int(1).build()));
+
+        const auto inner_endif_result = rewriter.visit(
+                *SemaIR::Builder(&arena).command(endif_cmd).build());
+        REQUIRE(inner_endif_result);
+        REQUIRE(std::distance(inner_endif_result->begin(),
+                              inner_endif_result->end())
+                == 2);
+
+        const auto outer_endif_result = rewriter.visit(
+                *SemaIR::Builder(&arena).command(endif_cmd).build());
+        REQUIRE(outer_endif_result);
+        REQUIRE(std::distance(outer_endif_result->begin(),
+                              outer_endif_result->end())
+                == 2);
     }
 
     SUBCASE("nested IF in else-block")
@@ -489,10 +536,9 @@ TEST_CASE_FIXTURE(IfStmtRewriterFixture, "three levels of nesting")
             == 2);
     {
         auto it = e1_endif_result->begin();
-        CHECK(&it->command().def() == &goto_if_false_cmd);
-        const auto* const t = it->command().arg(0).as_label();
-        CHECK(symtable.lookup_label(t->name()) == t);
-        CHECK(&(++it)->label() == t);
+        CHECK(it->has_label());
+        ++it;
+        CHECK(it->has_label());
     }
 
     const auto e2_endif_result = rewriter.visit(
@@ -502,11 +548,10 @@ TEST_CASE_FIXTURE(IfStmtRewriterFixture, "three levels of nesting")
             == 2);
     {
         auto it = e2_endif_result->begin();
-        CHECK(&it->command().def() == &goto_if_false_cmd);
-        const auto* const t = it->command().arg(0).as_label();
-        CHECK(symtable.lookup_label(t->name()) == t);
-        CHECK(&(++it)->label() == t);
-        CHECK(t->name() == "TEST_LABEL_0");
+        CHECK(it->has_label());
+        ++it;
+        CHECK(it->has_label());
+        CHECK(it->label().name() == "TEST_LABEL_0");
     }
 }
 

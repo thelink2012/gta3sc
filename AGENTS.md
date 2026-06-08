@@ -53,6 +53,13 @@ cmake --build build --target gta3sc_unittest
 ./build/unittest/gta3sc_unittest
 ```
 
+**Temporary driver** (`src/gta3sc/main.cpp`): build with `--target gta3sc-cli` (not
+`gta3sc` — that name is the static library). Binary: `./build/src/gta3sc/gta3sc`.
+
+```bash
+cmake --build build --target gta3sc-cli
+```
+
 **Filter tests (doctest):**
 
 ```bash

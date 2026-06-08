@@ -1,4 +1,4 @@
-add_library(gta3sc 
+add_library(gta3sc
   command-table.cpp
   model-table.cpp
   diagnostics.cpp

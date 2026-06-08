@@ -152,8 +152,7 @@ auto Parser::is_special_name(std::string_view name,
             || name == command_else || name == command_endif
             || name == command_while || name == command_whilenot
             || name == command_endwhile || name == command_repeat
-            || name == command_endrepeat || name == command_mission_start
-            || name == command_mission_end);
+            || name == command_endrepeat);
 }
 
 auto Parser::is_var_decl_command(std::string_view name) const -> bool
@@ -219,11 +218,15 @@ auto Parser::is_peek(Category category, std::string_view lexeme,
 
 auto Parser::peek_expression_type() -> std::optional<Category>
 {
-    if(is_peek(Category::plus_plus) || is_peek(Category::minus_minus))
-        return peek()->category;
+    size_t i = 0;
+    while(is_peek(Category::whitespace, i))
+        ++i;
 
-    // We want the next token ignoring whitespaces.
-    const auto opos = is_peek(Category::whitespace, 1) ? 2 : 1;
+    if(is_peek(Category::plus_plus, i) || is_peek(Category::minus_minus, i))
+        return peek(i)->category;
+
+    // We want the operator token ignoring whitespace after the lhs.
+    const auto opos = is_peek(Category::whitespace, i + 1) ? i + 2 : i + 1;
 
     switch(peek(opos) ? peek(opos)->category : Category::word)
     {
@@ -556,10 +559,9 @@ auto Parser::parse_main_extension_file() -> std::optional<LinkedIR<ParserIR>>
 
 auto Parser::parse_subscript_file() -> std::optional<LinkedIR<ParserIR>>
 {
-    // subscript_file := 'MISSION_START' eol
-    //                  {statement}
-    //                  [label_prefix] 'MISSION_END' eol
-    //                  {statement} ;
+    // Subscript and mission files begin with MISSION_START. Everything after
+    // that is a flat statement list until EOF. MISSION_END may appear anywhere
+    // in the file (including inside { ... } scopes) and is lowered later.
 
     if(!ensure_mission_start_at_top_of_file())
         return std::nullopt;
@@ -575,25 +577,28 @@ auto Parser::parse_subscript_file() -> std::optional<LinkedIR<ParserIR>>
         return std::nullopt;
     }
 
-    auto body_stms = parse_statement_list("MISSION_END");
-    if(!body_stms)
+    auto statements = parse_statement_list({});
+    if(!statements)
         return std::nullopt;
 
-    if(const auto &mission_end_command = body_stms->back().command();
-       mission_end_command.has_args())
+    for(const auto &line : *statements)
     {
-        report(mission_end_command.source(), diag::too_many_arguments);
-        return std::nullopt;
-    }
+        if(!line.has_command())
+            continue;
 
-    auto rest_stms = parse_statement_list({});
-    if(!rest_stms)
-        return std::nullopt;
+        const auto &command = line.command();
+        if((command.name() == command_mission_start
+            || command.name() == command_mission_end)
+           && command.has_args())
+        {
+            report(command.source(), diag::too_many_arguments);
+            return std::nullopt;
+        }
+    }
 
     LinkedIR<ParserIR> linked_ir;
     linked_ir.push_front(**mission_start);
-    linked_ir.splice_back(std::move(*body_stms));
-    linked_ir.splice_back(std::move(*rest_stms));
+    linked_ir.splice_back(std::move(*statements));
     return linked_ir;
 }
 
@@ -676,10 +681,12 @@ auto Parser::parse_statement_list(
 
     while(!eof())
     {
+        const bool allow_special = stop_when.size() != 0;
+
         // Call `parse_statement` with the error handling for special names
         // at the top level (i.e. for `command_statement` only) disabled
         // because the `stop_when` commands are usually special names.
-        auto stmt_list = parse_statement(true);
+        auto stmt_list = parse_statement(allow_special);
         if(!stmt_list)
             return std::nullopt;
 
@@ -703,7 +710,7 @@ auto Parser::parse_statement_list(
                 // Since the special name checking was disabled, we now
                 // have to make sure we do not allow any other special name
                 // other than the ones in `stop_when`.
-                if(is_special_name(command.name(), false))
+                if(allow_special && is_special_name(command.name(), false))
                 {
                     report_special_name(command.source());
                     return std::nullopt;
@@ -830,7 +837,33 @@ auto Parser::parse_embedded_statement(bool allow_special_name)
     }
     else
     {
-        if(auto ir = parse_command())
+        bool not_flag = false;
+        if(is_peek(Category::word, "NOT"))
+        {
+            if(!consume() || !consume_whitespace())
+                return std::nullopt;
+            not_flag = true;
+        }
+
+        // Statement-level NOT before a relational expression (decompiler output
+        // uses this instead of IFNOT for flat control flow; legacy
+        // -frelax-not).
+        if(not_flag)
+        {
+            if(auto category = peek_expression_type();
+               category && is_relational_operator(*category))
+            {
+                if(auto expr_ir = parse_conditional_expression(false, not_flag))
+                {
+                    if(!consume(Category::end_of_line))
+                        return std::nullopt;
+                    return expr_ir;
+                }
+                return std::nullopt;
+            }
+        }
+
+        if(auto ir = parse_command(false, not_flag))
         {
             if(!allow_special_name
                && is_special_name((*ir)->command().name(), false))
@@ -882,7 +915,7 @@ auto Parser::parse_scope_statement() -> std::optional<LinkedIR<ParserIR>>
 
     this->in_lexical_scope = true;
 
-    auto linked_stmts = parse_statement_list("}");
+    auto linked_stmts = parse_statement_list({"}"});
     if(!linked_stmts)
         return std::nullopt;
 
@@ -1485,7 +1518,7 @@ auto Parser::parse_expression_detail(bool is_conditional, bool is_if_line,
     auto linked = LinkedIR<ParserIR>();
 
     const auto src_info = FileRange(spans[0].begin,
-                                      spans[num_toks - 1].end - spans[0].begin);
+                                    spans[num_toks - 1].end - spans[0].begin);
 
     if(num_toks == 2
        && ((cats[0] == Category::word && cats[1] == Category::plus_plus)

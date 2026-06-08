@@ -131,7 +131,7 @@ bool MultifileCodeGen::generate_global_var_header(
     next_header_offset += global_var_header_size();
     emitter.emit_opcode(0x0002)
             .emit_i32(next_header_offset)
-            .emit_raw_byte(std::byte{0})
+            .emit_raw_byte(std::byte{0x6D})
             .emit_fill(std::byte{0}, fill_size);
     return true;
 }

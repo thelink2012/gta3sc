@@ -1,6 +1,7 @@
 #include "syntax-fixture.hpp"
 #include <cassert>
 #include <doctest/doctest.h>
+#include <fstream>
 #include <gta3sc/syntax/parser.hpp>
 #include <string>
 using namespace gta3sc::test::syntax; // NOLINT
@@ -1194,6 +1195,28 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing a valid IF...ENDIF block")
     REQUIRE(++it == ir->end());
 }
 
+TEST_CASE_FIXTURE(ParserFixture, "parsing nested IF...ENDIF blocks")
+{
+    build_parser("IF OUTER\n"
+                 "    IF INNER\n"
+                 "        DO\n"
+                 "    ENDIF\n"
+                 "ENDIF\n");
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+
+    auto it = ir->begin();
+    REQUIRE(it->command().name() == "IF");
+    REQUIRE((++it)->command().name() == "OUTER");
+    REQUIRE((++it)->command().name() == "IF");
+    REQUIRE((++it)->command().name() == "INNER");
+    REQUIRE((++it)->command().name() == "DO");
+    REQUIRE((++it)->command().name() == "ENDIF");
+    REQUIRE((++it)->command().name() == "ENDIF");
+    REQUIRE(++it == ir->end());
+}
+
 TEST_CASE_FIXTURE(ParserFixture, "parsing a valid IF...ELSE...ENDIF block")
 {
     build_parser("IF SOMETHING\n"
@@ -1644,9 +1667,7 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing valid var declaration commands")
 
 TEST_CASE_FIXTURE(ParserFixture, "parsing invalid use of special names")
 {
-    build_parser("MISSION_END\n"
-                 "MISSION_START\n"
-                 "}\n"
+    build_parser("}\n"
                  "NOT\n"
                  "AND\n"
                  "OR\n"
@@ -1664,11 +1685,9 @@ TEST_CASE_FIXTURE(ParserFixture, "parsing invalid use of special names")
                  "IF GOSUB_FILE a b.sc\n"
                  "IF LAUNCH_MISSION b.sc\n"
                  "IF LOAD_AND_LAUNCH_MISSION b.sc\n"
-                 "IF MISSION_START\n"
-                 "IF MISSION_END\n"
                  "WAIT 0\n"); // valid sync point
 
-    for(auto invalid = 0; invalid < 22; ++invalid)
+    for(auto invalid = 0; invalid < 18; ++invalid)
     {
         auto ir = parser.parse_statement();
         parser.skip_current_line();
@@ -2205,4 +2224,62 @@ TEST_CASE_FIXTURE(ParserFixture, "number of arguments of LVAR_TEXT_LABEL")
         REQUIRE(consume_diag().descriptor
                 == &gta3sc::syntax::diag::too_few_arguments);
     }
+}
+
+TEST_CASE_FIXTURE(ParserFixture, "parsing expressions with CRLF line endings")
+{
+    build_parser("SCRIPT_NAME MAIN\r\n"
+                 "$g2 = 0.0625\r\n"
+                 "$g3 = $g2 // (float)\r\n"
+                 "$g3 /= 2.0\r\n");
+
+    REQUIRE(parser.parse_statement() != std::nullopt);
+    REQUIRE(parser.parse_statement() != std::nullopt);
+    REQUIRE(parser.parse_statement() != std::nullopt);
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+    REQUIRE(ir->front().command().name() == "DIV_THING_BY_THING"sv);
+    REQUIRE(*ir->front().command().arg(1).as_float() == 2.0F);
+}
+
+TEST_CASE_FIXTURE(ParserFixture, "parsing hj if else nest with CRLF")
+{
+    build_parser("IF heading_difference > 180.0\r\n"
+                 "\theading_difference_temp = heading_difference\r\n"
+                 "\theading_difference = 360.0 - heading_difference_temp\r\n"
+                 "ELSE\r\n"
+                 "\tIF heading_difference < -180.0\r\n"
+                 "\t\theading_difference_temp = heading_difference\r\n"
+                 "\t\theading_difference = 360.0 + heading_difference_temp\r\n"
+                 "\tENDIF\r\n"
+                 "ENDIF\r\n"
+                 "IF heading_difference < 0.0\r\n"
+                 "\theading_difference_temp = heading_difference\r\n"
+                 "ENDIF\r\n");
+
+    auto ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+    ir = parser.parse_statement();
+    REQUIRE(ir != std::nullopt);
+}
+
+TEST_CASE_FIXTURE(ParserFixture, "parsing intro subscript file")
+{
+    std::ifstream in("build/gta3-test/main/intro.sc", std::ios::binary);
+    REQUIRE(in);
+    const std::string src((std::istreambuf_iterator<char>(in)),
+                          std::istreambuf_iterator<char>());
+    build_parser(src);
+    REQUIRE(parser.parse_subscript_file() != std::nullopt);
+}
+
+TEST_CASE_FIXTURE(ParserFixture, "parsing hj subscript file")
+{
+    std::ifstream in("build/gta3-test/main/hj.sc", std::ios::binary);
+    REQUIRE(in);
+    const std::string src((std::istreambuf_iterator<char>(in)),
+                          std::istreambuf_iterator<char>());
+    build_parser(src);
+    REQUIRE(parser.parse_subscript_file() != std::nullopt);
 }

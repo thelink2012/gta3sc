@@ -116,7 +116,7 @@ void CodeGen::generate_int(const SemaIR::Argument& arg)
 void CodeGen::generate_float(const SemaIR::Argument& arg)
 {
     assert(arg.type() == SemaIR::Argument::Type::FLOAT);
-    emitter.emit_q11_4(*arg.pun_as_float());
+    emitter.emit_float(*arg.pun_as_float());
 }
 
 void CodeGen::generate_used_object(const SemaIR::Argument& arg)
