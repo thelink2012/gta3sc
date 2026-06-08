@@ -280,7 +280,7 @@
     <Command ID="0xa9a" Name="OPEN_FILE" Hash="0xd4269fc0">
       <Args>
         <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
-        <Arg Type="INT"/>
+        <Arg Type="STRING" AllowPointer="true" PreserveCase="true"/>
         <Arg Type="INT" Out="true" Entity="FILE"/>
       </Args>
     </Command>
