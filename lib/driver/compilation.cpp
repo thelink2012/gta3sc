@@ -54,7 +54,8 @@ auto apply_rewriter(LinkedIR<IR>&& ir, Rewriter& rewriter) -> LinkedIR<IR>
 Compilation::Compilation(const std::filesystem::path& input_file,
                          CommandTable& command_table, ModelTable& model_table,
                          SourceManager& source_manager,
-                         DiagnosticHandler& diag_manager) :
+                         DiagnosticHandler& diag_manager,
+                         codegen::trilogy::TrilogyGame game) :
     symbol_arena(std::make_unique<ArenaMemoryResource>()),
     parser_ir_arena(std::make_unique<ArenaMemoryResource>()),
     sema_ir_arena(std::make_unique<ArenaMemoryResource>()),
@@ -63,7 +64,8 @@ Compilation::Compilation(const std::filesystem::path& input_file,
     command_table(&command_table),
     model_table(&model_table),
     source_manager(&source_manager),
-    diag_manager(&diag_manager)
+    diag_manager(&diag_manager),
+    game(game)
 {}
 
 auto Compilation::parse() -> std::optional<LinkedIR<ParserIR>>
@@ -146,7 +148,7 @@ auto Compilation::codegen(LinkedIR<SemaIR> input_ir, Result result) -> bool
     codegen::RelocationTable reloc_table(symbol_table);
 
     codegen::trilogy::MultifileCodeGen codegen(symbol_table, *storage_table,
-                                               *diag_manager);
+                                               *diag_manager, game);
     if(!codegen.generate(input_ir, reloc_table, output_main_scm))
         return false;
 

@@ -1,3 +1,4 @@
+#include <cctype>
 #include <charconv>
 #include <gta3sc/diagnostics.hpp>
 #include <gta3sc/syntax/sema.hpp>
@@ -547,7 +548,9 @@ auto Sema::validate_argument(const CommandTable::ParamDef& param,
                             return SemaIR::create_constant(*cdef, arg.source(),
                                                            allocator);
                         }
-                        else if(modelman->find_model(ident))
+                        if(!is_model_from_ide(ident) && lookup_var_lvar(ident))
+                            return validate_var_ref(param, arg);
+                        if(modelman->find_model(ident))
                         {
                             auto [uobj, _] = symrepo->insert_used_object(
                                     ident, arg.source());
@@ -559,13 +562,14 @@ auto Sema::validate_argument(const CommandTable::ParamDef& param,
                     else if(defaultmodel_enum
                             && param.enum_type == *defaultmodel_enum)
                     {
-                        if(const auto* cdef = find_defaultmodel_constant(
-                                   ident))
+                        if(const auto* cdef = find_defaultmodel_constant(ident))
                         {
                             return SemaIR::create_constant(*cdef, arg.source(),
                                                            allocator);
                         }
-                        else if(modelman->find_model(ident))
+                        if(!is_model_from_ide(ident) && lookup_var_lvar(ident))
+                            return validate_var_ref(param, arg);
+                        if(modelman->find_model(ident))
                         {
                             auto [uobj, _] = symrepo->insert_used_object(
                                     ident, arg.source());
@@ -1278,6 +1282,39 @@ auto Sema::find_defaultmodel_constant(std::string_view name) const
 auto Sema::is_object_param(const CommandTable::ParamDef& param) const -> bool
 {
     return this->model_enum && param.enum_type == *model_enum;
+}
+
+auto Sema::is_model_from_ide(std::string_view name) const -> bool
+{
+    if(find_defaultmodel_constant(name))
+        return true;
+
+    // Legacy fallback when level/default .dat tables do not list IDE objects.
+    static constexpr std::string_view known_models[]{
+            "PLAYERSDOOR",   "DEADMAN1",     "BACKDOOR",
+            "HELIX_BARRIER", "AIRPORTDOOR1", "AIRPORTDOOR2",
+    };
+
+    for(const auto known : known_models)
+    {
+        if(name.size() != known.size())
+            continue;
+        bool match = true;
+        for(size_t i = 0; i < name.size(); ++i)
+        {
+            const auto a = static_cast<unsigned char>(name[i]);
+            const auto b = static_cast<unsigned char>(known[i]);
+            if(std::tolower(a) != std::tolower(b))
+            {
+                match = false;
+                break;
+            }
+        }
+        if(match)
+            return true;
+    }
+
+    return false;
 }
 
 auto Sema::is_gvar_param(ParamType param_type) const -> bool

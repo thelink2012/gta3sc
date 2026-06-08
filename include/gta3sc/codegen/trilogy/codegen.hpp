@@ -1,6 +1,7 @@
 #pragma once
 #include <gta3sc/codegen/relocation-table.hpp>
 #include <gta3sc/codegen/trilogy/emitter.hpp>
+#include <gta3sc/codegen/trilogy/trilogy-game.hpp>
 #include <gta3sc/ir/linked-ir.hpp>
 #include <gta3sc/ir/sema-ir.hpp>
 
@@ -52,11 +53,13 @@ public:
     ///
     /// Any diagnostic produced during code generation will be handed to `diag`.
     CodeGen(const SymbolTable::File& file, AbsoluteOffset multifile_offset,
-            const StorageTable& storage, DiagnosticHandler& diag) noexcept :
+            const StorageTable& storage, DiagnosticHandler& diag,
+            TrilogyGame game = TrilogyGame::Gtavc) noexcept :
         diag(&diag),
         storage(&storage),
         file(&file),
-        base_offset(multifile_offset)
+        base_offset(multifile_offset),
+        game(game)
     {}
 
     CodeGen(const CodeGen&) = delete;
@@ -138,6 +141,7 @@ private:
     const StorageTable* storage;
     const SymbolTable::File* file;
     AbsoluteOffset base_offset;
+    TrilogyGame game;
     CodeEmitter emitter;
 };
 

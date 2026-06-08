@@ -131,7 +131,7 @@ bool MultifileCodeGen::generate_global_var_header(
     next_header_offset += global_var_header_size();
     emitter.emit_opcode(0x0002)
             .emit_i32(next_header_offset)
-            .emit_raw_byte(std::byte{0x6D})
+            .emit_raw_byte(global_var_header_marker(game))
             .emit_fill(std::byte{0}, fill_size);
     return true;
 }
@@ -250,7 +250,7 @@ auto MultifileCodeGen::generate_next_file(
     // code being compiled. This could imply a file label is appearing twice.
     assert(first_fileoff_insert);
 
-    CodeGen codegen(file, current_multifile_offset, *storage, *diag);
+    CodeGen codegen(file, current_multifile_offset, *storage, *diag, game);
 
     NextFile result{nullptr, max_ir};
     auto output_iter = std::back_inserter(output);

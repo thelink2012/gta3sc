@@ -234,7 +234,14 @@ private:
     auto parse_conditional_element(bool is_if_line = false)
             -> std::optional<ArenaPtr<ParserIR>>;
 
+    auto parse_conditional_element_after_not(bool is_if_line = false)
+            -> std::optional<ArenaPtr<ParserIR>>;
+
     auto parse_conditional_list()
+            -> std::pair<std::optional<LinkedIR<ParserIR>>, int32_t>;
+
+    /// Parses AND/OR conditional lines, optionally prefixed by a first element.
+    auto parse_andor_conditional_chain(std::optional<ArenaPtr<ParserIR>> first)
             -> std::pair<std::optional<LinkedIR<ParserIR>>, int32_t>;
 
     /// Continues parsing a conditional list after parsing the first

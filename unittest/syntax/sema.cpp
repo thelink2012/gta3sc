@@ -2095,7 +2095,7 @@ TEST_CASE_FIXTURE(SemaFixture, "sema used objects")
         REQUIRE(!symrepo.lookup_used_object("CHEETAH"));
     }
 
-    SUBCASE("level model has precedence over variable reference")
+    SUBCASE("variable wins when same name as level-only model")
     {
         build_sema("VAR_INT LEVEL_MODEL\n"
                    "CREATE_OBJECT LEVEL_MODEL 0.0 0.0 0.0 LEVEL_MODEL");
@@ -2109,10 +2109,26 @@ TEST_CASE_FIXTURE(SemaFixture, "sema used objects")
         REQUIRE(ir->back().has_command());
         REQUIRE(ir->back().command().args().size() == 5);
         REQUIRE(!ir->back().command().arg(0).as_constant());
-        REQUIRE(ir->back().command().arg(0).as_used_object());
-        REQUIRE(ir->back().command().arg(0).as_used_object()
-                == symrepo.lookup_used_object("LEVEL_MODEL"));
+        REQUIRE(ir->back().command().arg(0).as_var_ref());
+        REQUIRE(std::addressof(ir->back().command().arg(0).as_var_ref()->def())
+                == symrepo.lookup_var("LEVEL_MODEL"));
 
+        REQUIRE(!symrepo.lookup_used_object("LEVEL_MODEL"));
+    }
+
+    SUBCASE("level-only model becomes used object without name collision")
+    {
+        build_sema("VAR_INT x\n"
+                   "CREATE_OBJECT LEVEL_MODEL 0.0 0.0 0.0 x");
+
+        auto ir = sema.validate();
+        REQUIRE(ir != std::nullopt);
+        REQUIRE(size(*ir) == 2);
+
+        CHECK(modelman.find_model("LEVEL_MODEL") != nullptr);
+
+        REQUIRE(ir->back().has_command());
+        REQUIRE(ir->back().command().arg(0).as_used_object());
         REQUIRE(symrepo.lookup_used_object("LEVEL_MODEL")->id() == 0);
     }
 

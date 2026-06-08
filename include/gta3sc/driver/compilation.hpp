@@ -1,5 +1,6 @@
 #pragma once
 #include <filesystem>
+#include <gta3sc/codegen/trilogy/trilogy-game.hpp>
 #include <gta3sc/ir/linked-ir.hpp>
 #include <gta3sc/ir/parser-ir.hpp>
 #include <gta3sc/ir/sema-ir.hpp>
@@ -36,9 +37,12 @@ public:
     /// \param source_manager The source manager to use for file loading
     /// and source location tracking.
     /// \param diag_manager where to report diagnostics to.
+    /// \param game Trilogy title for float encoding and header layout.
     Compilation(const std::filesystem::path& input_file,
                 CommandTable& command_table, ModelTable& model_table,
-                SourceManager& source_manager, DiagnosticHandler& diag_manager);
+                SourceManager& source_manager, DiagnosticHandler& diag_manager,
+                codegen::trilogy::TrilogyGame game
+                = codegen::trilogy::TrilogyGame::Gtavc);
 
     Compilation(Compilation&&) noexcept = default;
     auto operator=(Compilation&&) noexcept -> Compilation& = default;
@@ -112,6 +116,7 @@ private:
     ModelTable* model_table;
     SourceManager* source_manager;
     DiagnosticHandler* diag_manager;
+    codegen::trilogy::TrilogyGame game;
 };
 
 struct Compilation::Result

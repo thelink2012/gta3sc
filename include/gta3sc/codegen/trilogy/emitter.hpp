@@ -83,6 +83,9 @@ public:
     /// value).
     auto emit_float(float value) -> CodeEmitter&;
 
+    /// Emits a Q11.4 fixed-point argument (GTA III).
+    auto emit_q11_4(float value) -> CodeEmitter&;
+
     /// Emits a global integer/float variable offset (i.e. datatype byte +
     /// 16-bit offset).
     auto emit_var(uint16_t offset) -> CodeEmitter&;
@@ -130,6 +133,9 @@ public:
 
     /// Emits a given byte value `count` times.
     auto emit_fill(std::byte value, size_t count) -> CodeEmitter&;
+
+private:
+    [[nodiscard]] auto float_to_q11_4(float value) const -> int16_t;
 
 private:
     std::vector<std::byte> buffer;

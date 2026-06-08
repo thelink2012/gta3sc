@@ -162,8 +162,7 @@ private:
     /// coincide to what the user actually wrote in the source code.
     ///
     /// Compare `report_count` before and after the call to check success.
-    auto parse_var_ref(std::string_view identifier,
-                       FileRange source) -> VarRef;
+    auto parse_var_ref(std::string_view identifier, FileRange source) -> VarRef;
 
     /// Reports an invalid situation and increments `report_count`.
     auto report(FileLoc source,
@@ -190,6 +189,10 @@ private:
     /// association.
     [[nodiscard]] auto
     is_object_param(const CommandTable::ParamDef& param) const -> bool;
+
+    /// Whether a model name should win over a same-named variable (legacy
+    /// `ProgramContext::is_model_from_ide` for pedantic compiles).
+    [[nodiscard]] auto is_model_from_ide(std::string_view name) const -> bool;
 
     /// Checks whether a parameter type accepts only global variables.
     [[nodiscard]] auto
@@ -230,7 +233,7 @@ private:
     struct VarRef
     {
         std::string_view name; ///< The name of the variable.
-        FileRange source;    ///< The range of the name of the variable.
+        FileRange source;      ///< The range of the name of the variable.
         std::optional<VarSubscript> subscript; ///< The subscript if any.
     };
 

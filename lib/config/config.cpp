@@ -128,6 +128,10 @@ private:
                                const pugi::xml_node& constant_node,
                                CommandTable::EnumId enum_id,
                                int32_t& next_value);
+    void process_constant_node(const FileEntryRef& config_file,
+                               const pugi::xml_node& constant_node,
+                               CommandTable::EnumId enum_id,
+                               int32_t& next_value, bool mirror_global);
     auto parse_constant_value(const FileEntryRef& config_file,
                               const pugi::xml_node& constant_node,
                               const char* value_str) -> int32_t;
@@ -251,8 +255,7 @@ auto load_config(const FileEntryRef& config_file, DiagnosticHandler& diagman,
 
 namespace
 {
-auto xml_location(const FileEntryRef& config_file,
-                  ptrdiff_t offset) -> FileLoc
+auto xml_location(const FileEntryRef& config_file, ptrdiff_t offset) -> FileLoc
 {
     return offset > 0 ? config_file.location_of(config_file.data() + offset)
                       : no_file_loc;
@@ -363,9 +366,9 @@ void ConfigLoader::report_could_not_open_file(const FileEntryRef& config_file,
             .args(path);
 }
 
-void ConfigLoader::report_invalid_constant_value(const FileEntryRef& config_file,
-                                                 const pugi::xml_node& node,
-                                                 const char* value)
+void ConfigLoader::report_invalid_constant_value(
+        const FileEntryRef& config_file, const pugi::xml_node& node,
+        const char* value)
 {
     diagman.report(xml_location(config_file, node),
                    config::diag::xml_invalid_constant_value)
@@ -1018,10 +1021,32 @@ void ConfigLoader::process_constant_node(const FileEntryRef& config_file,
                                           value_attr.value());
     }
 
+    const int32_t value = next_value;
+
     // Add the constant
     builder.insert_or_assign_constant(enum_id, toupper(const_name.value()),
-                                      next_value);
+                                      value);
     ++next_value;
+}
+
+void ConfigLoader::process_constant_node(const FileEntryRef& config_file,
+                                         const pugi::xml_node& constant_node,
+                                         CommandTable::EnumId enum_id,
+                                         int32_t& next_value,
+                                         bool mirror_global)
+{
+    const int32_t value_before = next_value;
+    process_constant_node(config_file, constant_node, enum_id, next_value);
+    if(!mirror_global || enum_id == CommandTable::global_enum)
+        return;
+
+    auto const_name = constant_node.attribute("Name");
+    if(!const_name || const_name.value()[0] == '\0')
+        return;
+
+    builder.insert_or_assign_constant(CommandTable::global_enum,
+                                      toupper(const_name.value()),
+                                      value_before);
 }
 
 void ConfigLoader::process_enum_node(const FileEntryRef& config_file,
@@ -1035,6 +1060,15 @@ void ConfigLoader::process_enum_node(const FileEntryRef& config_file,
         return;
     }
 
+    const bool is_global = [&enum_node]() {
+        if(const auto global = enum_node.attribute("Global"))
+        {
+            return std::strcmp(global.value(), "true") == 0
+                   || std::strcmp(global.value(), "1") == 0;
+        }
+        return false;
+    }();
+
     auto enum_id
             = name ? builder.insert_enumeration(toupper(name.value())).first
                    : CommandTable::global_enum;
@@ -1046,7 +1080,8 @@ void ConfigLoader::process_enum_node(const FileEntryRef& config_file,
     {
         if(std::strcmp(constant.name(), "Constant") == 0)
         {
-            process_constant_node(config_file, constant, enum_id, next_value);
+            process_constant_node(config_file, constant, enum_id, next_value,
+                                  is_global);
         }
         else
         {

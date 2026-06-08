@@ -1,6 +1,7 @@
 #include <gta3sc/codegen/relocation-table.hpp>
 #include <gta3sc/codegen/storage-table.hpp>
 #include <gta3sc/codegen/trilogy/codegen.hpp>
+#include <gta3sc/codegen/trilogy/trilogy-game.hpp>
 #include <gta3sc/diagnostics.hpp>
 
 namespace gta3sc::codegen::diag
@@ -116,7 +117,10 @@ void CodeGen::generate_int(const SemaIR::Argument& arg)
 void CodeGen::generate_float(const SemaIR::Argument& arg)
 {
     assert(arg.type() == SemaIR::Argument::Type::FLOAT);
-    emitter.emit_float(*arg.pun_as_float());
+    if(uses_q11_4_floats(game))
+        emitter.emit_q11_4(*arg.pun_as_float());
+    else
+        emitter.emit_float(*arg.pun_as_float());
 }
 
 void CodeGen::generate_used_object(const SemaIR::Argument& arg)

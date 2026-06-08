@@ -968,37 +968,86 @@ auto Parser::parse_conditional_element(bool is_if_line)
     return ir;
 }
 
+auto Parser::parse_conditional_element_after_not(bool is_if_line)
+        -> std::optional<ArenaPtr<ParserIR>>
+{
+    auto ir = std::optional<ArenaPtr<ParserIR>>();
+    if(peek_expression_type())
+    {
+        if(auto linked = parse_conditional_expression(is_if_line, true))
+        {
+            assert(!linked->empty()
+                   && std::next(linked->begin()) == linked->end());
+            ir = &linked->front();
+            linked->erase(linked->begin());
+        }
+        else
+            return std::nullopt;
+    }
+    else
+    {
+        if(ir = parse_command(is_if_line, true); !ir)
+            return std::nullopt;
+        if(is_special_name((*ir)->command().name(), true))
+        {
+            report_special_name((*ir)->command().source());
+            return std::nullopt;
+        }
+    }
+
+    return ir;
+}
+
 auto Parser::parse_conditional_list()
         -> std::pair<std::optional<LinkedIR<ParserIR>>, int32_t>
 {
     // conditional_list := conditional_element eol
     //                     ({and_conditional_stmt} | {or_conditional_stmt}) ;
+    //
+    // Rockstar sources sometimes break after a lone NOT (e.g. `WHILE NOT` then
+    // `OR NOT ...` on the next line).
+
+    if(is_peek(Category::word, "NOT"))
+    {
+        if(!consume() || !consume_whitespace())
+            return {std::nullopt, 0};
+
+        if(is_peek(Category::end_of_line))
+        {
+            if(!consume(Category::end_of_line))
+                return {std::nullopt, 0};
+            return parse_andor_conditional_chain(std::nullopt);
+        }
+
+        auto op_cond0 = parse_conditional_element_after_not();
+        if(!op_cond0)
+            return {std::nullopt, 0};
+        if(!consume(Category::end_of_line))
+            return {std::nullopt, 0};
+        return parse_andor_conditional_chain(*op_cond0);
+    }
 
     auto op_cond0 = parse_conditional_element();
     if(!op_cond0)
         return {std::nullopt, 0};
     if(!consume(Category::end_of_line))
         return {std::nullopt, 0};
-    return parse_conditional_list(*op_cond0);
+    return parse_andor_conditional_chain(*op_cond0);
 }
 
-auto Parser::parse_conditional_list(ParserIR *op_cond0)
+auto Parser::parse_andor_conditional_chain(
+        std::optional<ArenaPtr<ParserIR>> first)
         -> std::pair<std::optional<LinkedIR<ParserIR>>, int32_t>
 {
-    // and_conditional_stmt := 'AND' sep conditional_element eol ;
-    // or_conditional_stmt := 'OR' sep conditional_element eol ;
-    //
-    // conditional_list := conditional_element eol
-    //                     ({and_conditional_stmt} | {or_conditional_stmt}) ;
-
-    // This method is parsing the AND/OR part of the conditional_list.
-
-    assert(op_cond0 && op_cond0->has_command());
-
     auto andor_list = LinkedIR<ParserIR>();
-    andor_list.push_back(*op_cond0);
+    size_t num_conds = 0;
 
-    size_t num_conds = 1;
+    if(first)
+    {
+        andor_list.push_back(**first);
+        num_conds = 1;
+    }
+
     int32_t andor_count = 0;
 
     if(is_peek(Category::word, "AND") || is_peek(Category::word, "OR"))
@@ -1029,13 +1078,12 @@ auto Parser::parse_conditional_list(ParserIR *op_cond0)
             return {std::nullopt, 0};
         }
 
-        andor_count = is_and ? num_conds - 1 : 20 + num_conds - 1;
+        andor_count = is_and ? static_cast<int32_t>(num_conds) - 1
+                             : 20 + static_cast<int32_t>(num_conds) - 1;
     }
+    else if(!first)
+        return {std::nullopt, 0};
 
-    // The runtime has a soft limit of 8 conditions per list.
-    // Unfortunately we cannot ignore this limit during the
-    // parsing phrase because the generated IL for ANDOR has
-    // this limitation embedded in its first parameter.
     if(num_conds > 8)
     {
         report(andor_list.back().command().source(), diag::too_many_conditions);
@@ -1043,6 +1091,12 @@ auto Parser::parse_conditional_list(ParserIR *op_cond0)
     }
 
     return {std::move(andor_list), andor_count};
+}
+
+auto Parser::parse_conditional_list(ParserIR *op_cond0)
+        -> std::pair<std::optional<LinkedIR<ParserIR>>, int32_t>
+{
+    return parse_andor_conditional_chain(op_cond0);
 }
 
 auto Parser::parse_if_statement() -> std::optional<LinkedIR<ParserIR>>

@@ -1,6 +1,7 @@
 #pragma once
 #include <gta3sc/codegen/relocation-table.hpp>
 #include <gta3sc/codegen/trilogy/emitter.hpp>
+#include <gta3sc/codegen/trilogy/trilogy-game.hpp>
 #include <gta3sc/diagnostics.hpp>
 #include <gta3sc/ir/linked-ir.hpp>
 #include <gta3sc/ir/sema-ir.hpp>
@@ -44,9 +45,9 @@ public:
     /// the storage of variables.
     /// \param diag where diagnostics will be reported to.
     MultifileCodeGen(const SymbolTable& symbol_table,
-                     const StorageTable& storage,
-                     DiagnosticHandler& diag) noexcept :
-        symbol_table(&symbol_table), storage(&storage), diag(&diag)
+                     const StorageTable& storage, DiagnosticHandler& diag,
+                     TrilogyGame game = TrilogyGame::Gtavc) noexcept :
+        symbol_table(&symbol_table), storage(&storage), diag(&diag), game(game)
     {}
 
     MultifileCodeGen(const MultifileCodeGen&) = delete;
@@ -173,6 +174,7 @@ private:
     const SymbolTable* symbol_table;
     const StorageTable* storage;
     DiagnosticHandler* diag;
+    TrilogyGame game;
 
     uint32_t globals_top_index{};
     uint32_t num_used_objects{};

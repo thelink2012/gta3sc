@@ -1,4 +1,5 @@
 #include <filesystem>
+#include <gta3sc/codegen/trilogy/trilogy-game.hpp>
 #include <gta3sc/command-table.hpp>
 #include <gta3sc/config/config.hpp>
 #include <gta3sc/config/models.hpp>
@@ -25,18 +26,18 @@ using namespace gta3sc;
 
 int main()
 {
-    // TEMP: gtavc_main integration test (see gta3sc test/main/gtavc.test)
-    const std::filesystem::path input_file = "build/gtavc-test/main.sc";
+    // TEMP: undefinified-liberty integration (GTA3)
+    const std::filesystem::path input_file
+            = "build/undefinified-liberty/main.sc";
 
     const std::filesystem::path config_root_path
             = "/home/denimorim/dev/gta3script-config/config";
     const std::filesystem::path config_path = config_root_path
-                                              / "gtavc/config.xml";
+                                              / "gta3/config.xml";
 
     const std::filesystem::path level_root_path
-            = "/home/denimorim/Downloads/OriginalData/ViceCity";
-    const std::filesystem::path level_path = level_root_path
-                                             / "data/gta_vc.dat";
+            = "/home/denimorim/Downloads/OriginalData/GTA3";
+    const std::filesystem::path level_path = level_root_path / "data/gta3.dat";
 
     gta3sc::SourceManager file_manager;
     std::vector<gta3sc::Diagnostic> diagnostics;
@@ -63,11 +64,10 @@ int main()
     commands_builder = gta3sc::config::load_config(
             config_root_path, config_path, file_manager, diag_manager,
             std::move(commands_builder));
-    // TEMP (brute-force): default.xml carries the full DEFAULTMODEL table
-    // (MAFIA, BFINJECT, …). constants.xml only has a partial set — see
+    // TEMP (brute-force): default.xml carries the full DEFAULTMODEL table — see
     // brute-force-summary.md issue 5.
     commands_builder = gta3sc::config::load_config(
-            config_root_path, config_root_path / "gtavc/default.xml",
+            config_root_path, config_root_path / "gta3/default.xml",
             file_manager, diag_manager, std::move(commands_builder));
     gta3sc::CommandTable command_table = std::move(commands_builder).build();
 
@@ -98,7 +98,8 @@ int main()
 
     std::vector<std::byte> output;
     gta3sc::driver::Compilation compilation(
-            input_file, command_table, model_table, file_manager, diag_manager);
+            input_file, command_table, model_table, file_manager, diag_manager,
+            gta3sc::codegen::trilogy::TrilogyGame::Gta3);
     if(!compilation.compile({&output}))
     {
         std::println(stderr, "error: compilation failed ({} diagnostics)",

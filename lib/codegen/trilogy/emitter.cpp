@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cmath>
 #include <limits>
 
 #include <gta3sc/codegen/trilogy/emitter.hpp>
@@ -106,6 +107,13 @@ auto CodeEmitter::emit_float(float value) -> CodeEmitter&
     return *this;
 }
 
+auto CodeEmitter::emit_q11_4(float value) -> CodeEmitter&
+{
+    emit_raw_byte(datatype_float);
+    emit_raw_i16(float_to_q11_4(value));
+    return *this;
+}
+
 auto CodeEmitter::emit_var(uint16_t offset) -> CodeEmitter&
 {
     emit_raw_byte(datatype_var);
@@ -192,5 +200,20 @@ auto CodeEmitter::emit_fill(std::byte value, size_t count) -> CodeEmitter&
     std::fill_n(buffer.begin() + buffer_pos, count, value);
 
     return *this;
+}
+
+auto CodeEmitter::float_to_q11_4(float value) const -> int16_t
+{
+    constexpr float q11_4_min = -2048.0F;
+    constexpr float q11_4_max = 2047.9375F;
+
+    value = std::fmax(q11_4_min, value);
+    value = std::fmin(q11_4_max, value);
+
+    const auto q11_4 = static_cast<int32_t>(value * 16.0F);
+    assert(q11_4 >= std::numeric_limits<int16_t>::min()
+           && q11_4 <= std::numeric_limits<int16_t>::max());
+
+    return static_cast<int16_t>(q11_4);
 }
 } // namespace gta3sc::codegen::trilogy
