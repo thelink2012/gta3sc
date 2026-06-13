@@ -134,12 +134,15 @@ auto Compilation::lower(LinkedIR<SemaIR> ir) -> std::optional<LinkedIR<SemaIR>>
 
 auto Compilation::codegen(LinkedIR<SemaIR> input_ir, Result result) -> bool
 {
+    // TODO is it possible to run all these steps without stopping on error, and
+    //      only stopping at the very end?
+
     assert(result.target_main_scm != nullptr);
     auto& output_main_scm = *result.target_main_scm;
 
     const auto storage_options = codegen::StorageTable::Options{};
-    auto storage_table = codegen::StorageTable::from_symbols(symbol_table,
-                                                             storage_options);
+    auto storage_table = codegen::StorageTable::from_symbols(
+            symbol_table, storage_options, *diag_manager);
     if(!storage_table)
         return false;
 
@@ -153,8 +156,6 @@ auto Compilation::codegen(LinkedIR<SemaIR> input_ir, Result result) -> bool
     codegen::Relocator relocator(output_main_scm);
     if(!relocator.relocate(reloc_table, *diag_manager))
         return false;
-
-    // TODO check for diagman errors before returning true?
 
     return true;
 }

@@ -4,6 +4,7 @@
 #include <doctest/doctest.h>
 #include <functional>
 #include <gta3sc/codegen/relocation-table.hpp>
+#include <gta3sc/codegen/storage-table.hpp>
 #include <gta3sc/codegen/trilogy/codegen.hpp>
 #include <gta3sc/diagnostics.hpp>
 #include <gta3sc/driver/compilation.hpp>
@@ -107,11 +108,8 @@ TEST_CASE_FIXTURE(CompilationFixture, "compile - sema phase failure")
 // TODO: add lowering test cases here when the lowering pass is implemented
 
 TEST_CASE_FIXTURE(CompilationFixture,
-                  "compile - codegen phase failure - local storage overflow"
-                          * doctest::may_fail(true))
+                  "compile - codegen phase failure - local storage overflow")
 {
-    // TODO: add CHECK on the expected diagnostic descriptor once StorageTable
-    // emits one on overflow.
     CHECK_FALSE(compile_script("{\n"
                                "LVAR_TEXT_LABEL a\n"
                                "LVAR_TEXT_LABEL b\n"
@@ -124,22 +122,19 @@ TEST_CASE_FIXTURE(CompilationFixture,
                                "LVAR_TEXT_LABEL i\n"
                                "}\n"));
 
-    CHECK_FALSE(diags.empty());
-    consume_diag();
+    REQUIRE_FALSE(diags.empty());
+    CHECK(consume_diag().descriptor
+          == &gta3sc::codegen::diag::storage_overflow);
 }
 
 TEST_CASE_FIXTURE(CompilationFixture,
-                  "compile - codegen phase failure - bytecode failure"
-                          * doctest::may_fail(true))
+                  "compile - codegen phase failure - bytecode failure")
 {
     const auto result = compile_script("COMMAND_WITHOUT_ID 1\n");
 
-    CHECK_FALSE(diags.empty());
-    const auto d = consume_diag();
-    CHECK(d.descriptor
+    REQUIRE_FALSE(diags.empty());
+    CHECK(consume_diag().descriptor
           == &gta3sc::codegen::diag::target_does_not_support_command);
-    CHECK(d.descriptor->default_severity()
-          == gta3sc::DiagnosticSeverity::error);
 
     CHECK_FALSE(result);
 }

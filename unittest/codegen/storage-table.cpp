@@ -1,3 +1,4 @@
+#include "../with-diagnostic-fixture.hpp"
 #include <doctest/doctest.h>
 #include <gta3sc/codegen/storage-table.hpp>
 
@@ -9,7 +10,7 @@ using VarType = gta3sc::SymbolTable::VarType;
 
 namespace
 {
-class BaseStorageTableFixture
+class BaseStorageTableFixture : public gta3sc::test::WithDiagnosticFixture
 {
 public:
     BaseStorageTableFixture() : symtable(&arena) {}
@@ -63,7 +64,7 @@ public:
             -> LocalStorageTable
     {
         auto table = LocalStorageTable::from_symbols(
-                symtable, SymbolTable::global_scope, options);
+                symtable, SymbolTable::global_scope, options, diagman);
         REQUIRE(table != std::nullopt);
         return std::move(table).value();
     }
@@ -76,7 +77,7 @@ public:
     void fail_to_make_storage_table(const LocalStorageTable::Options& options)
     {
         auto table = LocalStorageTable::from_symbols(
-                symtable, SymbolTable::global_scope, options);
+                symtable, SymbolTable::global_scope, options, diagman);
         REQUIRE(table == std::nullopt);
     }
 
@@ -92,9 +93,15 @@ public:
     auto
     make_storage_table(const StorageTable::Options& options) -> StorageTable
     {
-        auto table = StorageTable::from_symbols(symtable, options);
+        auto table = StorageTable::from_symbols(symtable, options, diagman);
         REQUIRE(table != std::nullopt);
         return std::move(table).value();
+    }
+
+    void fail_to_make_storage_table(const StorageTable::Options& options)
+    {
+        auto table = StorageTable::from_symbols(symtable, options, diagman);
+        REQUIRE(table == std::nullopt);
     }
 };
 } // namespace
@@ -205,6 +212,8 @@ TEST_CASE_FIXTURE(LocalStorageTableFixture, "storage limits")
         REQUIRE(table.top_var_index() == max_var_index + 1);
         make_var(VarType::INT);
         fail_to_make_storage_table();
+        CHECK(consume_diag().descriptor
+              == &gta3sc::codegen::diag::storage_overflow);
     }
 
     SUBCASE("storage is limited by maximum float variables")
@@ -215,6 +224,8 @@ TEST_CASE_FIXTURE(LocalStorageTableFixture, "storage limits")
         REQUIRE(table.top_var_index() == max_var_index + 1);
         make_var(VarType::INT);
         fail_to_make_storage_table();
+        CHECK(consume_diag().descriptor
+              == &gta3sc::codegen::diag::storage_overflow);
     }
 
     SUBCASE("storage is limited by maximum text label variables")
@@ -226,6 +237,8 @@ TEST_CASE_FIXTURE(LocalStorageTableFixture, "storage limits")
         REQUIRE(table.top_var_index() == max_var_index - 1 + 2);
         make_var(VarType::INT);
         fail_to_make_storage_table();
+        CHECK(consume_diag().descriptor
+              == &gta3sc::codegen::diag::storage_overflow);
     }
 }
 
@@ -250,6 +263,8 @@ TEST_CASE_FIXTURE(LocalStorageTableFixture, "storage limits with arrays")
     {
         make_var(VarType::INT, max_num_int_vars + 1);
         fail_to_make_storage_table();
+        CHECK(consume_diag().descriptor
+              == &gta3sc::codegen::diag::storage_overflow);
     }
 
     SUBCASE("can make float array with index size of maximum float variables")
@@ -265,6 +280,8 @@ TEST_CASE_FIXTURE(LocalStorageTableFixture, "storage limits with arrays")
     {
         make_var(VarType::FLOAT, max_num_float_vars + 1);
         fail_to_make_storage_table();
+        CHECK(consume_diag().descriptor
+              == &gta3sc::codegen::diag::storage_overflow);
     }
 
     SUBCASE("can make text label array with index size of maximum text label "
@@ -282,6 +299,8 @@ TEST_CASE_FIXTURE(LocalStorageTableFixture, "storage limits with arrays")
     {
         make_var(VarType::TEXT_LABEL, max_num_text_label_vars + 1);
         fail_to_make_storage_table();
+        CHECK(consume_diag().descriptor
+              == &gta3sc::codegen::diag::storage_overflow);
     }
 }
 
@@ -294,6 +313,8 @@ TEST_CASE_FIXTURE(LocalStorageTableFixture,
     make_storage_table(options);
     make_var(VarType::INT);
     fail_to_make_storage_table(options);
+    CHECK(consume_diag().descriptor
+          == &gta3sc::codegen::diag::storage_overflow);
 }
 
 TEST_CASE_FIXTURE(LocalStorageTableFixture, "storage with one index")
@@ -308,6 +329,8 @@ TEST_CASE_FIXTURE(LocalStorageTableFixture, "storage with one index")
         make_storage_table(options);
         make_var(VarType::INT);
         fail_to_make_storage_table(options);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::codegen::diag::storage_overflow);
     }
 
     SUBCASE("can make one float var")
@@ -316,12 +339,16 @@ TEST_CASE_FIXTURE(LocalStorageTableFixture, "storage with one index")
         make_storage_table(options);
         make_var(VarType::FLOAT);
         fail_to_make_storage_table(options);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::codegen::diag::storage_overflow);
     }
 
     SUBCASE("cannot make text label var")
     {
         make_var(VarType::TEXT_LABEL);
         fail_to_make_storage_table(options);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::codegen::diag::storage_overflow);
     }
 }
 
@@ -377,6 +404,8 @@ TEST_CASE_FIXTURE(LocalStorageTableFixture, "storage with timers")
                 == first_storage_index + 1); // doesn't include timer
         make_var(VarType::INT);
         fail_to_make_storage_table(options);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::codegen::diag::storage_overflow);
     }
 
     SUBCASE("timers are allocated to the option's indicated index")
@@ -441,6 +470,53 @@ TEST_CASE_FIXTURE(LocalStorageTableFixture, "storage with timers")
         REQUIRE(table.var_index(timera) == first_storage_index);
         REQUIRE(table.top_var_index()
                 == first_storage_index); // doesn't include timer
+    }
+}
+
+TEST_CASE_FIXTURE(StorageTableFixture, "global variable storage overflow")
+{
+    StorageTable::Options options;
+    options.max_var_storage_index = 3; // first=2, max=3: two slots
+
+    make_var(SymbolTable::global_scope, VarType::INT);
+    make_var(SymbolTable::global_scope, VarType::INT);
+
+    SUBCASE("exactly at limit succeeds")
+    {
+        make_storage_table(options);
+    }
+
+    SUBCASE("one over limit fails")
+    {
+        make_var(SymbolTable::global_scope, VarType::INT);
+        fail_to_make_storage_table(options);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::codegen::diag::storage_overflow);
+    }
+}
+
+TEST_CASE_FIXTURE(StorageTableFixture, "local variable storage overflow")
+{
+    StorageTable::Options options;
+    options.max_lvar_storage_index = 1; // first=0, max=1: two slots
+    options.timers[0] = std::nullopt;
+    options.timers[1] = std::nullopt;
+
+    const auto scope = make_scope();
+    make_var(scope, VarType::INT);
+    make_var(scope, VarType::INT);
+
+    SUBCASE("exactly at limit succeeds")
+    {
+        make_storage_table(options);
+    }
+
+    SUBCASE("one over limit fails")
+    {
+        make_var(scope, VarType::INT);
+        fail_to_make_storage_table(options);
+        CHECK(consume_diag().descriptor
+              == &gta3sc::codegen::diag::storage_overflow);
     }
 }
 

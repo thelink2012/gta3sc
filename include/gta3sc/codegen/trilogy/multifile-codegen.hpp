@@ -57,15 +57,18 @@ public:
 
     ~MultifileCodeGen() noexcept = default;
 
+    /// Returns true if any error was reported during generation.
+    [[nodiscard]] auto has_error() const noexcept -> bool;
+
     /// Generates headers and bytecode for a list of instructions.
     ///
     /// Behaves as if by calling \ref compute_header_stubs, followed by
     /// \ref generate_next_file for each file in the IR, and finally
     /// \ref generate_headers to fill the header data.
     ///
-    /// \returns whether generation was successful. Recoverable errors are
-    /// ignored and reported to the diagnostic handler. Returns false only
-    /// for unrecoverable errors.
+    /// All errors are reported to the diagnostic handler. Generation
+    /// continues after recoverable errors to collect as many diagnostics
+    /// as possible. Returns false if any error was reported.
     bool generate(const LinkedIR<SemaIR>& ir, RelocationTable& reloc_table,
                   std::vector<std::byte>& output);
 
@@ -118,9 +121,9 @@ public:
     /// \param reloc_table where to output relocation information to.
     /// \param output the output vector to fill with bytecode.
     ///
-    /// \returns a `NextFile` describing the next file to be generated or
-    /// `std::nullopt` in case of an unrecoverable error. Please check
-    /// the diagnostic handler for all errors.
+    /// \returns a `NextFile` describing the next file to be generated, or
+    /// `std::nullopt` in case of an unrecoverable error. Use \ref has_error
+    /// to check whether any recoverable error was reported during generation.
     auto generate_next_file(const SymbolTable::File& file,
                             LinkedIR<SemaIR>::const_iterator next_ir,
                             LinkedIR<SemaIR>::const_iterator max_ir,
@@ -152,6 +155,9 @@ public:
     };
 
 private:
+    auto report(FileRange source,
+                const DiagnosticDescriptor& message) -> Diagnostic::Builder;
+
     auto detect_file_label(const SemaIR& line) -> const SymbolTable::File*;
 
     auto global_var_header_size() const -> uint32_t;
@@ -182,6 +188,7 @@ private:
     RelocationTable::AbsoluteOffset main_segment_size{};
     RelocationTable::AbsoluteOffset largest_mission_script_size{};
     bool computed_header_size{};
+    bool m_has_error{};
 };
 } // namespace gta3sc::codegen::trilogy
 

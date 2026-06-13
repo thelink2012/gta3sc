@@ -52,7 +52,7 @@ auto MultifileCodeGen::generate(const LinkedIR<SemaIR>& ir,
     if(!generate_headers(reloc_table, output))
         return false;
 
-    return true;
+    return !m_has_error;
 }
 
 auto MultifileCodeGen::compute_header_stubs()
@@ -169,7 +169,7 @@ bool MultifileCodeGen::generate_used_object_header(
                     0, max_used_object_name_without_terminator);
 
             has_error = true;
-            diag->report(used_object_source, diag::used_object_name_too_long);
+            report(used_object_source, diag::used_object_name_too_long);
         }
 
         emitter.emit_raw_bytes(used_object_name.begin(), used_object_name.end(),
@@ -269,6 +269,8 @@ auto MultifileCodeGen::generate_next_file(
         if(auto result_it = codegen.generate(*ir, reloc_table, output_iter);
            result_it)
             output_iter = *result_it;
+        else
+            this->m_has_error = true;
 
         // TODO should we check for overflow? in CodeGen maybe?
         current_multifile_offset = codegen.absolute_offset();
@@ -284,6 +286,19 @@ auto MultifileCodeGen::generate_next_file(
                                                        - offset_before_script);
 
     return {result};
+}
+
+auto MultifileCodeGen::has_error() const noexcept -> bool
+{
+    return m_has_error;
+}
+
+auto MultifileCodeGen::report(FileRange source,
+                              const DiagnosticDescriptor& message)
+        -> Diagnostic::Builder
+{
+    this->m_has_error = true;
+    return diag->report(source, message);
 }
 
 auto MultifileCodeGen::detect_file_label(const SemaIR& line)

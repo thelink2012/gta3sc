@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <gta3sc/diagnostics.hpp>
 #include <gta3sc/ir/symbol-table.hpp>
 #include <vector>
 
@@ -49,11 +50,12 @@ public:
     /// symbol table.
     ///
     /// Returns the storage table or `std::nullopt` in case not enough storage
-    /// is available for the given variables.
-    [[nodiscard]] static auto from_symbols(const SymbolTable& symtable,
-                                           SymbolTable::ScopeId scope_id,
-                                           const Options& options) noexcept
-            -> std::optional<LocalStorageTable>;
+    /// is available for the given variables. In that case, a diagnostic is
+    /// reported to `diag`.
+    [[nodiscard]] static auto
+    from_symbols(const SymbolTable& symtable, SymbolTable::ScopeId scope_id,
+                 const Options& options,
+                 DiagnosticHandler& diag) -> std::optional<LocalStorageTable>;
 
     /// Returns the index for the given variable.
     ///
@@ -118,10 +120,11 @@ public:
     /// the given symbol table.
     ///
     /// Returns the storage table or `std::nullopt` in case not enough
-    /// storage is available for the given variables.
-    [[nodiscard]] static auto from_symbols(const SymbolTable& symtable,
-                                           const Options& options) noexcept
-            -> std::optional<StorageTable>;
+    /// storage is available for the given variables. In that case, a
+    /// diagnostic is reported to `diag`.
+    [[nodiscard]] static auto
+    from_symbols(const SymbolTable& symtable, const Options& options,
+                 DiagnosticHandler& diag) -> std::optional<StorageTable>;
 
     /// Returns the index for the given variable.
     ///
@@ -145,3 +148,8 @@ private:
     std::vector<LocalStorageTable> table_for_scopes;
 };
 } // namespace gta3sc::codegen
+
+namespace gta3sc::codegen::diag
+{
+extern const DiagnosticDescriptor storage_overflow;
+} // namespace gta3sc::codegen::diag
