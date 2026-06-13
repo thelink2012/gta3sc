@@ -105,7 +105,117 @@ TEST_CASE_FIXTURE(CompilationFixture, "compile - sema phase failure")
           == &gta3sc::syntax::diag::undefined_command);
 }
 
-// TODO: add lowering test cases here when the lowering pass is implemented
+TEST_CASE_FIXTURE(CompilationFixture,
+                  "compile - pre-sema lowering - REPEAT stmt lowered")
+{
+    CHECK(compile_script("VAR_INT x\n"
+                         "REPEAT 3 x\n"
+                         "    WAIT 0\n"
+                         "ENDREPEAT\n"));
+    CHECK(diags.empty());
+}
+
+TEST_CASE_FIXTURE(CompilationFixture,
+                  "compile - post-sema lowering - IF stmt lowered")
+{
+    CHECK(compile_script("IF NOT WAIT 0\n"
+                         "    WAIT 0\n"
+                         "ENDIF\n"));
+    CHECK(diags.empty());
+}
+
+TEST_CASE_FIXTURE(CompilationFixture,
+                  "compile - post-sema lowering - WHILE stmt lowered")
+{
+    CHECK(compile_script("WHILE NOT WAIT 0\n"
+                         "    WAIT 0\n"
+                         "ENDWHILE\n"));
+    CHECK(diags.empty());
+}
+
+TEST_CASE_FIXTURE(CompilationFixture,
+                  "compile - post-sema lowering - scope blocks compile")
+{
+    CHECK(compile_script("{\n"
+                         "    WAIT 0\n"
+                         "}\n"));
+    CHECK(diags.empty());
+}
+
+TEST_CASE_FIXTURE(CompilationFixture,
+                  "compile - post-sema lowering - var decls compile")
+{
+    CHECK(compile_script("VAR_INT x\n"
+                         "WAIT 0\n"));
+    CHECK(diags.empty());
+}
+
+TEST_CASE_FIXTURE(CompilationFixture,
+                  "compile - post-sema lowering - stats args rewritten")
+{
+    // Each subcase verifies that a StatsRewriter actually fires by compiling
+    // two structurally identical scripts that differ only in the stats
+    // initializer argument: one uses the placeholder 0 (which the rewriter
+    // must replace with the real count) and one hardcodes the expected count
+    // directly (no rewrite needed).  Equal output bytes prove the rewrite
+    // substituted the correct value.
+
+    SUBCASE("collectable1_total")
+    {
+        std::vector<std::byte> via_placeholder, via_direct;
+        REQUIRE(compile_script("CREATE_COLLECTABLE1 1.0 2.0 3.0\n"
+                               "SET_COLLECTABLE1_TOTAL 0\n"
+                               "WAIT 0\n",
+                               via_placeholder));
+        REQUIRE(compile_script("CREATE_COLLECTABLE1 1.0 2.0 3.0\n"
+                               "SET_COLLECTABLE1_TOTAL 1\n"
+                               "WAIT 0\n",
+                               via_direct));
+        CHECK(via_placeholder == via_direct);
+    }
+
+    SUBCASE("progress_total")
+    {
+        std::vector<std::byte> via_placeholder, via_direct;
+        REQUIRE(compile_script("PLAYER_MADE_PROGRESS 5\n"
+                               "SET_PROGRESS_TOTAL 0\n"
+                               "WAIT 0\n",
+                               via_placeholder));
+        REQUIRE(compile_script("PLAYER_MADE_PROGRESS 5\n"
+                               "SET_PROGRESS_TOTAL 5\n"
+                               "WAIT 0\n",
+                               via_direct));
+        CHECK(via_placeholder == via_direct);
+    }
+
+    SUBCASE("mission_total")
+    {
+        std::vector<std::byte> via_placeholder, via_direct;
+        REQUIRE(compile_script("REGISTER_ODDJOB_MISSION_PASSED\n"
+                               "SET_TOTAL_NUMBER_OF_MISSIONS 0\n"
+                               "WAIT 0\n",
+                               via_placeholder));
+        REQUIRE(compile_script("REGISTER_ODDJOB_MISSION_PASSED\n"
+                               "SET_TOTAL_NUMBER_OF_MISSIONS 1\n"
+                               "WAIT 0\n",
+                               via_direct));
+        CHECK(via_placeholder == via_direct);
+    }
+
+    SUBCASE("mission_respect_total")
+    {
+        std::vector<std::byte> via_placeholder, via_direct;
+        REQUIRE(compile_script("AWARD_PLAYER_MISSION_RESPECT 7\n"
+                               "SET_MISSION_RESPECT_TOTAL 0\n"
+                               "WAIT 0\n",
+                               via_placeholder));
+        REQUIRE(compile_script("AWARD_PLAYER_MISSION_RESPECT 7\n"
+                               "SET_MISSION_RESPECT_TOTAL 7\n"
+                               "WAIT 0\n",
+                               via_direct));
+        CHECK(via_placeholder == via_direct);
+    }
+}
 
 TEST_CASE_FIXTURE(CompilationFixture,
                   "compile - codegen phase failure - local storage overflow")

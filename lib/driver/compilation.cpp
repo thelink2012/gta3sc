@@ -79,8 +79,11 @@ auto Compilation::lower(LinkedIR<ParserIR> ir)
     syntax::MissionStmtRewriter mission_rewriter(parser_ir_arena.get());
     ir = apply_rewriter(std::move(ir), mission_rewriter);
 
-    util::NameGenerator namegen("LOWER_");
-    syntax::RepeatStmtRewriter repeat_rewriter(namegen, parser_ir_arena.get());
+    // Identifiers can never start with "_" so we use them to avoid collisions
+    // between synthetic labels and source code ones.
+    util::NameGenerator repeat_namegen("_REPEAT_");
+    syntax::RepeatStmtRewriter repeat_rewriter(repeat_namegen,
+                                               parser_ir_arena.get());
     return apply_rewriter(std::move(ir), repeat_rewriter);
 }
 
@@ -94,14 +97,16 @@ auto Compilation::sema(LinkedIR<ParserIR> input_ir)
 
 auto Compilation::lower(LinkedIR<SemaIR> ir) -> std::optional<LinkedIR<SemaIR>>
 {
-    util::NameGenerator namegen("LOWER_");
-
-    syntax::IfStmtRewriter if_rewriter(*command_table, symbol_table, namegen,
+    // See comment in lower(LinkedIR<ParserIR>) regarding "_" prefix.
+    util::NameGenerator if_namegen("_IF_");
+    syntax::IfStmtRewriter if_rewriter(*command_table, symbol_table, if_namegen,
                                        sema_ir_arena.get());
     ir = apply_rewriter(std::move(ir), if_rewriter);
 
-    syntax::WhileStmtRewriter while_rewriter(*command_table, symbol_table,
-                                             namegen, sema_ir_arena.get());
+    // See comment in lower(LinkedIR<ParserIR>) regarding "_" prefix.
+    util::NameGenerator while_namegen("_WHILE_");
+    syntax::WhileStmtRewriter while_rewriter(
+            *command_table, symbol_table, while_namegen, sema_ir_arena.get());
     ir = apply_rewriter(std::move(ir), while_rewriter);
 
     syntax::ScopeRemover scope_rewriter(*command_table, sema_ir_arena.get());
@@ -193,3 +198,22 @@ bool Compilation::compile(Result result)
     return true;
 }
 } // namespace gta3sc::driver
+
+// TODO maybe in namegen we could use the same names as miss2?
+
+// TODO improve relocation so its done in steps i.e.
+//   first gen + relocate main segment
+//   then gen + relocate each mission individually
+//   ...
+//   on each step discard the registered fixups in the reloc table.
+//   this will save memory.
+//   needs to improve the Relocator interface for this.
+
+// TODO add AbstractCompilation -> Compilation
+//                              -> DecoratedCompilation -> ...
+//    maybe I'll need to think about a pipeline and subinterfaces
+//    like analyzer (where I only need the IR as output, not codegen)
+//    think about it further
+
+// TODO the output interface could be improved to allow for the output
+//      to be written in steps instead of a entire std::vector<std::byte>
