@@ -23,7 +23,7 @@ class Parser
 {
 public:
     /// \param scanner the scanner to consume tokens from.
-    /// \param arena the arena that should be used to allocate IR in.
+    /// \param allocator the arena that should be used to allocate IR in.
     explicit Parser(Scanner scanner, ArenaAllocator<> allocator) noexcept :
         scanner(std::move(scanner)), allocator(allocator)
     {}

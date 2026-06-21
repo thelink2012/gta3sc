@@ -1,6 +1,7 @@
 #include "common-codegen-fixture.hpp"
 #include <concepts>
 #include <doctest/doctest.h>
+#include <gta3sc/codegen/trilogy/codegen.hpp>
 #include <gta3sc/codegen/trilogy/emitter.hpp>
 #include <gta3sc/codegen/trilogy/multifile-codegen.hpp>
 #include <gta3sc/ir/linked-ir.hpp>
@@ -92,6 +93,7 @@ protected:
         MultifileCodeGen gen(symtable, make_storage_table(), diagman);
         std::vector<std::byte> output;
         REQUIRE_FALSE(gen.generate(ir, reloc_table, output));
+        CHECK(gen.has_error());
     }
 
     auto compute_header_size() -> RelocationTable::AbsoluteOffset
@@ -430,4 +432,17 @@ TEST_CASE_FIXTURE(MultifileCodeGenFixture, "used object name length boundary")
         REQUIRE(consume_diag().descriptor
                 == &gta3sc::codegen::trilogy::diag::used_object_name_too_long);
     }
+}
+
+TEST_CASE_FIXTURE(MultifileCodeGenFixture, "generate tracks codegen failures")
+{
+    const auto& bad_command = find_command("COMMAND_WITHOUT_ID");
+    const auto& main_label = make_file_label(FileType::main, "MAIN.SC");
+
+    fail_to_generate_code(LinkedIR<SemaIR>{
+            SemaIR::Builder(&arena).label(&main_label).build(),
+            SemaIR::Builder(&arena).command(bad_command).build()});
+
+    REQUIRE(consume_diag().descriptor
+            == &gta3sc::codegen::diag::target_does_not_support_command);
 }

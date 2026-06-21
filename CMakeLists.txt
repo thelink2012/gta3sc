@@ -43,6 +43,7 @@ include(CTest)
 
 add_subdirectory(thirdparty)
 add_subdirectory(lib)
+add_subdirectory(src)
 if(BUILD_TESTING)
   enable_testing()
   add_subdirectory(unittest)

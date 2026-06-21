@@ -87,9 +87,12 @@ private:
         add_command(builder, "GOTO", {ParamDef{ParamType::LABEL}});
         add_command(builder, "GOSUB", {ParamDef{ParamType::LABEL}});
         add_command(builder, "RETURN", {});
+        add_command(builder, "TERMINATE_THIS_SCRIPT", {});
         add_command(builder, "SCRIPT_NAME", {ParamDef{ParamType::TEXT_LABEL}});
         add_command(builder, "PRINT_HELP", {ParamDef{ParamType::TEXT_LABEL}});
         add_command(builder, "LAUNCH_MISSION", {ParamDef{ParamType::LABEL}});
+        add_command(builder, "GOSUB_FILE",
+                    {ParamDef{ParamType::LABEL}, ParamDef{ParamType::LABEL}});
         add_command(builder, "LOAD_AND_LAUNCH_MISSION",
                     {ParamDef{ParamType::LABEL}});
         add_command(builder, "LOAD_AND_LAUNCH_MISSION_INTERNAL",
@@ -282,6 +285,17 @@ private:
                      ParamDef{ParamType::INPUT_FLOAT}});
         add_command(builder, "SET_COLLECTABLE1_TOTAL",
                     {ParamDef{ParamType::INPUT_INT}});
+
+        add_command(builder, "ADD_VAL_TO_INT_VAR",
+                    {ParamDef{ParamType::VAR_INT}, ParamDef{ParamType::INT}});
+        add_command(builder, "IS_INT_VAR_GREATER_OR_EQUAL_TO_NUMBER",
+                    {ParamDef{ParamType::VAR_INT}, ParamDef{ParamType::INT}});
+
+        add_alternator(builder, "ADD_THING_TO_THING",
+                       {builder.find_command("ADD_VAL_TO_INT_VAR")});
+        add_alternator(builder, "IS_THING_GREATER_OR_EQUAL_TO_THING",
+                       {builder.find_command(
+                               "IS_INT_VAR_GREATER_OR_EQUAL_TO_NUMBER")});
         add_command(builder, "PLAYER_MADE_PROGRESS",
                     {ParamDef{ParamType::INPUT_INT}});
         add_command(builder, "SET_PROGRESS_TOTAL", {ParamDef{ParamType::INT}});
@@ -297,8 +311,15 @@ private:
 
         set_command_id(builder, "WAIT", 1);
         set_command_id(builder, "GOTO", 2);
+        set_command_id(builder, "ANDOR", 214);
+        set_command_id(builder, "GOTO_IF_FALSE", 77);
+        set_command_id(builder, "GOTO_IF_TRUE", 76);
+        set_command_id(builder, "TERMINATE_THIS_SCRIPT", 78);
         set_command_id(builder, "START_NEW_SCRIPT", 79);
         set_command_id(builder, "LAUNCH_MISSION", 215);
+        set_command_id(builder, "GOSUB_FILE", 717);
+        set_command_id(builder, "LOAD_AND_LAUNCH_MISSION", 1046);
+        set_command_id(builder, "LOAD_AND_LAUNCH_MISSION_INTERNAL", 1047);
         set_command_id(builder, "DO_FADE", 362);
         set_command_id(builder, "SET_TIME_SCALE", 349);
         set_command_id(builder, "PRINT_HELP", 997);
@@ -307,6 +328,18 @@ private:
         set_command_id(builder, "RETURN", 81);
         set_command_id(builder, "FLASH_RADAR_BLIP", 1000, false);
         set_command_id(builder, "COMMAND_WITHOUT_ID", std::nullopt, true);
+        set_command_id(builder, "SET_VAR_INT", 4);
+        set_command_id(builder, "ADD_VAL_TO_INT_VAR", 8);
+        set_command_id(builder, "IS_INT_VAR_GREATER_OR_EQUAL_TO_NUMBER", 40);
+        set_command_id(builder, "CREATE_COLLECTABLE1", 748);
+        set_command_id(builder, "SET_COLLECTABLE1_TOTAL", 749);
+        set_command_id(builder, "PLAYER_MADE_PROGRESS", 780);
+        set_command_id(builder, "SET_PROGRESS_TOTAL", 781);
+        set_command_id(builder, "REGISTER_MISSION_PASSED", 792);
+        set_command_id(builder, "SET_TOTAL_NUMBER_OF_MISSIONS", 1068);
+        set_command_id(builder, "REGISTER_ODDJOB_MISSION_PASSED", 1429);
+        set_command_id(builder, "SET_MISSION_RESPECT_TOTAL", 2455);
+        set_command_id(builder, "AWARD_PLAYER_MISSION_RESPECT", 2456);
 
         return std::move(builder).build();
     }

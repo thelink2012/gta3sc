@@ -1,5 +1,13 @@
 #include <functional>
 #include <gta3sc/codegen/storage-table.hpp>
+#include <gta3sc/diagnostics.hpp>
+
+namespace gta3sc::codegen::diag
+{
+const DiagnosticDescriptor storage_overflow(DiagnosticSeverity::error,
+                                                  "Variable storage overflow",
+                                                  "TODO");
+} // namespace gta3sc::codegen::diag
 
 namespace gta3sc::codegen
 {
@@ -53,7 +61,8 @@ auto LocalStorageTable::top_var_index() const noexcept -> IndexType
 
 auto LocalStorageTable::from_symbols(
         const SymbolTable& symtable, SymbolTable::ScopeId scope_id,
-        const Options& options) noexcept -> std::optional<LocalStorageTable>
+        const Options& options,
+        DiagnosticHandler& diag) -> std::optional<LocalStorageTable>
 {
     LocalStorageTable storage;
 
@@ -99,7 +108,10 @@ auto LocalStorageTable::from_symbols(
 
             current_index += num_indices_for_var(var);
             if(current_index > max_var_index + 1)
+            {
+                diag.report(var.source(), diag::storage_overflow);
                 return std::nullopt;
+            }
         }
     }
 
@@ -127,7 +139,7 @@ auto StorageTable::top_var_index(SymbolTable::ScopeId scope) const noexcept
 }
 
 auto StorageTable::from_symbols(const SymbolTable& symtable,
-                                const Options& options) noexcept
+                                const Options& options, DiagnosticHandler& diag)
         -> std::optional<StorageTable>
 {
     StorageTable storage;
@@ -138,7 +150,8 @@ auto StorageTable::from_symbols(const SymbolTable& symtable,
         const SymbolTable::ScopeId scope_id{i};
 
         if(auto local_table = LocalStorageTable::from_symbols(
-                   symtable, scope_id, options_for_scope(scope_id, options));
+                   symtable, scope_id, options_for_scope(scope_id, options),
+                   diag);
            local_table)
         {
             storage.table_for_scopes.emplace_back(std::move(*local_table));

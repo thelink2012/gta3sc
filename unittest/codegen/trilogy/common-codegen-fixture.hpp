@@ -74,7 +74,8 @@ protected:
     auto make_storage_table() -> gta3sc::codegen::StorageTable
     {
         return gta3sc::codegen::StorageTable::from_symbols(
-                       symtable, gta3sc::codegen::StorageTable::Options())
+                       symtable, gta3sc::codegen::StorageTable::Options(),
+                       diagman)
                 .value();
     }
 
