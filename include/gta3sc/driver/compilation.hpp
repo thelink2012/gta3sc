@@ -69,9 +69,9 @@ private:
 
     /// Lowers high-level parser IR constructs into low-level ones.
     ///
-    /// Constructs all IR objects in \ref parser_ir_arena and the symbol table
-    /// objects in \ref symbol_arena.
-    auto lower(LinkedIR<ParserIR> ir) -> std::optional<LinkedIR<ParserIR>>;
+    /// Constructs replacement IR objects in \ref parser_ir_arena and
+    /// \ref symbol_arena.
+    auto lower_parser(LinkedIR<ParserIR> ir) -> LinkedIR<ParserIR>;
 
     /// Validates the semantics of the parser IR and produces a sema IR.
     ///
@@ -87,9 +87,9 @@ private:
 
     /// Lowers high-level sema IR constructs into low-level ones.
     ///
-    /// Constructs all IR objects in \ref sema_ir_arena and the symbol table
-    /// objects in \ref symbol_arena.
-    auto lower(LinkedIR<SemaIR> ir) -> std::optional<LinkedIR<SemaIR>>;
+    /// Constructs replacement IR objects in \ref sema_ir_arena and
+    /// \ref symbol_arena.
+    auto lower_sema(LinkedIR<SemaIR> ir) -> LinkedIR<SemaIR>;
 
     /// Code generates the sema IR into a binary stream.
     ///

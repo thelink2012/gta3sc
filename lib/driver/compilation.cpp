@@ -1,4 +1,3 @@
-#include <array>
 #include <gta3sc/codegen/relocation-table.hpp>
 #include <gta3sc/codegen/relocator.hpp>
 #include <gta3sc/codegen/storage-table.hpp>
@@ -7,6 +6,7 @@
 #include <gta3sc/command-table.hpp>
 #include <gta3sc/diagnostics.hpp>
 #include <gta3sc/driver/compilation.hpp>
+#include <gta3sc/ir/instruction-rewriter.hpp>
 #include <gta3sc/model-table.hpp>
 #include <gta3sc/source-manager.hpp>
 #include <gta3sc/syntax/lowering/if-stmt-rewriter.hpp>
@@ -25,32 +25,6 @@
 
 namespace gta3sc::driver
 {
-namespace
-{
-template<typename IR, typename Rewriter>
-auto apply_rewriter(LinkedIR<IR>&& ir, Rewriter& rewriter) -> LinkedIR<IR>
-{
-    LinkedIR<IR> result;
-    auto it = ir.begin();
-    while(it != ir.end())
-    {
-        if(auto rewrite = rewriter.visit(*it))
-        {
-            it = ir.erase(it);
-            if(!rewrite->empty())
-                result.splice_back(std::move(*rewrite));
-        }
-        else
-        {
-            auto& node = *it;
-            it = ir.erase(it);
-            result.push_back(node);
-        }
-    }
-    return result;
-}
-} // namespace
-
 Compilation::Compilation(const std::filesystem::path& input_file,
                          CommandTable& command_table, ModelTable& model_table,
                          SourceManager& source_manager,
@@ -73,18 +47,21 @@ auto Compilation::parse() -> std::optional<LinkedIR<ParserIR>>
     return parser.parse();
 }
 
-auto Compilation::lower(LinkedIR<ParserIR> ir)
-        -> std::optional<LinkedIR<ParserIR>>
+auto Compilation::lower_parser(LinkedIR<ParserIR> ir) -> LinkedIR<ParserIR>
 {
-    syntax::MissionStmtRewriter mission_rewriter(parser_ir_arena.get());
-    ir = apply_rewriter(std::move(ir), mission_rewriter);
+    using namespace gta3sc::syntax;
+    auto* arena = parser_ir_arena.get();
 
-    // Identifiers can never start with "_" so we use them to avoid collisions
-    // between synthetic labels and source code ones.
-    util::NameGenerator repeat_namegen("_REPEAT_");
-    syntax::RepeatStmtRewriter repeat_rewriter(repeat_namegen,
-                                               parser_ir_arena.get());
-    return apply_rewriter(std::move(ir), repeat_rewriter);
+    // Synthetic labels use a "@" prefix to avoid collisions with source
+    // identifiers, which can never start with "@".
+    util::NameGenerator repeat_namegen("@REPEAT_");
+
+    CompositeInstructionRewriter rewriter(
+            MissionStmtRewriter(arena),
+            RepeatStmtRewriter(repeat_namegen, arena));
+    rewriter.rewrite_each(ir);
+
+    return ir;
 }
 
 auto Compilation::sema(LinkedIR<ParserIR> input_ir)
@@ -95,44 +72,28 @@ auto Compilation::sema(LinkedIR<ParserIR> input_ir)
     return sema.validate();
 }
 
-auto Compilation::lower(LinkedIR<SemaIR> ir) -> std::optional<LinkedIR<SemaIR>>
+auto Compilation::lower_sema(LinkedIR<SemaIR> ir) -> LinkedIR<SemaIR>
 {
-    // See comment in lower(LinkedIR<ParserIR>) regarding "_" prefix.
-    util::NameGenerator if_namegen("_IF_");
-    syntax::IfStmtRewriter if_rewriter(*command_table, symbol_table, if_namegen,
-                                       sema_ir_arena.get());
-    ir = apply_rewriter(std::move(ir), if_rewriter);
+    using namespace gta3sc::syntax;
+    auto* arena = sema_ir_arena.get();
+    auto& commands = *command_table;
+    auto& symbols = symbol_table;
 
-    // See comment in lower(LinkedIR<ParserIR>) regarding "_" prefix.
-    util::NameGenerator while_namegen("_WHILE_");
-    syntax::WhileStmtRewriter while_rewriter(
-            *command_table, symbol_table, while_namegen, sema_ir_arena.get());
-    ir = apply_rewriter(std::move(ir), while_rewriter);
+    // Synthetic labels use a "@" prefix to avoid collisions with source
+    // identifiers, which can never start with "@".
+    util::NameGenerator if_namegen("@IF_");
+    util::NameGenerator while_namegen("@WHILE_");
 
-    syntax::ScopeRemover scope_rewriter(*command_table, sema_ir_arena.get());
-    ir = apply_rewriter(std::move(ir), scope_rewriter);
-
-    syntax::VarDeclRemover var_decl_rewriter(*command_table,
-                                             sema_ir_arena.get());
-    ir = apply_rewriter(std::move(ir), var_decl_rewriter);
-
-    syntax::LoadAndLaunchMissionRewriter load_and_launch_rewriter(
-            *command_table, sema_ir_arena.get());
-    ir = apply_rewriter(std::move(ir), load_and_launch_rewriter);
-
-    auto stats_rewriters = std::array{
-            syntax::StatsRewriter::for_collectable1_total(
-                    *command_table, symbol_table, sema_ir_arena.get()),
-            syntax::StatsRewriter::for_progress_total(
-                    *command_table, symbol_table, sema_ir_arena.get()),
-            syntax::StatsRewriter::for_mission_total(
-                    *command_table, symbol_table, sema_ir_arena.get()),
-            syntax::StatsRewriter::for_mission_respect_total(
-                    *command_table, symbol_table, sema_ir_arena.get()),
-    };
-
-    for(auto& stats_rewriter : stats_rewriters)
-        ir = apply_rewriter(std::move(ir), stats_rewriter);
+    CompositeInstructionRewriter rewriter(
+            IfStmtRewriter(commands, symbols, if_namegen, arena),
+            WhileStmtRewriter(commands, symbols, while_namegen, arena),
+            ScopeRemover(commands, arena), VarDeclRemover(commands, arena),
+            LoadAndLaunchMissionRewriter(commands, arena),
+            StatsRewriter::for_collectable1_total(commands, symbols, arena),
+            StatsRewriter::for_progress_total(commands, symbols, arena),
+            StatsRewriter::for_mission_total(commands, symbols, arena),
+            StatsRewriter::for_mission_respect_total(commands, symbols, arena));
+    rewriter.rewrite_each(ir);
 
     return ir;
 }
@@ -171,9 +132,7 @@ bool Compilation::compile(Result result)
     if(!parser_ir)
         return false;
 
-    parser_ir = lower(std::move(*parser_ir));
-    if(!parser_ir)
-        return false;
+    *parser_ir = lower_parser(std::move(*parser_ir));
 
     auto sema_ir = sema(std::move(*parser_ir));
     if(!sema_ir)
@@ -183,9 +142,7 @@ bool Compilation::compile(Result result)
     // parser IR into the sema scope in the previous step.
     parser_ir_arena->release();
 
-    sema_ir = lower(std::move(*sema_ir));
-    if(!sema_ir)
-        return false;
+    *sema_ir = lower_sema(std::move(*sema_ir));
 
     if(!codegen(std::move(*sema_ir), std::move(result)))
         return false;
