@@ -1,0 +1,83 @@
+
+- Infrastructure
+  - [ ] Fix CI/CD
+- Basic Infrastructure
+  - [x] File Pool
+  - [x] Diagnostics
+  - [x] Arena
+  - [ ] More fwd headers
+- Documentation
+  - [ ] Finish README.md
+  - [ ] Finish DESIGN.adoc
+- Compiler
+  - [x] Preprocessor
+  - [x] Scanner
+  - [x] Parser
+  - [x] Semantic Analyzer
+  - [x] Codegen
+  - [x] Multifile Parser
+  - [x] Multifile Codegen
+  - [x] Compiler Driver
+  - [x] Lowering
+- Decompiler 
+  - TODO (don't fill for now)
+- Config
+  - [x] Load command definitions from XMLs (V2)
+  - [x] Load models from DATA files
+  - [ ] Allow loading V1 command definition XMLs
+  - [x] Path Resolvers
+  - [ ] Migrate latest config enhancements from legacy to gta3sc-config
+- CLI
+  - [ ] Argument Parser
+  - [ ] Actions
+     - [ ] Compile
+     - [ ] Decompile
+     - [ ] TODO...
+  - [ ] TODO...
+  - [ ] AGENTS.md should know that to recompile CLI it should use `-target gta3sc-cli` not `--target gta3sc`
+- Diagnostics
+  - [ ] Parser should be able to accumulate errors
+  - [ ] Proper diagnostic messages for existing diagnostics
+  - [ ] Diagnostic message formatting to string
+  - [ ] DiagnosticBag?
+- Integration Tests (lit)
+   - [ ] Blocker: Needs decompiler (or use legacy decompiler)
+   - [ ] Blocker: Needs CLI
+   - [ ] Migrate lit tests from legacy to gta3sc-rewrite
+- Refactoring
+  - [ ] Large Files
+    - [ ] Split parser.cpp into smaller files
+    - [ ] Split parser unit tests into smaller files
+    - [ ] Split sema.cpp into smaller files
+    - [ ] Split sema unit tests into smaller files
+- GTA 3 Support
+  - [ ] Fix CRLF preprocessor/scanner handling
+  - [ ] MISSION_START...MISSION_END shape*
+  - [ ] Collision between variable names and string constants*
+  - [ ] START_NEW_SCRIPT label*
+  - [ ] GTA3 DEFAULTMODEL handling*
+  - [ ] Nested IF bug
+  - [ ] Model name vs. variable name collision*
+- GTA VC Support
+  - [ ] Proper levels loading*
+  - [ ] peek_expression_type leading whitespace bug
+  - [ ] SCM Header 0x6D identifier
+  - [ ] IEEE 754 Float Encoding
+  - [ ] Ambiguous constat names e.g. SNIPER*
+  - [ ] WHILTE NOT miss2 syntax bug*
+  - [ ] Support 'Main' rather than `main` directory name.
+  - [ ] Migrate latest config enhancements from legacy to gta3sc-config
+- CLEO Support
+  - [ ] CLEO Definitions in Config
+  - [ ] CLEO_CALL / CLEO_RETURN
+  - TODO...
+- GTA SA Support
+  - [ ] Streamed Scripts
+  - [ ] SWITCH
+  - [ ] CONST_INT
+  - TODO...
+- Language Extensions
+  - [ ] -frelax-not
+  - [ ] IFNOT / WHITENOT support without GOTO_IF_TRUE
+  - [ ] DUMP...ENDDUMP
+  - [ ] TODO...
