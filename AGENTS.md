@@ -10,6 +10,8 @@ The active integration branch is **`gta3sc-rewrite`**. The branch **`master`** h
 
 High-level design and rationale: see [`DESIGN.adoc`](DESIGN.adoc).
 
+Spec-Driven Development (write spec → human review → implement; concurrent worktrees for subtasks): see [`docs/sdd/`](docs/sdd/).
+
 ## Compiler pipeline
 
 Paths are relative to `include/gta3sc/` and `lib/` unless noted.
@@ -31,7 +33,7 @@ Paths are relative to `include/gta3sc/` and `lib/` unless noted.
 
 ## Implementation status
 
-**Present:** preprocessor, scanner, parser, multifile parser, semantic analysis, all planned lowering passes (ParserIR and SemaIR — see [`plans/all-lowering.md`](plans/all-lowering.md)), Trilogy codegen and emitter (including multifile codegen), config loading, model table, command table, symbol table, source manager, diagnostics, storage/relocation tables, arena allocator, intrusive list IR wiring, required-files visitor.
+**Present:** preprocessor, scanner, parser, multifile parser, semantic analysis, all planned lowering passes (ParserIR and SemaIR), Trilogy codegen and emitter (including multifile codegen), config loading, model table, command table, symbol table, source manager, diagnostics, storage/relocation tables, arena allocator, intrusive list IR wiring, required-files visitor.
 
 **Not done yet:** CLI under `src/`, compiler driver (wire parse → lowering → sema → lowering → codegen; no rewrite applicator or pass orchestration yet), lit/integration tests, install script.
 
