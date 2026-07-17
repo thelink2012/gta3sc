@@ -22,6 +22,7 @@ add_executable(gta3sc_unittest
     codegen/trilogy/emitter.cpp
     codegen/trilogy/codegen.cpp
     codegen/trilogy/multifile-codegen.cpp
+    config/config-path.cpp
     config/config-fixture.hpp
     config/config-alternator.cpp
     config/config-commands.cpp
@@ -38,9 +39,12 @@ add_executable(gta3sc_unittest
     filesystem/path-resolver/relative-path-resolver.cpp
     filesystem/path-resolver/relative-insensitive-path-resolver.cpp
     ir/instruction-rewriter.cpp
+    cli/option-parser.cpp
+    cli/run.cpp
+    cli/run-compile.cpp
 )
 target_compile_features(gta3sc_unittest PUBLIC cxx_std_26)
-target_link_libraries(gta3sc_unittest PRIVATE gta3sc gta3sc-config doctest_with_main)
+target_link_libraries(gta3sc_unittest PRIVATE gta3sc gta3sc-config gta3sc-cli doctest_with_main)
 
 doctest_discover_tests(gta3sc_unittest)
 

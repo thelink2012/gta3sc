@@ -12,6 +12,7 @@ add_library(gta3sc
   filesystem/resolver/script-path-resolver.cpp
   filesystem/resolver/relative-path-resolver.cpp
   filesystem/resolver/relative-insensitive-path-resolver.cpp
+  config/config-path.cpp
   config/models.cpp
   syntax/diagnostics.cpp
   syntax/preprocessor.cpp
@@ -49,3 +50,14 @@ add_library(gta3sc-config
 target_compile_features(gta3sc-config PUBLIC cxx_std_26)
 target_link_libraries(gta3sc-config gta3sc pugixml-static)
 target_compile_options(gta3sc-config PRIVATE ${GTA3SC_PEDANTIC_COMPILE_OPTIONS})
+
+add_library(gta3sc-cli
+  cli/option-parser.cpp
+  cli/run.cpp
+  cli/run-help.cpp
+  cli/run-version.cpp
+  cli/run-compile.cpp
+)
+target_compile_features(gta3sc-cli PUBLIC cxx_std_26)
+target_link_libraries(gta3sc-cli PUBLIC gta3sc gta3sc-config)
+target_compile_options(gta3sc-cli PRIVATE ${GTA3SC_PEDANTIC_COMPILE_OPTIONS})

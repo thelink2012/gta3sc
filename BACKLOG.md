@@ -28,13 +28,15 @@
   - [x] Path Resolvers
   - [ ] Migrate latest config enhancements from legacy to gta3sc-config
 - CLI
-  - [ ] Argument Parser
-  - [ ] Actions
-     - [ ] Compile
-     - [ ] Decompile
-     - [ ] TODO...
-  - [ ] TODO...
-  - [ ] AGENTS.md should know that to recompile CLI it should use `-target gta3sc-cli` not `--target gta3sc`
+  - [ ] Phase 1: `OptionParser` primitives (`gta3sc-cli-core` lib)
+  - [ ] Phase 2: subcommand router + `run` shell + generic `--help`/`--version`
+  - [ ] Phase 3: `run_compile` end-to-end + config-path discovery
+  - [ ] Phase 4: flag plumbing (storage opts, `--add-config`, `--datadir`/`--levelfile` models)
+  - [ ] Phase 5: `commandline.txt` recursive merge
+  - [ ] Phase 6: remaining subcommands (decompile stub, query-config-path, query-models) + integration tests
+  - [ ] Ship `commandline.txt` per game in the config submodule (Phase 5 prereq)
+  - [ ] Proper `--version` string via `project(gta3sc VERSION …)` + git-describe
+  - [ ] AGENTS.md should know that to recompile CLI it should use `--target gta3sc-cli` not `--target gta3sc
 - Diagnostics
   - [ ] Parser should be able to accumulate errors
   - [ ] Proper diagnostic messages for existing diagnostics

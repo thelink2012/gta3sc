@@ -246,6 +246,21 @@ TEST_CASE_FIXTURE(CodeEmitterFixture, "emit opcode from command_id")
 }
 ```
 
+**Grouping** — wrap related cases in `TEST_SUITE("api_or_layer")`. Name the suite after the API or test layer (e.g. `parse_compile_options`, `run_compile validation`).
+
+**Parameterized tests** — when test body is similar to several cases consider using `GENERATE`.
+
+```cpp
+auto args = GENERATE(std::vector{"-o"sv, "out.scm"sv},
+                     std::vector{"-oout.scm"sv});
+OptionParser parser{args};
+// …identical setup, call, and assertions…
+```
+
+Prefer `SUBCASE` when variants share setup but assert different outcomes/logic; prefer `GENERATE` when setup and assertions are identical and only parameters differ (no branching necessary).
+
+**Layer and scope** — match test depth to the unit under test; do not repeat the same assertion at multiple layers.
+
 **Don't over-comment.** Clear test code doesn't need narration.
 
 **File size** — keep unit test `.cpp` files small enough to fit comfortably in context (~500 lines is a practical ceiling; split earlier if a file is growing broad). If one source file would produce a ~1000-line test file, split into two or more unit test `.cpp` files and register each in `unittest/CMakeLists.txt`.
