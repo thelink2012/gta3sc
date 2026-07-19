@@ -52,6 +52,7 @@
     - [ ] Split parser unit tests into smaller files
     - [ ] Split sema.cpp into smaller files
     - [ ] Split sema unit tests into smaller files
+  - [ ] ir/ -> syntax/ir & disasm/ir?
 - GTA 3 Support
   - [ ] Fix CRLF preprocessor/scanner handling
   - [ ] MISSION_START...MISSION_END shape*
