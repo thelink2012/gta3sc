@@ -240,7 +240,7 @@ auto Script::scan_subdir() const -> Script::SubDir
 
     if(fs::exists(subdir) && fs::is_directory(subdir))
     {
-        for(auto& entry : fs::recursive_directory_iterator(subdir))
+        for(auto& entry : fs::recursive_directory_iterator(subdir, fs::directory_options::follow_directory_symlink))
         {
             auto filename = entry.path().filename().generic_u8string();
             output.emplace(std::move(filename), entry.path());
