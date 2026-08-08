@@ -7,6 +7,7 @@
 -fno-switch
 -fno-arrays
 -fno-const
+-fifnot
 -fno-scope-then-label
 -fno-underscore-idents
 -fno-streamed-scripts

@@ -805,6 +805,10 @@ void Script::annotate_tree(const SymTable& symbols, ProgramContext& program)
                 return false;
             }
 
+            case NodeType::IFNOT:
+                if(!program.opt.fifnot)
+                    program.error(node, "IFNOT not supported [-fifnot]");
+                [[fallthrough]];
             case NodeType::IF:
             {
                 traverse_condition_list(node.child(0));
@@ -817,6 +821,10 @@ void Script::annotate_tree(const SymTable& symbols, ProgramContext& program)
                 return false;
             }
 
+            case NodeType::WHILENOT:
+                if(!program.opt.fifnot)
+                    program.error(node, "WHILENOT not supported [-fifnot]");
+                [[fallthrough]];
             case NodeType::WHILE:
             {
                 traverse_condition_list(node.child(0));

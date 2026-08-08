@@ -12,6 +12,7 @@
 -fswitch
 -farrays
 -fconst
+-fno-ifnot
 -fscope-then-label
 -funderscore-idents
 -fstreamed-scripts

@@ -48,10 +48,12 @@ enum class Token
     OR,
     
     IF,
+    IFNOT,
     ELSE,
     ENDIF,
 
     WHILE,
+    WHILENOT,
     ENDWHILE,
 
     REPEAT,
@@ -124,8 +126,10 @@ enum class NodeType
     OR,
 
     IF,
+    IFNOT,
     ELSE,
     WHILE,
+    WHILENOT,
     REPEAT,
     SWITCH,
     CASE,

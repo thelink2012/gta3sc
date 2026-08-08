@@ -8881,8 +8881,8 @@
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
         <Arg Type="INT" Entity="CAR"/>
-        <Arg Type="INT"/>
         <Arg Type="INT" Desc="Time"/>
+        <Arg Type="INT"/>
       </Args>
     </Command>
     <Command ID="0x5cb" Name="TASK_ENTER_CAR_AS_DRIVER">

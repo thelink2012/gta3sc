@@ -2108,7 +2108,7 @@
         <Arg Type="INT" Ref="true" AllowConst="false" AllowLocalVar="false"/>
       </Args>
     </Command>
-    <Command ID="0x150" Name="DISPLAY_ONSCREEN_COUNTER" Supported="false">
+    <Command ID="0x150" Name="DISPLAY_ONSCREEN_COUNTER">
       <Args>
         <Arg Type="INT" Ref="true" AllowConst="false" AllowLocalVar="false"/>
         <Arg Type="INT" Enum="COUNTER_DISPLAY"/>
@@ -3564,7 +3564,7 @@
         <Arg Type="FLOAT" Desc="Z Coord"/>
         <Arg Type="FLOAT"/>
         <Arg Type="FLOAT"/>
-        <Arg Type="INT"/>
+        <Arg Type="INT" Enum="GARAGE"/>
         <Arg Type="INT" Out="true" Entity="GARAGE"/>
       </Args>
     </Command>
@@ -7237,7 +7237,7 @@
         <Arg Type="FLOAT" Desc="Z Coord" Out="true"/>
       </Args>
     </Command>
-    <Command ID="0x464" Name="ATTACH_CHAR_TO_CAR">
+    <Command ID="0x464" Name="ATTACH_CHAR_TO_CAR" Supported="false">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
         <Arg Type="INT" Entity="CAR"/>
@@ -7249,7 +7249,7 @@
         <Arg Type="INT" Enum="WEAPONTYPE"/>
       </Args>
     </Command>
-    <Command ID="0x465" Name="DETACH_CHAR_FROM_CAR">
+    <Command ID="0x465" Name="DETACH_CHAR_FROM_CAR" Supported="false">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
       </Args>
@@ -7353,7 +7353,7 @@
         <Arg Type="INT" Desc="Bool"/>
       </Args>
     </Command>
-    <Command ID="0x473" Name="LOCATE_CHAR_IN_CAR_OBJECT_2D" Supported="false">
+    <Command ID="0x473" Name="LOCATE_CHAR_IN_CAR_OBJECT_2D">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
         <Arg Type="INT" Entity="OBJECT"/>
@@ -7362,17 +7362,7 @@
         <Arg Type="INT" Desc="Bool"/>
       </Args>
     </Command>
-    <Command ID="0x474" Name="LOCATE_CHAR_ANY_MEANS_OBJECT_3D" Supported="false">
-      <Args>
-        <Arg Type="INT" Entity="CHAR"/>
-        <Arg Type="INT" Entity="OBJECT"/>
-        <Arg Type="FLOAT" Desc="X Radius"/>
-        <Arg Type="FLOAT" Desc="Y Radius"/>
-        <Arg Type="FLOAT" Desc="Z Radius"/>
-        <Arg Type="INT" Desc="Bool"/>
-      </Args>
-    </Command>
-    <Command ID="0x475" Name="LOCATE_CHAR_ON_FOOT_OBJECT_3D" Supported="false">
+    <Command ID="0x474" Name="LOCATE_CHAR_ANY_MEANS_OBJECT_3D">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
         <Arg Type="INT" Entity="OBJECT"/>
@@ -7382,7 +7372,17 @@
         <Arg Type="INT" Desc="Bool"/>
       </Args>
     </Command>
-    <Command ID="0x476" Name="LOCATE_CHAR_IN_CAR_OBJECT_3D" Supported="false">
+    <Command ID="0x475" Name="LOCATE_CHAR_ON_FOOT_OBJECT_3D">
+      <Args>
+        <Arg Type="INT" Entity="CHAR"/>
+        <Arg Type="INT" Entity="OBJECT"/>
+        <Arg Type="FLOAT" Desc="X Radius"/>
+        <Arg Type="FLOAT" Desc="Y Radius"/>
+        <Arg Type="FLOAT" Desc="Z Radius"/>
+        <Arg Type="INT" Desc="Bool"/>
+      </Args>
+    </Command>
+    <Command ID="0x476" Name="LOCATE_CHAR_IN_CAR_OBJECT_3D">
       <Args>
         <Arg Type="INT" Entity="CHAR"/>
         <Arg Type="INT" Entity="OBJECT"/>
@@ -7392,11 +7392,10 @@
         <Arg Type="INT" Desc="Bool"/>
       </Args>
     </Command>
-    <Command ID="0x477" Name="SET_CAR_TEMP_ACTION">
+    <Command ID="0x477" Name="SET_CAR_HANDBRAKE_TURN_LEFT">
       <Args>
         <Arg Type="INT" Entity="CAR"/>
-        <Arg Type="INT" Enum="TEMPACT"/>
-        <Arg Type="INT" Desc="Time"/>
+        <Arg Type="INT"/>
       </Args>
     </Command>
     <Command ID="0x478" Name="SET_CAR_HANDBRAKE_TURN_RIGHT">

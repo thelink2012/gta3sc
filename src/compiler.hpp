@@ -223,8 +223,10 @@ private:
     void compile_scope(const SyntaxTree& scope_node);
 
     void compile_if(const SyntaxTree& if_node);
+    void compile_ifnot(const SyntaxTree& ifnot_node);
 
     void compile_while(const SyntaxTree& while_node);
+    void compile_whilenot(const SyntaxTree& whilenot_node);
 
     void compile_repeat(const SyntaxTree& repeat_node);
 
@@ -248,7 +250,7 @@ private:
 
     void compile_condition(const SyntaxTree& node, bool not_flag = false);
 
-    void compile_conditions(const SyntaxTree& conds_node, const shared_ptr<Label>& else_ptr);
+    void compile_conditions(const SyntaxTree& conds_node, const shared_ptr<Label>& else_ptr, bool not_flag);
 
     void compile_dump(const SyntaxTree& node);
 

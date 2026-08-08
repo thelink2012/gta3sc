@@ -55,6 +55,7 @@ Commands::Commands(transparent_set<Command>&& commands_,
     this->cleo_return                   = find_command("CLEO_RETURN");
     this->terminate_this_custom_script  = find_command("TERMINATE_THIS_CUSTOM_SCRIPT");
     this->goto_                          = find_command("GOTO");
+    this->goto_if_true                  = find_command("GOTO_IF_TRUE");
     this->goto_if_false                 = find_command("GOTO_IF_FALSE");
     this->andor                         = find_command("ANDOR");
     this->save_string_to_debug_file     = find_command("SAVE_STRING_TO_DEBUG_FILE");

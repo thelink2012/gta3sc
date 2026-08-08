@@ -41,6 +41,7 @@ Language Options:
   -fswitch                 Enables the SWITCH statement.
   -farrays                 Enables the use of arrays.
   -fconst                  Enables the use of CONST_INT and CONST_FLOAT.
+  -fifnot                  Enables the use of IFNOT and WHILENOT.
   -ftext-label-vars        Enables VAR_TEXT_LABEL and VAR_TEXT_LABEL16.
   -fskip-cutscene          Enables the use of SKIP_CUTSCENE_START.
   -fscript-name-check      Checks for duplicate SCRIPT_NAMEs.
@@ -296,6 +297,10 @@ bool parse_args(char**& argv, fs::path& input, fs::path& output, DataInfo& data,
             else if(optflag(argv, "-fswitch", &flag))
             {
                 options.fswitch = flag;
+            }
+            else if(optflag(argv, "-fifnot", &flag))
+            {
+                options.fifnot = flag;
             }
             else if(optflag(argv, "-fbreak-continue", nullptr))
             {

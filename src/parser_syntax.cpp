@@ -986,18 +986,9 @@ static ParserResult parse_condition_list(ParserContext& parser, token_iterator b
         return std::make_pair(it, std::move(state));
 }
 
-
-/*
-    whileStatement
-        :	WHILE conditionList
-                statementList
-            ENDWHILE newLine
-        ->  ^(WHILE conditionList statementList)
-        ;
-*/
-static ParserResult parse_while_statement(ParserContext& parser, token_iterator begin, token_iterator end)
+static ParserResult parse_while_statement_internal(ParserContext& parser, token_iterator begin, token_iterator end, Token token_type, NodeType node_type)
 {
-    if(begin != end && begin->type == Token::WHILE)
+    if(begin != end && begin->type == token_type)
     {
         ParserState state = ParserSuccess(nullptr);
         ParserState conditions, statements;
@@ -1020,7 +1011,7 @@ static ParserResult parse_while_statement(ParserContext& parser, token_iterator 
 
         if(is<ParserSuccess>(state))
         {
-            shared_ptr<SyntaxTree> tree(new SyntaxTree(NodeType::WHILE, parser.instream, *begin));
+            shared_ptr<SyntaxTree> tree(new SyntaxTree(node_type, parser.instream, *begin));
             tree->add_child(get<ParserSuccess>(conditions).tree);
             tree->add_child(get<ParserSuccess>(statements).tree);
             return std::make_pair(it, ParserSuccess(std::move(tree)));
@@ -1031,6 +1022,32 @@ static ParserResult parse_while_statement(ParserContext& parser, token_iterator 
         }
     }
     return std::make_pair(end, make_error(ParserStatus::GiveUp, begin));
+}
+
+/*
+    whileStatement
+        :	WHILE conditionList
+                statementList
+            ENDWHILE newLine
+        ->  ^(WHILE conditionList statementList)
+        ;
+*/
+static ParserResult parse_while_statement(ParserContext& parser, token_iterator begin, token_iterator end)
+{
+    return parse_while_statement_internal(parser, begin, end, Token::WHILE, NodeType::WHILE);
+}
+
+/*
+    whilenotStatement
+        :	WHILENOT conditionList
+                statementList
+            ENDWHILE newLine
+        ->  ^(WHILENOT conditionList statementList)
+        ;
+*/
+static ParserResult parse_whilenot_statement(ParserContext& parser, token_iterator begin, token_iterator end)
+{
+    return parse_while_statement_internal(parser, begin, end, Token::WHILENOT, NodeType::WHILENOT);
 }
 
 /*
@@ -1187,19 +1204,9 @@ static ParserResult parse_switch_statement(ParserContext& parser, token_iterator
     }
 }
 
-/*
-    ifStatement
-        :	IF conditionList
-                statIf=statementList
-            (ELSE newLine
-                statElse=statementList)?
-            ENDIF newLine
-        ->	^(IF conditionList $statIf ^(ELSE $statElse)?)
-        ;
-*/
-static ParserResult parse_if_statement(ParserContext& parser, token_iterator begin, token_iterator end)
+static ParserResult parse_if_statement_internal(ParserContext& parser, token_iterator begin, token_iterator end, Token token_type, NodeType node_type)
 {
-    if(begin != end && begin->type == Token::IF)
+    if(begin != end && begin->type == token_type)
     {
         ParserState state = ParserSuccess(nullptr);
         ParserState           conditions;
@@ -1238,7 +1245,7 @@ static ParserResult parse_if_statement(ParserContext& parser, token_iterator beg
 
         if(is<ParserSuccess>(state))
         {
-            shared_ptr<SyntaxTree> tree(new SyntaxTree(NodeType::IF, parser.instream, *begin));
+            shared_ptr<SyntaxTree> tree(new SyntaxTree(node_type, parser.instream, *begin));
 
             tree->add_child(get<ParserSuccess>(conditions).tree);
             tree->add_child(get<ParserSuccess>(body_true).tree);
@@ -1258,6 +1265,36 @@ static ParserResult parse_if_statement(ParserContext& parser, token_iterator beg
         }
     }
     return std::make_pair(end, make_error(ParserStatus::GiveUp, begin));
+}
+
+/*
+    ifStatement
+        :	IF conditionList
+                statIf=statementList
+            (ELSE newLine
+                statElse=statementList)?
+            ENDIF newLine
+        ->	^(IF conditionList $statIf ^(ELSE $statElse)?)
+        ;
+*/
+static ParserResult parse_if_statement(ParserContext& parser, token_iterator begin, token_iterator end)
+{
+    return parse_if_statement_internal(parser, begin, end, Token::IF, NodeType::IF);
+}
+
+/*
+    ifnotStatement
+        :	IFNOT conditionList
+                statIf=statementList
+            (ELSE newLine
+                statElse=statementList)?
+            ENDIF newLine
+        ->	^(IFNOT conditionList $statIf ^(ELSE $statElse)?)
+        ;
+*/
+static ParserResult parse_ifnot_statement(ParserContext& parser, token_iterator begin, token_iterator end)
+{
+    return parse_if_statement_internal(parser, begin, end, Token::IFNOT, NodeType::IFNOT);
 }
 
 /*
@@ -1339,7 +1376,9 @@ static ParserResult parse_statement(ParserContext& parser, token_iterator begin,
     auto result = parse_oneof(parser, begin, end,
                               parse_scope_statement,
                               parse_if_statement,
+                              parse_ifnot_statement,
                               parse_while_statement,
+                              parse_whilenot_statement,
                               parse_repeat_statement,
                               parse_switch_statement,
                               parse_dump_statement,

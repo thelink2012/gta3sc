@@ -149,8 +149,14 @@ void CompilerContext::compile_statement(const SyntaxTree& node, bool not_flag)
         case NodeType::IF:
             compile_if(node);
             break;
+        case NodeType::IFNOT:
+            compile_ifnot(node);
+            break;
         case NodeType::WHILE:
             compile_while(node);
+            break;
+        case NodeType::WHILENOT:
+            compile_whilenot(node);
             break;
         case NodeType::REPEAT:
             compile_repeat(node);
@@ -202,24 +208,72 @@ void CompilerContext::compile_scope(const SyntaxTree& scope_node)
 
 void CompilerContext::compile_if(const SyntaxTree& if_node)
 {
+    auto end_ptr = make_internal_label();
+
     if(if_node.child_count() == 3) // [conds, case_true, else]
     {
         auto else_ptr = make_internal_label();
-        auto end_ptr  = make_internal_label();
-        compile_conditions(if_node.child(0), else_ptr);
+        compile_conditions(if_node.child(0), else_ptr, false);
         compile_statements(if_node.child(1));
         compile_command(*this->commands.goto_, { end_ptr });
         compile_label(else_ptr);
         compile_statements(if_node.child(2));
-        compile_label(end_ptr);
     }
     else // [conds, case_true]
     {
-        auto end_ptr = make_internal_label();
-        compile_conditions(if_node.child(0), end_ptr);
+        compile_conditions(if_node.child(0), end_ptr, false);
         compile_statements(if_node.child(1));
-        compile_label(end_ptr);
     }
+
+    compile_label(end_ptr);
+}
+
+void CompilerContext::compile_ifnot(const SyntaxTree& ifnot_node)
+{
+    auto end_ptr = make_internal_label();
+
+    auto opt_goto_if_true = commands.goto_if_true;
+    if (opt_goto_if_true && opt_goto_if_true->supported)
+    {
+        // "Native" IFNOT using GOTO_IF_TRUE
+        if(ifnot_node.child_count() == 3) // [conds, case_false, else]
+        {
+            auto else_ptr = make_internal_label();
+            compile_conditions(ifnot_node.child(0), else_ptr, true);
+            compile_statements(ifnot_node.child(1));
+            compile_command(*this->commands.goto_, { end_ptr });
+            compile_label(else_ptr);
+            compile_statements(ifnot_node.child(2));
+        }
+        else // [conds, case_false]
+        {
+            compile_conditions(ifnot_node.child(0), end_ptr, true);
+            compile_statements(ifnot_node.child(1));
+        }
+    }
+    else
+    {
+        // "Emulated" IFNOT using extra gotos and reordered cases
+        if(ifnot_node.child_count() == 3) // [conds, case_false, else]
+        {
+            auto else_ptr = make_internal_label();
+            compile_conditions(ifnot_node.child(0), else_ptr, false);
+            compile_statements(ifnot_node.child(2));
+            compile_command(*this->commands.goto_, { end_ptr });
+            compile_label(else_ptr);
+            compile_statements(ifnot_node.child(1));
+        }
+        else // [conds, case_false]
+        {
+            auto then_ptr = make_internal_label();
+            compile_conditions(ifnot_node.child(0), then_ptr, false);
+            compile_command(*this->commands.goto_, { end_ptr });
+            compile_label(then_ptr);
+            compile_statements(ifnot_node.child(1));
+        }
+    }
+
+    compile_label(end_ptr);
 }
 
 void CompilerContext::compile_while(const SyntaxTree& while_node)
@@ -230,8 +284,39 @@ void CompilerContext::compile_while(const SyntaxTree& while_node)
     loop_stack.emplace_back(LoopInfo { beg_ptr, end_ptr });
 
     compile_label(beg_ptr);
-    compile_conditions(while_node.child(0), end_ptr);
+    compile_conditions(while_node.child(0), end_ptr, false);
     compile_statements(while_node.child(1));
+    compile_command(*this->commands.goto_, { beg_ptr });
+    compile_label(end_ptr);
+
+    loop_stack.pop_back();
+}
+
+void CompilerContext::compile_whilenot(const SyntaxTree& whilenot_node)
+{
+    auto beg_ptr = make_internal_label();
+    auto end_ptr = make_internal_label();
+
+    loop_stack.emplace_back(LoopInfo { beg_ptr, end_ptr });
+
+    compile_label(beg_ptr);
+
+    auto opt_goto_if_true = commands.goto_if_true;
+    if (opt_goto_if_true && opt_goto_if_true->supported)
+    {
+        // "Native" WHILENOT using GOTO_IF_TRUE
+        compile_conditions(whilenot_node.child(0), end_ptr, true);
+    }
+    else
+    {
+        // "Emulated" WHILENOT using extra gotos
+        auto then_ptr = make_internal_label();
+        compile_conditions(whilenot_node.child(0), then_ptr, false);
+        compile_command(*this->commands.goto_, { end_ptr });
+        compile_label(then_ptr);
+    }
+
+    compile_statements(whilenot_node.child(1));
     compile_command(*this->commands.goto_, { beg_ptr });
     compile_label(end_ptr);
 
@@ -598,7 +683,7 @@ void CompilerContext::compile_condition(const SyntaxTree& node, bool not_flag)
     }
 }
 
-void CompilerContext::compile_conditions(const SyntaxTree& conds_node, const shared_ptr<Label>& else_ptr)
+void CompilerContext::compile_conditions(const SyntaxTree& conds_node, const shared_ptr<Label>& else_ptr, bool not_flag)
 {
     auto compile_multi_andor = [this](const auto& conds_node, size_t op)
     {
@@ -631,7 +716,7 @@ void CompilerContext::compile_conditions(const SyntaxTree& conds_node, const sha
             Unreachable();
     }
 
-    compile_command(*this->commands.goto_if_false, { else_ptr });
+    compile_command(not_flag ? *this->commands.goto_if_true : *this->commands.goto_if_false, { else_ptr });
 }
 
 auto CompilerContext::get_args(const Command& command, const std::vector<any>& params) -> ArgList

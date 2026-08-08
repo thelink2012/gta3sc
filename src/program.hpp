@@ -88,6 +88,7 @@ public:
     bool entity_tracking = true;
     bool script_name_check = true;
     bool fswitch = false;
+    bool fifnot = false;
     bool allow_break_continue = false;
     bool scope_then_label = false;
     bool farrays = false;
