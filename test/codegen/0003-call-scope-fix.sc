@@ -1,7 +1,7 @@
 // Regression Test 3
 // Checks whether call scopes in SA Missions have their local vars starting at 0.
 //
-// RUN: %gta3sc %s --config=gtasa --guesser --cm -emit-ir2 -o - | %FileCheck %s
+// RUN: %gta3sc-filecheck %s --config=gtasa --guesser --cm -emit-ir2 -o -
 //
 MISSION_START
 {

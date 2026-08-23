@@ -1,4 +1,4 @@
-// RUN: %dis %gta3sc %s --config=gtasa --guesser --cs -fsyntax-only 2>&1 | %verify %s
+// RUN: %gta3sc-verify %s --config=gtasa --guesser --cs -fsyntax-only
 SCRIPT_START
 {
 CLEO_CALL returns_text1 0

@@ -1,5 +1,5 @@
 // Tests the -fswitch flag.
-// RUN: %dis %gta3sc %s --config=gta3 -fsyntax-only 2>&1 | %verify %s
+// RUN: %gta3sc-verify %s --config=gta3 -fsyntax-only
 // RUN: %not %gta3sc %s --config=gta3 -fsyntax-only -fswitch 2>&1 | grep "guesser mode"
 // RUN:      %gta3sc %s --config=gta3 -fsyntax-only -fswitch --guesser 2>&1
 // RUN:      %gta3sc %s --config=gtasa -fsyntax-only --guesser 2>&1

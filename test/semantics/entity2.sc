@@ -1,4 +1,4 @@
-// RUN: %dis %gta3sc %s --config=gtavc -fsyntax-only 2>&1 | %verify %s
+// RUN: %gta3sc-verify %s --config=gtavc -fsyntax-only
 
 VAR_INT car
 

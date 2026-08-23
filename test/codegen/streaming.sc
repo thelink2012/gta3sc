@@ -1,5 +1,5 @@
 // # Check IR2
-// RUN: %gta3sc %s --config=gtasa --guesser -emit-ir2 -o - | %FileCheck %s
+// RUN: %gta3sc-filecheck %s --config=gtasa --guesser -emit-ir2 -o -
 //
 // # Check SCM Header and IMG Building
 // RUN: mkdir "%/T/streaming" || echo _

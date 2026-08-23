@@ -1,4 +1,4 @@
-// RUN: %dis %gta3sc %s --config=gtasa --guesser -fsyntax-only 2>&1 | %verify %s
+// RUN: %gta3sc-verify %s --config=gtasa --guesser -fsyntax-only
 
 MISSION_START // expected-error@directives.sc:0 {{cannot use MISION_START in main scripts}}
 LAUNCH_MISSION subscript.sc

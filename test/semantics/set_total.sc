@@ -1,4 +1,4 @@
-// RUN: %dis %gta3sc %s --config=gta3 -fsyntax-only 2>&1 | %verify %s
+// RUN: %gta3sc-verify %s --config=gta3 -fsyntax-only
 
 // Set total once
 SET_PROGRESS_TOTAL 1			// expected-error {{must be 0}}

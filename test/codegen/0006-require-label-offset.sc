@@ -1,7 +1,7 @@
 // Regression Test 6
 // Checks whether local offsets of required scripts (second require in special) are correct.
 //
-// RUN: %gta3sc %s --config=gtasa --guesser --cs -emit-ir2 -o - | %FileCheck %s
+// RUN: %gta3sc-filecheck %s --config=gtasa --guesser --cs -emit-ir2 -o -
 
 SCRIPT_START
 REQUIRE a.sc

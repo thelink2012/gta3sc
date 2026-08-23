@@ -1,4 +1,4 @@
-// RUN: %gta3sc %s --config=gtasa --guesser -emit-ir2 -o - | %FileCheck %s
+// RUN: %gta3sc-filecheck %s --config=gtasa --guesser -emit-ir2 -o -
 
 // CHECK: SET_TOTAL_NUMBER_OF_MISSIONS 3i8
 SET_TOTAL_NUMBER_OF_MISSIONS 0

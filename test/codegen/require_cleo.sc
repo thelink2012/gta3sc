@@ -1,5 +1,5 @@
-// RUN: %gta3sc %s --config=gtasa --guesser -emit-ir2 -o - --cs -D CS | %FileCheck %s
-// RUN: %gta3sc %s --config=gtasa --guesser -emit-ir2 -o - --cm -D CM | %FileCheck %s
+// RUN: %gta3sc-filecheck %s --config=gtasa --guesser -emit-ir2 -o - --cs -D CS
+// RUN: %gta3sc-filecheck %s --config=gtasa --guesser -emit-ir2 -o - --cm -D CM
 #ifdef CS
 SCRIPT_START
 #else

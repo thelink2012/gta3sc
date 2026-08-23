@@ -1,4 +1,4 @@
-// RUN: %dis %gta3sc %s --config=gtasa --guesser -fsyntax-only -Wexpect-var 2>&1 | %verify %s
+// RUN: %gta3sc-verify %s --config=gtasa --guesser -fsyntax-only -Wexpect-var
 
 // expected-no-diagnostics
 

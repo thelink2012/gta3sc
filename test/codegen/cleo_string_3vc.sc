@@ -1,5 +1,5 @@
-// RUN: %gta3sc %s --config=gta3 --cs -emit-ir2 -o - | %FileCheck %s
-// RUN: %gta3sc %s --config=gtavc --cs -emit-ir2 -o - | %FileCheck %s
+// RUN: %gta3sc-filecheck %s --config=gta3 --cs -emit-ir2 -o -
+// RUN: %gta3sc-filecheck %s --config=gtavc --cs -emit-ir2 -o -
 SCRIPT_START
 {
 LVAR_INT ptr1 ptr2

@@ -1,4 +1,4 @@
-// RUN: %dis %gta3sc %s --config=gtasa --guesser -fbreak-continue -fsyntax-only 2>&1 | %verify %s
+// RUN: %gta3sc-verify %s --config=gtasa --guesser -fbreak-continue -fsyntax-only
 VAR_INT x
 
 CONTINUE  // expected-error {{CONTINUE not in a loop}}

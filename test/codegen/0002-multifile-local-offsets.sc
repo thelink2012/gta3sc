@@ -1,7 +1,7 @@
 // Regression Test 2
 // Checks whether multifiles compiled with -mlocal-offsets produces proper offsets.
 //
-// RUN: %gta3sc %s --config=gta3 -mlocal-offsets -emit-ir2 -o - | %FileCheck %s
+// RUN: %gta3sc-filecheck %s --config=gta3 -mlocal-offsets -emit-ir2 -o -
 //
 LAUNCH_MISSION subscript.sc
 LOAD_AND_LAUNCH_MISSION miss1.sc

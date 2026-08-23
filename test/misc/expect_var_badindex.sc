@@ -1,4 +1,4 @@
-// RUN: %dis %gta3sc %s --config=gta3 -fsyntax-only -Wexpect-var 2>&1 | %verify %s
+// RUN: %gta3sc-verify %s --config=gta3 -fsyntax-only -Wexpect-var
 
 VAR_INT player scplayer flag_player_on_mission
 

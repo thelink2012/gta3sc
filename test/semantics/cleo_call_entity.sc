@@ -1,4 +1,4 @@
-// RUN: %dis %gta3sc %s --config=gtasa --guesser --cs -fsyntax-only 2>&1 | %verify %s
+// RUN: %gta3sc-verify %s --config=gtasa --guesser --cs -fsyntax-only
 SCRIPT_START
 {
 LVAR_INT car char car2 null1 null2 null3 null4 

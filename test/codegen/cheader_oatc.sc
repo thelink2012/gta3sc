@@ -1,10 +1,10 @@
 // # Check IR2 with and without OATC
-// RUN: %gta3sc %s --config=gtasa --guesser -emit-ir2 -o - -fcleo | %FileCheck %s
-// RUN: %gta3sc %s --config=gtasa --guesser -emit-ir2 -o - --cs -D CS | %FileCheck %s
-// RUN: %gta3sc %s --config=gtasa --guesser -emit-ir2 -o - --cm -D CM | %FileCheck %s
-// RUN: %gta3sc %s --config=gtasa --guesser -emit-ir2 -o - -fcleo -moatc | %FileCheck %s
-// RUN: %gta3sc %s --config=gtasa --guesser -emit-ir2 -o - --cs -D CS -moatc | %FileCheck %s
-// RUN: %gta3sc %s --config=gtasa --guesser -emit-ir2 -o - --cm -D CM -moatc | %FileCheck %s
+// RUN: %gta3sc-filecheck %s --config=gtasa --guesser -emit-ir2 -o - -fcleo
+// RUN: %gta3sc-filecheck %s --config=gtasa --guesser -emit-ir2 -o - --cs -D CS
+// RUN: %gta3sc-filecheck %s --config=gtasa --guesser -emit-ir2 -o - --cm -D CM
+// RUN: %gta3sc-filecheck %s --config=gtasa --guesser -emit-ir2 -o - -fcleo -moatc
+// RUN: %gta3sc-filecheck %s --config=gtasa --guesser -emit-ir2 -o - --cs -D CS -moatc
+// RUN: %gta3sc-filecheck %s --config=gtasa --guesser -emit-ir2 -o - --cm -D CM -moatc
 //
 // # Check the binary representation
 // RUN: mkdir "%/T/cheader_oatc" || echo _

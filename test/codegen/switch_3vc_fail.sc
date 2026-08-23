@@ -1,5 +1,5 @@
-// RUN: %dis %gta3sc %s --config=gta3 -fswitch --guesser -emit-ir2 -o - 2>&1 | %verify %s
-// RUN: %dis %gta3sc %s --config=gtavc -fswitch --guesser -emit-ir2 -o - 2>&1 | %verify %s
+// RUN: %gta3sc-verify %s --config=gta3 -fswitch --guesser -emit-ir2 -o -
+// RUN: %gta3sc-verify %s --config=gtavc -fswitch --guesser -emit-ir2 -o -
 VAR_INT n
 
 SWITCH n // expected-error {{more than 8 cases}}

@@ -1,4 +1,4 @@
-// RUN: %dis %gta3sc %s --config=gtasa --guesser --datadir=Inputs/data -fsyntax-only 2>&1 | %verify %s
+// RUN: %gta3sc-verify %s --config=gtasa --guesser --datadir=Inputs/data -fsyntax-only
 
 					// expected-error@gosub1.sc:7 {{variable name exists already}}
 VAR_INT dup_var		// expected-note {{previously defined here}}

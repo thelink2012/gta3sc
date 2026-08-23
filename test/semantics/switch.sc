@@ -1,4 +1,4 @@
-// RUN: %dis %gta3sc %s --config=gtasa --guesser -pedantic -fsyntax-only 2>&1 | %verify %s
+// RUN: %gta3sc-verify %s --config=gtasa --guesser -pedantic -fsyntax-only
 VAR_INT n j
 VAR_FLOAT f
 

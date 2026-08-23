@@ -1,4 +1,4 @@
-// RUN: %gta3sc %s --config=gtasa --guesser -emit-ir2 -o - | %FileCheck %s
+// RUN: %gta3sc-filecheck %s --config=gtasa --guesser -emit-ir2 -o -
 
 // CHECK: SKIP_CUTSCENE_START_INTERNAL @MAIN_1
 SKIP_CUTSCENE_START

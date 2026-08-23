@@ -1,4 +1,4 @@
-// RUN: %dis %gta3sc %s --config=gtasa --guesser -fsyntax-only 2>&1 | %verify %s
+// RUN: %gta3sc-verify %s --config=gtasa --guesser -fsyntax-only
 
 VAR_TEXT_LABEL text8
 VAR_TEXT_LABEL16 text16

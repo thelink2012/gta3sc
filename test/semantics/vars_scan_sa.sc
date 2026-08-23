@@ -1,4 +1,4 @@
-// RUN: %dis %gta3sc %s --config=gtasa --guesser -fsyntax-only 2>&1 | %verify %s
+// RUN: %gta3sc-verify %s --config=gtasa --guesser -fsyntax-only
 // Also see other tests in vars_scan_3vc.sc
 
 VAR_INT con[XYZ]  // expected-error {{index must be constant}}

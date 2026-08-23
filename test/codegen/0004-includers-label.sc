@@ -1,7 +1,7 @@
 // Regression Test 4
 // Ensures file includers when used from subscripts onwards uses labels.
 //
-// RUN: %gta3sc %s --config=gta3 -emit-ir2 -o - | %FileCheck %s
+// RUN: %gta3sc-filecheck %s --config=gta3 -emit-ir2 -o -
 //
 LAUNCH_MISSION subscript.sc
 LOAD_AND_LAUNCH_MISSION miss1.sc

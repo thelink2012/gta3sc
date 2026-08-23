@@ -80,14 +80,15 @@ The legacy harness is outdated: Python 2 shebangs, unmaintained OutputCheck, no 
 | Name | Meaning |
 |------|---------|
 | `%s`, `%t`, `%S`, `%T`, … | Standard lit substitutions. |
+| `%gta3sc-filecheck` | `gta3sc-filecheck.sh`: `$1` filecheck, `$2` compiler; compile `%s` and FileCheck stdout. Extra args after the source go to the compiler (no baked `-emit-ir2 -o -`). |
+| `%gta3sc-verify` | `gta3sc-verify.sh`: `$1` verifier, `$2` compiler; compile `%s` and check diagnostics. Exit 0/1 discarded; crash still fails. |
 | `%gta3sc` | Binary under test, invoked with `-Wno-expect-var` (legacy default). |
 | `%FileCheck` | PyPI `filecheck` (LLVM FileCheck syntax). |
-| `%verify` | `VerifyDiagnosticConsumer.py` (Python 3) on stdin vs annotations in `$1`. |
-| `%checksum` | `sh Checksum.sh`: md5 of `$1` equals `$2`. |
+| `%verify` | `verify-diagnostics.py` (Python 3) on stdin vs annotations in `$1`. |
+| `%checksum` | `sh checksum.sh`: md5 of `$1` equals `$2`. |
 | `%not` | Invert exit code; crash (`>1`) stays a failure. |
-| `%dis` | Discard exit code unless crash. |
 
-Keep the three POSIX `sh` helpers (`Not.sh`, `Discard.sh`, `Checksum.sh`) with `#!/bin/sh`. Lit’s builtin `not` / `not --crash` is not a substitute (see Design).
+Keep the POSIX `sh` helpers (`not.sh`, `checksum.sh`, plus the filecheck/verify wrappers) with `#!/bin/sh`. Lit’s builtin `not` / `not --crash` is not a substitute (see Design).
 
 ### FileCheck syntax (migration from OutputCheck)
 
@@ -153,7 +154,7 @@ CTest test name is `gta3sc_integration` (not a generic `integration`) so a super
 | Commit V2 config fixtures in `test/` | Config data is a separate problem; compiler search path is enough. |
 | Drop `main/` | User chose to keep them; revisit later (BACKLOG). |
 | `python -c lit.main` CMake fallback | pipx/uv/dnf already put `lit` on PATH; the fallback bloated CMakeLists. |
-| Lit builtin `not` / `not --crash` instead of `Not.sh` | See below. |
+| Lit builtin `not` / `not --crash` instead of `not.sh` | See below. |
 
 ### `not --crash` (not used)
 
@@ -162,7 +163,7 @@ PyPI lit 18.1.8 **parses** `not --crash` in its internal shell. Semantics:
 - Plain `not cmd`: success if `cmd` is non-zero (any non-zero).
 - `not --crash cmd`: expects `cmd` to **crash** (typically abort / signal / high status); a clean exit 1 is a failure of `not --crash`.
 
-That is the **opposite emphasis** of `Not.sh`, which treats **exit 1 as the expected compiler error** and treats crash (`>1`) as a test failure. Also, with `execute_external` on Unix, `not --crash` is re-pushed as an external `not` binary (LLVM’s `not` tool), which we do not depend on. Keep `%not` → `Not.sh`.
+That is the **opposite emphasis** of `not.sh`, which treats **exit 1 as the expected compiler error** and treats crash (`>1`) as a test failure. Also, with `execute_external` on Unix, `not --crash` is re-pushed as an external `not` binary (LLVM’s `not` tool), which we do not depend on. Keep `%not` → `not.sh`.
 
 ### Invariants
 
@@ -174,7 +175,7 @@ That is the **opposite emphasis** of `Not.sh`, which treats **exit 1 as the expe
 
 - Where the V2 `config/` tree lives for CI (compiler search path vs `GTA3SC_CONFIG_ROOT`).
 - New directory taxonomy (see Plan).
-- Rename `GTA3ScriptTest.py` / `VerifyDiagnosticConsumer.py` to snake_case on next touch (not a dedicated cleanup).
+- Rename `GTA3ScriptTest.py` to snake_case on next touch (not a dedicated cleanup).
 
 ---
 
@@ -184,8 +185,8 @@ That is the **opposite emphasis** of `Not.sh`, which treats **exit 1 as the expe
 
 1. **Harness rewrite** (not a byte-copy of legacy helpers):
    - `test/lit.cfg`, `test/lit.site.cfg.in`, `test/GTA3ScriptTest.py`
-   - Python 3 `test/VerifyDiagnosticConsumer.py`
-   - `test/{Not,Discard,Checksum}.sh`
+   - Python 3 `test/verify-diagnostics.py`
+   - `test/{not,checksum}.sh`
    - `test/README.md`, `test/CMakeLists.txt`
    - Root `CMakeLists.txt`: `GTA3SC_INTEGRATION_TESTS` + `add_subdirectory(test)`
 2. **Suite copy:** `cp -r` of `codegen frontend lexer main misc parser preprocessor semantics` from `~/dev/gta3sc/test`. No suite files invented; none omitted. After copy, 124/171 files are byte-identical to legacy; the other 47 differ **only** by FileCheck directive translation (`CHECK-*-L:` → `CHECK-*:` plus a handful of `{{regex}}` wraps).

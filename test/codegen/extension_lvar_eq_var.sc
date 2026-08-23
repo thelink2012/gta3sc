@@ -1,5 +1,5 @@
-// RUN: %gta3sc %s --config=gta3 -emit-ir2 -o - | %FileCheck %s
-// RUN: %gta3sc %s --config=gtavc -emit-ir2 -o - | %FileCheck %s
+// RUN: %gta3sc-filecheck %s --config=gta3 -emit-ir2 -o -
+// RUN: %gta3sc-filecheck %s --config=gtavc -emit-ir2 -o -
 // RUN: %not %gta3sc %s --config=gta3 -emit-ir2 -o - -pedantic-errors
 // RUN: %not %gta3sc %s --config=gtavc -emit-ir2 -o - -pedantic-errors
 {

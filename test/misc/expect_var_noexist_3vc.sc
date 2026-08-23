@@ -1,5 +1,5 @@
-// RUN: %dis %gta3sc %s --config=gta3 -fsyntax-only -Wexpect-var 2>&1 | %verify %s
-// RUN: %dis %gta3sc %s --config=gtavc -fsyntax-only -Wexpect-var 2>&1 | %verify %s
+// RUN: %gta3sc-verify %s --config=gta3 -fsyntax-only -Wexpect-var
+// RUN: %gta3sc-verify %s --config=gtavc -fsyntax-only -Wexpect-var
 
 // expected-warning@gta3sc:0 {{expected variable scplayer to exist}}
 // expected-warning@gta3sc:0 {{expected variable player to exist}}

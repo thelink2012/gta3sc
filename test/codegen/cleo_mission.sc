@@ -1,4 +1,4 @@
-// RUN: %gta3sc %s --config=gtasa --guesser --cm -emit-ir2 -o - | %FileCheck %s
+// RUN: %gta3sc-filecheck %s --config=gtasa --guesser --cm -emit-ir2 -o -
 
 MISSION_START
 // CHECK-NEXT: GOSUB %MAIN_1

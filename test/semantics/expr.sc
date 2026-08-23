@@ -1,5 +1,5 @@
 // Tests the semantics of expressions
-// RUN: %dis %gta3sc %s --config=gtasa --guesser -fsyntax-only 2>&1 | %verify %s
+// RUN: %gta3sc-verify %s --config=gtasa --guesser -fsyntax-only
 
 VAR_INT   i j k a[10]
 VAR_FLOAT x y z

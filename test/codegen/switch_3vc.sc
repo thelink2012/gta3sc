@@ -1,5 +1,5 @@
-// RUN: %gta3sc %s --config=gta3 -fswitch --guesser -emit-ir2 -o - | %FileCheck %s
-// RUN: %gta3sc %s --config=gtavc -fswitch --guesser -emit-ir2 -o - | %FileCheck %s
+// RUN: %gta3sc-filecheck %s --config=gta3 -fswitch --guesser -emit-ir2 -o -
+// RUN: %gta3sc-filecheck %s --config=gtavc -fswitch --guesser -emit-ir2 -o -
 VAR_INT n
 
 // Using a default case, and an out of order case.

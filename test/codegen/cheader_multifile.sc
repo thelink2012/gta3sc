@@ -1,8 +1,8 @@
 // This is a test about custom headers in multifiles. The sample header used is OATC.
 //
 // # Check IR2 with and without OATC
-// RUN: %gta3sc %s --config=gtasa --guesser -emit-ir2 -o - -fcleo | %FileCheck %s
-// RUN: %gta3sc %s --config=gtasa --guesser -emit-ir2 -o - -fcleo -moatc | %FileCheck %s
+// RUN: %gta3sc-filecheck %s --config=gtasa --guesser -emit-ir2 -o - -fcleo
+// RUN: %gta3sc-filecheck %s --config=gtasa --guesser -emit-ir2 -o - -fcleo -moatc
 //
 // # Check the binary representation
 // RUN: mkdir "%/T/cheader_multifile" || echo _

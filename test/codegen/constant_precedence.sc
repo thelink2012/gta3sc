@@ -1,5 +1,5 @@
 // Constants takes precedence over variables!
-// RUN: %gta3sc %s --config=gtavc -fno-constant-checks --datadir=../semantics/Inputs/data -emit-ir2 -o - | %FileCheck %s
+// RUN: %gta3sc-filecheck %s --config=gtavc -fno-constant-checks --datadir=../semantics/Inputs/data -emit-ir2 -o -
 
 VAR_INT on
 VAR_INT red

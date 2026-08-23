@@ -1,4 +1,4 @@
-// RUN: %dis %gta3sc %s --config=gta3 -fsyntax-only 2>&1 | %verify %s
+// RUN: %gta3sc-verify %s --config=gta3 -fsyntax-only
 
 MAKE_PLAYER_SAFE 0 	// expected-error {{unsupported}}
 IF WHILE 0 			// expected-error {{internal}}

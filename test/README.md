@@ -53,7 +53,8 @@ Substitutions available in `RUN` lines:
 | `%s`, `%t`, `%S`, `%T`, … | Standard [lit substitutions](https://llvm.org/docs/CommandGuide/lit.html#substitutions). |
 | `%gta3sc`   | The `gta3sc` binary under test (with `-Wno-expect-var`). |
 | `%FileCheck`| [FileCheck](https://llvm.org/docs/CommandGuide/FileCheck.html). |
-| `%verify`   | Clang-style `-verify`: checks stdin against `// expected-error`/`// expected-warning` annotations (`VerifyDiagnosticConsumer.py`). Usually paired with `%dis %gta3sc`. |
+| `%verify`   | Clang-style `-verify`: checks stdin against `// expected-error`/`// expected-warning` annotations (`verify-diagnostics.py`). |
+| `%gta3sc-filecheck` | Compile `%s` and FileCheck the stdout against that same file. |
+| `%gta3sc-verify` | Compile `%s` and check diagnostics. |
 | `%checksum` | Asserts the md5sum of `$1` equals `$2`. |
 | `%not`      | Inverts the exit code (unless the program crashed). |
-| `%dis`      | Discards the exit code (unless the program crashed). |

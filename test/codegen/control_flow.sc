@@ -1,4 +1,4 @@
-// RUN: %gta3sc %s --config=gtavc -emit-ir2 -o - | %FileCheck %s
+// RUN: %gta3sc-filecheck %s --config=gtavc -emit-ir2 -o -
 
 VAR_INT x
 

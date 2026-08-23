@@ -1,4 +1,4 @@
-// RUN: %gta3sc %s --config=gtasa --guesser -emit-ir2 -o - | %FileCheck %s
+// RUN: %gta3sc-filecheck %s --config=gtasa --guesser -emit-ir2 -o -
 
 REQUIRE req1_from_main.sc
 REQUIRE req1_from_main.sc			// Requiring multiple times has no effect

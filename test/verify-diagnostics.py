@@ -5,7 +5,7 @@ Reference:
     https://clang.llvm.org/docs/InternalsManual.html#verifying-diagnostics
 
 Usage:
-    gta3sc ... 2>&1 | VerifyDiagnosticConsumer.py source.sc
+    gta3sc ... 2>&1 | verify-diagnostics.py source.sc
 
 Supported annotations (in ``//`` comments):
     // expected-error {{message substring}}

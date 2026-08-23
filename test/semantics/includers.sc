@@ -1,4 +1,4 @@
-// RUN: %dis %gta3sc %s --config=gta3 -fsyntax-only 2>&1 | %verify %s
+// RUN: %gta3sc-verify %s --config=gta3 -fsyntax-only
 GOSUB_FILE gosub1 gosub1.sc
 LAUNCH_MISSION subscript.sc
 LAUNCH_MISSION gosub1.sc // expected-error {{first seen as extension}}

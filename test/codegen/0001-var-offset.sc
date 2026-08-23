@@ -2,7 +2,7 @@
 // Checks whether a mission script which is the first to declare global vars
 // (i.e. main script has no globals) properly starts at &8 offset.
 //
-// RUN: %gta3sc %s --config=gta3 -emit-ir2 -o - | %FileCheck %s
+// RUN: %gta3sc-filecheck %s --config=gta3 -emit-ir2 -o -
 //
 LOAD_AND_LAUNCH_MISSION mission.sc
 TERMINATE_THIS_SCRIPT
