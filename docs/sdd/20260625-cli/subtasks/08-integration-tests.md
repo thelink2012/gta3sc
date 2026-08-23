@@ -11,7 +11,7 @@ subtask_id: 08-integration-tests
 
 Parent spec: [`../README.md`](../README.md).
 
-**Status:** approved — **blocked**
+**Status:** approved — **partially unblocked** (harness exists; CLI smoke tests still wait on flags)
 
 **Source code is truth.** This subtask doc may be deleted with the parent spec.
 
@@ -19,21 +19,26 @@ Parent spec: [`../README.md`](../README.md).
 
 ## Intent
 
-Add a lit-style / argv-matrix harness that runs the built `gta3sc` binary
-against fixture config trees and representative community command lines.
+Once compile flags stabilize, add a few lit `RUN:` lines that exercise
+realistic compiler command lines against a small fixture config tree
+(the CLI contract: `--config`, `-o`, `--add-config`, `--datadir`, …).
+
+The runner and the ported compiler suites already live in
+[`../../20260822-integration-tests/`](../../20260822-integration-tests/).
+Do not invent a second harness.
 
 ## Scope
 
-- In: harness wiring, compile-path matrix once CLI flags stabilize enough.
-- **Out:** implementing the decompiler; inventing new CLI product flags.
+- In: a handful of CLI smoke tests on the existing lit suite.
+- **Out:** implementing the decompiler; inventing new CLI product flags;
+  re-porting the legacy suite.
 
 ## Depends on
 
-- Broader lit / integration-test infrastructure (`BACKLOG.md`).
-- Decompile matrix additionally needs a decompiler (or legacy decompiler
-  bridge) — still blocked.
-- CLI binary already exists (`gta3sc-cli-exe`); that particular blocker is
-  lifted for **compile** cases.
+- Broader lit harness: landed — see the spec linked above.
+- Decompile smoke tests additionally need a decompiler — still blocked.
+- CLI binary already exists (`gta3sc-cli-exe`).
+- Compile-path smoke tests wait on flag plumbing (parent Phase 4+).
 
 ## Design notes (delta only)
 
@@ -41,20 +46,22 @@ against fixture config trees and representative community command lines.
 
 ## Implementation sketch
 
-- Deferred until lit scaffolding exists; then add compile fixtures first.
+- Lit scaffolding exists under `test/` (`-DGTA3SC_INTEGRATION_TESTS=ON`).
+  Add CLI smoke `RUN:` lines once flags stabilize.
 
 ## Branch / worktree
 
-- Branch: `gta3sc-rewrite-branches/20260625-cli/integration-tests`
-- Worktree: prefer tool default; manual → `.worktrees/integration-tests/`
+Harness + suite port (this work): `gta3sc-rewrite-branches/integration-tests`
+
+CLI smoke tests later, if split: `gta3sc-rewrite-branches/20260625-cli/integration-tests`
 
 ## Acceptance
 
 - [ ] Documented harness runs in CI or local recipe.
-- [ ] At least a compile argv matrix green on fixtures.
+- [ ] At least a few compile CLI smoke tests green on fixtures.
 - [ ] Full unit binary still green; lit failures attributed clearly.
 
 ## Notes / TBD
 
-- **Do not implement yet** under this CLI spec alone — track lit work in
-  backlog; return here when unblocked.
+- Harness + suite port is `20260822-integration-tests`, not this subtask.
+  Return here for CLI smoke `RUN:` lines once enough flags are honoured.

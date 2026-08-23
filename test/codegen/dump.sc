@@ -1,0 +1,25 @@
+// RUN: %gta3sc %s --config=gta3 -emit-ir2 -o - | %FileCheck %s
+
+DUMP
+   // CHECK-NEXT: WAIT 127i8
+   0100 04 7F
+   // CHECK-NEXT: WAIT -1i8
+   01 00 04 FF
+   // CHECK-NEXT: WAIT -110i8
+   01 00 04 92
+   // CHECK-NEXT: SHAKE_CAM 0x0.000000p+0f
+   0300 060000
+ENDDUMP
+
+DUMP
+    // CHECK-NEXT: PRINT_WITH_2_NUMBERS_BIG 'TeST1234' 1011709285i32 107i8 108i8 17716i16
+    "m" 03     // 0x036D
+    "TeST1234" // ...
+    01 "euM<"  // 01 0x3C4D7565
+    04 "k"     // 04 0x6B
+    04 "l"     // 04 0x6C
+    05 "4E"    // 05 0x4534 
+ENDDUMP
+
+// CHECK-NEXT: TERMINATE_THIS_SCRIPT
+TERMINATE_THIS_SCRIPT

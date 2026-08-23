@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='utf-8'?>
+<GTA3Script>
+  <Commands>
+    <Command ID="0xfff" Name="TEST_COMMAND">
+      <Args>
+        <Arg Type="FLOAT"/>
+        <Arg Type="FLOAT"/>
+      </Args>
+    </Command>
+  </Commands>
+</GTA3Script>

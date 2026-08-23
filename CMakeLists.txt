@@ -4,6 +4,7 @@ project(gta3sc CXX)
 
 option(GTA3SC_COVERAGE "Enable code coverage measurements with gcov/lcov." OFF)
 option(GTA3SC_ANALYSIS "Enable static analysis and linting with clang-tidy." OFF)
+option(GTA3SC_INTEGRATION_TESTS "Enable integration tests (requires Python 3 + PyPI lit+filecheck)." OFF)
 
 set(CMAKE_MODULE_PATH
   ${PROJECT_SOURCE_DIR}/cmake/modules
@@ -47,4 +48,7 @@ add_subdirectory(src)
 if(BUILD_TESTING)
   enable_testing()
   add_subdirectory(unittest)
+  if(GTA3SC_INTEGRATION_TESTS)
+    add_subdirectory(test)
+  endif()
 endif()

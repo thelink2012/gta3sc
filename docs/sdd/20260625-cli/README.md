@@ -54,7 +54,7 @@ Phases **1–3 are done** in-tree. **Next work is Phase 4** (flag plumbing), sta
 3. **`subtasks/03-models-datadir`** — Honour `--datadir` / `--levelfile` model loading (after 01; same surfaces).
 4. **`subtasks/04-commandline-txt`** — Only once enough flags are honoured + config ships `commandline.txt`.
 5. **`subtasks/07-query-models`** — After model loading (03); factor shared bootstrap if needed.
-6. **`subtasks/08-integration-tests`** — Lit/argv harness (blocked on broader lit/decompiler backlog).
+6. **`subtasks/08-integration-tests`** — A few CLI smoke `RUN:` lines on the existing lit harness (`docs/sdd/20260822-integration-tests/`); still waits on flag plumbing / decompiler.
 
 **Can run now in parallel with step 1** (light `run.cpp` touch — merge carefully):
 
@@ -81,7 +81,7 @@ Phases **1–3 are done** in-tree. **Next work is Phase 4** (flag plumbing), sta
 | 05 | [subtasks/05-query-config-path](subtasks/05-query-config-path.md) | approved | — | Parallel with 01; coordinate `run.cpp` with 06 |
 | 06 | [subtasks/06-decompile-stub](subtasks/06-decompile-stub.md) | approved | — | Parallel with 01; coordinate `run.cpp` with 05 |
 | 07 | [subtasks/07-query-models](subtasks/07-query-models.md) | approved | 03 | After models |
-| 08 | [subtasks/08-integration-tests](subtasks/08-integration-tests.md) | approved | lit + CLI maturity | **Blocked** |
+| 08 | [subtasks/08-integration-tests](subtasks/08-integration-tests.md) | approved | CLI flags + decompiler | CLI smoke RUN lines; harness is `20260822-integration-tests` |
 
 ## Code truth
 

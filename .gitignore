@@ -11,6 +11,8 @@
 /.cache
 /plans/
 /.worktrees/
+/test/.lit_test_times.txt
+/test/**/Output/
 
 #################
 ## C++
@@ -52,6 +54,15 @@
 #################
 Makefile
 *.make
+
+
+#################
+## Python
+#################
+__pycache__/
+*.py[cod]
+*$py.class
+
 
 #################
 ## Visual Studio

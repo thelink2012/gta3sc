@@ -108,10 +108,10 @@ Meaningful only once the flags a real `commandline.txt` references are honoured
 - `run-query-models.cpp`: `run_query_models` (bootstrap + print
   `=DEFAULT`/`=LEVEL` like legacy — [07](subtasks/07-query-models.md),
   needs models).
-- Integration tests: a `lit`-style / argv-matrix harness running the built
-  `gta3sc` binary against fixture config trees and real community command lines.
-  (**Blocked** — [08](subtasks/08-integration-tests.md); CLI binary exists;
-  decompiler still blocks decompile matrix.)
+- Integration tests: harness + suite port is
+  `docs/sdd/20260822-integration-tests/`. This subtask adds a few CLI smoke
+  `RUN:` lines once flags stabilize. ([08](subtasks/08-integration-tests.md);
+  decompiler still blocks decompile smoke tests.)
 ## Definition of Done (every phase) — Acceptance
 
 Per `AGENTS.md` autonomous-workflow rules:

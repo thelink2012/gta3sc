@@ -1,0 +1,22 @@
+// RUN: %gta3sc %s --config=gtasa --guesser --cs -emit-ir2 -o - | %FileCheck %s
+SCRIPT_START
+// CHECK-NEXT: GOSUB %MAIN_1
+GOSUB test_offset
+// CHECK-NEXT: TERMINATE_THIS_CUSTOM_SCRIPT
+SCRIPT_END
+
+{
+// CHECK-NEXT: MAIN_1:
+test_offset:
+
+LVAR_INT i j k
+
+// CHECK-NEXT: SET_LVAR_INT 32@ 0i8
+timera = 0
+
+// CHECK-NEXT: SET_LVAR_INT 0@ 100i8
+i = 100
+
+// CHECK-NEXT: TERMINATE_THIS_CUSTOM_SCRIPT
+TERMINATE_THIS_CUSTOM_SCRIPT
+}

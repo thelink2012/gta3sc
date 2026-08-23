@@ -46,7 +46,7 @@ add_executable(gta3sc_unittest
 target_compile_features(gta3sc_unittest PUBLIC cxx_std_26)
 target_link_libraries(gta3sc_unittest PRIVATE gta3sc gta3sc-config gta3sc-cli doctest_with_main)
 
-doctest_discover_tests(gta3sc_unittest)
+doctest_discover_tests(gta3sc_unittest PROPERTIES LABELS unit)
 
 if(GTA3SC_COVERAGE)
   setup_target_for_coverage_lcov(

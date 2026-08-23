@@ -1,0 +1,5 @@
+MISSION_START
+{
+LVAR_INT x y z // 34@ 35@ 36@
+}
+MISSION_END

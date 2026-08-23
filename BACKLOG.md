@@ -43,9 +43,14 @@
   - [ ] Diagnostic message formatting to string
   - [ ] DiagnosticBag?
 - Integration Tests (lit)
+   - Spec: `docs/sdd/20260822-integration-tests/`
    - [ ] Blocker: Needs decompiler (or use legacy decompiler)
    - [x] Blocker: Needs CLI (binary exists: `gta3sc-cli-exe` / `gta3sc`)
-   - [ ] Migrate lit tests from legacy to gta3sc-rewrite
+   - [x] Migrate lit tests from legacy to gta3sc-rewrite (harness under `test/`)
+   - [ ] Most cases red until unimplemented features land
+   - [ ] Provide a V2 `config/` tree for `--config=<game>`
+   - [ ] Revisit `main/` end-to-end tests download scripts over the network (Dropbox)
+   - [ ] Refactor the `test/` directory taxonomy
 - Refactoring
   - [ ] Large Files
     - [ ] Split parser.cpp into smaller files
