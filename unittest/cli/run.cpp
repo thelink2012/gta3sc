@@ -2,7 +2,9 @@
 #include "../with-temp-dir-fixture.hpp"
 #include <doctest/doctest.h>
 #include <filesystem>
+#include <format>
 #include <gta3sc/cli/run.hpp>
+#include <gta3sc/cli/version.hpp>
 #include <gta3sc/config/config-path.hpp>
 #include <sstream>
 #include <string_view>
@@ -65,7 +67,7 @@ TEST_SUITE("split_action routing")
         int code = call_run({"--version"}, out, err);
 
         CHECK(code == EXIT_SUCCESS);
-        CHECK(out.str().contains("gta3sc"));
+        CHECK(out.str() == std::format("gta3sc {}\n", gta3sc::cli::version()));
         CHECK(err.str().empty());
     }
 
@@ -75,7 +77,7 @@ TEST_SUITE("split_action routing")
         int code = call_run({"-v"}, out, err);
 
         CHECK(code == EXIT_SUCCESS);
-        CHECK(out.str().contains("gta3sc"));
+        CHECK(out.str() == std::format("gta3sc {}\n", gta3sc::cli::version()));
     }
 
     TEST_CASE("compile subcommand at argv[1] routes to compile (fails with no "

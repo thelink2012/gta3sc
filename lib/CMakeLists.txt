@@ -61,3 +61,6 @@ add_library(gta3sc-cli
 target_compile_features(gta3sc-cli PUBLIC cxx_std_26)
 target_link_libraries(gta3sc-cli PUBLIC gta3sc gta3sc-config)
 target_compile_options(gta3sc-cli PRIVATE ${GTA3SC_PEDANTIC_COMPILE_OPTIONS})
+
+include("${CMAKE_CURRENT_LIST_DIR}/../cmake/GenerateGitVersion.cmake")
+gta3sc_target_git_version(gta3sc-cli cli/version.cpp.in)
