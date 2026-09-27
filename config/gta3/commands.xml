@@ -6407,7 +6407,6 @@
     <Command ID="0x3c3" Name="DISPLAY_ONSCREEN_TIMER_WITH_STRING">
       <Args>
         <Arg Type="INT" Ref="true" AllowConst="false" AllowLocalVar="false"/>
-        <Arg Type="INT" Enum="TIMER"/>
         <Arg Type="TEXT_LABEL"/>
       </Args>
     </Command>
